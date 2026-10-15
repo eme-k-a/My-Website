@@ -15,7 +15,7 @@ export const SOURCE = join(ROOT, 'assets-src', 'headshot.jpg');
 export const OUT_DIR = join(ROOT, 'public', 'images');
 
 /** 4:5 crop from the top of the 1008 x 1792 original, as the WP-03 brief pins it. */
-const CROP = { left: 0, top: 0, width: 1008, height: 1260 };
+const CROP = { left: 0, top: 360, width: 1008, height: 1260 };
 /** EXPERIENCE §2.3: the duotone maps luminance from shadows #16161A to highlights #F2EDE4. */
 const SHADOW = [0x16, 0x16, 0x1a] as const;
 const HIGHLIGHT = [0xf2, 0xed, 0xe4] as const;

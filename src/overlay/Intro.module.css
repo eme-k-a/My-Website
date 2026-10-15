@@ -59,6 +59,11 @@
   letter-spacing: -0.005em;
 }
 
+/* A hyphenated word of the name stays whole: see Name in Intro.tsx (F-005). */
+.nowrap {
+  white-space: nowrap;
+}
+
 .role {
   margin: 12px 0 0;
   font-size: var(--type-role);

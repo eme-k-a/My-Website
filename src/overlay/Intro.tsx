@@ -18,6 +18,26 @@ import ui from './ui.module.css';
 const plainClick = (e: MouseEvent) =>
   e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 
+/**
+ * The name, with each hyphenated word kept whole: the h1 never breaks at the hyphen of
+ * "Nduka-Nwagbo". The metric-matched serif fallback is missing on Linux and Android, and the
+ * generic serif there is wide enough to break the surname at its hyphen, so the swap to
+ * Instrument Serif removed a line and moved the rest of the hero (F-005, CLS). The other words
+ * stay one text node, which keeps the shift record of a reflow small.
+ */
+function Name({ name }: { name: string }) {
+  const parts = name.split(/(\S+-\S+)/).filter((part) => part !== '');
+  return parts.map((part, i) =>
+    part.includes('-') ? (
+      <span key={i} className={styles.nowrap}>
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
+
 export function Intro({ card }: { card: LobbyCard }) {
   const ready = useMuseum((s) => s.ready);
   const beginWalk = (e: MouseEvent<HTMLAnchorElement>) => {
@@ -31,7 +51,9 @@ export function Intro({ card }: { card: LobbyCard }) {
     <div className={styles.lobby} data-ready={ready ? '' : undefined}>
       <div className={styles.hero} data-card="" data-testid={TEST_IDS.hero}>
         <p className={styles.eyebrow}>{card.eyebrow}</p>
-        <h1 className={styles.name}>{card.name}</h1>
+        <h1 className={styles.name}>
+          <Name name={card.name} />
+        </h1>
         <p className={styles.role}>{card.roleLine}</p>
         <p className={styles.education}>{card.educationLine}</p>
         <ul className={styles.links}>

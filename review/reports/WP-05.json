@@ -1,0 +1,104 @@
+{
+  "wp": "WP-05",
+  "role": "R2 (Art Director)",
+  "status": "done",
+  "branch": "wp/WP-05-art-direction",
+  "commits": [
+    "9754d6a docs(art): art direction and review rubric",
+    "ddfcf8f feat(design): token values, css variables and fonts",
+    "62b94f0 feat(materials): shared material library",
+    "docs(concepts): exhibit concept checklists (this commit, carries this report)"
+  ],
+  "changedFiles": [
+    "docs/ART_DIRECTION.md",
+    "src/design/contrast.ts",
+    "src/design/contrast.test.ts",
+    "src/design/css.test.ts",
+    "src/design/fonts.css",
+    "src/design/tokens.css",
+    "src/museum/materials/index.ts",
+    "src/museum/materials/library.ts",
+    "src/museum/materials/library.test.ts",
+    "src/museum/materials/MaterialsProvider.tsx",
+    "src/museum/materials/walnutGrain.ts",
+    "review/concepts/verafin.md",
+    "review/concepts/mysa.md",
+    "review/concepts/wailo.md",
+    "review/concepts/cfia.md",
+    "review/concepts/klarup.md",
+    "review/concepts/finance-tracker.md",
+    "review/concepts/safe-sip.md",
+    "review/concepts/sdsj.md",
+    "review/concepts/mun.md",
+    "review/concepts/certifications.md",
+    "review/reports/WP-05.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Every text pair at least 4.5:1, focus rings at least 3:1; test passes",
+      "command": "npx vitest run --project unit src/design",
+      "result": "pass",
+      "evidence": "3 files, 79 tests passed. 29 text pairs, lowest 5.32:1 (--text-2 on --panel over a light-0 pool) and 5.45:1 (--paper-ink-2 on --paper-old); 8 focus rings, lowest 11.0:1; 3 boundary pairs, lowest 3.57:1; --text-3 used by no text pair (3.66:1); every EXPERIENCE figure within 0.05 of the measurement."
+    },
+    {
+      "id": "A2",
+      "criterion": "Material library tests pass; exactly eight exhibit-allowed names; zero transmission",
+      "command": "npx vitest run --project unit src/museum/materials",
+      "result": "pass",
+      "evidence": "1 file, 17 tests passed. Exhibit-allowed = brass, frostedGlass, walnut, ceramic, ceramicGraphite, paper, accentGlow, wall (8); transmission 0 in every spec and on both built MeshPhysicalMaterials; colors equal tokens; createMaterialLibrary() builds in Node with no document."
+    },
+    {
+      "id": "A3",
+      "criterion": "Token and material names frozen: tokens.test.ts passes unchanged, name arrays unchanged versus contracts-v1",
+      "command": "npx vitest run --project unit src/design/tokens.test.ts; git diff contracts-v1 -- src/design/tokens.ts src/museum/materials/index.ts | grep -E '^[-+][^-+]'",
+      "result": "pass",
+      "evidence": "tokens.test.ts 2 tests passed, file untouched. tokens.ts: no diff (its values already equal EXPERIENCE section 7). index.ts: +31 -0, only appended re-exports; EXHIBIT_MATERIALS, KIT_MATERIALS and MaterialLibrary unchanged."
+    },
+    {
+      "id": "A4",
+      "criterion": "Rubric has rows D1 to D6; D6 is the 320 px grayscale thumbnail test",
+      "command": "grep -cE '^\\| D[1-6] ' docs/ART_DIRECTION.md",
+      "result": "pass",
+      "evidence": "6. D6 row: Object read, \"Reads as one object in a 320 px grayscale thumbnail\", anchors for 1, 3 and 5."
+    },
+    {
+      "id": "A5",
+      "criterion": "Ten concept checklists, each with at least 6 unchecked items",
+      "command": "for id in ...; do grep -c '^- \\[ \\]' review/concepts/$id.md; done",
+      "result": "pass",
+      "evidence": "verafin 8, mysa 8, wailo 7, cfia 7, klarup 7, finance-tracker 7, safe-sip 7, sdsj 6, mun 6, certifications 6"
+    },
+    {
+      "id": "A6",
+      "criterion": "npm run verify and npm run build exit 0; fonts resolve from node_modules; no https:// in dist/assets/*.css",
+      "command": "npm run verify && npm run build && grep -l 'https://' dist/assets/*.css",
+      "result": "pass",
+      "evidence": "verify exit 0 (13 files, 199 tests), build exit 0, grep prints nothing. No entry imports fonts.css or tokens.css yet (R6 wires them in WP-10), so dist/assets has only classic-*.css today. Proof that the fonts resolve: css.test.ts resolves the 4 @imports with Node resolution to node_modules/@fontsource and finds every url() file locally; a scratch Vite build of both stylesheets into out/wp05/ emitted 8 hashed font files (4 woff2, 4 woff) under /assets/ and CSS with no https://."
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "EXPERIENCE 7.8 sets the secondary-button border at --brass 50%, which measures 2.85:1 on --ink, below the 3:1 EXPERIENCE 10.4 requires of UI boundaries. Accept --border-secondary at brass 60% (3.62:1 on ink, 3.57:1 on wall), or rule that the visible label alone identifies the control?",
+      "for": "R0",
+      "default": "tokens.css --border-secondary is rgba(201, 163, 106, 0.6); recorded in ART_DIRECTION 6 and enforced by contrast.test.ts."
+    },
+    {
+      "question": "fonts.css and tokens.css are not imported by any build entry yet, so the fonts reach dist only once WP-10 (R6) imports them from the client entry (global.css) and from src/classic/classic.css. Re-run the A6 grep after WP-10 merges?",
+      "for": "R0",
+      "default": "Left to WP-10, whose brief lists both files as inputs."
+    },
+    {
+      "question": "wall is exhibit-allowed in the frozen EXHIBIT_MATERIALS (the first eight rows of EXPERIENCE 7.6), but its lightMap is the kit wall wash, which would look wrong on exhibit geometry, and no section 4 exhibit uses it. Keep it exhibit-allowed?",
+      "for": "R0",
+      "default": "Kept as frozen; ART_DIRECTION 5 lists it among the eight."
+    },
+    {
+      "question": "Kit contract for WP-08 and WP-11: useMaterial and useMaterialInstance accept only the eight exhibit names (a type error otherwise); the kit and environment use useMaterialLibrary() for kit rows, fill wall.lightMap, floor.lightMap and portrait.map before the boot compileAsync, and keep every library material in the scene for that compile.",
+      "for": "R3",
+      "default": "As documented in ART_DIRECTION 5."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Worktree started on main (4f1ab2b); it was reset to the integration tip 3b4acc5 before any work, so all four commits sit on claude/intelligent-sagan-poq45q. R2 decisions recorded in ART_DIRECTION: --border-secondary at 60% (see openQuestions); accentGlow rests at 0.15 and peaks at 1.4 with a 1.6 ceiling for the brief flashes that EXPERIENCE 4 specifies (Mysa, Wailo, Safe Sip); beam is transparent so its 0.035 opacity applies; shadowDecal uses premultiplied alpha (three requires it for MultiplyBlending) and an --ink tint, so the floor is scaled by 1 - 0.45 x falloff; caseGlass keeps the three default white because EXPERIENCE gives no color. Fallback font metrics are first-pass: size-adjust from average advance widths measured with fontkit against Liberation Sans (Arial-compatible, system font) and Gelasio (Georgia-compatible, fetched with npm pack into the session scratchpad, not a dependency, not committed). Measured contrast table: --text on --ink (text) 16.9:1; --text on --wall (text) 15.8:1; --text on --panel over --ink (text) 16.6:1; --text on --panel solid (text) 16.4:1; --text on --panel over light-0 (text) 11.5:1; --text-2 on --ink (text) 7.77:1; --text-2 on --wall (text) 7.26:1; --text-2 on --panel over --ink (text) 7.64:1; --text-2 on --panel solid (text) 7.56:1; --text-2 on --panel over light-0 (text) 5.32:1; --brass on --ink (text) 8.36:1; --brass on --panel over --ink (text) 8.22:1; --brass-hi on --ink (text) 11.8:1; --brass-hi on --panel over --ink (text) 11.6:1; --ink on --brass (text) 8.36:1; --ink on --brass-hi (text) 11.8:1; --signal on --ink (text) 11.1:1; --signal on --panel over --ink (text) 10.9:1; --paper-ink on --paper (text) 14.6:1; --paper-ink on --paper-old (text) 12.8:1; --paper-ink-2 on --paper (text) 6.22:1; --paper-ink-2 on --paper-old (text) 5.45:1; classic text on classic light bg (text) 16.6:1; classic text-2 on classic light bg (text) 7.46:1; classic link on classic light bg (text) 5.93:1; classic text on classic dark bg (text) 16.9:1; classic text-2 on classic dark bg (text) 7.77:1; classic link on classic dark bg (text) 11.8:1; print text on print bg (text) 21.0:1; --brass-hi ring on --ink (focus) 11.8:1; --brass-hi ring on --wall (focus) 11.0:1; --brass-hi ring on --panel solid (focus) 11.5:1; --brass-hi ring on --panel over --ink (focus) 11.6:1; --paper-ink ring on --paper (focus) 14.6:1; --paper-ink ring on --paper-old (focus) 12.8:1; classic light ring on classic light bg (focus) 16.6:1; classic dark ring on classic dark bg (focus) 11.8:1; --border-secondary on --ink (boundary) 3.62:1; --border-secondary on --wall (boundary) 3.57:1; --border-secondary on --panel solid (boundary) 3.61:1; --text-3 on --ink (decorative) 3.66:1; --text-3 on --wall (decorative) 3.42:1; --hairline on --ink (decorative) 1.66:1."
+}

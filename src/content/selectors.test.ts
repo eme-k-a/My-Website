@@ -6,13 +6,19 @@ import {
   entryById,
   exhibitNumber,
   heroLines,
+  linkedinDisplay,
   mainTrack,
+  printModel,
+  printSiteHost,
   readingOrder,
   stopCards,
   threeDStrings,
   trackOf,
   wingTrack,
   type ExhibitCard,
+  type PrintEntry,
+  type PrintModel,
+  type PrintSection,
   type StopCard,
 } from './selectors';
 import type { Content } from './types';
@@ -316,5 +322,198 @@ describe('threeDStrings (EXPERIENCE §5.4)', () => {
       const serif = s.kind === 'number' || (s.kind === 'sign' && s.text !== 'FOUNDATIONS');
       expect(s.font, s.text).toBe(serif ? 'serif' : 'sans');
     }
+  });
+});
+
+describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
+  const model = printModel(content, { now: OCT_2026 });
+  // Built at runtime: check-copy scans every tracked file for a phone-shaped literal.
+  const PHONE = new RegExp(['\\b\\d{3}', '\\d{3}', '\\d{4}\\b'].join('[-. ]'));
+  const fakePhone = () => ['555', '010', '0199'].join('-');
+  const section = <K extends PrintSection['kind']>(m: PrintModel, kind: K) => {
+    const found = m.sections.find((s) => s.kind === kind);
+    if (!found) throw new Error(`No ${kind} section`);
+    return found as Extract<PrintSection, { kind: K }>;
+  };
+  const entryOf = (entries: PrintEntry[], id: string) => {
+    const found = entries.find((e) => e.id === id);
+    if (!found) throw new Error(`No print entry '${id}'`);
+    return found;
+  };
+  const clone = (): Content => structuredClone(content);
+
+  it('orders the sections like the original resume', () => {
+    expect(model.sections.map((s) => s.title)).toEqual([
+      'Education',
+      'Experience',
+      'Technical Skills',
+      'Projects',
+      'Volunteer Experience',
+      'Certifications',
+    ]);
+  });
+
+  it('prints the work entries newest first with formatRange dates and formatLocation places', () => {
+    const experience = section(model, 'experience').entries;
+    expect(experience.map((e) => e.id)).toEqual(['verafin', 'mysa', 'wailo', 'cfia']);
+    const verafin = entryOf(experience, 'verafin');
+    expect(verafin).toMatchObject({
+      role: 'Software Development Co-op Student',
+      org: 'Nasdaq Verafin',
+      location: "St. John's, NL",
+      dates: { text: `Sep 2026 ${EN_DASH} Dec 2026`, tex: 'Sep 2026 -- Dec 2026' },
+    });
+    expect(entryOf(experience, 'wailo').location).toBe('Calgary, AB / Remote');
+    expect(entryOf(experience, 'cfia').location).toBe('Ottawa, ON / Remote');
+    const sdsj = entryOf(section(model, 'volunteer').entries, 'sdsj');
+    expect(sdsj.dates.text).toBe(`Jul 2024 ${EN_DASH} Present`);
+  });
+
+  it('keeps only print: true bullets, with their content positions', () => {
+    const all = [...content.experiences, ...content.projects, ...content.volunteer];
+    const printed = model.sections.flatMap((s) =>
+      s.kind === 'experience' || s.kind === 'volunteer' || s.kind === 'projects'
+        ? s.entries.flatMap((e) => e.bullets.map((b) => ({ id: e.id, ...b })))
+        : [],
+    );
+    const expected = all.flatMap((e) =>
+      e.bullets.flatMap((b, i) =>
+        b.print ? [{ id: e.id, text: b.text, n: i + 1, priority: b.priority }] : [],
+      ),
+    );
+    expect(printed).toEqual(expected);
+    expect(printed.length).toBe(15);
+  });
+
+  it('leaves out Personal Finance Tracker (no printed bullet) but keeps KlarUp', () => {
+    const projects = section(model, 'projects').entries;
+    expect(projects.map((p) => p.id)).toEqual(['klarup']);
+    expect(projects[0]).toMatchObject({
+      name: 'KlarUp: Collaborative Productivity App',
+      stack: 'React Native, Python, Expo',
+    });
+    expect(projects[0]?.dates).toBeUndefined();
+  });
+
+  it('omits a volunteer entry, and the whole section, once nothing in it prints', () => {
+    const c = clone();
+    for (const b of c.volunteer[0]!.bullets) b.print = false;
+    expect(section(printModel(c, { now: OCT_2026 }), 'volunteer').entries.map((e) => e.id)).toEqual(
+      ['sdsj'],
+    );
+    for (const v of c.volunteer) for (const b of v.bullets) b.print = false;
+    for (const p of c.projects) for (const b of p.bullets) b.print = false;
+    const kinds = printModel(c, { now: OCT_2026 }).sections.map((s) => s.kind);
+    expect(kinds).toEqual(['education', 'experience', 'skills', 'certifications']);
+  });
+
+  it('prints the degree as expected until the graduation month', () => {
+    const edu = section(model, 'education').entries[0];
+    expect(edu).toMatchObject({
+      institution: 'Memorial University of Newfoundland',
+      degree: 'B.Eng in Computer Engineering',
+      location: "St. John's, NL",
+      dates: { text: 'Expected Graduation: May 2027' },
+    });
+    const later = section(printModel(content, { now: MAY_2027 }), 'education').entries[0];
+    expect(later?.dates.text).toBe('May 2027');
+  });
+
+  it('prints four skill lines and one certifications line', () => {
+    expect(section(model, 'skills').lines).toEqual([
+      { label: 'Languages', items: 'Python, C++, C#, JavaScript, TypeScript, HTML, CSS' },
+      { label: 'Frameworks', items: 'React, React Native, Next.js, Node.js, Express, FastAPI' },
+      {
+        label: 'Data, Cloud & DevOps',
+        items: 'MongoDB, SQLite, AWS, Firebase, Kubernetes, Detox, GitHub Actions',
+      },
+      {
+        label: 'Concepts',
+        items: 'Algorithms, Data Structures, Agile, CI/CD, OAuth 2.0 / OIDC, Compiler & OS Basics',
+      },
+    ]);
+    expect(section(model, 'certifications').items).toEqual([
+      'AWS Certified Cloud Practitioner',
+      'Tech Stewardship Practice Program',
+      'Tech Stewardship for the Energy Transition',
+    ]);
+    expect(model.keywords).toEqual(content.skills.flatMap((s) => s.items));
+  });
+
+  it('has a public header of email, LinkedIn and location while SITE_URL is a placeholder', () => {
+    expect(model.name).toBe('Chukwuemeka Nduka-Nwagbo');
+    expect(model.contact).toEqual([
+      { kind: 'email', text: 'cndukanwagbo@mun.ca', href: 'mailto:cndukanwagbo@mun.ca' },
+      {
+        kind: 'linkedin',
+        text: 'linkedin.com/in/emekanduka',
+        href: 'https://linkedin.com/in/emekanduka',
+      },
+      { kind: 'location', text: "St. John's, NL" },
+    ]);
+    expect(content.meta.siteUrl).toContain('[placeholder');
+    expect(JSON.stringify(model)).not.toContain('[placeholder');
+  });
+
+  it('adds the site host before the location once SITE_URL is real', () => {
+    const c = clone();
+    c.meta.siteUrl = 'https://emeka.netlify.app';
+    expect(printModel(c, { now: OCT_2026 }).contact.map((i) => i.text)).toEqual([
+      'cndukanwagbo@mun.ca',
+      'linkedin.com/in/emekanduka',
+      'emeka.netlify.app',
+      "St. John's, NL",
+    ]);
+    expect(printSiteHost('https://[placeholder: netlify-subdomain].netlify.app')).toBeUndefined();
+    expect(linkedinDisplay('https://www.linkedin.com/in/emekanduka/')).toBe(
+      'linkedin.com/in/emekanduka',
+    );
+  });
+
+  it('prepends the phone only when the private build passes one', () => {
+    expect(JSON.stringify(model)).not.toMatch(PHONE);
+    expect(model.contact.some((i) => i.kind === 'phone')).toBe(false);
+    const phone = fakePhone();
+    const priv = printModel(content, { now: OCT_2026, phone });
+    expect(priv.contact[0]).toEqual({ kind: 'phone', text: phone });
+    expect(priv.contact.slice(1)).toEqual(model.contact);
+  });
+
+  it('lists trim candidates by priority 3 then 2, oldest entries first, never a priority 1', () => {
+    expect(model.trimCandidates.map((t) => `${t.id} ${t.n} p${t.priority}`)).toEqual([
+      'wailo 2 p3',
+      'mysa 4 p3',
+      'sdsj 1 p3',
+      'wailo 3 p2',
+      'mysa 3 p2',
+      'verafin 3 p2',
+      'verafin 2 p2',
+      'safe-sip 1 p2',
+      'klarup 2 p2',
+    ]);
+  });
+
+  it("never names a work entry's first printed bullet, so a work entry keeps one", () => {
+    const c = clone();
+    for (const w of c.experiences) for (const b of w.bullets) b.priority = 3;
+    const named = printModel(c, { now: OCT_2026 }).trimCandidates;
+    for (const w of c.experiences) {
+      const first = w.bullets.findIndex((b) => b.print) + 1;
+      expect(
+        named.some((t) => t.id === w.id && t.n === first),
+        w.id,
+      ).toBe(false);
+    }
+    expect(named.some((t) => t.id === 'cfia')).toBe(false);
+  });
+
+  it('has no em dash and no en dash outside date ranges', () => {
+    const json = JSON.stringify(model);
+    expect(json).not.toContain(EM_DASH);
+    const dates = model.sections.flatMap((s) =>
+      s.kind === 'experience' || s.kind === 'volunteer' ? s.entries.map((e) => e.dates.text) : [],
+    );
+    const withoutDates = dates.reduce((acc, d) => acc.replaceAll(d, ''), json);
+    expect(withoutDates).not.toContain(EN_DASH);
   });
 });

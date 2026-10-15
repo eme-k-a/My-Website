@@ -12,7 +12,7 @@ import {
   ym,
 } from './format';
 import { doorId, type ExhibitId, type StopId, type TrackId, type WingId } from './ids';
-import type { Content, Copy, DateRange, ExhibitEntry, Work } from './types';
+import type { Bullet, Content, Copy, DateRange, ExhibitEntry, Work } from './types';
 
 // Content ids are validated against EXHIBIT_IDS by the content tests, so the casts below are safe.
 const asExhibit = (id: string) => id as ExhibitId;
@@ -430,4 +430,265 @@ export function threeDStrings(c: Content, now?: Date): ThreeDString[] {
     strings.push({ kind: 'year', text: String(year), font: 'sans', for: 'year-strip' });
   }
   return strings;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Print model (WP-04, ARCHITECTURE §3.7, §4): the one selection behind dist/resume.pdf, the private
+// PDF and resume/resume.tex. Only `print: true` bullets; project and volunteer entries with no
+// printed bullet are left out (a work entry always keeps one, schema rule 5).
+
+/** A date column in both spellings: `text` for the PDF (en dash), `tex` for resume.tex (`--`). */
+export interface PrintDates {
+  text: string;
+  tex: string;
+}
+
+/** One item of the contact row under the name, in print order. */
+export interface PrintContactItem {
+  kind: 'phone' | 'email' | 'linkedin' | 'site' | 'location';
+  text: string;
+  href?: string;
+}
+
+/** A printed bullet. `n` is its 1-based position among the entry's bullets in content. */
+export interface PrintBullet {
+  text: string;
+  n: number;
+  priority: 1 | 2 | 3;
+}
+
+/** A work or volunteer entry: bold role and dates, then italic organization and location. */
+export interface PrintEntry {
+  id: string;
+  role: string;
+  dates: PrintDates;
+  org: string;
+  location: string;
+  bullets: PrintBullet[];
+}
+
+/** Institution and location, then the degree and "Expected Graduation: May 2027". */
+export interface PrintEducation {
+  id: string;
+  institution: string;
+  location: string;
+  degree: string;
+  dates: PrintDates;
+}
+
+/** "KlarUp: Collaborative Productivity App" with its stack; dates only once they are known. */
+export interface PrintProject {
+  id: string;
+  name: string;
+  stack: string;
+  dates?: PrintDates;
+  bullets: PrintBullet[];
+}
+
+/** "Languages" and "Python, C++, ...". */
+export interface PrintSkillLine {
+  label: string;
+  items: string;
+}
+
+export type PrintSection =
+  | { kind: 'education'; title: 'Education'; entries: PrintEducation[] }
+  | { kind: 'experience'; title: 'Experience'; entries: PrintEntry[] }
+  | { kind: 'skills'; title: 'Technical Skills'; lines: PrintSkillLine[] }
+  | { kind: 'projects'; title: 'Projects'; entries: PrintProject[] }
+  | { kind: 'volunteer'; title: 'Volunteer Experience'; entries: PrintEntry[] }
+  | { kind: 'certifications'; title: 'Certifications'; items: string[] };
+
+/** A printed bullet the overflow gate may name; trimming is a content edit, never automatic. */
+export interface TrimCandidate {
+  id: string;
+  n: number;
+  priority: 2 | 3;
+}
+
+export interface PrintModel {
+  name: string;
+  contact: PrintContactItem[];
+  /** Education, Experience, Technical Skills, Projects, Volunteer Experience, Certifications. */
+  sections: PrintSection[];
+  /** Priority 3 then 2; oldest entries first; never a work entry's first printed bullet. */
+  trimCandidates: TrimCandidate[];
+  /** Every skill item, for the PDF Keywords field. */
+  keywords: string[];
+}
+
+export interface PrintOptions {
+  /** Private build only (`npm run resume:private`): prepended to the contact row. */
+  phone?: string;
+  /** The build date; decides "Expected Graduation". Scripts pass buildDateFromEnv(). */
+  now?: Date;
+}
+
+const PLACEHOLDER_MARK = '[placeholder';
+
+const printDates = (r: DateRange): PrintDates => ({
+  text: formatRange(r),
+  tex: formatRange(r, { style: 'tex' }),
+});
+
+const printedBullets = (bullets: Bullet[]): PrintBullet[] =>
+  bullets.flatMap((b, i) => (b.print ? [{ text: b.text, n: i + 1, priority: b.priority }] : []));
+
+/** "linkedin.com/in/emekanduka": no scheme, no www, no trailing slash. */
+export function linkedinDisplay(url: string): string {
+  return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/+$/, '');
+}
+
+/** The site host for the header, or undefined while SITE_URL is still a placeholder. */
+export function printSiteHost(siteUrl: string): string | undefined {
+  if (siteUrl.includes(PLACEHOLDER_MARK)) return undefined;
+  return siteUrl.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+}
+
+function printContact(c: Content, phone: string | undefined): PrintContactItem[] {
+  const items: PrintContactItem[] = [];
+  if (phone !== undefined) items.push({ kind: 'phone', text: phone });
+  items.push({ kind: 'email', text: c.contact.email, href: `mailto:${c.contact.email}` });
+  items.push({
+    kind: 'linkedin',
+    text: linkedinDisplay(c.contact.linkedin),
+    href: c.contact.linkedin,
+  });
+  const host = printSiteHost(c.meta.siteUrl);
+  if (host !== undefined) items.push({ kind: 'site', text: host, href: c.meta.siteUrl });
+  items.push({ kind: 'location', text: c.contact.location });
+  return items;
+}
+
+const END_OF_TIME = Number.MAX_SAFE_INTEGER;
+
+export interface TrimSource {
+  id: string;
+  kind: 'work' | 'project' | 'volunteer';
+  bullets: PrintBullet[];
+  /** Month index of the end ('present' sorts last), undefined for undated projects. */
+  end?: number;
+  start?: number;
+}
+
+/**
+ * Overflow-gate candidates: printed bullets of priority 3, then 2; within a priority the oldest
+ * entries first (earliest end month, then earliest start; undated projects after dated entries),
+ * and within an entry the last bullet first. A work entry's first printed bullet is never listed,
+ * so following the list can never leave a work entry without a printed bullet.
+ */
+export function trimCandidates(entries: TrimSource[]): TrimCandidate[] {
+  const age = (e: TrimSource): [number, number] => [
+    e.end ?? END_OF_TIME + 1,
+    e.start ?? END_OF_TIME,
+  ];
+  const ordered = [...entries].sort((a, b) => {
+    const [ae, as] = age(a);
+    const [be, bs] = age(b);
+    return ae - be || as - bs;
+  });
+  const out: TrimCandidate[] = [];
+  for (const priority of [3, 2] as const) {
+    for (const entry of ordered) {
+      const keep = entry.kind === 'work' ? entry.bullets[0] : undefined;
+      for (const b of [...entry.bullets].reverse()) {
+        if (b.priority === priority && b !== keep) out.push({ id: entry.id, n: b.n, priority });
+      }
+    }
+  }
+  return out;
+}
+
+const ageOf = (r: DateRange | undefined) =>
+  r === undefined ? {} : { start: ym(r.start), end: r.end === 'present' ? END_OF_TIME : ym(r.end) };
+
+/**
+ * The resume as it prints (ARCHITECTURE §4.1, CONTENT_DRAFT §3): header, then Education,
+ * Experience, Technical Skills, Projects, Volunteer Experience and Certifications. The public
+ * build never passes `phone`; empty sections are left out.
+ */
+export function printModel(c: Content, options: PrintOptions = {}): PrintModel {
+  const now = options.now ?? new Date();
+
+  const education: PrintEducation[] = c.education.map((e) => {
+    const month = formatMonth(e.graduation);
+    const dates = isExpected(e, now) ? `Expected Graduation: ${month}` : month;
+    return {
+      id: e.id,
+      institution: e.institution,
+      location: formatLocation(e.location),
+      degree: e.degree,
+      dates: { text: dates, tex: dates },
+    };
+  });
+
+  const entry = (e: Work | Content['volunteer'][number]): PrintEntry => ({
+    id: e.id,
+    role: e.role,
+    dates: printDates(e.dates),
+    org: e.org,
+    location: formatLocation(e.location),
+    bullets: printedBullets(e.bullets),
+  });
+  const experience = c.experiences.map(entry);
+  const volunteer = c.volunteer.map(entry).filter((e) => e.bullets.length > 0);
+
+  const projects: PrintProject[] = c.projects
+    .map((p) => ({
+      id: p.id,
+      name: `${p.name}: ${p.tagline}`,
+      stack: p.stack.join(', '),
+      ...(p.dates !== undefined && { dates: printDates(p.dates) }),
+      bullets: printedBullets(p.bullets),
+    }))
+    .filter((p) => p.bullets.length > 0);
+
+  const skills: PrintSkillLine[] = c.skills.map((s) => ({
+    label: s.label,
+    items: s.items.join(', '),
+  }));
+  const certifications = c.certifications.items.map((item) => item.name);
+
+  const sections: PrintSection[] = [];
+  if (education.length > 0)
+    sections.push({ kind: 'education', title: 'Education', entries: education });
+  if (experience.length > 0)
+    sections.push({ kind: 'experience', title: 'Experience', entries: experience });
+  if (skills.length > 0)
+    sections.push({ kind: 'skills', title: 'Technical Skills', lines: skills });
+  if (projects.length > 0)
+    sections.push({ kind: 'projects', title: 'Projects', entries: projects });
+  if (volunteer.length > 0)
+    sections.push({ kind: 'volunteer', title: 'Volunteer Experience', entries: volunteer });
+  if (certifications.length > 0)
+    sections.push({ kind: 'certifications', title: 'Certifications', items: certifications });
+
+  const aged: TrimSource[] = [
+    ...c.experiences.map((w, i) => ({
+      id: w.id,
+      kind: 'work' as const,
+      bullets: experience[i]?.bullets ?? [],
+      ...ageOf(w.dates),
+    })),
+    ...c.projects.map((p) => ({
+      id: p.id,
+      kind: 'project' as const,
+      bullets: printedBullets(p.bullets),
+      ...ageOf(p.dates),
+    })),
+    ...c.volunteer.map((v) => ({
+      id: v.id,
+      kind: 'volunteer' as const,
+      bullets: printedBullets(v.bullets),
+      ...ageOf(v.dates),
+    })),
+  ];
+
+  return {
+    name: c.contact.name,
+    contact: printContact(c, options.phone),
+    sections,
+    trimCandidates: trimCandidates(aged),
+    keywords: c.skills.flatMap((s) => s.items),
+  };
 }

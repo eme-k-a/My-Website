@@ -1,0 +1,181 @@
+/*
+ * Print stylesheet for src/print/ResumePrint.tsx (ARCHITECTURE §4.1): Jake's Resume look on US
+ * Letter. scripts/build-resume-pdf.ts inlines this file after the CMU Serif @font-face rules it
+ * writes with file:// URLs. Plain .pr-* classes, no CSS Modules.
+ *
+ * Geometry follows Jake's LaTeX template: 0.5in margins, entries indented 0.15in and 0.97 of the
+ * text width wide, bullet text from 0.45in to the right margin, 10pt body on a 12pt line.
+ * .pr-page is a fixed 7.5in x 10in box WITHOUT overflow: hidden, so the overflow gate can measure
+ * scrollHeight - clientHeight. Never fix an overflow here by shrinking type; trim content instead.
+ */
+@page {
+  size: Letter;
+  margin: 0.5in;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #000;
+}
+
+/* Screen only (the --preview screenshot): draw the page margins the printer adds via @page. */
+@media screen {
+  body {
+    width: 8.5in;
+    min-height: 11in;
+    padding: 0.5in;
+  }
+}
+
+.pr-page {
+  width: 7.5in;
+  height: 10in;
+  font-family: 'CMU Serif', serif;
+  font-size: 10pt;
+  line-height: 12pt;
+  font-kerning: normal;
+  font-synthesis: none;
+  font-variant-ligatures: none;
+  font-feature-settings:
+    'liga' 0,
+    'clig' 0;
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  overflow-wrap: normal;
+}
+
+/* Zero-specificity resets, so every .pr-* rule below wins over them. */
+:where(.pr-page) :where(h1, h2, h3, p, ul, li) {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.pr-page a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 0.4pt;
+  text-underline-offset: 1.5pt;
+}
+
+.pr-nobr {
+  white-space: nowrap;
+}
+
+/* Header: centered name and contact row. */
+.pr-header {
+  text-align: center;
+}
+
+.pr-name {
+  font-size: 20pt;
+  line-height: 24pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pr-contact {
+  margin-top: 1pt;
+}
+
+/* Section headings: uppercase with letter-spacing (never synthesized small caps) and a full rule. */
+.pr-section {
+  margin-top: 9pt;
+}
+
+.pr-heading {
+  font-size: 11pt;
+  line-height: 12pt;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 0.4pt solid #000;
+  padding-bottom: 1pt;
+  margin-bottom: 1pt;
+}
+
+/* Entries: bold title left and dates right, then an italic organization and location row. */
+.pr-entry {
+  margin-left: 0.15in;
+  width: 7.275in;
+}
+
+.pr-entry + .pr-entry {
+  margin-top: 2pt;
+}
+
+.pr-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12pt;
+  white-space: nowrap;
+}
+
+.pr-row-head {
+  font-size: 11pt;
+  line-height: 12pt;
+}
+
+.pr-row-sub {
+  font-size: 10pt;
+  line-height: 12pt;
+}
+
+.pr-row strong {
+  font-weight: 700;
+}
+
+.pr-row em {
+  font-style: italic;
+}
+
+.pr-project .pr-row-head {
+  font-size: 10pt;
+}
+
+/* Tight bullet lists: text from 0.45in to the right margin. */
+.pr-bullets {
+  list-style: none;
+  margin-top: -1pt;
+  width: calc(7.5in - 0.45in);
+  margin-left: 0.3in;
+}
+
+/*
+ * The marker hangs in the margin but stays in normal flow: positioned boxes paint in a later layer,
+ * which moves their text after everything else in the PDF content stream (and in pdf.js text
+ * extraction), so no position or z-index on bullets.
+ */
+.pr-bullet::before {
+  content: '\2022';
+  display: inline-block;
+  width: 10pt;
+  margin-left: -10pt;
+}
+
+.pr-bullet + .pr-bullet {
+  margin-top: -1pt;
+}
+
+/* Technical Skills and Certifications. */
+.pr-skills {
+  list-style: none;
+  margin-left: 0.15in;
+}
+
+.pr-skills strong {
+  font-weight: 700;
+}
+
+.pr-certs {
+  margin-left: 0.15in;
+}

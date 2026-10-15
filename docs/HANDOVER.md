@@ -84,12 +84,15 @@ How to tell what's done:
 You are continuing the "Commit History" website build for Emeka Nduka-Nwagbo on branch
 claude/intelligent-sagan-poq45q. Act as R0, the orchestrator described in docs/PLAN.md.
 
-1. Read CLAUDE.md, docs/HANDOVER.md, docs/PLAN.md (especially the Addendum rulings),
-   docs/wp/_TEMPLATE.md, and skim docs/ARCHITECTURE.md and docs/spec/EXPERIENCE.md.
+1. Read CLAUDE.md, docs/HANDOVER.md, docs/RULINGS.md, docs/PLAN.md section 7 (the cost-aware
+   operating rules) and docs/wp/_TEMPLATE.md. Do not read the big specs up front: each work
+   package has a context pack in docs/wp/packs/.
 2. Work out the real status: `git log --oneline`, `ls review/reports/`, and run
    `npm ci && npm run verify && npm run build` if package.json exists. Update the status
    table in docs/HANDOVER.md.
-3. Continue with the next work package(s) in milestone order from docs/PLAN.md section 5.
+3. Continue with the next milestone from docs/PLAN.md section 5. If the Workflow tool is
+   available, run the saved workflow .claude/workflows/milestone.js (name "milestone"),
+   following the cost rules in docs/PLAN.md section 7. Otherwise work through the WPs one at a time.
    For each WP: hand its brief (docs/wp/WP-xx.md) to a subagent, or do it yourself. Then
    have a separate subagent independently re-run every acceptance check and review the
    diff adversarially. Fix and re-verify until it passes. Commit with a conventional

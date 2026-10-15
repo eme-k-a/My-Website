@@ -10,4 +10,5 @@ playwright-report/
 .DS_Store
 *.log
 review/runs/**/*.png
-.claude/
+.claude/*
+!.claude/workflows/

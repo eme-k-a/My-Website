@@ -359,6 +359,17 @@ Size: S is under half a day of agent work, M is 1 to 2, L is 3 or more. Every WP
 - Workflows stay around 6 to 10 agents each.
 - Commits are small and conventional, with the `WP:` trailer, and contain no em dashes.
 
+### Cost-aware operating rules (approved by Emeka on 2026-10-15; ultracode stays on)
+- **Context packs.** Every agent reads `docs/wp/packs/<WP>.md` first. That file holds the brief, `docs/RULINGS.md` and the cited doc sections. Agents open the full docs only for something the pack lacks.
+- **Models and effort.**
+  - Builders inherit the session model at `high` effort, or `xhigh` for hard work packages (camera feel, lighting, quality tiers, CI failure diagnosis).
+  - Integrators run on Sonnet at `low` effort.
+  - Verifiers run on Sonnet at `medium` effort.
+- **One fix round.** A failed verification gets one fix round and one re-verification. If it still fails, the work stops and R0 decides.
+- **Saved workflow.** Milestones run through `.claude/workflows/milestone.js` (Workflow tool, `name: "milestone"`) with args `{ label, wps: [{ id, role, model?, effort? }], mergeOrder?, notes? }`.
+- **Stop at milestone boundaries.** After each milestone is pushed and its gate is reported, R0 stops. Emeka runs `/compact` (or starts a fresh session from `docs/HANDOVER.md`) and says "go" before the next milestone. This is also where he decides whether to spend more of his usage limit now.
+- **Keep the main session lean.** Summarize workflow results with scripts rather than dumping them. Keep the session plan file a short pointer.
+
 ## 8. What I need from Emeka (none of it blocks M0 to M1)
 - **G0:** approve the resume before/after, the Verafin bullets and the style changes.
 - **Before WP-18:** create a Netlify personal access token and add it as the `NETLIFY_AUTH_TOKEN` GitHub repo secret. I create the site and its `NETLIFY_SITE_ID` through the Netlify connector. Turn off Netlify Git builds.

@@ -14,7 +14,7 @@ npm run dev
 
 ## Commands
 
-Until the work package that implements a script lands, the script prints `not implemented yet (WP-xx)` and exits 0.
+Until the work package that implements a script lands, the script prints `not implemented yet (WP-xx)` and exits 0. The one exception is `fonts`: WP-28 adds that key to `package.json`, so until then `npm run fonts` fails with "Missing script".
 
 | Script           | Command                                                                                                                                                                                                                   | What it does                                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -40,9 +40,20 @@ Until the work package that implements a script lands, the script prints `not im
 | `check:copy`     | `tsx scripts/check-copy.ts`                                                                                                                                                                                               | Em dash and phone pattern scan (add `RELEASE=1` for release mode)                       |
 | `check:budgets`  | `tsx scripts/check-budgets.ts`                                                                                                                                                                                            | Bundle budgets on an existing `dist/`                                                   |
 | `check:glyphs`   | `tsx scripts/check-glyphs.ts`                                                                                                                                                                                             | Every 3D label glyph exists in the `.woff` troika uses                                  |
-| `fonts`          | `tsx scripts/subset-fonts.ts`                                                                                                                                                                                             | Subset fonts into `public/fonts/` (added in WP-28)                                      |
+| `fonts`          | `tsx scripts/subset-fonts.ts`                                                                                                                                                                                             | Subset fonts into `public/fonts/` (not in `package.json` until WP-28 adds it)           |
 
 The `e2e`, `visual` and `a11y` scripts run `node scripts/not-implemented.mjs WP-07` and `lh` runs `node scripts/not-implemented.mjs WP-06` until those work packages set the commands above. In the table, `\|` only escapes the Markdown pipe.
+
+## Dependency notes
+
+Versions are pinned per `docs/ARCHITECTURE.md` §1. `package.json` also carries `overrides` that keep single copies of the shared runtime packages; a Dependabot bump of `three`, `@react-three/drei`, `zustand` or `@playwright/test` must keep them in step:
+
+- `playwright-core` is held at `1.56.1`, the version `@playwright/test` uses, so the `@axe-core/playwright` peer does not hoist a newer copy that expects a different Chromium revision than the preinstalled 1194.
+- `three` resolves to the root `three` everywhere (`stats-gl` under drei pins an older range).
+- `r3f-perf` uses the root `@react-three/drei` and `zustand` (it imports only drei `Text` and `zustand/traditional` plus `zustand/shallow`, which drei 10 and zustand 5 provide).
+- `tunnel-rat` uses the root `zustand` (named `create` only).
+
+`leva` 0.10.1 keeps a private `zustand` 3.7.2: it imports the v3 default exports that zustand 5 removed. ARCHITECTURE §1.1 limits `leva` to the lazy `?debug` chunk, so that copy must never reach the entry or museum chunk.
 
 ## Documentation
 

@@ -1,0 +1,847 @@
+{
+  "rules": {
+    "mostSpecificWins": "When several role globs match a path, the glob with the longest literal prefix wins: src/overlay/ScrollTrack* (R4) beats src/overlay/** (R6); src/museum/exhibits/_kit/** (R3) beats src/museum/exhibits/*/** (R5); review/concepts/** (R2) and review/reports/** (R0) beat review/** (R11).",
+    "everyoneMayRead": "Every role may read every path. Writing requires the role's globs or an explicit grant in the WP entry below.",
+    "colocatedTests": "A *.test.ts file next to its source, and that folder's __snapshots__, belong to the owner of the folder. R8 owns tests/** and playwright.config.ts.",
+    "wpAllow": "A commit whose trailer is 'WP: WP-xx' may create, edit or delete only paths matched by wps['WP-xx'].allow and not matched by wps['WP-xx'].deny. R0's merge script checks every commit against this. Grants on another role's path are listed explicitly in allow and in the brief.",
+    "packageJson": "package.json and package-lock.json belong to R10. A WP with packageJsonScripts may change only those keys of the scripts field (PLAN Addendum M0 exception for WP-03 and WP-04, extended by R0 at the WP-00 review to the WPs that replace a 'not implemented yet' stub, WP-06 and WP-07, and to the new 'fonts' key of WP-28). Only R10 changes dependencies and the lockfile.",
+    "reports": "Every WP writes exactly one report at review/reports/WP-xx.json (schema in docs/wp/_TEMPLATE.md).",
+    "reviewFixes": "Review fixes use the trailer 'WP: F-###' and the allow globs written in docs/wp/F-###.md, which are limited to the owner globs of the affected path.",
+    "git": "Only R0 pushes, merges and tags, except: WP-01 creates and pushes the tag legacy-site; WP-33 creates and pushes the tag v1.0.0. R0 tags contracts-v1 after merging WP-02."
+  },
+  "roles": {
+    "R0": [
+      "docs/PLAN.md",
+      "docs/ARCHITECTURE.md",
+      "docs/spec/**",
+      "docs/wp/**",
+      "CLAUDE.md",
+      "OWNERS.json",
+      "review/reports/**"
+    ],
+    "R1": [
+      "src/content/**",
+      "src/print/**",
+      "resume/**",
+      "assets-src/**",
+      "public/images/**",
+      "scripts/build-resume-*",
+      "scripts/build-media*",
+      "scripts/check-content*",
+      "scripts/new-exhibit*",
+      "scripts/templates/**",
+      "docs/CONTENT_*.md",
+      "docs/RESUME_CHANGES.md"
+    ],
+    "R2": [
+      "src/design/**",
+      "src/museum/materials/**",
+      "docs/ART_DIRECTION.md",
+      "review/concepts/**"
+    ],
+    "R3": [
+      "src/museum/environment/**",
+      "src/museum/exhibits/_kit/**",
+      "src/museum/MuseumCanvas.tsx",
+      "src/museum/MuseumCanvas.module.css",
+      "src/museum/Scene.tsx"
+    ],
+    "R4": [
+      "src/museum/rail/**",
+      "src/app/routes*",
+      "src/app/testHooks*",
+      "src/app/testIds*",
+      "src/overlay/ScrollTrack*"
+    ],
+    "R5": [
+      "src/museum/exhibits/verafin/**",
+      "src/museum/exhibits/mysa/**",
+      "src/museum/exhibits/wailo/**",
+      "src/museum/exhibits/cfia/**",
+      "src/museum/exhibits/klarup/**",
+      "src/museum/exhibits/finance-tracker/**",
+      "src/museum/exhibits/safe-sip/**",
+      "src/museum/exhibits/sdsj/**",
+      "src/museum/exhibits/mun/**",
+      "src/museum/exhibits/certifications/**",
+      "src/museum/exhibits/*/**"
+    ],
+    "R6": [
+      "index.html",
+      "src/main.tsx",
+      "src/app/App.tsx",
+      "src/app/App.module.css",
+      "src/app/global.css",
+      "src/app/boot*",
+      "src/app/store*",
+      "src/overlay/**",
+      "src/classic/**"
+    ],
+    "R7": [
+      "src/museum/quality/**",
+      "src/museum/debug/**",
+      "perf/**",
+      "scripts/check-budgets*",
+      "scripts/optimize-assets*",
+      "scripts/check-glyphs*",
+      "scripts/subset-fonts*",
+      "public/fonts/**",
+      "public/credits.html",
+      "LICENSES/**"
+    ],
+    "R8": [
+      "tests/**",
+      "playwright.config.ts",
+      "scripts/review/**"
+    ],
+    "R9": [
+      "src/seo/**",
+      "src/entry-server.tsx",
+      "scripts/postbuild*",
+      "scripts/prerender*",
+      "scripts/gen-og*",
+      "public/og/**",
+      "public/favicon*",
+      "public/apple-touch-icon*",
+      "public/robots.txt"
+    ],
+    "R10": [
+      "package.json",
+      "package-lock.json",
+      ".npmrc",
+      ".nvmrc",
+      ".editorconfig",
+      ".prettierrc.json",
+      ".prettierignore",
+      ".gitignore",
+      "vite.config.ts",
+      "vitest.config.ts",
+      "tsconfig.json",
+      "tsconfig.app.json",
+      "tsconfig.node.json",
+      "eslint.config.js",
+      "lighthouserc.cjs",
+      "lighthouserc.desktop.cjs",
+      "netlify.toml",
+      ".github/**",
+      "src/vite-env.d.ts",
+      "scripts/serve-dist*",
+      "scripts/check-copy*",
+      "scripts/check-links*",
+      "scripts/headers*",
+      "scripts/not-implemented*",
+      "README.md",
+      "LICENSE",
+      "docs/MAINTENANCE.md"
+    ],
+    "R11": [
+      "review/**"
+    ]
+  },
+  "wps": {
+    "WP-00": {
+      "role": "R0",
+      "name": "Commit the reconciled spec",
+      "milestone": "M0",
+      "size": "S",
+      "dependsOn": [],
+      "allow": [
+        "docs/PLAN.md",
+        "docs/ARCHITECTURE.md",
+        "docs/spec/**",
+        "docs/wp/**",
+        "docs/CONTENT_DRAFT.md",
+        "CLAUDE.md",
+        "OWNERS.json",
+        "review/reports/WP-00.json"
+      ]
+    },
+    "WP-01": {
+      "role": "R10",
+      "name": "Scaffold",
+      "milestone": "M0",
+      "size": "S",
+      "dependsOn": ["WP-00"],
+      "allow": [
+        "package.json",
+        "package-lock.json",
+        ".npmrc",
+        ".nvmrc",
+        ".editorconfig",
+        ".prettierrc.json",
+        ".prettierignore",
+        ".gitignore",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "eslint.config.js",
+        "tsconfig.json",
+        "tsconfig.app.json",
+        "tsconfig.node.json",
+        "src/vite-env.d.ts",
+        "README.md",
+        "LICENSE",
+        "index.html",
+        "scripts.js",
+        "styles.css",
+        ".DS_Store",
+        "headshot.jpg",
+        "assets-src/headshot.jpg",
+        "src/main.tsx",
+        "src/app/boot.ts",
+        "src/classic/classic.css",
+        "src/entry-server.tsx",
+        "scripts/not-implemented.mjs",
+        "scripts/check-content.ts",
+        "scripts/build-media.ts",
+        "scripts/build-resume-pdf.ts",
+        "scripts/build-resume-tex.ts",
+        "scripts/postbuild.ts",
+        "scripts/prerender.ts",
+        "scripts/headers.ts",
+        "scripts/serve-dist.ts",
+        "scripts/check-copy.ts",
+        "scripts/check-budgets.ts",
+        "scripts/check-glyphs.ts",
+        "scripts/gen-og.ts",
+        "scripts/new-exhibit.ts",
+        "scripts/check-links.ts",
+        "scripts/review/capture.ts",
+        "review/reports/WP-01.json"
+      ],
+      "note": "May create and push the tag legacy-site on 4f1ab2b5e0c080c9e4bde94ac7b530ff51442c5d."
+    },
+    "WP-02": {
+      "role": "R0",
+      "with": ["R4"],
+      "name": "Freeze contracts",
+      "milestone": "M0",
+      "size": "L",
+      "dependsOn": ["WP-01"],
+      "allow": [
+        "src/content/ids.ts",
+        "src/content/schema.ts",
+        "src/content/types.ts",
+        "src/content/site.ts",
+        "src/content/normalize.ts",
+        "src/content/index.ts",
+        "src/content/format.ts",
+        "src/content/temporal.ts",
+        "src/content/selectors.ts",
+        "src/content/resume.ts",
+        "src/content/*.test.ts",
+        "src/museum/rail/layout.ts",
+        "src/museum/rail/layout.test.ts",
+        "src/museum/rail/__snapshots__/**",
+        "src/museum/rail/progress.ts",
+        "src/museum/rail/navigation.ts",
+        "src/museum/rail/CameraRig.tsx",
+        "src/museum/rail/ReadySignal.tsx",
+        "src/app/routes.ts",
+        "src/app/routes.test.ts",
+        "src/app/testHooks.ts",
+        "src/app/testHooks.test.ts",
+        "src/app/testIds.ts",
+        "src/app/store.ts",
+        "src/app/store.test.ts",
+        "src/overlay/ScrollTrack.tsx",
+        "src/overlay/story.ts",
+        "src/museum/exhibits/_kit/types.ts",
+        "src/museum/exhibits/_kit/registry.ts",
+        "src/museum/exhibits/_kit/registry.test.ts",
+        "src/museum/exhibits/_kit/defineExhibit.ts",
+        "src/museum/MuseumCanvas.tsx",
+        "src/museum/Scene.tsx",
+        "src/museum/materials/index.ts",
+        "src/design/tokens.ts",
+        "src/design/tokens.test.ts",
+        "src/museum/quality/StatsProbe.tsx",
+        "src/museum/quality/QualityController.tsx",
+        "src/museum/quality/FrameDriver.tsx",
+        "src/museum/quality/contextLoss.ts",
+        "src/museum/quality/tiers.ts",
+        "review/reports/WP-02.json"
+      ],
+      "note": "After merge R0 tags contracts-v1."
+    },
+    "WP-03": {
+      "role": "R1",
+      "name": "Content file",
+      "milestone": "M0",
+      "size": "M",
+      "dependsOn": ["WP-02"],
+      "allow": [
+        "src/content/**",
+        "scripts/check-content.ts",
+        "scripts/build-media.ts",
+        "scripts/build-media.test.ts",
+        "assets-src/**",
+        "public/images/**",
+        "docs/CONTENT_DRAFT.md",
+        "package.json",
+        "review/reports/WP-03.json"
+      ],
+      "packageJsonScripts": ["media"]
+    },
+    "WP-04": {
+      "role": "R1",
+      "name": "Resume outputs",
+      "milestone": "M0",
+      "size": "M",
+      "dependsOn": ["WP-03"],
+      "allow": [
+        "src/print/**",
+        "src/content/selectors.ts",
+        "src/content/*.test.ts",
+        "scripts/build-resume-pdf.ts",
+        "scripts/build-resume-pdf.test.ts",
+        "scripts/build-resume-tex.ts",
+        "scripts/build-resume-tex.test.ts",
+        "resume/**",
+        "tests/pdf/resume-pdf.test.ts",
+        "LICENSES/OFL-CMU-Serif.txt",
+        "LICENSES/OFL-Source-Serif-4.txt",
+        "docs/RESUME_CHANGES.md",
+        "package.json",
+        "review/reports/WP-04.json"
+      ],
+      "packageJsonScripts": ["resume", "resume:private", "test:pdf"]
+    },
+    "WP-05": {
+      "role": "R2",
+      "name": "Art direction",
+      "milestone": "M0",
+      "size": "M",
+      "dependsOn": ["WP-02"],
+      "allow": [
+        "docs/ART_DIRECTION.md",
+        "src/design/**",
+        "src/museum/materials/**",
+        "review/concepts/**",
+        "review/reports/WP-05.json"
+      ]
+    },
+    "WP-06": {
+      "role": "R10",
+      "name": "CI",
+      "milestone": "M1",
+      "size": "M",
+      "dependsOn": ["WP-04", "WP-05"],
+      "allow": [
+        ".github/**",
+        "scripts/headers.ts",
+        "scripts/headers.test.ts",
+        "scripts/serve-dist.ts",
+        "scripts/serve-dist.test.ts",
+        "scripts/check-copy.ts",
+        "scripts/check-copy.test.ts",
+        "scripts/check-budgets.ts",
+        "scripts/check-budgets.test.ts",
+        "perf/budgets.json",
+        "lighthouserc.cjs",
+        "lighthouserc.desktop.cjs",
+        "netlify.toml",
+        "package.json",
+        "package-lock.json",
+        "review/reports/WP-06.json"
+      ],
+      "packageJsonScripts": ["lh"]
+    },
+    "WP-07": {
+      "role": "R8",
+      "name": "Test harness",
+      "milestone": "M1",
+      "size": "M",
+      "dependsOn": ["WP-04", "WP-05", "WP-06"],
+      "allow": [
+        "playwright.config.ts",
+        "tests/e2e/**",
+        "scripts/check-glyphs.ts",
+        "scripts/check-glyphs.test.ts",
+        "package.json",
+        "review/reports/WP-07.json"
+      ],
+      "packageJsonScripts": ["e2e", "visual", "a11y"]
+    },
+    "WP-08": {
+      "role": "R3",
+      "name": "Greybox + kit",
+      "milestone": "M1",
+      "size": "M",
+      "dependsOn": ["WP-04", "WP-05", "WP-06", "WP-07", "WP-10"],
+      "allow": [
+        "src/museum/MuseumCanvas.tsx",
+        "src/museum/MuseumCanvas.module.css",
+        "src/museum/Scene.tsx",
+        "src/museum/environment/**",
+        "src/museum/exhibits/_kit/**",
+        "tests/e2e/greybox.spec.ts",
+        "review/reports/WP-08.json"
+      ]
+    },
+    "WP-09": {
+      "role": "R4",
+      "name": "Scroll track + rail",
+      "milestone": "M1",
+      "size": "M",
+      "dependsOn": ["WP-04", "WP-05", "WP-06", "WP-07", "WP-10", "WP-08"],
+      "allow": [
+        "src/museum/rail/**",
+        "src/overlay/ScrollTrack.tsx",
+        "src/overlay/ScrollTrack.module.css",
+        "src/app/routes.ts",
+        "src/app/routes.test.ts",
+        "src/app/testHooks.ts",
+        "src/app/testHooks.test.ts",
+        "src/app/testIds.ts",
+        "tests/e2e/rail-input.spec.ts",
+        "tests/e2e/wings.spec.ts",
+        "tests/e2e/greybox.spec.ts",
+        "review/reports/WP-09.json"
+      ]
+    },
+    "WP-10": {
+      "role": "R6",
+      "name": "App shell",
+      "milestone": "M1",
+      "size": "M",
+      "dependsOn": ["WP-04", "WP-05", "WP-06", "WP-07"],
+      "allow": [
+        "index.html",
+        "src/main.tsx",
+        "src/app/App.tsx",
+        "src/app/App.module.css",
+        "src/app/global.css",
+        "src/app/boot.ts",
+        "src/app/boot.test.ts",
+        "src/app/store.ts",
+        "src/overlay/**",
+        "src/classic/**",
+        "src/entry-server.tsx",
+        "scripts/prerender.ts",
+        "tests/e2e/shell.spec.ts",
+        "tests/e2e/fast-path.spec.ts",
+        "review/reports/WP-10.json"
+      ],
+      "deny": ["src/overlay/ScrollTrack*"]
+    },
+    "WP-11": {
+      "role": "R3",
+      "with": ["R2"],
+      "name": "Environment v1",
+      "milestone": "M2",
+      "size": "L",
+      "dependsOn": ["WP-06", "WP-07", "WP-08", "WP-09", "WP-10"],
+      "allow": [
+        "src/museum/environment/**",
+        "src/museum/exhibits/_kit/**",
+        "src/museum/MuseumCanvas.tsx",
+        "src/museum/MuseumCanvas.module.css",
+        "src/museum/Scene.tsx",
+        "src/design/tokens.ts",
+        "docs/ART_DIRECTION.md",
+        "tests/e2e/environment.spec.ts",
+        "review/reports/WP-11.json"
+      ]
+    },
+    "WP-12": {
+      "role": "R5",
+      "with": ["R2"],
+      "name": "Verafin exhibit",
+      "builder": "A",
+      "milestone": "M2",
+      "size": "M",
+      "dependsOn": ["WP-06", "WP-07", "WP-08", "WP-09", "WP-10"],
+      "allow": [
+        "src/museum/exhibits/verafin/**",
+        "review/concepts/verafin.md",
+        "review/reports/WP-12.json"
+      ]
+    },
+    "WP-13": {
+      "role": "R5",
+      "with": ["R2"],
+      "name": "Safe Sip exhibit",
+      "builder": "D",
+      "milestone": "M2",
+      "size": "M",
+      "dependsOn": ["WP-06", "WP-07", "WP-08", "WP-09", "WP-10"],
+      "allow": [
+        "src/museum/exhibits/safe-sip/**",
+        "review/concepts/safe-sip.md",
+        "review/reports/WP-13.json"
+      ]
+    },
+    "WP-14": {
+      "role": "R6",
+      "with": ["R9"],
+      "name": "Dialog, routes, prerender",
+      "milestone": "M2",
+      "size": "M",
+      "dependsOn": ["WP-06", "WP-07", "WP-08", "WP-09", "WP-10"],
+      "allow": [
+        "src/overlay/**",
+        "src/seo/meta.ts",
+        "src/seo/meta.test.ts",
+        "src/entry-server.tsx",
+        "scripts/prerender.ts",
+        "scripts/postbuild.ts",
+        "tests/e2e/dialog.spec.ts",
+        "review/reports/WP-14.json"
+      ],
+      "deny": ["src/overlay/ScrollTrack*"]
+    },
+    "WP-15": {
+      "role": "R4",
+      "name": "Camera feel",
+      "milestone": "M2",
+      "size": "M",
+      "dependsOn": ["WP-06", "WP-07", "WP-08", "WP-09", "WP-10"],
+      "allow": [
+        "src/museum/rail/**",
+        "src/overlay/ScrollTrack.tsx",
+        "src/overlay/ScrollTrack.module.css",
+        "src/overlay/Intro.tsx",
+        "src/overlay/LiveRegion.tsx",
+        "tests/e2e/camera.spec.ts",
+        "review/reports/WP-15.json"
+      ],
+      "note": "Intro.tsx and LiveRegion.tsx: wiring calls only (useHint, useAnnouncer)."
+    },
+    "WP-16": {
+      "role": "R7",
+      "name": "Quality tiers",
+      "milestone": "M2",
+      "size": "M",
+      "dependsOn": ["WP-06", "WP-07", "WP-08", "WP-09", "WP-10"],
+      "allow": [
+        "src/museum/quality/**",
+        "src/museum/debug/**",
+        "tests/e2e/quality.spec.ts",
+        "review/reports/WP-16.json"
+      ]
+    },
+    "WP-17": {
+      "role": "R8",
+      "name": "Slice tests",
+      "milestone": "M2",
+      "size": "M",
+      "dependsOn": ["WP-11", "WP-12", "WP-13", "WP-14", "WP-15", "WP-16"],
+      "allow": [
+        "tests/**",
+        "playwright.config.ts",
+        "review/reports/WP-17.json"
+      ]
+    },
+    "WP-18": {
+      "role": "R10",
+      "name": "Preview deploy",
+      "milestone": "M2",
+      "size": "S",
+      "dependsOn": ["WP-06", "WP-07"],
+      "allow": [
+        ".github/workflows/deploy.yml",
+        "README.md",
+        "src/content/site.ts",
+        "review/reports/WP-18.json"
+      ],
+      "note": "src/content/site.ts: SITE_URL value only. R0 creates the Netlify site and NETLIFY_SITE_ID secret first."
+    },
+    "WP-19": {
+      "role": "R11",
+      "name": "Slice review",
+      "milestone": "M2",
+      "size": "S",
+      "dependsOn": ["WP-17"],
+      "allow": [
+        "review/rubric.md",
+        "review/findings.json",
+        "review/runs/**",
+        "review/reports/WP-19.json"
+      ],
+      "note": "Uses the WP-18 preview link when it exists."
+    },
+    "WP-20": {
+      "role": "R5",
+      "with": ["R2"],
+      "name": "Builder A: Mysa, Wailo",
+      "builder": "A",
+      "milestone": "M3",
+      "size": "L",
+      "dependsOn": ["WP-17", "WP-18", "WP-19"],
+      "allow": [
+        "src/museum/exhibits/mysa/**",
+        "src/museum/exhibits/wailo/**",
+        "review/concepts/mysa.md",
+        "review/concepts/wailo.md",
+        "review/reports/WP-20.json"
+      ]
+    },
+    "WP-21": {
+      "role": "R5",
+      "with": ["R2"],
+      "name": "Builder B: CFIA, MUN, Certifications",
+      "builder": "B",
+      "milestone": "M3",
+      "size": "L",
+      "dependsOn": ["WP-17", "WP-18", "WP-19"],
+      "allow": [
+        "src/museum/exhibits/cfia/**",
+        "src/museum/exhibits/mun/**",
+        "src/museum/exhibits/certifications/**",
+        "review/concepts/cfia.md",
+        "review/concepts/mun.md",
+        "review/concepts/certifications.md",
+        "review/reports/WP-21.json"
+      ]
+    },
+    "WP-22": {
+      "role": "R5",
+      "with": ["R2"],
+      "name": "Builder C: KlarUp, Finance Tracker",
+      "builder": "C",
+      "milestone": "M3",
+      "size": "M",
+      "dependsOn": ["WP-17", "WP-18", "WP-19"],
+      "allow": [
+        "src/museum/exhibits/klarup/**",
+        "src/museum/exhibits/finance-tracker/**",
+        "review/concepts/klarup.md",
+        "review/concepts/finance-tracker.md",
+        "review/reports/WP-22.json"
+      ]
+    },
+    "WP-23": {
+      "role": "R5",
+      "with": ["R2"],
+      "name": "Builder D: SDSJ",
+      "builder": "D",
+      "milestone": "M3",
+      "size": "M",
+      "dependsOn": ["WP-17", "WP-18", "WP-19"],
+      "allow": [
+        "src/museum/exhibits/sdsj/**",
+        "review/concepts/sdsj.md",
+        "review/reports/WP-23.json"
+      ]
+    },
+    "WP-24": {
+      "role": "R3",
+      "name": "Wing rooms and doors",
+      "milestone": "M3",
+      "size": "M",
+      "dependsOn": ["WP-17", "WP-18", "WP-19"],
+      "allow": [
+        "src/museum/environment/**",
+        "src/museum/exhibits/_kit/**",
+        "review/reports/WP-24.json"
+      ]
+    },
+    "WP-25": {
+      "role": "R8",
+      "name": "Test expansion",
+      "milestone": "M3",
+      "size": "M",
+      "dependsOn": ["WP-20", "WP-21", "WP-22", "WP-23", "WP-24"],
+      "allow": [
+        "tests/**",
+        "playwright.config.ts",
+        "review/reports/WP-25.json"
+      ]
+    },
+    "WP-26": {
+      "role": "R3",
+      "with": ["R2"],
+      "name": "Lighting and atmosphere",
+      "milestone": "M4",
+      "size": "M",
+      "dependsOn": ["WP-25"],
+      "allow": [
+        "src/museum/environment/**",
+        "src/museum/MuseumCanvas.tsx",
+        "src/museum/MuseumCanvas.module.css",
+        "src/museum/Scene.tsx",
+        "src/design/tokens.ts",
+        "src/design/tokens.css",
+        "docs/ART_DIRECTION.md",
+        "review/reports/WP-26.json"
+      ]
+    },
+    "WP-27": {
+      "role": "R6",
+      "name": "Mobile and onboarding",
+      "milestone": "M4",
+      "size": "M",
+      "dependsOn": ["WP-25"],
+      "allow": [
+        "src/overlay/**",
+        "src/app/App.tsx",
+        "src/app/App.module.css",
+        "src/app/global.css",
+        "index.html",
+        "tests/e2e/mobile.spec.ts",
+        "review/reports/WP-27.json"
+      ],
+      "deny": ["src/overlay/ScrollTrack*"]
+    },
+    "WP-28": {
+      "role": "R7",
+      "name": "Asset pass",
+      "milestone": "M4",
+      "size": "M",
+      "dependsOn": ["WP-25"],
+      "allow": [
+        "public/fonts/**",
+        "public/credits.html",
+        "LICENSES/**",
+        "scripts/check-glyphs.ts",
+        "scripts/check-glyphs.test.ts",
+        "scripts/subset-fonts.ts",
+        "perf/**",
+        "src/design/fonts.css",
+        "src/museum/exhibits/_kit/fonts.ts",
+        "scripts/prerender.ts",
+        "tests/e2e/transfer.spec.ts",
+        "package.json",
+        "review/reports/WP-28.json"
+      ],
+      "packageJsonScripts": ["fonts"],
+      "note": "scripts/prerender.ts: the <!--preload--> injection only."
+    },
+    "WP-29": {
+      "role": "R7",
+      "name": "Performance",
+      "milestone": "M5",
+      "size": "M",
+      "dependsOn": ["WP-26", "WP-27", "WP-28"],
+      "allow": [
+        "perf/**",
+        "scripts/check-budgets.ts",
+        "scripts/check-budgets.test.ts",
+        "src/museum/quality/**",
+        ".github/workflows/ci.yml",
+        "lighthouserc.cjs",
+        "lighthouserc.desktop.cjs",
+        "tests/e2e/budgets.spec.ts",
+        "tests/e2e/vitals.spec.ts",
+        "tests/e2e/lh-precheck.spec.ts",
+        "review/reports/WP-29.json"
+      ],
+      "note": "ci.yml: the lighthouse job only; lighthouserc files: assertions and URLs only."
+    },
+    "WP-30": {
+      "role": "R9",
+      "name": "Accessibility",
+      "milestone": "M5",
+      "size": "M",
+      "dependsOn": ["WP-26", "WP-27", "WP-28"],
+      "allow": [
+        "src/seo/**",
+        "tests/e2e/keyboard.spec.ts",
+        "tests/e2e/a11y.spec.ts",
+        "src/overlay/**",
+        "src/classic/**",
+        "index.html",
+        "review/reports/WP-30.json"
+      ],
+      "deny": ["src/overlay/ScrollTrack*"],
+      "note": "In src/overlay, src/classic and index.html: attribute-level fixes only (aria-*, role, lang, alt, labels, heading levels)."
+    },
+    "WP-31": {
+      "role": "R9",
+      "with": ["R2"],
+      "name": "SEO and sharing",
+      "milestone": "M5",
+      "size": "M",
+      "dependsOn": ["WP-26", "WP-27", "WP-28"],
+      "allow": [
+        "src/seo/**",
+        "src/entry-server.tsx",
+        "scripts/postbuild.ts",
+        "scripts/prerender.ts",
+        "scripts/gen-og.ts",
+        "scripts/gen-og.test.ts",
+        "public/og/**",
+        "public/favicon.svg",
+        "public/favicon-32.png",
+        "public/apple-touch-icon.png",
+        "public/robots.txt",
+        "review/reports/WP-31.json"
+      ]
+    },
+    "WP-32": {
+      "role": "R8",
+      "name": "Cross-browser and resilience",
+      "milestone": "M5",
+      "size": "M",
+      "dependsOn": ["WP-26", "WP-27", "WP-28"],
+      "allow": [
+        "tests/**",
+        "playwright.config.ts",
+        ".github/workflows/ci.yml",
+        "review/reports/WP-32.json"
+      ],
+      "note": "ci.yml: the new e2e-xbrowser job only."
+    },
+    "WP-33": {
+      "role": "R10",
+      "name": "Release",
+      "milestone": "M6",
+      "size": "S",
+      "dependsOn": ["WP-29", "WP-30", "WP-31", "WP-32"],
+      "allow": [
+        "README.md",
+        "package.json",
+        "review/reports/WP-33.json"
+      ],
+      "note": "package.json: the version field only. May create and push the tag v1.0.0 on the main merge commit."
+    },
+    "WP-34": {
+      "role": "R8",
+      "with": ["R11"],
+      "name": "Review automation",
+      "milestone": "M7",
+      "size": "M",
+      "dependsOn": ["WP-33"],
+      "allow": [
+        "scripts/review/**",
+        "tests/**",
+        "review/rubric.md",
+        "review/findings.json",
+        "review/findings.schema.json",
+        "review/TEMPLATE_SCORECARD.md",
+        "review/runs/**",
+        "review/reports/WP-34.json"
+      ]
+    },
+    "WP-35": {
+      "role": "R1",
+      "name": "Content runbook",
+      "milestone": "M7",
+      "size": "S",
+      "dependsOn": ["WP-33"],
+      "allow": [
+        "docs/CONTENT_UPDATE.md",
+        "docs/CONTENT_DRAFT.md",
+        "scripts/new-exhibit.ts",
+        "scripts/new-exhibit.test.ts",
+        "scripts/templates/**",
+        "review/reports/WP-35.json"
+      ],
+      "note": "The practice run happens on a local scratch branch that is deleted; nothing from it is committed."
+    },
+    "WP-36": {
+      "role": "R10",
+      "name": "Scheduled maintenance",
+      "milestone": "M7",
+      "size": "S",
+      "dependsOn": ["WP-33"],
+      "allow": [
+        ".github/workflows/scheduled.yml",
+        "scripts/check-links.ts",
+        "scripts/check-links.test.ts",
+        "docs/MAINTENANCE.md",
+        "review/reports/WP-36.json"
+      ]
+    }
+  }
+}

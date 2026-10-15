@@ -247,7 +247,7 @@ Size: S is under half a day of agent work, M is 1 to 2, L is 3 or more. Every WP
 - **WP-00 Commit the reconciled spec** (R0, S)
   - [ ] Write `docs/spec/EXPERIENCE.md`, `docs/ARCHITECTURE.md`, `docs/PLAN.md` and `docs/CONTENT_DRAFT.md` from the scratchpad proposals, with this plan's rulings applied.
   - [ ] Write every WP brief, plus `CLAUDE.md` (stack pins, commands, the no-em-dash rule, ownership, `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`, never run `playwright install` locally).
-  - Accept: `grep -rE 'pnpm|__SCENE__|/classic|src/scene/|#/exhibit' docs CLAUDE.md` finds nothing; there is one brief per WP; no U+2014 anywhere.
+  - Accept: `grep -rE 'pnpm|__SCENE__|(^|[^c])/c[l]assic|src/scene/|#/exhibit' docs CLAUDE.md` finds nothing outside docs/PLAN.md; there is one brief per WP; no U+2014 anywhere.
 - **WP-01 Scaffold** (R10, S; after WP-00)
   - [ ] Vite + React + TS at the repo root with every pin from section 3.
   - [ ] ESLint, Prettier, Vitest; all npm scripts (`dev build preview verify test e2e visual a11y lh review resume resume:private new:exhibit check:copy check:budgets`).
@@ -421,3 +421,7 @@ Size: S is under half a day of agent work, M is 1 to 2, L is 3 or more. Every WP
     15. Developer ergonomics
 - **M0 exception:** WP-03 and WP-04 may add entries to the `scripts` field of `package.json`. R10 owns the rest of that file.
 - **Agent commits** use a conventional message and end with the trailer `WP: WP-xx`, followed by the session attribution lines.
+- **R0 rulings after the WP-00 review (2026-10-15):**
+  - **Keyboard stepping.** WP-09 adds one keydown handler for ArrowUp, ArrowDown, PageUp, PageDown, Space, Home and End. It calls `scrollIntoView` on the neighbouring section and is ignored while focus is in a form field or the dialog is open. Scrolling stays native; wheel and touch listeners are still banned.
+  - **Draft flag for whole exhibits.** The exhibit presentation gets `exhibit.draft: boolean` (default false). It covers the title, caption, tags and object text. `RELEASE=1 npm run check:copy` fails while any exhibit has `draft: true`. Verafin starts as `draft: true`.
+  - **Reconciler rulings 18 to 23 are accepted**, as recorded in `docs/wp/WP-00.md`. So is the `package.json` script-key extension for WP-06, WP-07 and WP-28.

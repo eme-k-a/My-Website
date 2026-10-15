@@ -4,6 +4,10 @@ Owner: R0. Every brief in this folder (`docs/wp/WP-00.md` to `docs/wp/WP-36.md`,
 
 Read order for an agent: (1) your brief, (2) this file, (3) `CLAUDE.md`, (4) every section your brief lists under Inputs. Read anything else in the repo freely; write only what your brief allows.
 
+## Context pack
+
+Read `docs/wp/packs/WP-xx.md` first; open the full docs only for something the pack lacks. A pack holds your brief, `docs/RULINGS.md` (the consolidated R0 rulings) and only the spec sections the brief cites. R0 regenerates packs with `npx tsx scripts/context-pack.ts WP-xx` (also `WP-11..WP-36`, `--all`, and `--check` to find stale packs) whenever a brief, a spec or `docs/RULINGS.md` changes. Sections the generator could not resolve are listed at the end of the pack.
+
 ## Authority when documents disagree
 
 1. `docs/PLAN.md`, including its "Addendum: rulings made at kickoff". It wins every conflict.

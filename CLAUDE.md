@@ -14,6 +14,7 @@ Personal website of Chukwuemeka (Emeka) Nduka-Nwagbo: a 3D modern-gallery aisle 
 | `docs/CONTENT_DRAFT.md` | Resume text and museum copy, with placeholders and draft flags |
 | `docs/ART_DIRECTION.md` | Tokens, lighting recipe, material library, review rubric (WP-05) |
 | `docs/wp/WP-xx.md` | Your brief: goal, inputs, owned globs, forbidden paths, commands, acceptance, `report.json` output |
+| `docs/RULINGS.md`, `docs/wp/packs/` | Consolidated binding R0 rulings; per-WP context packs (brief + rulings + only the spec sections it cites): read `docs/wp/packs/WP-xx.md` first |
 | `docs/CONTENT_UPDATE.md` | Content update runbook and dated checklist (written in WP-35) |
 
 ## Stack (exact pins in ARCHITECTURE §1)

@@ -89,6 +89,13 @@ for (const id of ORDER) {
     report = `${report}\n\nFix round:\n${fixed}`
     verdict = await agent(verifyPrompt(id, report), { label: `reverify:${id}`, phase: 'Integrate', model: 'sonnet', effort: 'medium', schema: VERDICT })
   }
+  // Escalation (docs/PLAN.md section 7): one max-effort fix attempt before handing back to R0.
+  if (verdict && !verdict.pass && A.escalate !== false) {
+    log(`${id}: still failing after the fix round; one max-effort escalation`)
+    const escalated = await agent(fixPrompt(w, verdict), { label: `escalate:${id}`, phase: 'Integrate', effort: 'max' })
+    report = `${report}\n\nMax-effort escalation:\n${escalated}`
+    verdict = await agent(verifyPrompt(id, report), { label: `reverify2:${id}`, phase: 'Integrate', model: 'sonnet', effort: 'medium', schema: VERDICT })
+  }
   const ok = !!(verdict && verdict.pass)
   results.push({ id, ok, summary: verdict && verdict.summary, issues: verdict && verdict.issues })
   log(`${id}: ${ok ? 'PASS' : 'FAIL'}`)

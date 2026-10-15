@@ -365,7 +365,8 @@ Size: S is under half a day of agent work, M is 1 to 2, L is 3 or more. Every WP
   - Builders inherit the session model at `high` effort, or `xhigh` for hard work packages (camera feel, lighting, quality tiers, CI failure diagnosis).
   - Integrators run on Sonnet at `low` effort.
   - Verifiers run on Sonnet at `medium` effort.
-- **One fix round.** A failed verification gets one fix round and one re-verification. If it still fails, the work stops and R0 decides.
+- **One fix round, then a max-effort escalation.** A failed verification gets one fix round (at the builder's effort) and one re-verification. If it still fails, one `max`-effort fix attempt runs with a final re-verification. If it still fails after that, the work stops and R0 decides. `max` is never the default effort.
+- **M2 effort.** WP-11 (environment v1), WP-12 (Verafin exhibit), WP-15 (camera feel) and WP-16 (quality tiers) set the look and feel, so they start at `xhigh`. Every other M2 work package starts at `high`.
 - **Saved workflow.** Milestones run through `.claude/workflows/milestone.js` (Workflow tool, `name: "milestone"`) with args `{ label, wps: [{ id, role, model?, effort? }], mergeOrder?, notes? }`.
 - **Stop at milestone boundaries.** After each milestone is pushed and its gate is reported, R0 stops. Emeka runs `/compact` (or starts a fresh session from `docs/HANDOVER.md`) and says "go" before the next milestone. This is also where he decides whether to spend more of his usage limit now.
 - **Keep the main session lean.** Summarize workflow results with scripts rather than dumping them. Keep the session plan file a short pointer.

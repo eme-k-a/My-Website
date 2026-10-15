@@ -14,6 +14,22 @@ const fakePhone = (sep = '-') => ['555', '010', '0199'].join(sep);
 
 let root: string;
 
+/** Follows a scanContent label such as `content.experiences[verafin].exhibit` back into `value`. */
+function resolveHit(value: unknown, where: string): unknown {
+  let node = value;
+  for (const [, key, bracket] of where
+    .slice('content'.length)
+    .matchAll(/\.([^.[]+)|\[([^\]]+)\]/g)) {
+    if (key !== undefined) {
+      node = (node as Record<string, unknown>)[key];
+    } else {
+      const items = node as { id?: unknown }[];
+      node = items.find((item) => item?.id === bracket) ?? items[Number(bracket)];
+    }
+  }
+  return node;
+}
+
 async function put(file: string, text: string | Uint8Array) {
   await mkdir(join(root, file, '..'), { recursive: true });
   await writeFile(join(root, file), text);
@@ -79,10 +95,43 @@ describe('scanContent', () => {
     ]);
   });
 
-  it('flags the real content today (Verafin and other exhibits are still draft)', () => {
-    const hits = scanContent(content);
-    expect(hits.some((h) => h.where === 'content.experiences[verafin].exhibit')).toBe(true);
-    expect(hits.some((h) => h.reason.startsWith('[placeholder'))).toBe(true);
+  it('reports a draft exhibit and a placeholder with their reasons', () => {
+    const fixture = {
+      experiences: [{ id: 'verafin', exhibit: { draft: true, caption: 'Ok' } }],
+      lobby: { intro: { text: 'Open to [placeholder: target roles]', draft: false } },
+    };
+    const hits = scanContent(fixture);
+    expect(hits).toEqual([
+      {
+        where: 'content.experiences[verafin].exhibit',
+        reason: 'draft: true (RELEASE=1 needs approved copy)',
+      },
+      { where: 'content.lobby.intro.text', reason: '[placeholder in content (RELEASE=1)' },
+    ]);
+    expect(resolveHit(fixture, hits[0]!.where)).toBe(fixture.experiences[0]!.exhibit);
+    expect(resolveHit(fixture, hits[1]!.where)).toBe(fixture.lobby.intro.text);
+    expect(resolveHit({ list: [{ draft: true }] }, 'content.list[0]')).toEqual({ draft: true });
+  });
+
+  it('reports nothing for approved copy', () => {
+    expect(
+      scanContent({
+        experiences: [{ id: 'mysa', exhibit: { draft: false }, bullets: [{ text: 'a' }] }],
+      }),
+    ).toEqual([]);
+  });
+
+  // The real content only gets shape checks: it may hold any number of drafts, including none.
+  it('labels every hit on the real content with a path that resolves to its source', () => {
+    for (const hit of scanContent(content)) {
+      expect(hit.where.startsWith('content.')).toBe(true);
+      const target = resolveHit(content, hit.where);
+      if (hit.reason.startsWith('draft')) {
+        expect((target as { draft?: unknown } | null)?.draft, hit.where).toBe(true);
+      } else {
+        expect(String(target), hit.where).toContain('[placeholder');
+      }
+    }
   });
 });
 
@@ -173,7 +222,7 @@ describe('checkCopy', () => {
 
   it('with RELEASE=1 loads the real content when none is given', async () => {
     const { hits } = await checkCopy({ root, release: true, files: [] });
-    expect(hits.length).toBeGreaterThan(0);
+    expect(hits).toEqual(scanContent(content));
     expect(hits.every((h) => h.where.startsWith('content.'))).toBe(true);
   });
 });

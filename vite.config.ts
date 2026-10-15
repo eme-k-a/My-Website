@@ -11,22 +11,38 @@ const BOOT_MARKER = '<!--boot-->';
 const bootPath = fileURLToPath(new URL('./src/app/boot.ts', import.meta.url));
 
 /**
- * Turns the transpiled boot module into a classic script: drops `export {}` and
- * `export` modifiers, and refuses imports (the boot script runs before any bundle).
+ * Turns the transpiled boot module into a classic script: drops `export {}` lists and
+ * `export` modifiers, keeps the expression of `export default <expr>` (so its side effects
+ * still run), and refuses anything that needs a module loader (the boot script runs before
+ * any bundle) or cannot stand alone without its export.
  */
 const toClassicScript: ts.TransformerFactory<ts.SourceFile> = (context) => (file) => {
+  const fail = (what: string): never => {
+    throw new Error(`${bootPath}: the boot script is inlined as a classic script and ${what}`);
+  };
   const statements: ts.Statement[] = [];
   for (const statement of file.statements) {
     if (ts.isImportDeclaration(statement) || ts.isImportEqualsDeclaration(statement)) {
-      throw new Error(
-        `${bootPath}: the boot script is inlined as a classic script and cannot import`,
-      );
+      fail('cannot import');
     }
-    if (ts.isExportDeclaration(statement) || ts.isExportAssignment(statement)) continue;
+    if (ts.isExportDeclaration(statement)) {
+      if (statement.moduleSpecifier) fail('cannot re-export from another module');
+      continue;
+    }
+    if (ts.isExportAssignment(statement)) {
+      statements.push(context.factory.createExpressionStatement(statement.expression));
+      continue;
+    }
     const modifiers = ts.canHaveModifiers(statement) ? ts.getModifiers(statement) : undefined;
     if (!modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
       statements.push(statement);
       continue;
+    }
+    if (
+      (ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) &&
+      !statement.name
+    ) {
+      fail('cannot have an anonymous default export (name the function or class)');
     }
     const kept = modifiers.filter(
       (m) => m.kind !== ts.SyntaxKind.ExportKeyword && m.kind !== ts.SyntaxKind.DefaultKeyword,

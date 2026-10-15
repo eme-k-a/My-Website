@@ -1,0 +1,268 @@
+/*
+ * DOM placard cards (EXPERIENCE §5.8). The slot fills its section and places the card: phone
+ * portrait pinned to the bottom with 16 px gutters; desktop (and landscape at 640 px and wider) a
+ * left column at left 5vw, bottom 12vh, width clamp(320px, 26vw, 400px). The slot itself takes no
+ * pointer events (they fall through to the scene); only the card does ([data-card], §6.1).
+ */
+.slot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100svh;
+  padding: 88px max(16px, env(safe-area-inset-right))
+    max(16px, calc(env(safe-area-inset-bottom) + 12px)) max(16px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.card {
+  --card-paper: var(--paper);
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  background: var(--card-paper);
+  color: var(--paper-ink);
+  pointer-events: auto;
+}
+
+.card :focus-visible {
+  outline-color: var(--focus-paper);
+}
+
+.numberRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 22px;
+  margin: 0 0 8px;
+}
+
+.number {
+  composes: label from './ui.module.css';
+  color: var(--paper-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.pill {
+  composes: label from './ui.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--paper-ink);
+  color: var(--paper);
+}
+
+.pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brass);
+}
+
+.pill[data-pill='now']::before {
+  background: var(--signal);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--type-title);
+  font-style: italic;
+  font-weight: var(--weight-regular);
+  line-height: var(--lh-title);
+}
+
+.storyLink {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(26, 26, 30, 0.35);
+}
+
+.storyLink:hover {
+  text-decoration-color: currentColor;
+}
+
+.role {
+  margin: 8px 0 0;
+  font-size: var(--type-role);
+  font-weight: var(--weight-medium);
+  line-height: var(--lh-role);
+}
+
+.org,
+.count {
+  margin: 2px 0 0;
+  color: var(--paper-ink-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+.dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  margin: 6px 0 0;
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.range {
+  min-width: 17ch;
+}
+
+.dimensions {
+  color: var(--paper-ink-2);
+}
+
+.medium,
+.caption {
+  margin: 8px 0 0;
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+.mediumLabel {
+  composes: label from './ui.module.css';
+  margin-right: 4px;
+  color: var(--paper-ink-2);
+}
+
+.caption {
+  color: var(--paper-ink-2);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* "Installation in progress" (EXPERIENCE §5.7): a reserved line, so it never shifts the card. */
+.status {
+  min-height: calc(var(--type-small) * 1.5);
+  margin: 8px 0 0;
+  color: var(--paper-ink-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+  font-style: italic;
+}
+
+.doorLinks {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doorLinks li {
+  display: flex;
+  min-height: var(--target-min);
+  align-items: center;
+}
+
+.doorLinks .storyLink {
+  font-size: var(--type-body);
+}
+
+.helper {
+  margin: 8px 0 0;
+  color: var(--paper-ink-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+.body {
+  margin: 10px 0 0;
+}
+
+.deskLinks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deskLinks li:first-child {
+  margin-bottom: 6px;
+}
+
+.deskLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--target-min);
+  color: var(--paper-ink);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
+  text-underline-offset: 4px;
+}
+
+.footnote {
+  margin: 10px 0 0;
+  color: var(--paper-ink-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+/* Phones: Medium and Caption are hidden below 480 px (EXPERIENCE §5.8, §9.2). */
+@media (max-width: 479px) {
+  .medium,
+  .caption {
+    display: none;
+  }
+
+  .card {
+    padding: 16px 18px;
+  }
+
+  .title {
+    font-size: var(--type-title-phone);
+  }
+
+  .actions {
+    margin-top: 12px;
+  }
+}
+
+/* Desktop and landscape: the left column, clear of the case framed right of center. */
+@media (min-width: 1024px), (orientation: landscape) and (min-width: 640px) {
+  .slot {
+    align-items: flex-start;
+    padding: 96px 0 12vh 5vw;
+  }
+
+  .card {
+    width: clamp(320px, 26vw, 400px);
+  }
+}
+
+/* Landscape phones: compact desktop layout (EXPERIENCE §9.1). */
+@media (orientation: landscape) and (max-height: 500px) {
+  .slot {
+    padding-top: 64px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .card {
+    width: 300px;
+    padding: 14px 18px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .medium,
+  .caption {
+    display: none;
+  }
+}

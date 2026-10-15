@@ -1,0 +1,214 @@
+/*
+ * Lobby hero (EXPERIENCE §8.1, §7.7). Phones: the hero at the top under a top-to-bottom scrim.
+ * Desktop (1024 px and wider): the hero in the left 40% over a left-to-right scrim. Before the canvas
+ * exists, a CSS radial gradient imitates the warm pool on --ink; it fades out at `ready` so the
+ * canvas (under the track) shows through.
+ */
+.lobby {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+.lobby::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(60% 50% at 70% 85%, rgba(255, 233, 210, 0.1), transparent 70%), var(--ink);
+  transition: opacity var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+}
+
+.lobby[data-ready]::before {
+  opacity: 0;
+}
+
+.lobby::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(to bottom, rgba(11, 11, 13, 0.9), transparent 70%);
+  pointer-events: none;
+}
+
+.hero {
+  position: relative;
+  max-width: 640px;
+  padding: calc(max(8px, env(safe-area-inset-top)) + 64px) max(16px, env(safe-area-inset-right))
+    24px max(16px, env(safe-area-inset-left));
+  color: var(--text);
+}
+
+.eyebrow {
+  composes: label from './ui.module.css';
+  margin: 0 0 8px;
+  color: var(--text-2);
+}
+
+.name {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--type-display);
+  font-weight: var(--weight-regular);
+  line-height: var(--lh-display);
+  letter-spacing: -0.005em;
+}
+
+.role {
+  margin: 12px 0 0;
+  font-size: var(--type-role);
+  font-weight: var(--weight-medium);
+  line-height: var(--lh-role);
+}
+
+.education {
+  margin: 4px 0 0;
+  color: var(--text-2);
+  font-size: var(--type-role);
+  line-height: var(--lh-role);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The reserved loading row: always 20 px, so the hero never shifts when it appears or hides. */
+.loading {
+  height: 20px;
+  margin: 12px 0;
+}
+
+.progress {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  height: 20px;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.hairline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--brass);
+  transform-origin: 0 50%;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.loadingText {
+  padding-bottom: 4px;
+  color: var(--text-2);
+  font-size: var(--type-label);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.begin {
+  margin: 0;
+}
+
+.lead {
+  margin: 24px 0 4px;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.intro {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--text-2);
+}
+
+.hint {
+  max-width: 52ch;
+  margin: 12px 0 0;
+  color: var(--text-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+/* The onboarding hint (EXPERIENCE §8.3): museum mode only, bottom center of the lobby. */
+.onboarding {
+  display: none;
+}
+
+:global(html[data-mode='museum']) .onboarding {
+  position: absolute;
+  left: 50%;
+  bottom: max(16px, calc(env(safe-area-inset-bottom) + 12px));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--panel-solid);
+  color: var(--text);
+  font-size: var(--type-small);
+  line-height: 1;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.arrow {
+  width: 16px;
+  height: 16px;
+}
+
+.coarse {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .fine {
+    display: none;
+  }
+
+  .coarse {
+    display: inline;
+  }
+}
+
+/*
+ * Narrow screens: the h1 must stay the largest text in the first viewport (it is the LCP
+ * element), and the intro paragraph alone is about twice its area, so the paragraph is left out
+ * below 480 px, like the card caption (EXPERIENCE §5.8, §9.2). The lead sentence and hint stay.
+ */
+@media (max-width: 479px) {
+  .intro {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lobby {
+    justify-content: center;
+  }
+
+  .lobby::after {
+    right: 60%;
+    background: linear-gradient(to right, rgba(11, 11, 13, 0.85), transparent);
+  }
+
+  .hero {
+    width: 40vw;
+    max-width: none;
+    padding: 96px 2vw 64px 5vw;
+  }
+}

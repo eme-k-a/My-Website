@@ -1,0 +1,78 @@
+// The lobby hero (EXPERIENCE §8.1, CONTENT_DRAFT §6.1, §6.2): the recruiter fast path. Eyebrow, the
+// h1 name (the LCP element), the role and education lines from heroLines(), and three real links
+// (Resume PDF, Email, Classic view), all inside the first phone viewport with or without JS. Then
+// the reserved 20 px loading row, "Begin the walk" (an in-page anchor), the lobby headline as a lead
+// sentence, the intro paragraph, the static hint, and the onboarding hint element (static copy
+// here; WP-15 adds its timing).
+import type { MouseEvent } from 'react';
+import { useMuseum } from '../app/store';
+import { TEST_IDS } from '../app/testIds';
+import type { LobbyCard } from '../content/selectors';
+import { travelTo } from '../museum/rail/navigation';
+import { Icon } from './icons';
+import { LoadingRow } from './LoadingRow';
+import { CLASSIC_PATH, EMAIL_HREF, FIRST_EXHIBIT, PDF_PATH } from './model';
+import styles from './Intro.module.css';
+import ui from './ui.module.css';
+
+const plainClick = (e: MouseEvent) =>
+  e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+
+export function Intro({ card }: { card: LobbyCard }) {
+  const ready = useMuseum((s) => s.ready);
+  const beginWalk = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (!plainClick(e)) return;
+    // With JS the walk starts through the rail, so no fragment is written to the URL.
+    e.preventDefault();
+    useMuseum.setState({ inputSource: 'hud' });
+    travelTo(FIRST_EXHIBIT).catch(() => {});
+  };
+  return (
+    <div className={styles.lobby} data-ready={ready ? '' : undefined}>
+      <div className={styles.hero} data-card="" data-testid={TEST_IDS.hero}>
+        <p className={styles.eyebrow}>{card.eyebrow}</p>
+        <h1 className={styles.name}>{card.name}</h1>
+        <p className={styles.role}>{card.roleLine}</p>
+        <p className={styles.education}>{card.educationLine}</p>
+        <ul className={styles.links}>
+          <li>
+            <a className={ui.primary} href={PDF_PATH} data-testid={TEST_IDS.heroPdf}>
+              <Icon name="file-text" />
+              Resume (PDF)
+            </a>
+          </li>
+          <li>
+            <a className={ui.secondary} href={EMAIL_HREF} data-testid={TEST_IDS.heroEmail}>
+              <Icon name="mail" />
+              Email
+            </a>
+          </li>
+          <li>
+            <a className={ui.secondary} href={CLASSIC_PATH} data-testid={TEST_IDS.heroClassic}>
+              <Icon name="list" />
+              Classic view
+            </a>
+          </li>
+        </ul>
+        <LoadingRow />
+        <a
+          className={`${ui.secondary} ${styles.begin}`}
+          href={`#stop-${FIRST_EXHIBIT}`}
+          data-testid={TEST_IDS.beginWalk}
+          onClick={beginWalk}
+        >
+          <Icon name="ticket" />
+          Begin the walk
+        </a>
+        <p className={styles.lead}>{card.headline}</p>
+        <p className={styles.intro}>{card.intro.text}</p>
+        <p className={styles.hint}>{card.hint}</p>
+      </div>
+      <p className={styles.onboarding} data-testid={TEST_IDS.onboardingHint}>
+        <span className={styles.fine}>Scroll to walk through my work</span>
+        <span className={styles.coarse}>Swipe up to walk</span>
+        <Icon name="arrow-down" className={styles.arrow} />
+      </p>
+    </div>
+  );
+}

@@ -1,30 +1,41 @@
-// Placeholder hero (WP-01). WP-10 replaces this file with the real client entry.
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+// Client entry (ARCHITECTURE §5.4). The inline boot script has already chosen the mode before first
+// paint; this hydrates the prerendered #app only in museum mode. Classic mode on an exhibit page
+// keeps the static story and ships no hydration; on `/` the boot script has already left for
+// /resume/. The tier is chosen once here (ARCHITECTURE §8.4) and never changes at runtime.
+// `src/museum/**` stays out of this chunk except the pure rail and tier helpers; MuseumGate loads
+// the canvas with a dynamic import.
+import './app/global.css';
+import { hydrateRoot } from 'react-dom/client';
+import { App } from './app/App';
+import { useMuseum } from './app/store';
+import { installTestHook, testParams } from './app/testHooks';
+import { chooseTier } from './museum/quality/tiers';
 
-function PlaceholderHero() {
-  return (
-    <main>
-      <h1>Chukwuemeka (Emeka) Nduka-Nwagbo</h1>
-      <p>Software Development Co-op, Nasdaq Verafin</p>
-      <p>B.Eng Computer Engineering, MUN, expected May 2027</p>
-      <ul>
-        <li>
-          <a href="/resume.pdf">Resume (PDF)</a>
-        </li>
-        <li>
-          <a href="mailto:cndukanwagbo@mun.ca">Email</a>
-        </li>
-        <li>
-          <a href="/resume/">Classic view</a>
-        </li>
-      </ul>
-    </main>
+function start(): void {
+  const root = document.documentElement;
+  if (root.dataset.mode !== 'museum') return;
+  const container = document.getElementById('app');
+  if (!container) return;
+
+  const boot = window.__BOOT__;
+  const params = testParams(window.location.search);
+  const tier = chooseTier({
+    coarse: boot?.coarse ?? window.matchMedia('(pointer: coarse)').matches,
+    cores: boot?.cores ?? navigator.hardwareConcurrency ?? 0,
+    saveData: boot?.saveData ?? false,
+    renderer: boot?.renderer ?? '',
+    params: { test: params.test, tier: new URLSearchParams(window.location.search).get('tier') },
+  });
+  root.dataset.tier = tier;
+
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  useMuseum.setState({ mode: 'museum', tier, reducedMotion: motion.matches });
+  motion.addEventListener('change', (event) =>
+    useMuseum.setState({ reducedMotion: event.matches }),
   );
+
+  installTestHook();
+  hydrateRoot(container, <App />);
 }
 
-createRoot(document.getElementById('app')!).render(
-  <StrictMode>
-    <PlaceholderHero />
-  </StrictMode>,
-);
+start();

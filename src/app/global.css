@@ -1,0 +1,78 @@
+/*
+ * Gallery-wide CSS (R6): tokens and fonts, the dark base, focus rings, the mode rules of
+ * ARCHITECTURE §5.2 and §6.1, and the <noscript> notice. The gallery is always dark (EXPERIENCE
+ * §7.10); /resume/ uses src/classic/classic.css instead. Snapping and section sizing belong to
+ * ScrollTrack (R4).
+ */
+@import '../design/tokens.css';
+@import '../design/fonts.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--ink);
+  color: var(--text);
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--brass-hi);
+}
+
+button {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: var(--focus-width) solid var(--focus-dark);
+  outline-offset: var(--focus-offset);
+}
+
+/* The track sits above the fixed stage (ARCHITECTURE §6.1: stage z-index 0, track z-index 1). */
+#track {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mode rules (ARCHITECTURE §5.2): the static story shows only outside museum mode. */
+html[data-mode='museum'] #story-static {
+  display: none;
+}
+
+html:not([data-mode='museum']) body[data-page='exhibit'] #app {
+  display: none;
+}
+
+/* Page scroll is locked while the story dialog is open (EXPERIENCE §5.9). */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+/* <noscript> notice (EXPERIENCE §8.4), at the top of the page, clear of the fixed HUD. */
+.noscript {
+  margin: 0;
+  padding: calc(max(8px, env(safe-area-inset-top)) + 60px) max(16px, env(safe-area-inset-right))
+    12px max(16px, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--hairline);
+  background: var(--panel-solid);
+  color: var(--text);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}

@@ -1,0 +1,110 @@
+/*
+ * HUD header (EXPERIENCE §7.8, §9.2): wordmark top left, Resume (PDF) and Classic view top right,
+ * with safe-area insets. Fixed above the track; only its controls take pointer events, so clicks on
+ * empty HUD space still reach the scene behind it.
+ */
+.hud {
+  position: fixed;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: max(8px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 8px
+    max(16px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.hud a {
+  pointer-events: auto;
+}
+
+.skip {
+  composes: primary from './ui.module.css';
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  z-index: 1;
+  transform: translateY(-200%);
+}
+
+.skip:focus,
+.skip:focus-visible {
+  transform: none;
+}
+
+.wordmark {
+  composes: label from './ui.module.css';
+  margin: 0;
+  color: var(--text);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.primary {
+  composes: primary from './ui.module.css';
+}
+
+.secondary {
+  composes: secondary from './ui.module.css';
+  background: rgba(11, 11, 13, 0.55);
+}
+
+.short {
+  display: none;
+}
+
+/* Phone progress (EXPERIENCE §6.10): display only, museum mode only. */
+.phoneProgress {
+  display: none;
+}
+
+.bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--brass);
+  transform-origin: 0 50%;
+  transform: scaleX(var(--p, 0));
+}
+
+.year {
+  composes: label from './ui.module.css';
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--panel-solid);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1023px), (max-height: 559px) {
+  :global(html[data-mode='museum']) .phoneProgress {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 639px) {
+  .wordmark {
+    display: none;
+  }
+
+  .long {
+    display: none;
+  }
+
+  .short {
+    display: inline;
+  }
+}

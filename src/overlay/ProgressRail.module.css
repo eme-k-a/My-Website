@@ -1,0 +1,210 @@
+/*
+ * Desktop progress rail (EXPERIENCE §6.10): a 60vh brass hairline on the right edge, vertically
+ * centered. Museum mode only; without JS (or in classic mode) the dots could not travel anywhere.
+ * Phones and short windows use the HUD's bar and year chip; inside a wing they keep only the
+ * "Return to the aisle" control here.
+ */
+.rail {
+  display: none;
+}
+
+:global(html[data-mode='museum']) .rail {
+  position: fixed;
+  z-index: 3;
+  top: 50%;
+  right: max(12px, env(safe-area-inset-right));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.rail button {
+  pointer-events: auto;
+}
+
+.end {
+  composes: label from './ui.module.css';
+  padding-left: 4px;
+  color: var(--text-2);
+}
+
+.line {
+  position: relative;
+  width: 64px;
+  height: 60vh;
+}
+
+/* The hairline itself, 22 px from the rail's left edge. */
+.line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 22px;
+  width: 1px;
+  background: var(--brass);
+}
+
+.bead {
+  position: absolute;
+  top: -4px;
+  left: 18px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--brass-hi);
+  box-shadow: 0 0 0 3px rgba(11, 11, 13, 0.8);
+  transform: translateY(calc(var(--p, 0) * 60vh));
+  pointer-events: none;
+}
+
+.tick {
+  position: absolute;
+  top: calc(var(--at) * 100%);
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 12px;
+  transform: translateY(-50%);
+  color: var(--text-2);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.tick::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 9px;
+  height: 1px;
+  background: var(--brass);
+}
+
+.dots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stop {
+  position: absolute;
+  top: calc(var(--at) * 100%);
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.dot {
+  position: relative;
+  display: block;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.dot::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--brass);
+  border-radius: 50%;
+  background: var(--ink);
+  transform: translateY(-50%);
+}
+
+.dot[aria-current='step']::before {
+  background: var(--brass);
+}
+
+/* Door stubs: a short side line on the wing's side of the aisle. */
+.dot[data-door]::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: var(--brass);
+}
+
+.dot[data-door='left']::after {
+  left: 8px;
+}
+
+.dot[data-door='right']::after {
+  left: 27px;
+}
+
+.dot:focus-visible {
+  outline-offset: -4px;
+}
+
+/* Labels: the accessible name always; visible on hover, focus and the current stop. */
+.label {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 4px);
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  background: var(--panel-solid);
+  color: var(--text);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+  white-space: nowrap;
+  transform: translateY(-50%);
+  clip-path: inset(50%);
+}
+
+.dot:hover .label,
+.dot:focus-visible .label,
+.dot[aria-current='step'] .label {
+  clip-path: none;
+}
+
+.wingHead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.wingTitle {
+  composes: label from './ui.module.css';
+  margin: 0;
+  padding: 4px 8px;
+  background: var(--panel-solid);
+  color: var(--text);
+}
+
+@media (max-width: 1023px), (max-height: 559px) {
+  :global(html[data-mode='museum']) .rail {
+    display: none;
+  }
+
+  :global(html[data-mode='museum']) .rail:not([data-track='main']) {
+    top: calc(max(8px, env(safe-area-inset-top)) + 56px);
+    left: max(16px, env(safe-area-inset-left));
+    right: auto;
+    display: flex;
+    transform: none;
+  }
+
+  .rail:not([data-track='main']) .line {
+    display: none;
+  }
+
+  .wingHead {
+    align-items: flex-start;
+  }
+}

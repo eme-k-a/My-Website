@@ -100,6 +100,20 @@
     ]
   },
   "ciRunUrl": null,
+  "integration": {
+    "by": "R0",
+    "onto": "claude/intelligent-sagan-poq45q at a4625f7: cherry-picked in order, no conflicts, linear history",
+    "commits": [
+      "f7490b7 feat(ci): headers, serve-dist and copy checks (was 5b98a25)",
+      "9075b9b feat(perf): budget file and bundle checker (was 33b5211)",
+      "127ef66 ci: add ci workflow, lighthouse config and dependabot (was 87adb18)",
+      "0a30f4a chore(deps): drop unused print font (was c124beb)",
+      "5db4c43 docs(wp-06): put the resume .tex step first and drop the stale lh and print-font lines (R0)"
+    ],
+    "checks": "Main tree after the picks: npm ci clean (npm ls shows only the allowed sharp optional extraneous packages); npm run verify exit 0 (21 files, 365 tests); npm run build exit 0 (_headers written, PDF 1 page, entry 67.93 KB gzip of 110, check-copy ok with dist). A1 to A6 re-run on the merged tree with PORT=4173: all pass. actionlint 1.7.7 reports nothing on ci.yml. Chromium on serve-dist /?test=1&mode=museum: 200, CSP header present, 0 securitypolicyviolation events, 0 page errors. CI job commands run locally: build-resume-tex plus git diff --exit-code (clean), test:pdf (9 passed, 1 skipped), pdftoppm, pdfinfo Pages: 1. lhci healthcheck passes for both configs; local npm run lh exits 1 as expected (/exhibit/verafin/ is 404 until WP-10; / scored accessibility 0.91 and seo 0.9 against the 0.95 gates)",
+    "resolved": "openQuestions[0]: R0 made the ruled doc edits in 5db4c43 (ARCHITECTURE §15.2, §5.1 step 5 and §1.2; README.md resume row and lh sentence)",
+    "a7": "Deferred to R0 after push"
+  },
   "openQuestions": [
     {
       "question": "The WP-06 ruling also asks to correct the resume script order in ARCHITECTURE §15.2 and README.md (.tex step first, then the PDF step). Neither path is in WP-06's allow globs (ARCHITECTURE is R0's; README.md is R10's but not granted to WP-06), so both are untouched. Exact edit: the resume command in ARCHITECTURE §15.2 and in the README table becomes 'tsx scripts/build-resume-tex.ts && tsx scripts/build-resume-pdf.ts' (what package.json already runs); ARCHITECTURE §5.1 step 5 also lists the PDF step first. Two more stale lines: the README sentence saying 'lh' runs not-implemented.mjs WP-06 (lh is live now), and the ARCHITECTURE §1.2 row for @fontsource/source-serif-4 (removed). Will R0 make these doc edits, or grant README.md to an R10 follow-up?",

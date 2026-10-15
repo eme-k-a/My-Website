@@ -22,8 +22,12 @@ import { buildDateFromEnv } from '../src/content/temporal';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const TEX_OUT = join(ROOT, 'resume', 'resume.tex');
 export const PREAMBLE = join(ROOT, 'resume', 'template', 'preamble.tex');
-/** Jake's line 8; the preamble file holds everything else above `\begin{document}`. */
-export const DOCUMENT_CLASS = '\\documentclass[letterpaper,11pt]{article}';
+/**
+ * Jake's line 8 at 10pt, the size Emeka's own Overleaf resume uses (its PDF embeds CMR10 with
+ * 9pt bullets). At Jake's default 11pt the content runs onto a second page.
+ * The preamble file holds everything else above `\begin{document}`.
+ */
+export const DOCUMENT_CLASS = '\\documentclass[letterpaper,10pt]{article}';
 
 // A private-use character cannot occur in content, so it safely holds escaped backslashes while
 // the other replacements run (their braces must not be escaped again).

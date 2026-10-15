@@ -27,7 +27,75 @@ const nativeScrollSelectors = [
 ];
 
 const clientFiles = ['src/**/*.{ts,tsx}'];
-const clientIgnores = ['src/**/*.test.ts'];
+const testFiles = ['src/**/*.test.ts'];
+// Build and test time only, never shipped (ARCHITECTURE §3.1): schema.ts imports zod at runtime
+// (§3.3) and temporal.ts reads process.env (§3.5, §3.6). The guard stays on the importing side:
+// client files may still only `import type` from the schema, and a client import of temporal.ts
+// pulls it into tsconfig.app.json, where `process` does not type-check.
+const buildTimeSrcFiles = ['src/content/schema.ts', 'src/content/temporal.ts'];
+const clientIgnores = [...testFiles, ...buildTimeSrcFiles];
+
+// Exhibit author rules, ARCHITECTURE §7.5 verbatim.
+const exhibitFiles = ['src/museum/exhibits/*/**/*.{ts,tsx}'];
+const exhibitIgnores = ['src/museum/exhibits/_kit/**'];
+const exhibitTestFiles = ['src/museum/exhibits/*/**/*.test.ts'];
+const exhibitImportPatterns = [
+  {
+    regex: '^\\.\\./(?!_kit(/|$))',
+    message: 'Exhibits import only from ./ and ../_kit (no cross-exhibit or app imports).',
+  },
+  {
+    regex: '^(zustand|wouter|leva|r3f-perf|postprocessing|@react-three/postprocessing)(/|$)',
+    message: 'Not allowed in exhibits.',
+  },
+  { regex: '^three/(examples|addons)/', message: 'Ask R3 to add a kit helper instead.' },
+];
+const exhibitImportPaths = [
+  {
+    name: '@react-three/drei',
+    importNames: [
+      'Text',
+      'Text3D',
+      'Html',
+      'Environment',
+      'Lightformer',
+      'ContactShadows',
+      'MeshReflectorMaterial',
+      'MeshTransmissionMaterial',
+      'SpotLight',
+      'ScrollControls',
+      'useGLTF',
+      'useTexture',
+      'PerformanceMonitor',
+    ],
+    message: 'Owned by the environment, kit or quality code.',
+  },
+];
+const exhibitSyntax = [
+  { selector: 'JSXOpeningElement[name.name=/Light$/]', message: 'No lights in exhibits.' },
+  {
+    selector: 'JSXOpeningElement[name.name=/Material$/]',
+    message: 'Use materials from the shared library (props.materials).',
+  },
+  {
+    selector:
+      'NewExpression[callee.name=/(Light|Material)$/], NewExpression[callee.property.name=/(Light|Material)$/]',
+    message: 'No lights or ad-hoc materials.',
+  },
+  {
+    selector: 'JSXAttribute[name.name=/^(castShadow|receiveShadow)$/]',
+    message: 'No shadow maps.',
+  },
+  {
+    selector: "MemberExpression[object.name='Math'][property.name='random']",
+    message: 'Use the seeded rng from ../_kit/noise.',
+  },
+  {
+    selector:
+      "CallExpression[callee.object.name=/^(Date|performance)$/][callee.property.name='now']",
+    message: 'Use useExhibitClock() from ../_kit.',
+  },
+];
 
 export default defineConfig([
   globalIgnores([
@@ -67,6 +135,11 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
   {
+    // Colocated unit tests and Node-only src files run in Node (vitest environment 'node').
+    files: [...testFiles, 'src/content/temporal.ts'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: clientFiles,
     ignores: clientIgnores,
     rules: {
@@ -84,78 +157,31 @@ export default defineConfig([
       ],
     },
   },
-  // Exhibit author rules, ARCHITECTURE §7.5 verbatim plus the repo-wide entries above.
+  // Exhibit source files: the §7.5 rules plus the repo-wide client entries above.
   {
-    files: ['src/museum/exhibits/*/**/*.{ts,tsx}'],
-    ignores: ['src/museum/exhibits/_kit/**'],
+    files: exhibitFiles,
+    ignores: [...exhibitIgnores, ...testFiles],
     rules: {
       'no-restricted-imports': [
         'error',
         {
-          patterns: [
-            {
-              regex: '^\\.\\./(?!_kit(/|$))',
-              message:
-                'Exhibits import only from ./ and ../_kit (no cross-exhibit or app imports).',
-            },
-            {
-              regex:
-                '^(zustand|wouter|leva|r3f-perf|postprocessing|@react-three/postprocessing)(/|$)',
-              message: 'Not allowed in exhibits.',
-            },
-            { regex: '^three/(examples|addons)/', message: 'Ask R3 to add a kit helper instead.' },
-            ...clientImportPatterns,
-          ],
-          paths: [
-            {
-              name: '@react-three/drei',
-              importNames: [
-                'Text',
-                'Text3D',
-                'Html',
-                'Environment',
-                'Lightformer',
-                'ContactShadows',
-                'MeshReflectorMaterial',
-                'MeshTransmissionMaterial',
-                'SpotLight',
-                'ScrollControls',
-                'useGLTF',
-                'useTexture',
-                'PerformanceMonitor',
-              ],
-              message: 'Owned by the environment, kit or quality code.',
-            },
-          ],
+          patterns: [...exhibitImportPatterns, ...clientImportPatterns],
+          paths: exhibitImportPaths,
         },
       ],
-      'no-restricted-syntax': [
+      'no-restricted-syntax': ['error', ...exhibitSyntax, ...nativeScrollSelectors],
+    },
+  },
+  // Exhibit tests: the §7.5 rules only. The repo-wide client rules exempt *.test.ts (§7.5).
+  {
+    files: exhibitTestFiles,
+    ignores: exhibitIgnores,
+    rules: {
+      'no-restricted-imports': [
         'error',
-        { selector: 'JSXOpeningElement[name.name=/Light$/]', message: 'No lights in exhibits.' },
-        {
-          selector: 'JSXOpeningElement[name.name=/Material$/]',
-          message: 'Use materials from the shared library (props.materials).',
-        },
-        {
-          selector:
-            'NewExpression[callee.name=/(Light|Material)$/], NewExpression[callee.property.name=/(Light|Material)$/]',
-          message: 'No lights or ad-hoc materials.',
-        },
-        {
-          selector: 'JSXAttribute[name.name=/^(castShadow|receiveShadow)$/]',
-          message: 'No shadow maps.',
-        },
-        {
-          selector: "MemberExpression[object.name='Math'][property.name='random']",
-          message: 'Use the seeded rng from ../_kit/noise.',
-        },
-        {
-          selector:
-            "CallExpression[callee.object.name=/^(Date|performance)$/][callee.property.name='now']",
-          message: 'Use useExhibitClock() from ../_kit.',
-        },
-        ...nativeScrollSelectors,
+        { patterns: exhibitImportPatterns, paths: exhibitImportPaths },
       ],
+      'no-restricted-syntax': ['error', ...exhibitSyntax],
     },
   },
 ]);

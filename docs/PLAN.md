@@ -444,3 +444,9 @@ Size: S is under half a day of agent work, M is 1 to 2, L is 3 or more. Every WP
     - the `threeDStrings(c, now?)` object shape `{ kind, text, font, for }`. WP-07 and WP-28 read `.text` and `.font` and pass the build date;
     - the CTA labels inside `stopCards`.
   - **Agent worktrees** live under `.claude/`, which is now ignored by git, prettier and eslint.
+- **R0 rulings after M1a (2026-10-15):**
+  - **WP-06, WP-07 and WP-10 are accepted** (verified and merged at `ced456a`). The first CI run showed verify, build and e2e green. The latex job then caught that `resume.tex` ran to 2 pages at Jake's 11pt. The generator now emits 10pt, which matches Emeka's own Overleaf PDF (CMR10), and the file compiles to 1 page (checked locally with pdfLaTeX; commit `1431a5c`).
+  - **R-M1-1: the latex job skips `setup-node` and `npm ci`.** This is accepted: it compiles only the committed `resume.tex`. ARCHITECTURE §14 is read with this exception.
+  - **R-M1-2: entry-chunk imports.** The entry may statically import small pure-data modules from `src/museum` (`quality/tiers`, `rail/navigation`, `rail/progress`, `rail/layout`). It must never import three.js, R3F, drei or troika. `check-budgets` enforces this (F-010).
+  - **R-M1-3: TeX Live is now installed in this container** (`pdflatex` at `/usr/bin`). WP briefs may compile `resume.tex` locally. The CI latex job is still the authority.
+  - **Fix-ups F-001 to F-010** (`docs/wp/F-M1.md`) run before WP-08 and WP-09.

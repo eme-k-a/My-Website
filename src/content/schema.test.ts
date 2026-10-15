@@ -22,7 +22,7 @@ function messages(r: unknown): string {
   return result.success ? '' : result.error.issues.map((i) => i.message).join('\n');
 }
 
-describe('content skeleton', () => {
+describe('content file', () => {
   it('parses', () => {
     const result = Resume.safeParse(resume);
     expect(result.success, result.success ? '' : JSON.stringify(result.error.issues)).toBe(true);

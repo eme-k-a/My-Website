@@ -76,7 +76,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       - run: npm run build
       - run: npm run test:pdf
-      - run: sudo apt-get install -y poppler-utils
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - name: Render the PDF preview
         run: mkdir -p out && pdftoppm -png -r 110 dist/resume.pdf out/resume-preview
       - uses: actions/upload-artifact@v4
@@ -122,7 +122,7 @@ jobs:
         run: npm run visual
       - name: Regenerate the visual baselines
         if: ${{ inputs.update-baselines }}
-        run: npx playwright test --grep @visual --update-snapshots
+        run: npx playwright test --grep @visual --update-snapshots --pass-with-no-tests
       - if: ${{ inputs.update-baselines }}
         uses: actions/upload-artifact@v4
         with:
@@ -169,10 +169,16 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Lighthouse CI (mobile, then desktop)
-        run: |
-          export CHROME_PATH=$(node -p "require('@playwright/test').chromium.executablePath()")
-          npm run lh
+      - name: Point Lighthouse at the Playwright Chromium
+        run: echo "CHROME_PATH=$(node -p "require('@playwright/test').chromium.executablePath()")" >> "$GITHUB_ENV"
+      # The same two runs as npm run lh, as separate steps so desktop still runs when mobile
+      # fails. Both stay continue-on-error while the job is advisory (until WP-29).
+      - name: Lighthouse CI (mobile)
+        continue-on-error: true
+        run: npx lhci autorun --config=lighthouserc.cjs
+      - name: Lighthouse CI (desktop)
+        continue-on-error: true
+        run: npx lhci autorun --config=lighthouserc.desktop.cjs
       - if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:

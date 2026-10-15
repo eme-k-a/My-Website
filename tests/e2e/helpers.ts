@@ -202,8 +202,21 @@ export async function cdpFlick(page: Page, { dy, durationMs = 120 }: FlickOption
   }
 }
 
+/**
+ * Where an audited listener sits. The R3F wrapper is the `div` R3F renders around the canvas's
+ * parent, its default event source; sections are labelled by their `data-stop` id.
+ */
+export type ListenerTarget =
+  | 'window'
+  | 'document'
+  | '#app'
+  | 'canvas'
+  | 'canvas parent'
+  | 'R3F wrapper'
+  | `section[data-stop="${string}"]`;
+
 export interface ListenerRecord {
-  target: 'window' | 'document' | '#app' | 'canvas';
+  target: ListenerTarget;
   type: string;
   passive: boolean;
   useCapture: boolean;
@@ -213,24 +226,46 @@ export interface ListenerRecord {
 }
 
 const AUDITED_LISTENERS = new Set(['wheel', 'mousewheel', 'touchstart', 'touchmove']);
-const AUDITED_TARGETS: [ListenerRecord['target'], string][] = [
-  ['window', 'window'],
-  ['document', 'document'],
-  ['#app', "document.getElementById('app')"],
-  ['canvas', "document.querySelector('canvas')"],
-];
+
+/**
+ * Page-side expression: `[label, node]` for every audited target that exists, each node once (a
+ * canvas parent that is also `#app` is reported as `#app`). Evaluated in the page through CDP.
+ */
+const AUDITED_TARGETS = `(() => {
+  const canvas = document.querySelector('canvas');
+  const found = [
+    ['window', window],
+    ['document', document],
+    ['#app', document.getElementById('app')],
+    ['canvas', canvas],
+    ['canvas parent', canvas?.parentElement],
+    ['R3F wrapper', canvas?.parentElement?.parentElement],
+  ];
+  for (const section of document.querySelectorAll('section[data-stop]')) {
+    found.push(['section[data-stop="' + section.getAttribute('data-stop') + '"]', section]);
+  }
+  const seen = new Set();
+  return found.filter(([, node]) => node && !seen.has(node) && seen.add(node));
+})()`;
 
 /**
  * Non-passive `wheel`, `mousewheel`, `touchstart` and `touchmove` listeners on `window`,
- * `document`, `#app` and the canvas, from CDP `DOMDebugger.getEventListeners`. Native scroll
- * (CLAUDE.md rule 6) means this returns `[]`. Missing targets are skipped.
+ * `document`, `#app`, the canvas, the canvas's parent, the R3F wrapper around it and every
+ * `section[data-stop]`, from CDP `DOMDebugger.getEventListeners`. Native scroll (CLAUDE.md rule 6)
+ * means this returns `[]`. Missing targets are skipped.
  */
 export async function listenerAudit(page: Page): Promise<ListenerRecord[]> {
   const cdp = await page.context().newCDPSession(page);
   try {
     const found: ListenerRecord[] = [];
-    for (const [target, expression] of AUDITED_TARGETS) {
-      const { result } = await cdp.send('Runtime.evaluate', { expression });
+    const labels = await cdp.send('Runtime.evaluate', {
+      expression: `${AUDITED_TARGETS}.map(([label]) => label)`,
+      returnByValue: true,
+    });
+    for (const [i, target] of (labels.result.value as ListenerTarget[]).entries()) {
+      const { result } = await cdp.send('Runtime.evaluate', {
+        expression: `${AUDITED_TARGETS}[${i}]?.[1]`,
+      });
       if (!result.objectId) continue;
       const { listeners } = await cdp.send('DOMDebugger.getEventListeners', {
         objectId: result.objectId,

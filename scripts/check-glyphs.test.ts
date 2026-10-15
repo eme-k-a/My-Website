@@ -18,7 +18,7 @@ import {
 
 const OCT_2026 = new Date('2026-10-15T00:00:00Z');
 // Written as an escape: a private-use code point no font of the kit maps.
-const PRIVATE_USE = '';
+const PRIVATE_USE = '\uE000';
 const probe = (text: string, fonts: GlyphLabel['fonts'] = ['serif']): GlyphLabel => ({
   text,
   fonts,

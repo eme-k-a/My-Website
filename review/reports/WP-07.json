@@ -1,0 +1,106 @@
+{
+  "wp": "WP-07",
+  "role": "R8 (QA & Test Automation), with a grant on R7's check-glyphs script",
+  "status": "partial",
+  "branch": "wp/WP-07",
+  "commits": [
+    "4878ea6 test(e2e): playwright config and global guards",
+    "8de5171 test(e2e): museum helpers and smoke spec",
+    "b6f5f4c test(e2e): reusable exhibit contract spec",
+    "(this commit) feat(fonts): glyph coverage check for 3D text"
+  ],
+  "changedFiles": [
+    "playwright.config.ts",
+    "package.json",
+    "tests/e2e/fixtures.ts",
+    "tests/e2e/helpers.ts",
+    "tests/e2e/smoke.spec.ts",
+    "tests/e2e/guards.spec.ts",
+    "tests/e2e/harness.spec.ts",
+    "tests/e2e/capture.spec.ts",
+    "tests/e2e/exhibit-contract.spec.ts",
+    "scripts/check-glyphs.ts",
+    "scripts/check-glyphs.test.ts",
+    "review/reports/WP-07.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Smoke passes on preinstalled Chromium 1194, twice in a row, retries 0, desktop and pixel7",
+      "command": "npm run build; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers PORT=4175 npm run e2e -- --project=desktop --project=pixel7 --grep @smoke (twice)",
+      "result": "pass",
+      "evidence": "Run 1: 30 passed (14.7 s, wall 16.1 s). Run 2: 30 passed (12.0 s, wall 13.2 s). 0 flaky, 0 failed. scripts/serve-dist.ts and headers.ts are still WP-01 stubs on this branch, so these runs used BASE_URL with a scratch stand-in server applying the ARCHITECTURE 12.1 headers. Integration trial with WP-06's own headers.ts and serve-dist.ts (commit 87adb18, copied to the scratchpad, not committed): same command with PORT=4176 reusing that server, 30 passed (12.8 s); the full npm run e2e on all four projects: 84 passed, 60 skipped (capture), 0 failed. Re-run through the config's webServer (npx tsx scripts/serve-dist.ts) deferred to R0 after the WP-06 merge; today that webServer exits early because the stub prints and exits."
+    },
+    {
+      "id": "A2",
+      "criterion": "Every guard demonstrably trips (test.fail cases report expected to fail)",
+      "command": "npx playwright test --project=desktop --project=pixel7 --grep 'trips the' --reporter=json",
+      "result": "pass",
+      "evidence": "12 of 12 test.fail cases (6 per project) have expectedStatus failed and status failed, each with only its own guard in the error: console errors (guard probe: console.error), page errors (guard probe: page error), CSP violations (script-src-elem blocked inline; connect-src blocked https://example.com/), requests to other origins (GET https://example.com/ (fetch)), troika fallback-font requests (/fonts/unicode-fallback/x.woff). Each has a passing 'is recorded by' twin that asserts the exact record and nothing else, so the body itself never fails."
+    },
+    {
+      "id": "A3",
+      "criterion": "Projects and specs are wired; exhibit-contract compiles",
+      "command": "npx playwright test --list",
+      "result": "pass",
+      "evidence": "Total: 144 tests in 4 files. Projects desktop, pixel7, pixel7-landscape, no-webgl; specs smoke.spec.ts (3), guards.spec.ts (12), capture.spec.ts (14 stops), harness.spec.ts (7) per project. exhibit-contract.spec.ts loads and lists 0 tests (no src/museum/exhibits/<id>/index.ts yet; collection resolves src/museum/exhibits/ correctly) and passes tsc."
+    },
+    {
+      "id": "A3-capture",
+      "criterion": "CAPTURE_DIR=out/wp07 CAPTURE_STOPS=lobby npx playwright test --grep @capture --project=desktop writes out/wp07/lobby-desktop.png",
+      "command": "CAPTURE_DIR=out/wp07 CAPTURE_STOPS=lobby npx playwright test --grep @capture --project=desktop",
+      "result": "skipped",
+      "evidence": "Deferred to R0 after integration: the branch still renders the WP-01 placeholder hero with no window.__MUSEUM__ (WP-10 installs the hook, WP-08 and WP-09 make ready, settled and goTo real), so waitForMuseum times out at 60 s. The capture skips goTo when the museum already reports the requested stop, so the lobby capture needs only WP-10 plus ready."
+    },
+    {
+      "id": "A4",
+      "criterion": "Glyph coverage: exit 0 on current content; the U+E000 case fails",
+      "command": "npm run check:glyphs; npx vitest run --project unit scripts/check-glyphs.test.ts",
+      "result": "pass",
+      "evidence": "glyphs ok: 30 labels, 68 code points checked in their fonts (exit 0; BUILD_DATE=2027-01-05 also exit 0 with 31 labels). Unit tests: 8 passed, including U+E000 reported in both fonts with its label and main() returning 1."
+    },
+    {
+      "id": "A5",
+      "criterion": "Visual specs skip locally",
+      "command": "npm run visual; echo exit=$?",
+      "result": "pass",
+      "evidence": "exit=0 (no @visual specs yet; the script passes --pass-with-no-tests). A scratch @visual spec using shot() (not committed) was skipped without VISUAL_LOCAL=1 and, with VISUAL_LOCAL=1, wrote tests/e2e/__screenshots__/<spec>/<name>-desktop.png per snapshotPathTemplate (deleted, nothing committed)."
+    },
+    {
+      "id": "A6",
+      "criterion": "npm run verify exits 0 (helpers and specs typecheck)",
+      "command": "npm run verify",
+      "result": "pass",
+      "evidence": "eslint and prettier clean; tsc app and node configs clean (tests/ and playwright.config.ts are in tsconfig.node.json); vitest unit 18 files, 316 tests passed."
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "Chromium's full build (desktop project) requests /favicon.ico and logs its 404 as a console error; no icon exists until WP-31. The console guard ignores only that exact message from <origin>/favicon.ico. Keep this narrow exemption until WP-31 ships the favicon set and its <link> tags, then remove it?",
+      "for": "R0",
+      "default": "Exemption kept (isBrowserFaviconProbe in tests/e2e/fixtures.ts); R8 removes it after WP-31. Lighthouse best-practices will flag the same 404 until then."
+    },
+    {
+      "question": "Playwright exits 1 with 'No tests found' when a grep matches nothing, which breaks A5 and WP-06's CI e2e job (it runs npm run a11y and npm run visual). The visual and a11y scripts therefore add --pass-with-no-tests. Update the ARCHITECTURE 15.2 table to match?",
+      "for": "R0",
+      "default": "visual: playwright test --grep @visual --pass-with-no-tests; a11y: playwright test --grep @a11y --pass-with-no-tests; e2e as specified."
+    },
+    {
+      "question": "WP-06's ci.yml 'Regenerate the visual baselines' step runs npx playwright test --grep @visual --update-snapshots without --pass-with-no-tests, so a workflow_dispatch with update-baselines fails while no @visual spec exists.",
+      "for": "R10",
+      "default": "No change from WP-07 (ci.yml is R10's); harmless until someone dispatches it before the first @visual spec."
+    },
+    {
+      "question": "The production CSP (connect-src 'self') stops fetch('https://example.com/') inside the renderer before it becomes a request, so it never reaches the cross-origin guard (verified: no request event). guards.spec.ts proves the cross-origin guard with the same fetch under bypassCSP and a local route, and adds a case showing the same fetch under the real CSP trips the CSP guard. Accept this reading of the brief?",
+      "for": "R0",
+      "default": "Both cases kept; no request ever reaches the network (example.com is fulfilled by a route)."
+    },
+    {
+      "question": "labels3d.ts (WP-11) has no fixed export shape. check-glyphs accepts ThreeDString-shaped objects ({ kind, text, font, for }) and checks them in their font; bare strings are checked in both fonts. Ask WP-11 to export ThreeDString-shaped entries so each label is checked in its real font?",
+      "for": "R3",
+      "default": "Both shapes accepted; nested arrays and records are walked, functions ignored."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Worktree: it was created from main (4f1ab2b, the legacy site), not the integration branch; before any work the worktree's own branch was reset to claude/intelligent-sagan-poq45q (a4625f7). Nothing was pushed. Additions beyond the brief's file list, inside the owned globs: tests/e2e/harness.spec.ts (@harness, 7 tests per project: every helper exercised against a synthetic page served by a route, so they are proven before the museum exists) and forbidOnly in CI. Smoke loads museumUrl('/') (?test=1&mode=museum, CLAUDE.md test URL rule) and waits for networkidle so late chunk and font requests fall inside the guarded window. The @smoke CSP check covers every same-origin main-frame document response. no-webgl uses Playwright's default Chromium build as the brief lists no channel there. After WP-10 merges: the no-webgl project's / redirects to /resume/#why-no-webgl2, so smoke and guards there run on /resume/ (it needs one visible h1); R0 should re-run A1 through the webServer and A3-capture. exhibit-contract.spec.ts needs WP-08 (stats().exhibits), WP-09 (goTo, screenPos) and WP-10 (dialog, open-<id>) before an exhibit folder appears. Local runs use PORT=4175; nothing under out/, dist/, test-results/ or playwright-report/ is committed."
+}

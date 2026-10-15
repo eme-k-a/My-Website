@@ -114,6 +114,7 @@ export default defineConfig([
     '.lighthouseci',
     'review',
     'docs',
+    '.claude',
   ]),
   js.configs.recommended,
   tseslint.configs.recommended,

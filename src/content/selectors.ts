@@ -143,6 +143,23 @@ export function heroLines(c: Content, now: Date): [string, string] {
   return [current ? role : `Most recently: ${role}`, education];
 }
 
+/**
+ * Title and meta description of the classic page `/resume/` (CONTENT_DRAFT §6.6, ARCHITECTURE
+ * §11.1), built from the display name and the education entry, so they follow content updates.
+ * Before the graduation month he is a "student at" the institution, from then on a "graduate of"
+ * it, the same switch that drops "expected" from heroLines.
+ */
+export function resumePageMeta(c: Content, now: Date): { title: string; description: string } {
+  const edu = c.education[0];
+  if (!edu) throw new Error('Content has no education entry');
+  const name = displayName(c);
+  const standing = isExpected(edu, now) ? 'student at' : 'graduate of';
+  return {
+    title: `Resume | ${name}`,
+    description: `Resume of ${name}: ${edu.shortDegree ?? edu.degree} ${standing} ${edu.institution}. Experience, projects, skills and PDF.`,
+  };
+}
+
 export type StatusPill = 'ON VIEW NOW' | 'ONGOING';
 
 /** A card's call to action: a label and, for links, where it goes. */

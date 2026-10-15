@@ -8,7 +8,7 @@ import { App } from './app/App';
 import { parsePath } from './app/routes';
 import { ClassicResume } from './classic/ClassicResume';
 import { content } from './content/index';
-import { displayName } from './content/selectors';
+import { resumePageMeta } from './content/selectors';
 import { BUILD_DATE } from './overlay/model';
 import { NOT_FOUND_TITLE, NotFound } from './overlay/NotFound';
 
@@ -41,11 +41,8 @@ interface Head {
 
 const HEAD: Record<PageRoute, Head> = {
   gallery: { title: content.meta.title, description: content.meta.description },
-  classic: {
-    title: `Resume | ${displayName(content)}`,
-    // CONTENT_DRAFT §6.6, the description suggested for /resume/.
-    description: `Resume of ${displayName(content)}: Computer Engineering student at Memorial University of Newfoundland. Experience, projects, skills and PDF.`,
-  },
+  // CONTENT_DRAFT §6.6, derived from content so it follows content updates.
+  classic: resumePageMeta(content, BUILD_DATE),
   notFound: {
     title: NOT_FOUND_TITLE,
     description: "The page you asked for isn't part of the collection.",

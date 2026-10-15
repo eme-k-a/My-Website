@@ -1,0 +1,162 @@
+{
+  "wp": "WP-02",
+  "role": "R0 (Orchestrator) with R4 (Camera & Interaction)",
+  "status": "partial",
+  "branch": "claude/intelligent-sagan-poq45q",
+  "commits": [
+    "ffe42c3 feat(content): schema, ids, date helpers and content skeleton",
+    "b79bc83 feat(rail): layout from content with pinned snapshot",
+    "07e70ad feat(contracts): routes, store, test hook, tokens, exhibit types and seams"
+  ],
+  "changedFiles": [
+    "src/app/routes.test.ts",
+    "src/app/routes.ts",
+    "src/app/store.test.ts",
+    "src/app/store.ts",
+    "src/app/testHooks.test.ts",
+    "src/app/testHooks.ts",
+    "src/app/testIds.ts",
+    "src/content/format.test.ts",
+    "src/content/format.ts",
+    "src/content/ids.ts",
+    "src/content/index.ts",
+    "src/content/normalize.ts",
+    "src/content/resume.ts",
+    "src/content/schema.test.ts",
+    "src/content/schema.ts",
+    "src/content/selectors.test.ts",
+    "src/content/selectors.ts",
+    "src/content/site.ts",
+    "src/content/temporal.test.ts",
+    "src/content/temporal.ts",
+    "src/content/types.ts",
+    "src/design/tokens.test.ts",
+    "src/design/tokens.ts",
+    "src/museum/MuseumCanvas.tsx",
+    "src/museum/Scene.tsx",
+    "src/museum/exhibits/_kit/defineExhibit.ts",
+    "src/museum/exhibits/_kit/registry.test.ts",
+    "src/museum/exhibits/_kit/registry.ts",
+    "src/museum/exhibits/_kit/types.ts",
+    "src/museum/materials/index.ts",
+    "src/museum/quality/FrameDriver.tsx",
+    "src/museum/quality/QualityController.tsx",
+    "src/museum/quality/StatsProbe.tsx",
+    "src/museum/quality/contextLoss.ts",
+    "src/museum/quality/tiers.ts",
+    "src/museum/rail/CameraRig.tsx",
+    "src/museum/rail/ReadySignal.tsx",
+    "src/museum/rail/__snapshots__/layout.test.ts.snap",
+    "src/museum/rail/layout.test.ts",
+    "src/museum/rail/layout.ts",
+    "src/museum/rail/navigation.ts",
+    "src/museum/rail/progress.ts",
+    "src/overlay/ScrollTrack.tsx",
+    "src/overlay/story.ts",
+    "review/reports/WP-02.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Verify passes",
+      "command": "npm run verify",
+      "result": "pass",
+      "evidence": "exit 0: eslint and prettier clean, both tsc projects clean, vitest unit 10 files, 102 tests passed (also run before each of the 3 commits with the later files stashed: 47, 66 and 102 tests)"
+    },
+    {
+      "id": "A2",
+      "criterion": "Layout pinned: snapshot exists, 10 main stops, 2 wing tracks [door, item, item], coordinates equal EXPERIENCE §2.4 and §2.5 to 3 decimals, year marks within 0.1 m of §6.9",
+      "command": "npx vitest run --project unit src/museum/rail/layout.test.ts",
+      "result": "pass",
+      "evidence": "19 tests passed; src/museum/rail/__snapshots__/layout.test.ts.snap written at now = 2026-10-15; year marks 2026 -4, 2025 -25.529, 2024 -37.512, 2023 -44.537, 2022 -51.429; doors projects left z -16, volunteer right z -28; §2.7 worked example, wing move and every §2.2 rule-2 failure covered"
+    },
+    {
+      "id": "A3",
+      "criterion": "Date math",
+      "command": "npx vitest run --project unit src/content/format.test.ts",
+      "result": "pass",
+      "evidence": "16 tests passed: 4 months, 5 months, 4 months, 1 yr 9 mo; formatRange gives 'Sep 2026 <U+2013> Dec 2026' (spaced, no U+2014) and 'Sep 2026 -- Dec 2026' in tex style; isCurrent(verafin) true at 2026-10-15, false at 2027-01-05"
+    },
+    {
+      "id": "A4",
+      "criterion": "Tense derivation: one error naming verafin at 2027-01-05, none at 2026-10-15",
+      "command": "npx vitest run --project unit src/content/temporal.test.ts && npx tsx -e \"import('./src/content/temporal.ts')...\"",
+      "result": "pass",
+      "evidence": "6 tests passed; tsx printed [\"verafin: tense is 'present' but the role ended 2026-12. Rewrite bullets in past tense and set tense: 'past'.\"] at 2027-01-05 and [] at 2026-10-15"
+    },
+    {
+      "id": "A5",
+      "criterion": "Schema guards",
+      "command": "npx vitest run --project unit src/content/schema.test.ts",
+      "result": "pass",
+      "evidence": "19 tests passed: skeleton parses; contact.phone key rejected (strict); a caption with U+2014 (written as an escape) rejected; a runtime-built phone-shaped string rejected in a Line and, by the rule-9 deep walk, in a URL; normalize(resume) toEqual Resume.parse(resume); each of the nine refine rules has a failing case"
+    },
+    {
+      "id": "A6",
+      "criterion": "History table: one passing test per ARCHITECTURE §5.6 row (at least 10)",
+      "command": "npx vitest run --project unit src/app/routes.test.ts",
+      "result": "pass",
+      "evidence": "19 tests passed: rows 1 to 10 (arrive none, open push, step replace, close back, close cold replace, browser Back via deriveUi, enter wing push, exit wing back, exit cold replace, cold load replace) plus gallery cold load, query-string preservation, history length, applyHistoryOp, parsePath and route table"
+    },
+    {
+      "id": "A7",
+      "criterion": "Registry, store, tokens, test hook",
+      "command": "npx vitest run --project unit src/museum/exhibits src/app src/design",
+      "result": "pass",
+      "evidence": "5 files, 36 tests passed; registry passes with zero exhibit folders; store key list and token key paths pinned as inline snapshots"
+    },
+    {
+      "id": "A8",
+      "criterion": "Zod not shipped",
+      "command": "npm run build && grep -rl \"ZodError\" dist/assets",
+      "result": "pass",
+      "evidence": "build exit 0; grep lists no file. Stronger check: a scratch bundle of every client contract module (out/wp02/probe.ts, 965 KB unminified with react, three and r3f) contains no ZodError, $ZodType or zod import"
+    },
+    {
+      "id": "A9",
+      "criterion": "Tag contracts-v1 on origin points at the WP-02 merge commit",
+      "command": "git ls-remote --tags origin contracts-v1",
+      "result": "skipped",
+      "evidence": "ls-remote prints nothing: the tag exists only locally (git rev-parse contracts-v1 = 07e70ad39a0cfb370fc7789d4b7bf79c7a051d0a, lightweight, on 07e70ad, the last contracts commit). Pushing tags is refused by the session proxy, as with legacy-site in WP-01 (PLAN Addendum, R0 rulings after WP-01 verification)"
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "A9: push the contracts-v1 tag by hand (git push origin contracts-v1) from a machine with push rights, or waive A9 the way A4 of WP-01 was waived?",
+      "for": "R0",
+      "default": "Lightweight tag kept local at 07e70ad; this report commit sits on top of it and changes no contract file"
+    },
+    {
+      "question": "Finance Tracker stack: the brief lists MongoDB, Express, React, Node.js; CONTENT_DRAFT §5.6 lists 'MERN', 'ChatGPT API'. Which does WP-03 transcribe?",
+      "for": "R1",
+      "default": "Skeleton follows the brief; WP-03 owns the final value (the layout snapshot does not depend on it)"
+    },
+    {
+      "question": "Skeleton omits facts the brief did not list but CONTENT_DRAFT gives: project tense 'past', the AWS issuer 'Amazon Web Services', exhibit labels 'Memorial University' and 'Certifications'.",
+      "for": "R1",
+      "default": "WP-03 adds them from CONTENT_DRAFT; none affects the layout snapshot"
+    },
+    {
+      "question": "Test-hook camera target: StatsProbe exports reportCameraTarget(target) for CameraRig to call each frame; without a report, stats().camera.target is 1 m ahead of the camera. Accept this addition to the contract?",
+      "for": "R0",
+      "default": "Exported in src/museum/quality/StatsProbe.tsx; WP-09 should call it wherever it sets the look-at"
+    },
+    {
+      "question": "stats().mounted is derived from exhibits reported through reportExhibit(id, data); ExhibitFrame must call reportExhibit(id, null) on unmount. Accept?",
+      "for": "R3",
+      "default": "Implemented that way; WP-08 follows it"
+    },
+    {
+      "question": "History transitions take a Here argument ({ pathname, search, state }) and keep location.search on every URL they write, so ?test=1 and ?mode=museum survive opening a story or entering a wing. ARCHITECTURE §5.6 shows bare paths. Confirm?",
+      "for": "R0",
+      "default": "Query string kept; with no search the URLs are exactly the bare §5.6 paths"
+    },
+    {
+      "question": "computeLayout throws unless content has exactly one education entry (the Foundations room has one wide plinth). Should a second education entry ever be supported?",
+      "for": "R2",
+      "default": "Throws with a clear message; v1 content has one (mun)"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "TAG: contracts-v1 is a local lightweight tag at 07e70ad39a0cfb370fc7789d4b7bf79c7a051d0a (07e70ad, the last contracts commit); not pushed because the session proxy refuses tag pushes.\nCONTRACT FILES, FROZEN (CONTRACTS-V1): src/content/schema.ts (Line, Id, YearMonth, DateRange, Tense, HttpsUrl, SiteUrl, Location, Link, Copy, Bullet, StoryBlock, Exhibit, Work, Project, Volunteer, Education, Certification(s), Wing, SkillLine, ResumeShape, Resume = ResumeShape.superRefine(refineResume)) | src/content/ids.ts (EXHIBIT_IDS, STOP_ONLY_IDS, WING_IDS, ExhibitId, StopId, WingId, TrackId, doorId), verbatim from ARCHITECTURE §3.2 | src/museum/exhibits/_kit/types.ts (QualityTier, ExhibitSlot, ExhibitRuntime, ExhibitProps, ExhibitManifest) | src/app/store.ts state shape (MuseumState, InputSource, initialMuseumState(), useMuseum) | src/app/testHooks.ts types (MuseumTestHook, MuseumStats, ExhibitStats, GoToOptions, TestParams, NavProvider, StatsProvider, TestHookHost; window.__MUSEUM__) | src/app/testIds.ts (TEST_IDS) | src/app/routes.ts route table and transitions (ROUTE_TABLE, parsePath, exhibitPath, HistoryState, HistoryOp, Here, readHistoryState, deriveUi, transitions = { arrive, openStory, stepStory, closeStory, enterWing, exitWing, coldLoad }, applyHistoryOp, readHere) | src/design/tokens.ts token names (color, classic, light, motion, camera, render) | src/museum/rail/layout.ts output type (Vec3, StopPose, Slot, Door, Room, Track, Layout) plus computeLayout(content, now), the EXPERIENCE §2.1 constants and SLOT_BOUNDS.\nCONTRACT FILES, OTHER CONTRACTS: src/content/types.ts, site.ts, normalize.ts, index.ts, format.ts (ym, toYearMonth, formatMonth, formatRange, monthsInclusive, duration, isCurrent, isExpected, formatLocation), temporal.ts (buildDateFromEnv, checkTemporal), selectors.ts track part (mainTrack, wingTrack, trackOf, readingOrder, entryById, exhibitNumber), resume.ts skeleton | src/museum/rail/progress.ts (progress singleton) | src/museum/exhibits/_kit/defineExhibit.ts (defineExhibit, MAX_EXHIBIT_TRIANGLES), registry.ts (registry) | src/museum/materials/index.ts (EXHIBIT_MATERIALS, KIT_MATERIALS, ExhibitMaterialName, KitMaterialName, MaterialLibrary).\nCONTRACT FILES, REAL IMPLEMENTATIONS: src/museum/rail/ReadySignal.tsx: named export ReadySignal, READY_FRAMES = 2 | src/museum/quality/StatsProbe.tsx: named export StatsProbe, reportExhibit(id, data | null), reportCameraTarget(target).\nCONTRACT FILES, SEAMS (OWNER REPLACES; KEEP THESE EXPORT NAMES): src/museum/MuseumCanvas.tsx default export MuseumCanvas (R3, WP-08) | src/museum/Scene.tsx default export Scene (R3, WP-08) | src/museum/rail/CameraRig.tsx named CameraRig (R4, WP-09) | src/museum/rail/navigation.ts travelTo(id, { instant }), enterWing(wing), exitWing(), TravelOptions (R4, WP-09) | src/overlay/ScrollTrack.tsx named ScrollTrack({ renderCard }), ScrollTrackProps (R4, WP-09) | src/overlay/story.ts openStory(id, { opener, source }), closeStory(), stepStory('newer' | 'older'), OpenStoryOptions, StoryDirection (R6, WP-10 and WP-14) | src/museum/quality/FrameDriver.tsx named FrameDriver (interim: invalidates every frame), QualityController.tsx named QualityController, contextLoss.ts named ContextLossHandler, tiers.ts chooseTier(TierInput) (R7, WP-16).\nRULINGS APPLIED: Coordinates from EXPERIENCE §2.4 and §2.5 (mun look-at (-2.5, 1.25, -57); certifications look-at (5.85, 1.6, -57)); asserted to 3 decimals and pinned in the snapshot | computeLayout(content, now): now drives the build-year strip and ongoing date ranges | Wing tracks [projects-door, klarup, finance-tracker] and [volunteer-door, safe-sip, sdsj], door pose at index 0, threshold waypoint T as via { after: 0 } | Year-strip anchors on the half-open month interval mid = (ym(start) + ym(end) + 1) / 2, aisle-end anchor (zLast - 6, ym(start of last)), one-month clamp, boundary newer than the first midpoint at z0 + 3 | Schema changes: Exhibit.object: Copy, Exhibit.curatorNote: Copy.optional(), Education.shortDegree and shortInstitution: Line.optional() (CONTENT_DRAFT Appendix A items 1 to 3) | R0 ruling and PLAN Addendum: Exhibit.draft: boolean default false; Verafin's exhibit starts with draft: true | Store additions contextLost, canvasGeneration, placeholders | Test-hook additions stats().camera and stats().progress; testParams reads &idle=1 | Token initial values from EXPERIENCE §6 and §7 (motion.railSmoothTime 0.25, render.toneMapping 'aces', exposure 1); framing tokens per EXPERIENCE §6.2, no portrait pull-back | Test ids in src/app/testIds.ts | Slot bounds as local { min, max }: standard, mun wide plinth, certifications wall vitrine (EXPERIENCE §5.3); Slot.plinth includes 'none' | PHONE regex and em dash written with escapes in schema.ts; tests build the phone-shaped string at runtime.\nDEVIATIONS: npm ci was run on a copy of package.json, package-lock.json and .npmrc in out/wp02/ci (exit 0, 650 packages) instead of the shared main tree, so the installed node_modules other sessions use was never deleted; WP-02 changes neither file | Four commits instead of three: the brief's three commits, then this report in its own commit, because the report records the three SHAs and the tag | contracts-v1 points at 07e70ad (the last contracts commit); the report commit on top changes no contract file. R0 may move the tag with git tag -f contracts-v1 <sha> if it should include the report | ARCHITECTURE §7.2 declares defineExhibit inside types.ts; a bodiless function declaration cannot compile in a module, so the implementation lives in _kit/defineExhibit.ts and types.ts says so | Store and token key snapshots are inline (toMatchInlineSnapshot) because src/app/__snapshots__ and src/design/__snapshots__ are outside this WP's globs.\nEXTRA CHECKS: Smoke page (out/wp02/smoke, gitignored) in the preinstalled Chromium 141 with SwiftShader: ready stayed false through 44 frames while compilePending = 1 and turned true within a few frames of releasing it; stats() returned calls 1, triangles 12, programs 1, frames 48, dpr 1, tier medium, mounted [verafin], camera and progress; goTo and screenPos threw 'not available yet'; no page errors | Every changed path matches OWNERS.json wps['WP-02'].allow; no U+2014, no U+2013 literal and no phone pattern in any new file or commit message.\nMERGE: WP-02 is 3 contract commits (ffe42c3, b79bc83, 07e70ad) plus the commit adding this report, all on the local integration branch, not pushed. Later briefs must keep the seam export names listed above."
+}

@@ -435,3 +435,12 @@ Size: S is under half a day of agent work, M is 1 to 2, L is 3 or more. Every WP
   - **Query strings survive history writes.** Every URL the `routes.ts` transitions write keeps `location.search`, so `?test=1&mode=museum` survives opening a story, entering a wing and closing a deep link. The bare paths in ARCHITECTURE §5.6 and "URL is `/`" in EXPERIENCE §3.6 refer to the pathname; e2e specs assert on `new URL(page.url()).pathname`.
   - **One education entry in v1.** The schema keeps `education: z.array(Education).min(1)` (ARCHITECTURE §3.3). `computeLayout` throws `The Foundations room holds exactly one education entry (found n)`, like the EXPERIENCE §2.2 rule-2 wing checks that the schema also leaves to the layout. WP-03's `scripts/check-content.ts` calls `computeLayout(content, buildDate)` after the parse, so layout errors fail the content check.
   - **`stats().mounted`** lists every exhibit whose `ExhibitFrame` is mounted, whether it shows the placeholder, is compiling or is revealed. WP-08's `ExhibitFrame` calls `useEffect(() => markExhibitMounted(id), [id])` (exported by `src/museum/quality/StatsProbe.tsx`; the disposer also drops the exhibit's stats) and, after reveal under dev and `?test=1`, `reportExhibit(id, { triangles, drawCalls, inBounds })`. WP-09's `CameraRig` calls `reportCameraTarget(lookAt)` whenever it sets the look-at, so `stats().camera.target` is the real target.
+- **R0 rulings after the WP-02 to WP-05 verification (2026-10-15):**
+  - **Headshot crop.** The crop is now `{ left: 0, top: 360, width: 1008, height: 1260 }`, a head-and-shoulders 4:5 frame. `top: 0` cut the face at the chin. `public/images/` has been regenerated.
+  - **SDSJ priority.** The CONTENT_DRAFT bullet register now gives `sdsj.b1` priority 3, matching `resume.ts`.
+  - **Draft exhibits.** verafin, cfia, mun and certifications keep `exhibit.draft: true`. All first-person story copy stays draft until G5.
+  - **Accepted:**
+    - the 60% `--border-secondary` (at 50% it fails 3:1 contrast on `--ink`);
+    - the `threeDStrings(c, now?)` object shape `{ kind, text, font, for }`. WP-07 and WP-28 read `.text` and `.font` and pass the build date;
+    - the CTA labels inside `stopCards`.
+  - **Agent worktrees** live under `.claude/`, which is now ignored by git, prettier and eslint.

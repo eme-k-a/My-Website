@@ -198,7 +198,7 @@ Priority: 1 keep, 2 normal, 3 trim first. Characters are counted without the bul
 | `klarup.b2` | "Architected the production release pipeline using Expo Application Services (EAS), securely injecting environment variables to generate untethered, standalone APKs for Android." | true | 2 | false | 176 |
 | `finance-tracker.b1` | "Built a full-stack personal finance tracker using the MERN stack to manage income, expenses, and budgets, with ChatGPT API integration for real-time financial health analysis and personalized recommendations." | **false** | 3 | false | 208 |
 | `safe-sip.b1` | "Engineer a tamper-detecting smart lid MVP: a 3D-printed enclosure with a Raspberry Pi Pico W and I2C orientation sensor, using Euclidean distance and Euler angles to detect tampering in real time." | true | 2 | false | 196 |
-| `sdsj.b1` | "Spearhead recurring monthly mini-hackathons, uniting developers, designers, and founders to collaborate on projects and foster an active, cross-functional tech community." | true | 2 | false | 170 |
+| `sdsj.b1` | "Spearhead recurring monthly mini-hackathons, uniting developers, designers, and founders to collaborate on projects and foster an active, cross-functional tech community." | true | 3 | false | 170 |
 
 Notes:
 - Non-Verafin bullets are `draft: false` because they restate the existing resume; their rewrites are still approved at G0 through the before/after (§1.1).

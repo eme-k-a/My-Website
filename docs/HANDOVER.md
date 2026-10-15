@@ -35,12 +35,13 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 |---|---|---|
 | WP-00 | Commit reconciled spec and briefs | Done (commit 8b015d5) |
 | WP-01 | Scaffold, legacy cleanup, pinned toolchain | Done (288cf93 to 52b0407). Two checks were waived by R0 rulings in the PLAN Addendum: the `legacy-site` tag is local only, and leva keeps its own zustand in the debug chunk |
-| WP-02 | Contracts freeze (schema, layout, registry, tokens, test hook) | Next |
-| WP-03 | Content file + headshot pipeline | Pending |
-| WP-04 | Resume outputs (PDF public/private, `.tex`, before/after) | Pending |
-| WP-05 | Art direction + tokens | Pending |
-| Gate G0 | Emeka approves the resume before/after, Verafin bullets, title style | Waiting on WP-04 |
-| WP-06 onward | M1 to M7 | Not started |
+| WP-02 | Contracts freeze (schema, layout, registry, tokens, test hook) | Done (ffe42c3 to 3b4acc5; `contracts-v1` is a local tag on 3b4acc5) |
+| WP-03 | Content file + headshot pipeline | Done (999cfeb to c62ddbf; crop fixed after verification) |
+| WP-04 | Resume outputs (PDF public/private, `.tex`, before/after) | Done (fdbfb6a to 6ef8e39) |
+| WP-05 | Art direction + tokens | Done (f9b8ae5 to 2383647) |
+| Gate G0 | Emeka approves the resume before/after, Verafin bullets, title style | Package sent to Emeka 2026-10-15; waiting for his approval |
+| WP-06 to WP-10 | M1 foundation | Next |
+| WP-11 onward | M2 to M7 | Not started |
 
 How to tell what's done:
 - `git log --oneline` shows commits carrying a `WP: WP-xx` trailer.

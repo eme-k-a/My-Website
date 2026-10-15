@@ -74,6 +74,21 @@
       "evidence": "eslint and prettier clean; tsc app and node configs clean (tests/ and playwright.config.ts are in tsconfig.node.json); vitest unit 18 files, 316 tests passed."
     }
   ],
+  "integration": {
+    "by": "R0",
+    "onto": "claude/intelligent-sagan-poq45q at d43604e (after WP-06): cherry-picked in order, linear history",
+    "commits": [
+      "c59c931 test(e2e): playwright config and global guards (was 4878ea6)",
+      "437e688 test(e2e): museum helpers and smoke spec (was 8de5171)",
+      "6a11db3 test(e2e): reusable exhibit contract spec (was b6f5f4c)",
+      "d24b327 feat(fonts): glyph coverage check for 3D text (was 9b96229)"
+    ],
+    "conflicts": "package.json scripts only, in c59c931: kept WP-07's e2e, visual and a11y keys and WP-06's lh key (lhci autorun, both configs). No dependency or lockfile change, so no npm ci was needed (npm ls shows only the allowed sharp optional extraneous packages).",
+    "checks": "Main tree after the picks: npm run verify exit 0 (22 files, 373 tests); npm run build exit 0 (_headers written, PDF 1 page, entry 67.93 KB gzip of 110, check-copy ok with dist). With PORT=4173 and the config's own webServer (npx tsx scripts/serve-dist.ts, WP-06): playwright --list shows 4 projects, 144 tests in 4 files; smoke on desktop and pixel7 twice, 30 passed (15.5 s) then 30 passed (12.9 s), retries 0; JSON reporter: 12 of 12 test.fail guard cases failed as expected, 24 expected, 0 unexpected, 0 flaky; full npm run e2e on all four projects 84 passed, 60 skipped (capture), exit 0; npm run check:glyphs 30 labels, 68 code points, exit 0; check-glyphs unit test 8 passed; npm run visual and npm run a11y exit 0 (no specs yet).",
+    "a1": "Now proven through the config's webServer on serve-dist, as the builder deferred",
+    "a3Capture": "Still deferred: CAPTURE_DIR=out/wp07 CAPTURE_STOPS=lobby on desktop times out in waitForMuseum after 60 s because window.__MUSEUM__ does not exist until WP-10 (ready and goTo from WP-08 and WP-09). R0 re-runs it after those merge.",
+    "ci": "The CI e2e job commands (npm run e2e, npm run a11y, npm run visual) pass locally. The workflow_dispatch baseline step (npx playwright test --grep @visual --update-snapshots) exits 1 with no @visual spec, as openQuestions[2] says (R10). The green remote run is deferred to R0 after push."
+  },
   "openQuestions": [
     {
       "question": "Chromium's full build (desktop project) requests /favicon.ico and logs its 404 as a console error; no icon exists until WP-31. The console guard ignores only that exact message from <origin>/favicon.ico. Keep this narrow exemption until WP-31 ships the favicon set and its <link> tags, then remove it?",

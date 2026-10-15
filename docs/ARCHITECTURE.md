@@ -58,8 +58,7 @@ Versions were checked against the npm registry on 2026-10-14 and re-checked on 2
 | unpdf | `1.8.1` | PDF text extraction in tests. Its optional peer `@napi-rs/canvas` is not installed and not needed |
 | subset-font | `2.9.0` | Font subsetting in WP-28 (fontTools is not installed in the container) |
 | fontkit | `2.0.4` | Glyph-coverage check for 3D text (`font.hasGlyphForCodePoint`). Added by this document; MIT |
-| computer-modern | `0.1.3` | CMU Serif for the print template only. The package ships `OFL.txt`; its package.json says MIT for the CSS. R1 confirms the OFL text and copies it to `LICENSES/OFL-CMU-Serif.txt`. Fallback if the license cannot be confirmed: `@fontsource/source-serif-4@5.3.1` (OFL-1.1) |
-| @fontsource/source-serif-4 | `5.3.1` | The print-font fallback. WP-01 installs both print fonts so WP-04 never waits for a lockfile change; WP-06 uninstalls whichever one WP-04 did not use |
+| computer-modern | `0.1.3` | CMU Serif for the print template only. The package ships `OFL.txt`; its package.json says MIT for the CSS. R1 confirms the OFL text and copies it to `LICENSES/OFL-CMU-Serif.txt`. WP-04 confirmed the OFL, so WP-06 removed the `@fontsource/source-serif-4@5.3.1` fallback that WP-01 had installed |
 
 ### 1.3 CI-only tools (not in package.json)
 
@@ -638,7 +637,7 @@ Owner: R1 (WP-04). Outputs:
 2. `vite build`: client build of `index.html` plus a CSS-only input for the `/resume/` stylesheet (`classic.css` in the classic folder), `build.manifest: true` (writes `dist/.vite/manifest.json`). Inputs are set with `build.rolldownOptions.input` (Vite 8; `rollupOptions` is the deprecated alias).
 3. `vite build --ssr src/entry-server.tsx --outDir dist-ssr`.
 4. `tsx scripts/postbuild.ts` (R9): renders pages from `dist-ssr/entry-server.js` (§5.5, §11), writes `_headers` via `scripts/headers.ts` (§12), sitemap and robots.
-5. `tsx scripts/build-resume-pdf.ts`, `tsx scripts/build-resume-tex.ts` (§4).
+5. `npm run resume`: `tsx scripts/build-resume-tex.ts`, then `tsx scripts/build-resume-pdf.ts` (§4).
 6. `tsx scripts/check-budgets.ts` (§9), `tsx scripts/check-copy.ts --dist` (§12.5).
 
 A Vite plugin in `vite.config.ts` (`inlineBootScript`) transpiles `src/app/boot.ts` with `ts.transpileModule` (target ES2017, no imports, no exports) and replaces `<!--boot-->` in `index.html` with `<script>...</script>`. Postbuild hashes the exact script text for the CSP.
@@ -1469,7 +1468,7 @@ Netlify on a free `*.netlify.app` subdomain. Netlify Git builds are turned off; 
 | `a11y` | `playwright test --grep @a11y` | axe and keyboard specs |
 | `lh` | `lhci autorun --config=lighthouserc.cjs && lhci autorun --config=lighthouserc.desktop.cjs` | Lighthouse CI, mobile then desktop |
 | `review` | `tsx scripts/review/capture.ts` | WP-34 capture run into `review/runs/<date>/` |
-| `resume` | `tsx scripts/build-resume-pdf.ts && tsx scripts/build-resume-tex.ts` | Public PDF to `dist/resume.pdf` and `resume/resume.tex` |
+| `resume` | `tsx scripts/build-resume-tex.ts && tsx scripts/build-resume-pdf.ts` | `resume/resume.tex`, then the public PDF to `dist/resume.pdf` |
 | `resume:private` | `tsx scripts/build-resume-pdf.ts --private` | `out/private/resume.pdf` and `.tex` with the phone from `RESUME_PHONE` |
 | `new:exhibit` | `tsx scripts/new-exhibit.ts` | `npm run new:exhibit -- <id>` scaffolds `src/museum/exhibits/<id>/` |
 | `og` | `tsx scripts/gen-og.ts` | Regenerates `public/og/*.png` |

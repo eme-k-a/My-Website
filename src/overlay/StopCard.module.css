@@ -144,6 +144,16 @@
   margin-top: 16px;
 }
 
+/*
+ * "Read the story" and "Step inside" need the hydrated app, so they show only in museum mode
+ * (ARCHITECTURE §5.2). The boot script sets data-mode before first paint, so with JS off (no
+ * data-mode) they are never drawn, and in museum mode they never pop in. Without them the title
+ * and the door links still lead to every /exhibit/<id>/ page.
+ */
+:global(html:not([data-mode='museum'])) .actions {
+  display: none;
+}
+
 /* "Installation in progress" (EXPERIENCE §5.7): a reserved line, so it never shifts the card. */
 .status {
   min-height: calc(var(--type-small) * 1.5);

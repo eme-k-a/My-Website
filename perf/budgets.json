@@ -1,0 +1,12 @@
+{
+  "bundles": { "entryJsGzipKB": 110, "museumChunkGzipKB": 350, "exhibitChunkGzipKB": 40 },
+  "transfer": { "firstThreeExhibitsMB": 1.2, "fullWalkMB": 4 },
+  "render": {
+    "drawCalls": { "high": 150, "medium": 80, "low": 80 },
+    "triangles": { "desktop": 500000, "mobile": 150000, "perExhibit": 20000 },
+    "textureMB": { "desktop": 64, "mobile": 40 }
+  },
+  "web": { "lcpMs": { "desktop": 2000, "mobile": 2500 }, "cls": 0.02, "clsLhciGate": 0.05 },
+  "fps": { "mobileFloor": 30, "mobileTarget": 45 },
+  "readyMs": { "desktop": 3000, "mobile": 5000, "level": "warn" }
+}

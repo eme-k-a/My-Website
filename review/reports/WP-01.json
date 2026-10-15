@@ -1,0 +1,143 @@
+{
+  "wp": "WP-01",
+  "role": "R10 (DevOps & Release)",
+  "status": "partial",
+  "branch": "claude/intelligent-sagan-poq45q",
+  "commits": [
+    "288cf93 chore(legacy): remove legacy site files (tagged legacy-site)",
+    "1ed7fe4 chore(scaffold): vite, react, typescript and pinned toolchain",
+    "HEAD chore(scaffold): stub scripts and placeholder hero (this commit, carries this report)"
+  ],
+  "changedFiles": [
+    ".DS_Store (deleted)",
+    "index.html (legacy deleted, recreated as the gallery template)",
+    "scripts.js (deleted)",
+    "styles.css (deleted)",
+    "headshot.jpg -> assets-src/headshot.jpg",
+    "package.json",
+    "package-lock.json",
+    ".npmrc",
+    ".nvmrc",
+    ".editorconfig",
+    ".prettierrc.json",
+    ".prettierignore",
+    ".gitignore",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "eslint.config.js",
+    "tsconfig.json",
+    "tsconfig.app.json",
+    "tsconfig.node.json",
+    "src/vite-env.d.ts",
+    "README.md",
+    "LICENSE",
+    "src/main.tsx",
+    "src/app/boot.ts",
+    "src/classic/classic.css",
+    "src/entry-server.tsx",
+    "scripts/not-implemented.mjs",
+    "scripts/check-content.ts",
+    "scripts/build-media.ts",
+    "scripts/build-resume-pdf.ts",
+    "scripts/build-resume-tex.ts",
+    "scripts/postbuild.ts",
+    "scripts/prerender.ts",
+    "scripts/headers.ts",
+    "scripts/serve-dist.ts",
+    "scripts/check-copy.ts",
+    "scripts/check-budgets.ts",
+    "scripts/check-glyphs.ts",
+    "scripts/gen-og.ts",
+    "scripts/new-exhibit.ts",
+    "scripts/check-links.ts",
+    "scripts/review/capture.ts",
+    "review/reports/WP-01.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Clean install, verify and build",
+      "command": "rm -rf node_modules dist dist-ssr && npm ci && npm run verify && npm run build",
+      "result": "pass",
+      "evidence": "exit 0; npm ci added 650 packages; lint, prettier, both tsc projects and vitest (no tests, passWithNoTests) green; build ran every stub and both vite builds (main entry 220.07 kB, 68.80 kB gzip)"
+    },
+    {
+      "id": "A2",
+      "criterion": "No legacy files tracked; new index.html has the boot marker",
+      "command": "git ls-files | grep -E '(^|/)(scripts\\.js|styles\\.css|\\.DS_Store|headshot\\.jpg)$'; git show HEAD:index.html | grep -c '<!--boot-->'",
+      "result": "pass",
+      "evidence": "prints exactly assets-src/headshot.jpg; marker count 1"
+    },
+    {
+      "id": "A3",
+      "criterion": "Playwright matches the container",
+      "command": "browsers.json revision check; npx playwright --version; chromium.launch(...).version()",
+      "result": "pass",
+      "evidence": "chromium:1194,chromium-headless-shell:1194 / Version 1.56.1 / 141.0.7390.37 (needed the playwright-core override: before it, the @axe-core/playwright peer hoisted playwright-core 1.64.1 and the first check printed 1248)"
+    },
+    {
+      "id": "A4",
+      "criterion": "Legacy tag on the old main tip",
+      "command": "git ls-remote --tags origin legacy-site",
+      "result": "fail",
+      "evidence": "origin/main verified at 4f1ab2b5e0c080c9e4bde94ac7b530ff51442c5d and local tag legacy-site created on it, but this session's permission classifier denied git push origin legacy-site, so ls-remote prints nothing. See openQuestions"
+    },
+    {
+      "id": "A5",
+      "criterion": "Every npm script except dev and format runs and exits 0",
+      "command": "for s in ...; do npm run -s \"$s\" >/dev/null 2>&1 || echo \"FAIL $s\"; done",
+      "result": "pass",
+      "evidence": "prints nothing (20 scripts)"
+    },
+    {
+      "id": "A6",
+      "criterion": "Single copies of the 3D stack",
+      "command": "npm ls three react react-dom troika-three-text maath zustand; npm ls --all > /dev/null",
+      "result": "fail",
+      "evidence": "three 0.186.1, react 19.3.1, react-dom 19.3.1, troika-three-text 0.52.5, maath 0.10.8: one copy each, all others deduped; zustand 5.0.15 deduped everywhere except leva@0.10.1's own zustand@3.7.2 (leva imports the v3 default export; no leva release supports v5). npm ls exit 0, npm ls --all exit 0, no invalid or ERESOLVE. Only the zustand exception misses the threshold; see openQuestions"
+    },
+    {
+      "id": "A7",
+      "criterion": "Lint guards work",
+      "command": "the two eslint --stdin probes",
+      "result": "pass",
+      "evidence": "src/probe.ts: exit=1 'Input is native scroll: no wheel or touch listeners' (no-restricted-syntax); src/museum/exhibits/probe/index.ts: exit=1 'Exhibits import only from ./ and ../_kit (no cross-exhibit or app imports).' (no-restricted-imports)"
+    },
+    {
+      "id": "A8",
+      "criterion": "No U+2014 in tracked files",
+      "command": "git ls-files -z | xargs -0 grep -l \"$(printf '\\342\\200\\224')\"",
+      "result": "pass",
+      "evidence": "prints nothing"
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "The legacy-site tag push was denied by this session's permission classifier (it flagged the push as a destructive git action). The tag exists locally on 4f1ab2b5e0c080c9e4bde94ac7b530ff51442c5d. Someone with push approval must run: git push origin legacy-site (then A4 passes with git ls-remote --tags origin legacy-site).",
+      "for": "R0",
+      "default": "Tag created locally only; nothing else pushed."
+    },
+    {
+      "question": "A6 cannot show one zustand version: leva@0.10.1 (the pinned and latest leva) depends on zustand ^3.6.9 and imports its default export, which zustand 5 removed. Accept a second zustand (3.7.2) used only by leva in the lazy ?debug chunk?",
+      "for": "R0",
+      "default": "Kept leva's private zustand 3.7.2; every other consumer dedupes to zustand 5.0.15."
+    },
+    {
+      "question": "Ratify the package.json overrides added to reach single copies (not listed in the brief): playwright-core 1.56.1 (the @axe-core/playwright peer otherwise installs 1.64.1 at the top level and A3 reads revision 1248); three -> $three (stats-gl@2.4.2 under drei 10.7.9 pins three ^0.170.0); r3f-perf -> @react-three/drei $@react-three/drei and zustand $zustand (r3f-perf@7.2.3 wants drei ^9.103.0, whose react ^18 peer made npm ls report invalid, and zustand ~4.5.2; it only imports Text from drei and zustand/traditional plus zustand/shallow, all present in drei 10 and zustand 5); tunnel-rat -> zustand $zustand (named create and plain selectors, v5 compatible). ARCHITECTURE §1 and Dependabot (WP-06) should know about them.",
+      "for": "R0",
+      "default": "Overrides committed in chore(scaffold): vite, react, typescript and pinned toolchain."
+    },
+    {
+      "question": "inlineBootScript deviates from 'module none': TypeScript 6.0.3 deprecates module=None and its output for export {} is Object.defineProperty(exports, ...), which throws in a classic script. The plugin transpiles with module ESNext (target ES2017, removeComments) and an after-transformer that drops export {} and export modifiers and throws on any import. The stub transpiles to an empty <script></script>, and WP-10 can export pure functions from boot.ts for boot.test.ts.",
+      "for": "R0",
+      "default": "ESNext plus the strip transformer, documented in vite.config.ts; transpileBootScript is exported for postbuild or tests."
+    },
+    {
+      "question": "Vitest 5 treats passWithNoTests as a root-only option (NonProjectOptions), so it is set once at the root and applies to both the unit and pdf projects rather than inside each project.",
+      "for": "R0",
+      "default": "Root-level passWithNoTests: true; both projects use extends: true for the __BUILD_DATE__ define."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Playwright outputs: chromium:1194,chromium-headless-shell:1194 | Version 1.56.1 | 141.0.7390.37. npm ls summary: three 0.186.1, react 19.3.1, react-dom 19.3.1, troika-three-text 0.52.5, maath 0.10.8 single; zustand 5.0.15 plus leva's 3.7.2; playwright-core 1.56.1 single; npm ls --all exit 0 with no invalid or ERESOLVE, but it lists @img/sharp-wasm32 and @emnapi/runtime as extraneous (an npm quirk: they hang off sharp's freebsd and webcontainers wasm32 optional packages, which are skipped on linux; harmless). No browser download happened (@lhci/cli brings lighthouse 12.6.1 with puppeteer-core only), so PUPPETEER_SKIP_DOWNLOAD was not needed; npx playwright install was never run. Extra lint choices: the content-folder block also restricts './schema' value imports inside src/content (the repo-wide regex only matches paths ending in content/schema), and @typescript-eslint/no-unused-vars ignores underscore-prefixed names (stub parameters). README lists the WP-28 'fonts' script from ARCHITECTURE §15.2, marked as added in WP-28; package.json does not have it yet. Stub scripts export checkContent, buildMedia, buildResumePdf({ private, preview }), buildResumeTex, serveDist, checkCopy({ dist }), checkBudgets, checkGlyphs, genOg, newExhibit(id), checkLinks, capture, prerenderPages and writeHeaders; each runs and prints only when it is the entry file."
+}

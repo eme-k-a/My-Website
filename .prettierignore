@@ -1,0 +1,16 @@
+dist/
+dist-ssr/
+out/
+node_modules/
+package-lock.json
+docs/
+CLAUDE.md
+OWNERS.json
+review/
+resume/resume.tex
+public/og/
+tests/e2e/__screenshots__/
+test-results/
+playwright-report/
+.lighthouseci/
+assets-src/

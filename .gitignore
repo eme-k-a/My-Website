@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-ssr/
+out/
+.env.local
+.env*.local
+test-results/
+playwright-report/
+.lighthouseci/
+.DS_Store
+*.log
+review/runs/**/*.png

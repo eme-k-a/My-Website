@@ -1,0 +1,87 @@
+{
+  "name": "commit-history",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsx scripts/check-content.ts && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && tsx scripts/postbuild.ts && npm run resume && tsx scripts/check-budgets.ts && tsx scripts/check-copy.ts --dist",
+    "preview": "tsx scripts/serve-dist.ts",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "test": "vitest run --project unit",
+    "test:pdf": "vitest run --project pdf",
+    "verify": "npm run lint && npm run typecheck && npm test",
+    "e2e": "node scripts/not-implemented.mjs WP-07",
+    "visual": "node scripts/not-implemented.mjs WP-07",
+    "a11y": "node scripts/not-implemented.mjs WP-07",
+    "lh": "node scripts/not-implemented.mjs WP-06",
+    "review": "tsx scripts/review/capture.ts",
+    "resume": "tsx scripts/build-resume-pdf.ts && tsx scripts/build-resume-tex.ts",
+    "resume:private": "tsx scripts/build-resume-pdf.ts --private",
+    "new:exhibit": "tsx scripts/new-exhibit.ts",
+    "og": "tsx scripts/gen-og.ts",
+    "media": "tsx scripts/build-media.ts",
+    "check:copy": "tsx scripts/check-copy.ts",
+    "check:budgets": "tsx scripts/check-budgets.ts",
+    "check:glyphs": "tsx scripts/check-glyphs.ts"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "@fontsource/instrument-serif": "5.3.0",
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.2",
+    "leva": "0.10.1",
+    "maath": "0.10.8",
+    "r3f-perf": "7.2.3",
+    "react": "~19.3.1",
+    "react-dom": "~19.3.1",
+    "three": "~0.186.1",
+    "troika-three-text": "0.52.5",
+    "wouter": "3.13.0",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@eslint/js": "10.0.1",
+    "@fontsource/source-serif-4": "5.3.1",
+    "@lhci/cli": "0.15.1",
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.186.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "computer-modern": "0.1.3",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "fontkit": "2.0.4",
+    "globals": "17.13.0",
+    "pdf-lib": "1.17.1",
+    "prettier": "3.9.10",
+    "sharp": "0.35.5",
+    "subset-font": "2.9.0",
+    "tsx": "4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "8.71.2",
+    "unpdf": "1.8.1",
+    "vite": "8.3.4",
+    "vitest": "5.0.4",
+    "zod": "4.6.7"
+  },
+  "overrides": {
+    "playwright-core": "1.56.1",
+    "three": "$three",
+    "r3f-perf": {
+      "@react-three/drei": "$@react-three/drei",
+      "zustand": "$zustand"
+    },
+    "tunnel-rat": {
+      "zustand": "$zustand"
+    }
+  }
+}

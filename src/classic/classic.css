@@ -1,1 +1,247 @@
-/* Classic /resume/ page styles (R6) land in WP-10. */
+/*
+ * Classic /resume/ page (R6; EXPERIENCE §7.3, §7.7, §8.4). Built as its own CSS-only input
+ * (vite.config.ts `classic`) and linked from dist/resume/index.html, which ships zero JS. Light by
+ * default, dark through prefers-color-scheme (the --cv-* variables in tokens.css, keyed on
+ * [data-page='classic'] on <html>), black on white in print. Fallback banners show only as the
+ * :target of /resume/#why-<reason>.
+ */
+@import '../design/tokens.css';
+@import '../design/fonts.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--cv-bg);
+  color: var(--cv-text);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--cv-bg);
+  color: var(--cv-text);
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+}
+
+a {
+  color: var(--cv-link);
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: var(--focus-width) solid var(--cv-focus);
+  outline-offset: var(--focus-offset);
+}
+
+.cv {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: max(32px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 64px
+    max(20px, env(safe-area-inset-left));
+}
+
+/* Fallback banners (EXPERIENCE §8.4): hidden unless they are the URL fragment's target. */
+.cv-banner {
+  display: none;
+  margin: 0 0 24px;
+  padding: 12px 16px;
+  border-left: 3px solid var(--cv-link);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--cv-link) 10%, var(--cv-bg));
+  color: var(--cv-text);
+}
+
+.cv-banner:target {
+  display: block;
+}
+
+/* "Try the gallery" cannot work without WebGL2. */
+#why-no-webgl2:target ~ .cv-actions .cv-gallery {
+  display: none;
+}
+
+.cv-name {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 6vw, 56px);
+  font-weight: var(--weight-regular);
+  line-height: var(--lh-display);
+}
+
+.cv-headline {
+  margin: 12px 0 0;
+  color: var(--cv-text-2);
+}
+
+.cv-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--type-small);
+}
+
+.cv-contact li {
+  display: flex;
+  align-items: center;
+  min-height: var(--target-min);
+}
+
+.cv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin: 12px 0 0;
+}
+
+.cv-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding: 0 16px;
+  border-radius: var(--radius);
+  background: var(--cv-text);
+  color: var(--cv-bg);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+
+.cv-gallery {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  font-weight: var(--weight-medium);
+}
+
+.cv-section {
+  margin-top: 40px;
+}
+
+.cv-section-title {
+  margin: 0 0 16px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--cv-text-2);
+  font-size: var(--type-label);
+  font-weight: var(--weight-medium);
+  line-height: var(--lh-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.cv-entry + .cv-entry {
+  margin-top: 24px;
+}
+
+.cv-entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 16px;
+}
+
+.cv-entry-title {
+  margin: 0;
+  font-size: var(--type-role);
+  font-weight: var(--weight-medium);
+  line-height: var(--lh-role);
+}
+
+.cv-dates {
+  margin: 0;
+  color: var(--cv-text-2);
+  font-size: var(--type-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cv-entry-org,
+.cv-stack {
+  margin: 2px 0 0;
+  color: var(--cv-text-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+.cv-entry-org {
+  font-style: italic;
+}
+
+.cv-bullets,
+.cv-list {
+  margin: 8px 0 0;
+  padding-left: 1.2em;
+}
+
+.cv-bullets li + li,
+.cv-list li + li {
+  margin-top: 4px;
+}
+
+.cv-skills {
+  margin: 0;
+}
+
+.cv-skill {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+.cv-skill + .cv-skill {
+  margin-top: 6px;
+}
+
+.cv-skill dt {
+  font-weight: var(--weight-medium);
+}
+
+.cv-skill dt::after {
+  content: ':';
+}
+
+.cv-skill dd {
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .cv {
+    max-width: none;
+    padding: 0;
+  }
+
+  .cv-banner,
+  .cv-banner:target,
+  .cv-actions {
+    display: none;
+  }
+
+  .cv-button {
+    background: none;
+    color: #000;
+  }
+
+  a {
+    color: #000;
+  }
+
+  .cv-entry {
+    break-inside: avoid;
+  }
+}

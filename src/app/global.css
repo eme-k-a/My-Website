@@ -1,8 +1,8 @@
 /*
  * Gallery-wide CSS (R6): tokens and fonts, the dark base, focus rings, the mode rules of
- * ARCHITECTURE §5.2 and §6.1, and the <noscript> notice. The gallery is always dark (EXPERIENCE
- * §7.10); /resume/ uses src/classic/classic.css instead. Snapping and section sizing belong to
- * ScrollTrack (R4).
+ * ARCHITECTURE §5.2 and §6.1, the <noscript> notice and the 404 page (which links this same
+ * stylesheet and no script). The gallery is always dark (EXPERIENCE §7.10); /resume/ uses
+ * src/classic/classic.css instead. Snapping and section sizing belong to ScrollTrack (R4).
  */
 @import '../design/tokens.css';
 @import '../design/fonts.css';
@@ -75,4 +75,76 @@ html:has(dialog[open]) {
   color: var(--text);
   font-size: var(--type-small);
   line-height: var(--lh-small);
+}
+
+/* 404 (ARCHITECTURE §5.9, EXPERIENCE §8.4): gallery colors, zero JS. */
+.nf {
+  display: grid;
+  place-content: center;
+  min-height: 100svh;
+  padding: 48px max(24px, env(safe-area-inset-right)) 48px max(24px, env(safe-area-inset-left));
+  background:
+    radial-gradient(60% 50% at 70% 85%, rgba(255, 233, 210, 0.1), transparent 70%), var(--ink);
+}
+
+.nf-eyebrow {
+  margin: 0 0 8px;
+  color: var(--text-2);
+  font-size: var(--type-label);
+  font-weight: var(--weight-medium);
+  line-height: var(--lh-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.nf-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--type-h2);
+  font-weight: var(--weight-regular);
+  line-height: var(--lh-h2);
+}
+
+.nf-body {
+  max-width: 42ch;
+  margin: 12px 0 0;
+  color: var(--text-2);
+}
+
+.nf-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nf-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--target-min);
+  padding: 0 14px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+
+.nf-link:hover {
+  border-color: var(--brass-hi);
+}
+
+.nf-link[data-primary] {
+  border-color: var(--brass);
+  background: var(--brass);
+  color: var(--ink);
+}
+
+.nf-link[data-primary]:hover {
+  border-color: var(--brass-hi);
+  background: var(--brass-hi);
 }

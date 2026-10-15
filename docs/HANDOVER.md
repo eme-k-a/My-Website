@@ -39,10 +39,10 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | WP-03 | Content file + headshot pipeline | Done (999cfeb to c62ddbf; crop fixed after verification) |
 | WP-04 | Resume outputs (PDF public/private, `.tex`, before/after) | Done (fdbfb6a to 6ef8e39) |
 | WP-05 | Art direction + tokens | Done (f9b8ae5 to 2383647) |
-| Gate G0 | Emeka approves the resume before/after, Verafin bullets, title style | Package sent to Emeka 2026-10-15; waiting for his approval |
+| Gate G0 | Emeka approves the resume before/after, Verafin bullets, title style | Approved 2026-10-15 (7658245): hybrid, manager cleared, (Co-op) style, no GitHub on PDF yet |
 | WP-06, WP-07, WP-10 | CI, test harness, app shell | Done (merged at ced456a; first CI run: verify, build, e2e green; latex fixed in 1431a5c) |
-| F-M1 | Fix-ups from M1a verification | Next |
-| WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Next, after F-M1 |
+| F-M1 | Fix-ups from M1a verification | Committed (a9f0d49..9937041); independent verification running in M1b-2 |
+| WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Building in M1b-2 (WP-08 resumes from WIP commit 5ae2007 on wp/WP-08) |
 | WP-11 onward | M2 to M7 | Not started |
 
 How to tell what's done:

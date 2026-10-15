@@ -110,6 +110,25 @@
       "evidence": "20 passed, 4 skipped (project scoping), 0 violations. Also covered: /resume/#why-software (a banner shown) and the no-webgl landing /resume/#why-no-webgl2."
     }
   ],
+  "integration": {
+    "by": "R0",
+    "onto": "claude/intelligent-sagan-poq45q at eb95786 (after WP-06 and WP-07, merge order WP-06, WP-07, WP-10): cherry-picked in order, linear history",
+    "commits": [
+      "564e6d5 feat(boot): mode decision before first paint (was f49e333)",
+      "1c04668 feat(shell): hud, hero, cards, dialog skeleton and museum gate (was 58d6885)",
+      "eb2ba97 feat(classic): zero-js classic resume and 404 (was bd86a2b)",
+      "edb2675 feat(prerender): first prerendered pages (was 5c80695)",
+      "4335d49 test(e2e): shell and fast-path specs (was 83ff350)"
+    ],
+    "conflicts": "None. Every changed path matches OWNERS.json wps[\"WP-10\"].allow and none matches its deny (src/overlay/ScrollTrack*). No package.json or package-lock.json change, so no npm ci was needed.",
+    "checks": "Main tree after the picks: npm run verify exit 0 (lint and prettier clean, both tsc configs clean now that WP-07's tests/e2e/fixtures.ts is present, vitest unit 23 files, 385 tests); npm run build exit 0 (content ok, prerendered index.html, resume/index.html and 404.html, _headers with the boot script on 1 of 3 pages and one sha256 source, PDF 1 page, entry 87.10 KB gzip of 110, museum 0.07 KB, check-copy ok with dist). CI job commands run locally: check:copy ok, build-resume-tex plus git diff --exit-code clean, test:pdf 9 passed and 1 skipped. Playwright with PORT=4173 through the config's serve-dist webServer: 224 tests in 6 files listed; npm run e2e 111 passed, 89 skipped (project scoping and capture), exit 0; npm run a11y 20 passed, 4 skipped, exit 0; npm run visual exit 0 (no @visual spec yet).",
+    "acceptanceRerun": "A1: npx vitest run --project unit src/app/boot.test.ts 12 passed (rows 1 to 8, size, em dash and script-end, throwing storage, root-only redirect); the inlined script in dist/index.html is 1978 bytes. A2: check:budgets entry 87.10 KB gzip of 110, budgets ok. A3: grep -c '<script' gives 0 for dist/resume/index.html and dist/404.html. A4: no-webgl project, both fallback tests pass. A5: pixel7 project, 6 fast-path tests pass (360x640 and 390x844, JS off and JS on with the museum chunk blocked, LCP h1), desktop LCP h1 passes. A6: @smoke passes on desktop, pixel7, pixel7-landscape and no-webgl with WP-07's guards; the one sha256 in dist/_headers equals the SHA-256 of the only inline script in dist/index.html. A7: npm run a11y -- tests/e2e/shell.spec.ts 20 passed, 0 axe violations. Together, shell plus fast-path: 47 passed, 33 skipped.",
+    "lighthouse": "npm run lh (both configs) still exits 1 only because /exhibit/verafin/ returns 404 until WP-14 builds the exhibit pages, so the CI lighthouse job stays red until then. lhci collect plus assert with the same configs on the two existing URLs passes: / (?test=1&mode=museum) mobile accessibility 1, seo 1, LCP about 2.19 s, CLS 0.001, performance 0.97; desktop LCP about 0.52 s, CLS 0.020 to 0.022; /resume/ performance 1, accessibility 1, seo 1, best-practices 0.96 on both. Before WP-10, / scored accessibility 0.91 and seo 0.9 (WP-06 integration).",
+    "entryImports": "Checked for openQuestions[1]: the four static src/museum imports (rail/navigation.ts, rail/progress.ts, rail/layout.ts, quality/tiers.ts) import only types, src/content/ids, format and selectors. The built entry has no three.js fingerprint (WebGLRenderer, BufferGeometry, REVISION: 0 matches; the only 'three' strings are exhibit copy) and no leva or troika. The ruling itself stays with R0.",
+    "resolved": "openQuestions[2] (the spec commit needs WP-07): resolved by the merge order; npm run verify passes on the merged tree.",
+    "a3CaptureFromWp07": "Still deferred: CAPTURE_DIR=out/wp10-r0 CAPTURE_STOPS=lobby --grep @capture --project=desktop now finds window.__MUSEUM__ (installTestHook from WP-10) but still times out in waitForMuseum because ready is written by WP-08.",
+    "ci": "The remote GitHub Actions run (A6 remote part) and anything on Netlify are deferred to R0 after push."
+  },
   "deviations": [
     "The worktree was created from main (4f1ab2b, the legacy site) instead of the integration branch; the local branch was reset to a4625f7 (integration HEAD) before any work.",
     "The lobby intro paragraph is hidden below 480 px (like the card caption, EXPERIENCE §5.8 and §9.2). Measured: at 360x640 and 390x844 the paragraph is about twice the h1's area and would otherwise be the LCP element (WP-10 A5, EXPERIENCE §8.6). The lead sentence and the static hint stay. See openQuestions.",

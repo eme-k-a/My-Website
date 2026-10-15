@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EXHIBIT_IDS } from '../../../content/ids';
 import { MAX_EXHIBIT_TRIANGLES, defineExhibit } from './defineExhibit';
 import { registry } from './registry';
@@ -53,5 +53,17 @@ describe('defineExhibit', () => {
     expect(() => defineExhibit(unknown)).toThrow(/not in EXHIBIT_IDS/);
     const heavy = { ...valid, budget: { ...valid.budget, triangles: MAX_EXHIBIT_TRIANGLES + 1 } };
     expect(() => defineExhibit(heavy)).toThrow(/triangles/);
+  });
+
+  describe('in a production build', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it('skips the assertions when import.meta.env.DEV is false', () => {
+      vi.stubEnv('DEV', false);
+      const unknown = { ...valid, id: 'not-an-exhibit' } as unknown as ExhibitManifest;
+      expect(defineExhibit(unknown)).toBe(unknown);
+    });
   });
 });

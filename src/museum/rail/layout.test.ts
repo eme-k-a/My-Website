@@ -345,3 +345,16 @@ describe('validation (EXPERIENCE §2.2 rule 2)', () => {
     expect(() => computeLayout(stray, NOW)).toThrow(/Wing 'volunteer'.*'klarup' is not/);
   });
 });
+
+describe('validation (EXPERIENCE §2.2 rule 3)', () => {
+  it('rejects anything but exactly one education entry (the Foundations room has one plinth)', () => {
+    const two = draftContent();
+    two.education.push({ ...structuredClone(two.education[0]!), id: 'second-degree' });
+    expect(() => computeLayout(two, NOW)).toThrow(
+      /Foundations room holds exactly one education entry \(found 2\)/,
+    );
+    const none = draftContent();
+    none.education = [];
+    expect(() => computeLayout(none, NOW)).toThrow(/\(found 0\)/);
+  });
+});

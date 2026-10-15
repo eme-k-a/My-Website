@@ -1,5 +1,6 @@
 // Design tokens (EXPERIENCE §6.2 to §6.5, §7.2 to §7.5). Token NAMES are frozen at contracts-v1;
-// R2 tunes VALUES in WP-05 and WP-11. src/design/tokens.css mirrors the CSS-facing ones.
+// R2 tunes VALUES in WP-05 and WP-11. WP-05 adds src/design/tokens.css to mirror the CSS-facing
+// ones.
 // Units: names ending in Ms are milliseconds, S seconds, M meters, Deg degrees; `dur*` are ms;
 // `light.spotAngle` is radians; framing values are fractions of the viewport.
 

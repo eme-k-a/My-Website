@@ -179,7 +179,7 @@ describe('history transitions, one per ARCHITECTURE §5.6 row', () => {
     const h = memoryHistory({ url: '/', state: null });
     h.apply(transitions.enterWing(h.here, 'volunteer', 2400));
     expect(deriveUi(h.here.pathname, h.here.state).track).toBe('volunteer');
-    const op = transitions.exitWing(h.here);
+    const op = transitions.exitWing(h.here, 'volunteer');
     expect(op).toEqual({ type: 'back' });
     h.apply(op);
     expect(deriveUi(h.here.pathname, h.here.state)).toEqual({ openId: null, track: 'main' });
@@ -188,11 +188,23 @@ describe('history transitions, one per ARCHITECTURE §5.6 row', () => {
 
   it('row 9: exiting a wing entered by a cold deep link replaces the state with main', () => {
     const here = { pathname: '/', search: '', state: { inApp: false, track: 'projects' } };
-    expect(transitions.exitWing(here)).toEqual({
+    expect(transitions.exitWing(here, 'projects')).toEqual({
       type: 'replace',
       url: '/',
       state: { inApp: false, track: 'main' },
     });
+  });
+
+  it('row 9b: exit goes back only when the in-app entry is on this wing (EXPERIENCE §3.4)', () => {
+    const inProjects = { pathname: '/', search: '', state: { inApp: true, track: 'projects' } };
+    expect(transitions.exitWing(inProjects, 'projects')).toEqual({ type: 'back' });
+    expect(transitions.exitWing(inProjects, 'volunteer')).toEqual({
+      type: 'replace',
+      url: '/',
+      state: { inApp: false, track: 'main' },
+    });
+    const onMain = { pathname: '/', search: '', state: { inApp: true, track: 'main' } };
+    expect(transitions.exitWing(onMain, 'projects')).toMatchObject({ type: 'replace' });
   });
 
   it('row 10: a cold load of /exhibit/<id>/ replaces with the exhibit and its track', () => {
@@ -223,7 +235,7 @@ describe('history transitions, one per ARCHITECTURE §5.6 row', () => {
     const urls = [
       transitions.openStory(here, 'mun', 'main'),
       transitions.enterWing(here, 'projects', 0),
-      transitions.exitWing(here),
+      transitions.exitWing(here, 'projects'),
       transitions.closeStory({ ...here, pathname: '/exhibit/mun/' }),
     ].map((op) => (op.type === 'push' || op.type === 'replace' ? op.url : op.type));
     expect(urls).toEqual([

@@ -138,10 +138,13 @@ export function enterWing(here: Here, wing: WingId, mainScrollY: number): Histor
   };
 }
 
-/** Exit a wing: back when the app entered it, else (cold deep link) replace with the main track. */
-export function exitWing(here: Here): HistoryOp {
+/**
+ * Exit `wing`: back when the app entered it (the entry is in-app and on this wing, EXPERIENCE §3.4),
+ * else (a cold deep link) replace with the main track.
+ */
+export function exitWing(here: Here, wing: WingId): HistoryOp {
   const state = readHistoryState(here.state);
-  if (state?.inApp && state.track !== 'main') return BACK;
+  if (state?.inApp && state.track === wing) return BACK;
   return {
     type: 'replace',
     url: withSearch(here.pathname, here),

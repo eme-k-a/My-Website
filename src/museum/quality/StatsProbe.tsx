@@ -14,22 +14,42 @@ import {
 } from 'three';
 import { useMuseum } from '../../app/store';
 import { registerStatsProvider, type ExhibitStats, type MuseumStats } from '../../app/testHooks';
-import type { ExhibitId } from '../../content/ids';
+import { EXHIBIT_IDS, type ExhibitId } from '../../content/ids';
 import { progress } from '../rail/progress';
 
 type Vec3 = [number, number, number];
 
 const exhibitStats = new Map<ExhibitId, ExhibitStats>();
+const mountedIds = new Set<ExhibitId>();
 let cameraTarget: Vec3 | null = null;
 let frames = 0;
 
 /**
- * ExhibitFrame reports each revealed exhibit (dev and ?test=1); pass null when it unmounts.
- * `stats().mounted` lists the exhibits currently reported.
+ * ExhibitFrame marks itself mounted in its mount effect and returns the disposer as the cleanup:
+ * `useEffect(() => markExhibitMounted(id), [id])`. The exhibit counts as mounted from then on,
+ * whether it shows the placeholder, is still compiling or is revealed. The disposer also drops the
+ * exhibit's reported stats, so an unmount never leaves a stale entry.
+ */
+export function markExhibitMounted(id: ExhibitId): () => void {
+  mountedIds.add(id);
+  return () => {
+    mountedIds.delete(id);
+    exhibitStats.delete(id);
+  };
+}
+
+/**
+ * ExhibitFrame reports the measured stats of what a slot shows (dev and ?test=1, after reveal);
+ * null clears them. A reported exhibit also counts as mounted.
  */
 export function reportExhibit(id: ExhibitId, data: ExhibitStats | null): void {
   if (data) exhibitStats.set(id, { ...data });
   else exhibitStats.delete(id);
+}
+
+/** `stats().mounted`: marked or reported exhibits, in EXHIBIT_IDS order. */
+function mountedExhibits(): ExhibitId[] {
+  return EXHIBIT_IDS.filter((id) => mountedIds.has(id) || exhibitStats.has(id));
 }
 
 /** CameraRig reports the point it looks at; without a report, the target is 1 m ahead of the camera. */
@@ -118,7 +138,7 @@ export function StatsProbe() {
         dpr: gl.getPixelRatio(),
         tier,
         track,
-        mounted: [...exhibitStats.keys()],
+        mounted: mountedExhibits(),
         exhibits: Object.fromEntries(exhibitStats),
         camera: { position, target: cameraTarget ?? [ahead.x, ahead.y, ahead.z] },
         progress: { target: progress.target, current: progress.current },

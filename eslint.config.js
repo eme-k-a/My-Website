@@ -8,13 +8,19 @@ import tseslint from 'typescript-eslint';
 // no-restricted-imports or no-restricted-syntax replaces an earlier one for the
 // same files, so every block that sets them spreads these shared entries in.
 const CLIENT_IMPORT_MESSAGE = 'Client code may only import type from zod and the schema';
+// Any script extension: bundler resolution maps ./schema.js (and .mjs, .tsx, ...) to schema.ts.
+const SCRIPT_EXT = '(\\.[cm]?[jt]sx?)?';
 const clientImportPatterns = [
   { regex: '^zod(/|$)', allowTypeImports: true, message: CLIENT_IMPORT_MESSAGE },
-  { regex: '(^|/)content/schema(\\.ts)?$', allowTypeImports: true, message: CLIENT_IMPORT_MESSAGE },
+  {
+    regex: `(^|/)content/schema${SCRIPT_EXT}$`,
+    allowTypeImports: true,
+    message: CLIENT_IMPORT_MESSAGE,
+  },
 ];
 // Inside src/content/ the schema is reached as ./schema.
 const contentFolderImportPatterns = [
-  { regex: '^\\./schema(\\.ts)?$', allowTypeImports: true, message: CLIENT_IMPORT_MESSAGE },
+  { regex: `^\\./schema${SCRIPT_EXT}$`, allowTypeImports: true, message: CLIENT_IMPORT_MESSAGE },
 ];
 const NATIVE_SCROLL_MESSAGE = 'Input is native scroll: no wheel or touch listeners';
 const nativeScrollSelectors = [

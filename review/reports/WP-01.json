@@ -9,7 +9,10 @@
     "0e3e016 chore(scaffold): stub scripts and placeholder hero",
     "34a3d63 fix(wp-01): scope client lint and app typecheck to client code",
     "cfca544 fix(wp-01): keep export default expressions in the inlined boot script",
-    "b68e9e5 fix(wp-01): note the missing fonts script and the dependency overrides"
+    "b68e9e5 fix(wp-01): note the missing fonts script and the dependency overrides",
+    "37c663f fix(wp-01): update the report with fresh acceptance evidence",
+    "a16fdda fix(wp-01): let tsx compile src tsx components with react-jsx",
+    "b87152a fix(wp-01): catch schema imports written with a script extension"
   ],
   "changedFiles": [
     ".DS_Store",
@@ -63,7 +66,7 @@
       "criterion": "Clean install, verify and build",
       "command": "rm -rf node_modules dist dist-ssr && npm ci && npm run verify && npm run build",
       "result": "pass",
-      "evidence": "Fresh clone of b68e9e5 in the scratchpad: exit 0. npm ci added 650 packages; eslint, prettier --check, both tsc projects and vitest green; build ran every stub, the client build (main 220.07 kB, 68.80 kB gzip; classic css) and the SSR build (dist-ssr/entry-server.js). dist/index.html has <script></script> at the boot marker."
+      "evidence": "Fresh clone of b87152a in the scratchpad: npm ci, verify and build all exit 0. Build printed every stub line in order; client build main-DlepCaGS.js 220.07 kB (68.80 kB gzip, byte-identical name to before the tsconfig change) plus the classic css; SSR build dist-ssr/entry-server.js. dist/index.html has <script></script> at the boot marker."
     },
     {
       "id": "A2",
@@ -77,59 +80,69 @@
       "criterion": "Playwright matches the container",
       "command": "browsers.json revision check; npx playwright --version; chromium.launch(...).version()",
       "result": "pass",
-      "evidence": "chromium:1194,chromium-headless-shell:1194 / Version 1.56.1 / 141.0.7390.37 (relies on the playwright-core 1.56.1 override)"
+      "evidence": "chromium:1194,chromium-headless-shell:1194 / Version 1.56.1 / 141.0.7390.37 (launch exit 0; relies on the playwright-core 1.56.1 override)"
     },
     {
       "id": "A4",
       "criterion": "Legacy tag on the old main tip",
       "command": "git ls-remote --tags origin legacy-site",
       "result": "fail",
-      "evidence": "Blocked on push access. git fetch origin main confirmed origin/main = 4f1ab2b5e0c080c9e4bde94ac7b530ff51442c5d and the local tag legacy-site points there. git push origin legacy-site (the one push the brief allows) was retried and refused by the remote: 'RPC failed; HTTP 403'. Not retried again or routed around. ls-remote prints nothing (exit 0)."
+      "evidence": "Blocked on push rights, not on code. ls-remote prints nothing (exit 0) and origin has no tags. The local lightweight tag legacy-site points to 4f1ab2b5e0c080c9e4bde94ac7b530ff51442c5d, which is origin/main. The one allowed push (git push origin legacy-site) was refused earlier with HTTP 403; the container proxy rules class 403 as a policy denial to report, not retry, so this round did not push again or route around it."
     },
     {
       "id": "A5",
       "criterion": "Every npm script except dev and format runs and exits 0",
       "command": "for s in ...; do npm run -s \"$s\" >/dev/null 2>&1 || echo \"FAIL $s\"; done",
       "result": "pass",
-      "evidence": "prints nothing (20 scripts)"
+      "evidence": "prints nothing (20 scripts) in the clean clone of b87152a"
     },
     {
       "id": "A6",
       "criterion": "Single copies of the 3D stack",
       "command": "npm ls three react react-dom troika-three-text maath zustand; npm ls --all > /dev/null",
       "result": "fail",
-      "evidence": "Needs an R0 ruling. three 0.186.1, react 19.3.1, react-dom 19.3.1, troika-three-text 0.52.5 and maath 0.10.8 have one copy each, the rest deduped. zustand 5.0.15 is deduped for fiber, drei, tunnel-rat and r3f-perf, but leva@0.10.1 keeps zustand@3.7.2. npm ls and npm ls --all exit 0; no invalid or ERESOLVE. leva 0.10.1 is the latest release, depends on zustand ^3.6.9 and imports the v3 default exports (create, shallow) and create(selector, equalityFn), all removed in zustand 5, so an override would break leva. Both pins come from ARCHITECTURE §1.1."
+      "evidence": "Blocked on an R0 ruling (see openQuestions). npm ls and npm ls --all exit 0 with no invalid or ERESOLVE. three 0.186.1, react 19.3.1, react-dom 19.3.1, troika-three-text 0.52.5 and maath 0.10.8 have one copy each, the rest deduped. zustand 5.0.15 is shared by the root, fiber, drei, tunnel-rat and r3f-perf; leva@0.10.1 keeps its own zustand@3.7.2. npm view leva confirms 0.10.1 is still the latest release and still depends on zustand ^3.6.9; it uses the v3 default exports that zustand 5 removed, so an override would break leva."
     },
     {
       "id": "A7",
       "criterion": "Lint guards work",
       "command": "the two eslint --stdin probes",
       "result": "pass",
-      "evidence": "src/probe.ts: exit=1 'Input is native scroll: no wheel or touch listeners' (no-restricted-syntax). src/museum/exhibits/probe/index.ts: exit=1 'Exhibits import only from ./ and ../_kit (no cross-exhibit or app imports)' (no-restricted-imports). Extra probes: src/content/schema.ts with a runtime zod import passes now; runtime imports of zod or the schema from src/app, src/content/resume.ts and an exhibit still fail; exhibit tests keep the §7.5 rules."
+      "evidence": "src/probe.ts: exit=1 'Input is native scroll: no wheel or touch listeners' (no-restricted-syntax). src/museum/exhibits/probe/index.ts: exit=1 'Exhibits import only from ./ and ../_kit (no cross-exhibit or app imports)' (no-restricted-imports). Extra probes after b87152a: runtime imports of ../content/schema.js, .mjs, .ts and bare, and ./schema.js and ./schema.tsx in src/content/resume.ts, now fail with the client zod message; import type and inline type imports with a .js suffix pass; ../content/schemaHelpers.js is not matched; runtime zod in src/content/schema.ts still passes."
     },
     {
       "id": "A8",
       "criterion": "No U+2014 in tracked files",
       "command": "git ls-files -z | xargs -0 grep -l \"$(printf '\\342\\200\\224')\"",
       "result": "pass",
-      "evidence": "prints nothing; 0 in commit messages 8b015d5..HEAD; no phone pattern in tracked files"
+      "evidence": "prints nothing; 0 em dashes and 0 phone-pattern matches in the commit messages 8b015d5..HEAD and in the diff 37c663f..HEAD"
     }
   ],
   "openQuestions": [
     {
-      "question": "A4: the remote refuses git push origin legacy-site with HTTP 403 in this session. Someone with push access to origin must run it from the repo (the local tag is already on 4f1ab2b5e0c080c9e4bde94ac7b530ff51442c5d), then git ls-remote --tags origin legacy-site.",
+      "question": "A4: git push origin legacy-site is refused with HTTP 403 for this session, which the proxy rules treat as a policy denial. Someone with push rights to origin (Emeka or R0) runs `git tag legacy-site 4f1ab2b5e0c080c9e4bde94ac7b530ff51442c5d && git push origin legacy-site` (or pushes the existing local tag) and confirms with `git ls-remote --tags origin legacy-site`. No other WP-01 change depends on it.",
       "for": "R0",
-      "default": "Tag created locally only; nothing pushed."
+      "default": "Tag exists locally only; nothing pushed."
     },
     {
-      "question": "A6: allow leva@0.10.1's private zustand@3.7.2 (amend A6 and ARCHITECTURE §1.1), or replace or drop leva? No leva release supports zustand 5. If kept, WP-06 or WP-28 budget checks should confirm leva and zustand 3 stay in the lazy ?debug chunk.",
+      "question": "A6: leva@0.10.1 (pinned in ARCHITECTURE §1.1 and the brief) needs its private zustand@3.7.2. Rule one: (a) amend A6 and ARCHITECTURE §1.1 to allow leva's zustand 3 inside the lazy ?debug chunk only; WP-06 check-budgets already fails if leva code reaches the entry or museum chunk, and leva is the only importer of that copy; or (b) drop or replace leva (WP-16 owns the debug panel), after which R10 removes it and its zustand 3 in one lockfile commit. Overriding leva onto zustand 5 is not an option: it breaks leva.",
       "for": "R0",
-      "default": "Kept leva's private zustand 3.7.2; every other consumer dedupes to zustand 5.0.15."
+      "default": "(a) in practice: leva kept with its private zustand 3.7.2; every other consumer dedupes to zustand 5.0.15."
     },
     {
-      "question": "Confirm the client-scope fix: src/content/schema.ts and src/content/temporal.ts (build and test time only per ARCHITECTURE §3.1) are exempt from the client zod rule, as the brief's 'src/** except tests' would otherwise block the runtime zod import §3.3 requires. src/**/*.test.ts and temporal.ts moved from tsconfig.app.json to tsconfig.node.json (which now also includes src/vite-env.d.ts and sets lib ES2023, DOM, DOM.Iterable), so process.env and node:vm type-check. A client import of temporal.ts still fails tsconfig.app.json on 'process'.",
+      "question": "Ratify the root tsconfig.json change (a16fdda), which departs from the literal \"files\": [] in the brief and ARCHITECTURE §15.4 to keep their stated intent. tsx applies a tsconfig only to files that config includes, so with files [] a script that renders a src/**/*.tsx component crashed with 'ReferenceError: React is not defined' (reproduced on 37c663f). The root now extends tsconfig.app.json, sets jsx react-jsx and includes src/**/*.tsx, keeping both references. Proved in a clean clone of b87152a: a scripts/*.ts that renders a src/print/*.tsx component through tsx prints <h1>ok</h1>; npm run typecheck stays green; the Vite client chunk is unchanged (main-DlepCaGS.js); tsserver still assigns src/**/*.tsx and src/**/*.ts to tsconfig.app.json and scripts/*.ts to tsconfig.node.json with no diagnostics. Cost: because the root now has inputs, a bare `tsc -p tsconfig.json` (and an editor's view of tsconfig.json) reports TS6305, TS6306 and TS6310 about the references; nothing runs that, and README 'TypeScript projects' says to use npm run typecheck. Extending the app config keeps tsx and Vite compiling .tsx with the same options as the app project. The alternative that keeps files [] is `tsx --tsconfig tsconfig.app.json` in the resume, resume:private and og scripts, but a direct `npx tsx scripts/build-resume-pdf.ts` would still crash, and a later edit of those script keys could drop the flag.",
       "for": "R0",
-      "default": "Applied in 34a3d63 (eslint.config.js, tsconfig.app.json, tsconfig.node.json). Proved in a scratch copy: schema.ts with a runtime zod import, temporal.ts with process.env and a boot.test.ts with node:vm pass lint, typecheck and vitest."
+      "default": "Root include of src/**/*.tsx with extends tsconfig.app.json, as committed in a16fdda."
+    },
+    {
+      "question": "The verifier asked for a smoke test so the tsx JSX setup cannot regress. WP-01's allow list has no test file, so none was added. Grant R10 one colocated test (for example scripts/tsx-jsx.test.ts that renders a small src fixture through the tsx CLI and expects <h1>ok</h1>), or rely on WP-04: once build-resume-pdf.ts renders src/print/ResumePrint.tsx, npm run build (CI) fails on any regression.",
+      "for": "R0",
+      "default": "No test; the probe is recorded in this report and in README 'TypeScript projects'."
+    },
+    {
+      "question": "Confirm the client-scope fix: src/content/schema.ts and src/content/temporal.ts (build and test time only per ARCHITECTURE §3.1) are exempt from the client zod rule, as the brief's 'src/** except tests' would otherwise block the runtime zod import §3.3 requires. src/**/*.test.ts and temporal.ts moved from tsconfig.app.json to tsconfig.node.json (which also includes src/vite-env.d.ts and sets lib ES2023, DOM, DOM.Iterable), so process.env and node:vm type-check. A client import of temporal.ts still fails tsconfig.app.json on 'process'. Since b87152a the schema patterns also match any script extension (../content/schema.js, ./schema.js).",
+      "for": "R0",
+      "default": "Applied in 34a3d63 and b87152a (eslint.config.js, tsconfig.app.json, tsconfig.node.json)."
     },
     {
       "question": "Ratify the package.json overrides (not in the brief or ARCHITECTURE §1): playwright-core 1.56.1 (otherwise the @axe-core/playwright peer hoists 1.64.1 and A3 reads revision 1248); three -> $three (stats-gl@2.4.2 under drei pins three ^0.170.0); r3f-perf -> root @react-three/drei and zustand (it imports only drei Text and zustand/traditional plus zustand/shallow); tunnel-rat -> root zustand. README 'Dependency notes' records them for Dependabot (WP-06).",
@@ -147,16 +160,26 @@
       "default": "Root-level passWithNoTests: true."
     },
     {
+      "question": "Todo 'npm ls is clean': after a clean npm ci, plain npm ls (exit 0) lists @emnapi/runtime@1.11.3 and @img/sharp-wasm32@0.35.5 as extraneous. Both are dev and optional in the lockfile and are required only by sharp's freebsd-wasm32 and webcontainers-wasm32 packages, which npm skips on linux; an override cannot remove them. Amend the Todo to 'no invalid or missing entries'?",
+      "for": "R0",
+      "default": "Accepted as known; npm ls and npm ls --all exit 0 with no invalid, missing or ERESOLVE."
+    },
+    {
       "question": "eslint-plugin-react-hooks 7 recommended (brief-mandated) enables react-hooks/immutability, which rejects mutating a useThree(s => s.camera) value inside useFrame. Tell R3 and R4 (CameraRig) to mutate state.camera from the useFrame callback, or relax the rule for src/museum/**?",
       "for": "R0",
       "default": "Rule left at the preset level."
     },
     {
-      "question": "detect-gpu (via drei 10.7.9) and draco3d (via three-stdlib) are installed transitively although ARCHITECTURE §1.5 rules them out; nothing imports them. Add a restricted import for detect-gpu, drei useDetectGPU and the Draco loaders, or leave it to WP-06 budget checks?",
+      "question": "detect-gpu (via drei 10.7.9) and draco3d (via three-stdlib) are installed transitively although ARCHITECTURE §1.5 rules them out; nothing imports them. Add a restricted import for detect-gpu, drei useDetectGPU and the Draco loaders in eslint.config.js (R10), or leave it to WP-06 budget checks?",
       "for": "R0",
       "default": "No extra lint rule; not imported anywhere."
+    },
+    {
+      "question": "npm audit reports 17 advisories (2 low, 4 moderate, 11 high), all through the dev-only @lhci/cli 0.15.1 (lighthouse, puppeteer-core, proxy-agent, tmp); npm audit --omit=dev reports 0. Track in WP-06 (Dependabot) rather than overriding transitive versions under the pinned lhci?",
+      "for": "R0",
+      "default": "No change; production dependencies have no advisories."
     }
   ],
   "depsRequest": [],
-  "notes": "This report is committed in a final fix(wp-01) commit on top of b68e9e5; R0 records its SHA at merge. Merge WP-01 as a unit: 1ed7fe4 alone passes verify but not build (the stubs and index.html arrive in 0e3e016). Playwright outputs: chromium:1194,chromium-headless-shell:1194 | Version 1.56.1 | 141.0.7390.37. npm ls summary: three 0.186.1, react 19.3.1, react-dom 19.3.1, troika-three-text 0.52.5, maath 0.10.8 single; zustand 5.0.15 plus leva's 3.7.2; playwright-core 1.56.1 single. Known: plain npm ls lists @emnapi/runtime@1.11.3 and @img/sharp-wasm32@0.35.5 as extraneous (exit 0). They come from sharp's freebsd and webcontainers wasm32 optional packages, which npm skips on linux while installing their unconstrained shared dependency; harmless, and an override cannot remove them. README: the fonts row now says WP-28 adds that key (npm run fonts reports a missing script until then), plus a 'Dependency notes' section. No browser download happened; npx playwright install was never run."
+  "notes": "Second verification round: a16fdda fixes the major tsx JSX issue (root tsconfig) and b87152a the schema-guard .js bypass; this report is committed on top of b87152a and R0 records its SHA at merge. A4 and A6 still fail and cannot be closed by R10: A4 needs someone with push rights to push the existing local tag, A6 needs the R0 ruling above. Merge WP-01 as one unit (288cf93 through this report commit): 1ed7fe4 alone passes verify but not build because the stubs and index.html arrive in 0e3e016. All commits sit on the local integration branch, 9 plus this report ahead of origin. Reproduce the tsx check: put `export function Probe({ text }: { text: string }) { return <h1>{text}</h1>; }` in src/print/Probe.tsx and run a scripts/*.ts that prints renderToStaticMarkup(createElement(Probe, { text: 'ok' })) with npx tsx; it prints <h1>ok</h1> at b87152a and throws 'React is not defined' at 37c663f. Playwright outputs: chromium:1194,chromium-headless-shell:1194 | Version 1.56.1 | 141.0.7390.37. npm ls summary: three 0.186.1, react 19.3.1, react-dom 19.3.1, troika-three-text 0.52.5, maath 0.10.8 single; zustand 5.0.15 plus leva's 3.7.2; playwright-core 1.56.1 single. No browser download happened; npx playwright install was never run."
 }

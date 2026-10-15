@@ -21,7 +21,7 @@
     "a11y": "node scripts/not-implemented.mjs WP-07",
     "lh": "node scripts/not-implemented.mjs WP-06",
     "review": "tsx scripts/review/capture.ts",
-    "resume": "tsx scripts/build-resume-pdf.ts && tsx scripts/build-resume-tex.ts",
+    "resume": "tsx scripts/build-resume-tex.ts && tsx scripts/build-resume-pdf.ts",
     "resume:private": "tsx scripts/build-resume-pdf.ts --private",
     "new:exhibit": "tsx scripts/new-exhibit.ts",
     "og": "tsx scripts/gen-og.ts",

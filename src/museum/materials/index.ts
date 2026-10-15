@@ -29,3 +29,34 @@ export const KIT_MATERIALS = [
 export type ExhibitMaterialName = (typeof EXHIBIT_MATERIALS)[number];
 export type KitMaterialName = (typeof KIT_MATERIALS)[number];
 export type MaterialLibrary = Readonly<Record<ExhibitMaterialName | KitMaterialName, Material>>;
+
+// Implementation (WP-05, R2): docs/ART_DIRECTION.md §5.
+export {
+  ACCENT_GLOW,
+  createMaterialLibrary,
+  disposeMaterialLibrary,
+  floorReflectorParams,
+  materialSpecs,
+  RADIAL_DECAL_SIZE,
+  radialDecalPixels,
+  type BuiltMaterialLibrary,
+  type ColorToken,
+  type MaterialLibraryOptions,
+  type MaterialName,
+  type MaterialSpec,
+  type MaterialTypes,
+  type TextureSlot,
+} from './library';
+export {
+  MaterialsProvider,
+  useMaterial,
+  useMaterialInstance,
+  useMaterialLibrary,
+} from './MaterialsProvider';
+export {
+  createWalnutGrain,
+  WALNUT_GRAIN_RANGE,
+  WALNUT_GRAIN_SEED,
+  WALNUT_GRAIN_SIZE,
+  walnutGrainPixels,
+} from './walnutGrain';

@@ -19,7 +19,7 @@
     "e2e": "node scripts/not-implemented.mjs WP-07",
     "visual": "node scripts/not-implemented.mjs WP-07",
     "a11y": "node scripts/not-implemented.mjs WP-07",
-    "lh": "node scripts/not-implemented.mjs WP-06",
+    "lh": "lhci autorun --config=lighthouserc.cjs && lhci autorun --config=lighthouserc.desktop.cjs",
     "review": "tsx scripts/review/capture.ts",
     "resume": "tsx scripts/build-resume-tex.ts && tsx scripts/build-resume-pdf.ts",
     "resume:private": "tsx scripts/build-resume-pdf.ts --private",

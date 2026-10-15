@@ -1,0 +1,205 @@
+# CI (ARCHITECTURE §14.1, R10): verify, build (PDF gate, _headers, budgets, copy checks), e2e,
+# Lighthouse and the LaTeX one-page check. deploy.yml (WP-18) runs on this workflow's success.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'claude/**']
+  workflow_dispatch:
+    inputs:
+      update-baselines:
+        description: Regenerate the @visual screenshots and upload them as an artifact
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Release mode only on main: check-copy then also blocks draft copy and placeholders.
+  RELEASE: ${{ github.ref == 'refs/heads/main' && '1' || '' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Chromium here too, so the resume overflow-gate unit tests run instead of skipping.
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run check:copy
+      - name: resume.tex is up to date
+        run: npx tsx scripts/build-resume-tex.ts && git diff --exit-code resume/resume.tex
+
+  build:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:pdf
+      - run: sudo apt-get install -y poppler-utils
+      - name: Render the PDF preview
+        run: mkdir -p out && pdftoppm -png -r 110 dist/resume.pdf out/resume-preview
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          include-hidden-files: true
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resume-preview
+          path: out/resume-preview*.png
+          if-no-files-found: error
+
+  e2e:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - run: npm run a11y
+      - if: ${{ !inputs.update-baselines }}
+        run: npm run visual
+      - name: Regenerate the visual baselines
+        if: ${{ inputs.update-baselines }}
+        run: npx playwright test --grep @visual --update-snapshots
+      - if: ${{ inputs.update-baselines }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: tests/e2e/__screenshots__/
+          if-no-files-found: error
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          if-no-files-found: ignore
+
+  lighthouse:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # Advisory until WP-29 adds the museum-mode precheck spec and makes this job blocking.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Lighthouse CI (mobile, then desktop)
+        run: |
+          export CHROME_PATH=$(node -p "require('@playwright/test').chromium.executablePath()")
+          npm run lh
+      - if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouseci
+          path: .lighthouseci/
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+  latex:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Compiles the committed resume/resume.tex only, so it needs no Node setup. The default
+    # pdflatex engine is required: Jake's preamble uses \pdfgentounicode (WP-04 report).
+    steps:
+      - uses: actions/checkout@v4
+      - uses: xu-cheng/latex-action@v3
+        with:
+          root_file: resume.tex
+          working_directory: resume
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: resume.pdf is one page
+        run: |
+          pdfinfo resume/resume.pdf | grep '^Pages:'
+          test "$(pdfinfo resume/resume.pdf | awk '/^Pages:/{print $2}')" = "1"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resume-tex-pdf
+          path: resume/resume.pdf
+          if-no-files-found: error

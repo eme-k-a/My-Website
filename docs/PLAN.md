@@ -462,3 +462,8 @@ Size: S is under half a day of agent work, M is 1 to 2, L is 3 or more. Every WP
   - **R-M1-2: entry-chunk imports.** The entry may statically import small pure-data modules from `src/museum` (`quality/tiers`, `rail/navigation`, `rail/progress`, `rail/layout`). It must never import three.js, R3F, drei or troika. `check-budgets` enforces this (F-010).
   - **R-M1-3: TeX Live is now installed in this container** (`pdflatex` at `/usr/bin`). WP briefs may compile `resume.tex` locally. The CI latex job is still the authority.
   - **Fix-ups F-001 to F-010** (`docs/wp/F-M1.md`) run before WP-08 and WP-09.
+- **M1b retry rulings (2026-10-15, 18:41 UTC):**
+  - **F-001 is accepted.** Two R1 tests still expect the Verafin exhibit to be draft (`content.test.ts`, "verafin is a draft exhibit", and `selectors.test.ts`, "carries the exhibit draft flag"). That is correct: the exhibit copy stays draft until G5. Only the resume bullets were cleared at G0.
+  - **F-008:** its edit to `src/overlay/Intro.tsx` (one wrapper element) is accepted.
+  - **Tall lobby on phones.** On phones the lobby section is taller than 100svh (1074 px at 390x844). With mandatory snapping, visitors must still be able to scroll within a stop section that is taller than the viewport. WP-09 adds an e2e test: on Pixel 7 the lobby intro can be scrolled into view, and the next swipe after the section ends still lands exactly on the next stop.
+  - **Small-phone CLS.** CLS at 360x640 is 0.041, caused by fallback-font metrics. WP-28 fixes it with Linux and Android serif fallback overrides in `src/design/fonts.css`; it is tracked as a G4 item.

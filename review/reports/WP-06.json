@@ -1,0 +1,132 @@
+{
+  "wp": "WP-06",
+  "role": "R10 (DevOps & Release)",
+  "status": "partial",
+  "branch": "wp/WP-06",
+  "commits": [
+    "5b98a25 feat(ci): headers, serve-dist and copy checks",
+    "33b5211 feat(perf): budget file and bundle checker",
+    "87adb18 ci: add ci workflow, lighthouse config and dependabot",
+    "chore(deps): drop unused print font (this commit; carries this report)"
+  ],
+  "changedFiles": [
+    "scripts/headers.ts",
+    "scripts/headers.test.ts",
+    "scripts/serve-dist.ts",
+    "scripts/serve-dist.test.ts",
+    "scripts/check-copy.ts",
+    "scripts/check-copy.test.ts",
+    "perf/budgets.json",
+    "scripts/check-budgets.ts",
+    "scripts/check-budgets.test.ts",
+    ".github/workflows/ci.yml",
+    ".github/dependabot.yml",
+    "lighthouserc.cjs",
+    "lighthouserc.desktop.cjs",
+    "netlify.toml",
+    "package.json",
+    "package-lock.json",
+    "review/reports/WP-06.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Build writes dist/_headers with the CSP; /assets/* is immutable and no other path is",
+      "command": "npm run build && grep -c 'Content-Security-Policy' dist/_headers",
+      "result": "pass",
+      "evidence": "build exit 0; postbuild printed \"_headers written (dist/_headers; boot script on 1 of 1 pages, 'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=')\" (the hash of WP-10's still-empty boot script); grep count 1; the only immutable line is under /assets/* (line 9); headers.test.ts asserts the immutable path list is exactly ['/assets/*'] and that no header name repeats across overlapping rules"
+    },
+    {
+      "id": "A2",
+      "criterion": "serve-dist applies _headers: CSP on /, /nope is 404, /resume.pdf revalidates and has the Content-Disposition",
+      "command": "npx tsx scripts/serve-dist.ts --port 4174 & then the brief's curl lines against http://localhost:4174",
+      "result": "pass",
+      "evidence": "printed 'serve-dist listening on http://localhost:4174'; curl -sI / shows Content-Security-Policy with script-src 'self' 'sha256-...'; /nope gives 404; /resume.pdf gives 'Cache-Control: public, max-age=0, must-revalidate' and 'Content-Disposition: inline; filename=\"Chukwuemeka-Nduka-Nwagbo-Resume.pdf\"'; /assets/main-DlepCaGS.js is immutable with Content-Encoding gzip. End to end in Chromium 141: the served page loads with 0 console errors and 0 securitypolicyviolation events; on a scratch dist a hashed inline script ran (data-mode set), and the same page with one changed byte was refused by script-src"
+    },
+    {
+      "id": "A3",
+      "criterion": "check:copy exits 0; RELEASE=1 exits 1 and lists drafts and placeholders; unit tests catch a runtime-built U+2014 and phone string",
+      "command": "npm run check:copy; RELEASE=1 npm run check:copy",
+      "result": "pass",
+      "evidence": "'check-copy ok (174 files)' exit 0. RELEASE=1: 41 problems, exit 1: placeholders in content.meta.siteUrl and content.gallery.desk.body.text, the three Verafin bullets, every exhibit.draft (verafin, cfia, mun, certifications) and the draft story and object copy of every exhibit. check-copy.test.ts (12 tests) catches String.fromCharCode(0x2014) and ['555','010','0199'].join(sep) fixtures in tracked files, dist/ files and the PDF text, printed as <phone-pattern>"
+    },
+    {
+      "id": "A4",
+      "criterion": "Entry JS at most 110 KB gzip and exit 0; a breach exits 1",
+      "command": "npm run check:budgets",
+      "result": "pass",
+      "evidence": "entry 67.93 KB gzip (level 9, 1 KB = 1000 bytes) against 110; museum and exhibit rows skipped with a note (chunks not built yet); 'budgets ok', exit 0. check-budgets.test.ts: checkBudgets returns 1 on a breach, and the spawned CLI exits with code 1 and prints the entry row with 'NO'"
+    },
+    {
+      "id": "A5",
+      "criterion": "Unit tests pass (headers overlap rule, serve-dist behavior, check-copy, check-budgets)",
+      "command": "npx vitest run --project unit scripts/",
+      "result": "pass",
+      "evidence": "7 files, 98 tests passed (headers 20, serve-dist 13, check-copy 12, check-budgets 12, plus the existing resume and media tests). npm run verify: 21 files, 365 tests passed; eslint, prettier and both tsc projects clean"
+    },
+    {
+      "id": "A6",
+      "criterion": "Workflow files are valid YAML",
+      "command": "python3 -c \"import yaml,sys; [yaml.safe_load(open(f)) for f in sys.argv[1:]]; print('yaml ok')\" .github/workflows/*.yml .github/dependabot.yml",
+      "result": "pass",
+      "evidence": "'yaml ok'. Also actionlint 1.7.7 (release binary in the session scratchpad, not added to the repo) reports nothing on ci.yml. The job commands that can run here were run: npm run build, npm run test:pdf (9 passed, 1 RELEASE-only skipped), the resume.tex regenerate plus git diff --exit-code (clean), pdftoppm -png -r 110 (out/resume-preview-1.png), and the pdfinfo one-page test on dist/resume.pdf"
+    },
+    {
+      "id": "A7",
+      "criterion": "Green ci.yml run on the integration branch: verify, build, e2e and latex succeed; latex logs 'Pages: 1'; lighthouse runs",
+      "command": "gh run list --workflow ci.yml --branch claude/intelligent-sagan-poq45q --limit 1 --json conclusion,jobs",
+      "result": "skipped",
+      "evidence": "Deferred to R0 after push: the git proxy accepts pushes to the integration branch only, and this WP must not push. Not provable locally: GitHub runners, npx playwright install --with-deps, xu-cheng/latex-action (no LaTeX here). The latex step prints the pdfinfo 'Pages:' line before the one-page test, so 'Pages: 1' appears in the log"
+    }
+  ],
+  "budgets": {
+    "unit": "KB gzip, level 9, 1 KB = 1000 bytes",
+    "rows": [
+      { "name": "entry", "kb": 67.93, "limit": 110, "ok": true },
+      {
+        "name": "museum",
+        "kb": null,
+        "limit": 350,
+        "ok": true,
+        "note": "skipped: src/museum/MuseumCanvas.tsx is not in the manifest yet"
+      },
+      {
+        "name": "exhibits/*",
+        "kb": null,
+        "limit": 40,
+        "ok": true,
+        "note": "skipped: no exhibit dynamic entries in the manifest yet"
+      }
+    ]
+  },
+  "ciRunUrl": null,
+  "openQuestions": [
+    {
+      "question": "The WP-06 ruling also asks to correct the resume script order in ARCHITECTURE §15.2 and README.md (.tex step first, then the PDF step). Neither path is in WP-06's allow globs (ARCHITECTURE is R0's; README.md is R10's but not granted to WP-06), so both are untouched. Exact edit: the resume command in ARCHITECTURE §15.2 and in the README table becomes 'tsx scripts/build-resume-tex.ts && tsx scripts/build-resume-pdf.ts' (what package.json already runs); ARCHITECTURE §5.1 step 5 also lists the PDF step first. Two more stale lines: the README sentence saying 'lh' runs not-implemented.mjs WP-06 (lh is live now), and the ARCHITECTURE §1.2 row for @fontsource/source-serif-4 (removed). Will R0 make these doc edits, or grant README.md to an R10 follow-up?",
+      "for": "R0",
+      "default": "Docs untouched; package.json scripts.resume already runs the .tex step first"
+    },
+    {
+      "question": "lighthouserc.cjs and lighthouserc.desktop.cjs must be CommonJS (lhci loads them with require()), and typescript-eslint's recommended config bans require(). Each file carries one 'eslint-disable-next-line @typescript-eslint/no-require-imports' with a reason, because eslint.config.js is outside WP-06's globs. Prefer a '*.cjs' override in eslint.config.js as an R10 follow-up?",
+      "for": "R0",
+      "default": "Inline disable comments"
+    },
+    {
+      "question": "The latex job only checks out and compiles the committed resume/resume.tex, so it skips setup-node and npm ci, although ARCHITECTURE §14 says every job runs them. It also runs 'sudo apt-get update' before installing poppler-utils (a fresh runner may have stale apt lists; the build job relies on the update that 'playwright install --with-deps' already ran). Accept?",
+      "for": "R0",
+      "default": "latex job: checkout, latex-action, apt-get update and install poppler-utils, pdfinfo test, upload"
+    },
+    {
+      "question": "RELEASE=1 is set only when github.ref is refs/heads/main (pushes and dispatches on main). Pull requests into main stay non-release, because Dependabot opens its PRs against main and they would fail check:copy while drafts exist. Keep, or also gate PRs into main?",
+      "for": "R0",
+      "default": "Only refs/heads/main"
+    },
+    {
+      "question": "The isolated worktree was created at main (4f1ab2b, the legacy site), not at the integration branch tip. Before any work I pointed the worktree's own branch at claude/intelligent-sagan-poq45q (a4625f7) with git reset --hard on a clean tree. The WP-06 commits sit directly on a4625f7. The other M1 worktrees may have the same base problem.",
+      "for": "R0",
+      "default": "Commits based on a4625f7"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Integration notes for R0. (1) Merge first in M1 as planned. scripts/postbuild.ts already calls writeHeaders() after prerenderPages(), so when WP-10 inlines the real boot script and prerenders /exhibit/<id>/, /resume/ and /404.html, the hash and the inline-script rules cover every page with no WP-06 change. writeHeaders fails the build on a second inline script in a page, on pages with different inline scripts, and on any on*= attribute; it does not check that /resume/ and /404.html omit the boot script (ARCHITECTURE §5.3 leaves that to WP-10). (2) WP-07's playwright.config.ts can use 'npx tsx scripts/serve-dist.ts --port <PORT>' as specified. serve-dist re-reads dist/_headers on every request, so reuseExistingServer is safe across rebuilds. Beyond §12.2 it accepts --dir <folder> (tests), answers 405 to methods other than GET and HEAD, never serves /_headers or /_redirects (Netlify does not), and joins a header name set by two matching rules with ', ' as Netlify merges it. A /x/* rule matches /x/ and below but not the bare /x, so /resume without the slash gets the /* headers and no Cache-Control locally. (3) check-budgets finds debug-only code by manifest chunk names and by six string fingerprints (leva: leva__root, __levaInput; r3f-perf: muiPerf, __perf_toggle; leva's zustand 3: 'ServerSideRendering|^Deno' and its subscribeWithSelector deprecation text). All six survive minification in a scratch Vite build that imports leva and r3f-perf; none appears in any other node_modules package or in the current entry chunk. Exhibit rows count each src/museum/exhibits/<id>/ dynamic entry plus the static imports no other exhibit, the entry or the museum chunk uses; the ?debug chunk is reported, never budgeted. (4) check-copy scans 'git ls-files --cached --others --exclude-standard' (tracked plus new, non-ignored files, so a new file is checked before its first commit) and, with --dist, every dist/ text file plus the unpdf text of dist/resume.pdf. Content hits print as content.<path>, with array items labelled by id (for example content.experiences[verafin].exhibit). (5) Lighthouse, local and advisory: CHROME_PATH=/opt/pw-browsers/chromium npm run lh collected 3 mobile runs of /?test=1&mode=museum (performance 1, accessibility 0.91, best-practices 0.96, seo 0.9, LCP about 1.3 s, CLS 0), then stopped with exit 1 because /exhibit/verafin/ is a 404 until WP-10 prerenders it, so the desktop config never started. A one-run desktop collect of / confirmed formFactor desktop and the assertion matrix (accessibility 0.91 and seo 0.9 fail the 0.95 error gates on the WP-01 placeholder hero). The CI job is continue-on-error until WP-29. Desktop reports go to .lighthouseci/desktop/ so the mobile reports in .lighthouseci/ survive the second autorun (lhci collect clears only the top-level lhr-* files); the CI artifact uploads all of .lighthouseci/. (6) e2e, a11y and visual are still WP-07 stubs, so the e2e job passes trivially until WP-07 merges; a dispatch with update-baselines before any @visual spec exists fails with Playwright's 'No tests found'. (7) Dependabot reads .github/dependabot.yml from the default branch only, so it stays inactive until the launch merge to main. (8) Removed @fontsource/source-serif-4 5.3.1 (WP-04 chose CMU Serif from computer-modern): package.json and package-lock.json lose only that entry; npm ci from the new lockfile is clean and npm ls --depth=0 shows only the allowed sharp optional extraneous packages. (9) No dependency requests; nothing pushed; no tags."
+}

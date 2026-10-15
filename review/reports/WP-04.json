@@ -1,0 +1,145 @@
+{
+  "wp": "WP-04",
+  "role": "R1 (Content & Resume Editor)",
+  "status": "done",
+  "branch": "claude/intelligent-sagan-poq45q",
+  "commits": [
+    "fdbfb6a feat(print): jakes-style print template and font",
+    "07671fa feat(resume): generate resume.tex",
+    "6092f52 feat(resume): pdf build with overflow gate and private variant",
+    "9231710 test(pdf): one-page and verbatim checks",
+    "docs(resume): before and after change log (this commit; carries this report)"
+  ],
+  "changedFiles": [
+    "src/content/selectors.ts",
+    "src/content/selectors.test.ts",
+    "src/print/ResumePrint.tsx",
+    "src/print/print.css",
+    "LICENSES/OFL-CMU-Serif.txt",
+    "scripts/build-resume-tex.ts",
+    "scripts/build-resume-tex.test.ts",
+    "resume/resume.tex",
+    "resume/template/preamble.tex",
+    "resume/template/LICENSE",
+    "scripts/build-resume-pdf.ts",
+    "scripts/build-resume-pdf.test.ts",
+    "package.json",
+    "tests/pdf/resume-pdf.test.ts",
+    "docs/RESUME_CHANGES.md",
+    "review/reports/WP-04.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "One page",
+      "command": "pdfinfo dist/resume.pdf | awk '/^Pages:/{print $2}' && npm run test:pdf",
+      "result": "pass",
+      "evidence": "Pages: 1 (612 x 792 pt, Letter); pdf-lib getPageCount() 1 in tests/pdf and in build-resume-pdf.ts itself (the build throws on any other count)"
+    },
+    {
+      "id": "A2",
+      "criterion": "Every printed bullet verbatim and in order Verafin, Mysa, Wailo, CFIA",
+      "command": "npm run test:pdf; RELEASE=1 npx vitest run --project pdf",
+      "result": "pass",
+      "evidence": "test:pdf 9 passed, 1 skipped (the RELEASE-only placeholder check); with RELEASE=1 10 passed. All 15 print: true bullets found in content order in the unpdf text; Nasdaq Verafin < Mysa < Wailo < Canadian Food Inspection Agency"
+    },
+    {
+      "id": "A3",
+      "criterion": "No phone pattern in dist/",
+      "command": "grep -rlE '\\b[0-9]{3}[-. ][0-9]{3}[-. ][0-9]{4}\\b' dist/ ; pdftotext dist/resume.pdf - | grep -cE '\\b[0-9]{3}[-. ][0-9]{3}[-. ][0-9]{4}\\b'",
+      "result": "pass",
+      "evidence": "grep lists no files; count 0; the pdf test also scans the unpdf text and every text file under dist/"
+    },
+    {
+      "id": "A4",
+      "criterion": "Every work entry has at least 1 printed bullet",
+      "command": "npm run test:pdf (tests/pdf/resume-pdf.test.ts) plus schema rule 5",
+      "result": "pass",
+      "evidence": "verafin 3, mysa 4, wailo 3, cfia 1 printed bullets, each found in the PDF text; trim candidates never include a work entry's first printed bullet (selectors.test.ts)"
+    },
+    {
+      "id": "A5",
+      "criterion": "The overflow gate fails loudly and never trims",
+      "command": "npx vitest run --project unit scripts/build-resume-pdf.test.ts",
+      "result": "pass",
+      "evidence": "9 passed. Content plus 6 long bullets: 'Resume overflows by 165 px (about 11 lines). Trim candidates: wailo bullet 2 (priority 3), mysa bullet 4 (priority 3), sdsj bullet 1 (priority 3), wailo bullet 3 (priority 2), mysa bullet 10 (priority 2), ...', and all 21 bullets are still on the page. The real build passes with 19 CSS px (about 0.2 in) to spare"
+    },
+    {
+      "id": "A6",
+      "criterion": ".tex is deterministic and escaped",
+      "command": "npm run resume && git diff --exit-code resume/resume.tex; npx vitest run --project unit scripts/build-resume-tex.test.ts",
+      "result": "pass",
+      "evidence": "git diff exit 0 after regenerating; 11 tex tests passed (escaping of & % $ # _ { } ~ ^ \\ in the documented order, -- in dates, byte-identical output on two runs). dist/resume.pdf is byte-identical across runs too (sha256 f5d7a8ba...)"
+    },
+    {
+      "id": "A7",
+      "criterion": "Private build is safe",
+      "command": "RESUME_PHONE=<runtime-built dummy> npm run resume:private && git check-ignore -q out/private/resume.pdf && echo ignored; CI=1 npm run resume:private; echo \"exit=$?\"; git status --porcelain out/ ; git ls-files out | wc -l",
+      "result": "pass",
+      "evidence": "printed 'private resume written (phone included)' then 'ignored'; out/private held only resume.pdf and resume.tex (1 page; the temporary print.html is removed); CI=1 exit=1 with 'refuses to run when CI is set'; bad format and unset RESUME_PHONE also exit 1 without echoing the value; git status --porcelain out/ empty; git ls-files out = 0. Both dummy-phone runs (the brief's and an all-zero value) were deleted afterwards"
+    },
+    {
+      "id": "A8",
+      "criterion": "Previews and change log exist",
+      "command": "ls out/before/*.png out/after/*.png docs/RESUME_CHANGES.md",
+      "result": "pass",
+      "evidence": "out/before/resume-1.png and out/after/resume-1.png (110 dpi, 935 x 1210), plus out/review/resume-before.png and out/review/resume-after.png (150 dpi, 1275 x 1650) and out/resume-preview.png (device scale 2); all untracked under gitignored out/"
+    },
+    {
+      "id": "A9",
+      "criterion": "LaTeX compiles to one page",
+      "command": "/tmp/wp04-tex/tectonic -X compile resume/resume.tex --outdir /tmp/wp04-tex/out",
+      "result": "skipped",
+      "evidence": "blocked: the tectonic 0.15.0 binary downloaded, but its bundle host relay.fullyjustified.net is refused by the container proxy (CONNECT 403), so nothing compiled. The authoritative check is WP-06's CI latex job (pdfLaTeX, pdfinfo Pages: 1)"
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "Print font: CMU Serif (computer-modern 0.1.3) is confirmed OFL. The package ships OFL.txt and every CMU Serif face used (500 roman and italic, 700 roman and italic) carries 'This Font Software is licensed under the SIL Open Font License, Version 1.1' in its name-table license field (read with fontkit), with fsType allowing embedding and subsetting. OFL.txt is copied verbatim to LICENSES/OFL-CMU-Serif.txt. WP-06 can uninstall the unused @fontsource/source-serif-4.",
+      "for": "R0",
+      "default": "CMU Serif in the print template; no Source Serif 4 license file added"
+    },
+    {
+      "question": "package.json scripts.resume is now 'tsx scripts/build-resume-tex.ts && tsx scripts/build-resume-pdf.ts' (the .tex step first). With the ARCHITECTURE §15.2 order, `npm run resume -- --preview` appended --preview to the .tex step, so the brief's preview command could not work. Update ARCHITECTURE §15.2 and the README script table to match?",
+      "for": "R0",
+      "default": "Order swapped (brief allows changing scripts.resume when needed); behaviour is otherwise the same"
+    },
+    {
+      "question": "scripts/build-resume-pdf.test.ts launches Chromium. ARCHITECTURE §14.1's CI 'verify' job runs npm test without installing Chromium, so those gate tests would be skipped there (they skip with a console warning when chromium.executablePath() is missing). Should WP-06 install Chromium in 'verify' too (the cache is already keyed on @playwright/test), so the A5 gate test runs in CI?",
+      "for": "R0",
+      "default": "describe.skipIf(no Chromium); locally they always run"
+    },
+    {
+      "question": "printModel takes an optional build date: printModel(c, { phone?, now? }). ARCHITECTURE §3.7 lists printModel(c, { phone? }), but 'Expected Graduation: May 2027' depends on the build date (CONTENT_DRAFT §3.1). Scripts pass buildDateFromEnv(); without now it uses the current date.",
+      "for": "R0",
+      "default": "Optional now added; the frozen selectors are unchanged"
+    },
+    {
+      "question": "Trim-candidate order. I read 'oldest entries first' as earliest end month first (ongoing roles last), then earliest start, undated projects after dated entries, and within an entry the last bullet first; a work entry's first printed bullet is never listed. Today that gives wailo bullet 2, mysa bullet 4, sdsj bullet 1 (priority 3), then wailo 3, mysa 3, verafin 3, verafin 2, safe-sip 1, klarup 2 (priority 2). CONTENT_DRAFT §3.6 proposed mysa.b4 before wailo.b2. Confirm, or rule a different order?",
+      "for": "R0",
+      "default": "The order above (the gate only reports; trims stay manual)"
+    },
+    {
+      "question": "After G0, CONTENT_DRAFT §1 says a WP-04 commit flips the Verafin bullets to draft: false, and the brief's fit step would set print: false, both in src/content/resume.ts, which is not in WP-04's owned globs. No trim was needed, so resume.ts is untouched. Grant src/content/resume.ts for the approval commit, or route it through a WP-03 follow-up?",
+      "for": "R0",
+      "default": "resume.ts unchanged; RESUME_CHANGES.md has an approval table ready"
+    },
+    {
+      "question": "Name style: the PDF prints the name in capitals with letter spacing (CONTENT_DRAFT §3.2 shows 'CHUKWUEMEKA NDUKA-NWAGBO'); the original showed it in mixed-case bold. Apostrophes print straight as stored ('St. John's'), where LaTeX set them curly. Keep both, or prefer mixed case and a curly apostrophe in print only?",
+      "for": "Emeka",
+      "default": "Capitals and straight apostrophes; resume.tex keeps Jake's \\scshape name and LaTeX's own quotes"
+    },
+    {
+      "question": "G0 confirmations (also in docs/RESUME_CHANGES.md §5): Verafin bullets cleared by the manager? Verafin on-site, hybrid or remote? 'Right-To-Rise' or 'Right to Rise'? Did the Mysa web app use a database alongside Cognito? Title style '(Co-op)' and '(Intern)'? GitHub on the PDF header?",
+      "for": "Emeka",
+      "default": "Three safe Verafin bullets (draft), on-site, 'Right-To-Rise', no database named, '(Co-op)' and '(Intern)', GitHub on the site only"
+    },
+    {
+      "question": "Jake's preamble is pdfTeX-specific (\\input{glyphtounicode}, \\pdfgentounicode=1), so resume.tex needs pdfLaTeX (Overleaf's default and xu-cheng/latex-action's default), not XeLaTeX or tectonic. WP-06's latex job should keep the default pdflatex engine.",
+      "for": "R0",
+      "default": "Preamble kept verbatim as the brief requires"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Print font: CMU Serif (OFL confirmed, see openQuestions). print: false added: none; the PLAN §1 trims already in WP-03's content fit with about 0.2 in to spare at build date 2026-10-15 (out of 10 in). LaTeX: local tectonic blocked by the proxy (bundle host 403); rely on the CI latex job. Preview PNGs for R0 to send Emeka (never commit; out/ is gitignored): out/review/resume-before.png and out/review/resume-after.png (150 dpi), out/before/resume-1.png and out/after/resume-1.png (110 dpi), out/resume-preview.png. The before images are rendered from the original PDF and show the phone number, so they must not be attached to a PR or copied into the repo. Change log: docs/RESUME_CHANGES.md. Design notes: the overflow gate measures .pr-page in print media after document.fonts.ready and fails if CMU Serif did not load; hyphenated and slashed words are kept on one line (white-space: nowrap) so extraction never reads 'end-to- end'; bullet markers are in normal flow because a positioned box paints in a later layer and moved every bullet to the end of pdf.js's text order (a pitfall worth knowing for any print view). The PDF carries Title, Author, Subject 'Resume', comma-separated Keywords from the skills, Creator 'Commit History build', Producer 'Playwright + pdf-lib', dates from the build date, DisplayDocTitle, Lang en-CA from the page, and a document ID hashed from the content, so dist/resume.pdf is byte-identical between runs. Process: committed straight onto the integration branch like WP-02 and WP-03; nothing pushed. npm ci was not run because node_modules is installed and a parallel worktree is active; npm ls --depth=0 shows no invalid or missing entries. npm run verify green (214 unit tests); npm run build green (the client chunk hash is unchanged, main-DlepCaGS.js). The commit order puts the .tex generator before the PDF build because the private build imports renderResumeTex."
+}

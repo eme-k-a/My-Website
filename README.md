@@ -55,6 +55,12 @@ Versions are pinned per `docs/ARCHITECTURE.md` §1. `package.json` also carries 
 
 `leva` 0.10.1 keeps a private `zustand` 3.7.2: it imports the v3 default exports that zustand 5 removed. ARCHITECTURE §1.1 limits `leva` to the lazy `?debug` chunk, so that copy must never reach the entry or museum chunk.
 
+## TypeScript projects
+
+`tsconfig.app.json` checks the client code in `src/`. `tsconfig.node.json` checks `scripts/`, `tests/`, the config files and the colocated `src/**/*.test.ts`. `npm run typecheck` runs both, so use it rather than a bare `tsc`.
+
+The root `tsconfig.json` references both projects for editors. It also extends `tsconfig.app.json` and includes `src/**/*.tsx`, because `tsx` applies a tsconfig only to the files that config includes. Without that include, a script that renders a `.tsx` component (the print template, the OG card) compiles it as classic JSX and fails with "React is not defined". Since the root now has inputs, `tsc -p tsconfig.json` reports TS6305, TS6306 and TS6310 about the references. Those errors are expected, and nothing runs that command.
+
 ## Documentation
 
 - [`docs/PLAN.md`](docs/PLAN.md): approved master plan, roles, milestones and gates. Its Addendum is binding.

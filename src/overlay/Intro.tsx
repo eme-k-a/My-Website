@@ -2,8 +2,8 @@
 // h1 name (the LCP element), the role and education lines from heroLines(), and three real links
 // (Resume PDF, Email, Classic view), all inside the first phone viewport with or without JS. Then
 // the reserved 20 px loading row, "Begin the walk" (an in-page anchor), the lobby headline as a lead
-// sentence, the intro paragraph, the static hint, and the onboarding hint element (static copy
-// here; WP-15 adds its timing).
+// sentence, the intro paragraph (below the fold on phones), the static hint, and the onboarding
+// hint element (static copy here; WP-15 adds its timing).
 import type { MouseEvent } from 'react';
 import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
@@ -50,43 +50,46 @@ export function Intro({ card }: { card: LobbyCard }) {
   return (
     <div className={styles.lobby} data-ready={ready ? '' : undefined}>
       <div className={styles.hero} data-card="" data-testid={TEST_IDS.hero}>
-        <p className={styles.eyebrow}>{card.eyebrow}</p>
-        <h1 className={styles.name}>
-          <Name name={card.name} />
-        </h1>
-        <p className={styles.role}>{card.roleLine}</p>
-        <p className={styles.education}>{card.educationLine}</p>
-        <ul className={styles.links}>
-          <li>
-            <a className={ui.primary} href={PDF_PATH} data-testid={TEST_IDS.heroPdf}>
-              <Icon name="file-text" />
-              Resume (PDF)
-            </a>
-          </li>
-          <li>
-            <a className={ui.secondary} href={EMAIL_HREF} data-testid={TEST_IDS.heroEmail}>
-              <Icon name="mail" />
-              Email
-            </a>
-          </li>
-          <li>
-            <a className={ui.secondary} href={CLASSIC_PATH} data-testid={TEST_IDS.heroClassic}>
-              <Icon name="list" />
-              Classic view
-            </a>
-          </li>
-        </ul>
-        <LoadingRow />
-        <a
-          className={`${ui.secondary} ${styles.begin}`}
-          href={`#stop-${FIRST_EXHIBIT}`}
-          data-testid={TEST_IDS.beginWalk}
-          onClick={beginWalk}
-        >
-          <Icon name="ticket" />
-          Begin the walk
-        </a>
-        <p className={styles.lead}>{card.headline}</p>
+        {/* The first phone viewport ends with this block (see .fold). */}
+        <div className={styles.fold}>
+          <p className={styles.eyebrow}>{card.eyebrow}</p>
+          <h1 className={styles.name}>
+            <Name name={card.name} />
+          </h1>
+          <p className={styles.role}>{card.roleLine}</p>
+          <p className={styles.education}>{card.educationLine}</p>
+          <ul className={styles.links}>
+            <li>
+              <a className={ui.primary} href={PDF_PATH} data-testid={TEST_IDS.heroPdf}>
+                <Icon name="file-text" />
+                Resume (PDF)
+              </a>
+            </li>
+            <li>
+              <a className={ui.secondary} href={EMAIL_HREF} data-testid={TEST_IDS.heroEmail}>
+                <Icon name="mail" />
+                Email
+              </a>
+            </li>
+            <li>
+              <a className={ui.secondary} href={CLASSIC_PATH} data-testid={TEST_IDS.heroClassic}>
+                <Icon name="list" />
+                Classic view
+              </a>
+            </li>
+          </ul>
+          <LoadingRow />
+          <a
+            className={`${ui.secondary} ${styles.begin}`}
+            href={`#stop-${FIRST_EXHIBIT}`}
+            data-testid={TEST_IDS.beginWalk}
+            onClick={beginWalk}
+          >
+            <Icon name="ticket" />
+            Begin the walk
+          </a>
+          <p className={styles.lead}>{card.headline}</p>
+        </div>
         <p className={styles.intro}>{card.intro.text}</p>
         <p className={styles.hint}>{card.hint}</p>
       </div>

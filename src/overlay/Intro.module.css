@@ -37,10 +37,11 @@
 }
 
 .hero {
+  --hero-top: calc(max(8px, env(safe-area-inset-top)) + 64px);
   position: relative;
   max-width: 640px;
-  padding: calc(max(8px, env(safe-area-inset-top)) + 64px) max(16px, env(safe-area-inset-right))
-    24px max(16px, env(safe-area-inset-left));
+  padding: var(--hero-top) max(16px, env(safe-area-inset-right)) 24px
+    max(16px, env(safe-area-inset-left));
   color: var(--text);
 }
 
@@ -191,13 +192,35 @@
 }
 
 /*
- * Narrow screens: the h1 must stay the largest text in the first viewport (it is the LCP
- * element), and the intro paragraph alone is about twice its area, so the paragraph is left out
- * below 480 px, like the card caption (EXPERIENCE §5.8, §9.2). The lead sentence and hint stay.
+ * Narrow screens: the h1 must stay the largest text in the first viewport (it is the LCP element),
+ * and the intro paragraph alone is about twice its area. So the fast path down to the lead sentence
+ * fills the first viewport and the intro paragraph and the hint start below the fold (EXPERIENCE
+ * §8.1): the lobby grows past 100svh. The scrim darkens again behind them, and the onboarding hint
+ * stays at the bottom of the first viewport rather than of the taller lobby.
  */
 @media (max-width: 479px) {
+  .fold {
+    min-height: calc(100svh - var(--hero-top));
+  }
+
   .intro {
-    display: none;
+    margin-top: 24px;
+  }
+
+  .lobby::after {
+    background: linear-gradient(
+      to bottom,
+      rgba(11, 11, 13, 0.9),
+      transparent 70svh,
+      transparent 100svh,
+      rgba(11, 11, 13, 0.9) calc(100svh + 48px)
+    );
+  }
+
+  :global(html[data-mode='museum']) .onboarding {
+    top: calc(100svh - max(16px, calc(env(safe-area-inset-bottom) + 12px)));
+    bottom: auto;
+    transform: translate(-50%, -100%);
   }
 }
 

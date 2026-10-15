@@ -1,0 +1,160 @@
+{
+  "wp": "WP-10",
+  "role": "R6 (UI & Classic Engineer), with grants on R9's src/entry-server.tsx and scripts/prerender.ts",
+  "status": "done",
+  "branch": "wp/WP-10",
+  "commits": [
+    "f49e333 feat(boot): mode decision before first paint",
+    "58d6885 feat(shell): hud, hero, cards, dialog skeleton and museum gate",
+    "bd86a2b feat(classic): zero-js classic resume and 404",
+    "5c80695 feat(prerender): first prerendered pages",
+    "test(e2e): shell and fast-path specs (this commit, carries this report)"
+  ],
+  "changedFiles": [
+    "index.html",
+    "src/main.tsx",
+    "src/app/App.tsx",
+    "src/app/global.css",
+    "src/app/boot.ts",
+    "src/app/boot.test.ts",
+    "src/overlay/ContextVeil.tsx",
+    "src/overlay/ExhibitDialog.tsx",
+    "src/overlay/ExhibitDialog.module.css",
+    "src/overlay/Hud.tsx",
+    "src/overlay/Hud.module.css",
+    "src/overlay/Intro.tsx",
+    "src/overlay/Intro.module.css",
+    "src/overlay/LiveRegion.tsx",
+    "src/overlay/LoadingRow.tsx",
+    "src/overlay/MuseumGate.tsx",
+    "src/overlay/MuseumGate.module.css",
+    "src/overlay/NotFound.tsx",
+    "src/overlay/ProgressRail.tsx",
+    "src/overlay/ProgressRail.module.css",
+    "src/overlay/SkipLink.tsx",
+    "src/overlay/StopCard.tsx",
+    "src/overlay/StopCard.module.css",
+    "src/overlay/StoryBody.tsx",
+    "src/overlay/icons.tsx",
+    "src/overlay/model.ts",
+    "src/overlay/overlay.module.css",
+    "src/overlay/railProgress.ts",
+    "src/overlay/ui.module.css",
+    "src/classic/ClassicResume.tsx",
+    "src/classic/classic.css",
+    "src/entry-server.tsx",
+    "scripts/prerender.ts",
+    "tests/e2e/shell.spec.ts",
+    "tests/e2e/fast-path.spec.ts",
+    "review/reports/WP-10.json"
+  ],
+  "sizes": {
+    "bootScriptBytes": 1978,
+    "bootScriptLimitBytes": 2048,
+    "entryJsGzipKB": 87.1,
+    "entryJsRawKB": 275.38,
+    "entryJsLimitGzipKB": 110,
+    "museumChunkGzipKB": 0.07,
+    "galleryCssGzipKB": 5.24,
+    "classicCssGzipKB": 2.29,
+    "note": "Entry and museum sizes from WP-06's scripts/check-budgets.ts (gzip level 9, 1 KB = 1000 bytes) on the integration copy described in notes; the museum chunk is still WP-02's MuseumCanvas stub. Boot size is the UTF-8 length of transpileBootScript(src/app/boot.ts), the exact text vite.config.ts inlines."
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Boot decision table: one passing test per row (8) plus the size test (at most 2048 bytes transpiled)",
+      "command": "npx vitest run --project unit src/app/boot.test.ts",
+      "result": "pass",
+      "evidence": "12 passed: rows 1 to 8, the size and module-syntax contract, no em dash or </script, storage that throws, redirect only on / (exhibit pages stay). Transpiled boot script 1978 bytes."
+    },
+    {
+      "id": "A2",
+      "criterion": "Entry JS at most 110 KB gzip",
+      "command": "npm run build && npm run check:budgets",
+      "result": "pass",
+      "evidence": "entry 87.10 KB gzip of 110 (WP-06 check-budgets on the integration copy); museum 0.07 KB; no leva or r3f-perf fingerprints. On this branch alone check-budgets is still the WP-01 stub, so the gate is real only after WP-06 merges."
+    },
+    {
+      "id": "A3",
+      "criterion": "Zero <script> on the classic and 404 pages",
+      "command": "grep -c '<script' dist/resume/index.html dist/404.html",
+      "result": "pass",
+      "evidence": "dist/resume/index.html:0, dist/404.html:0 (on this branch; prerender.ts also refuses to write either page if it would contain a script)"
+    },
+    {
+      "id": "A4",
+      "criterion": "No-WebGL fallback: final path /resume/, banner #why-no-webgl2 visible, classic content includes Nasdaq Verafin",
+      "command": "PORT=4176 npx playwright test tests/e2e/shell.spec.ts --project=no-webgl",
+      "result": "pass",
+      "evidence": "no-webgl: '/ lands on /resume/#why-no-webgl2 with the banner and the classic content' and 'asking for the museum still lands on the classic resume' pass; 'Try the gallery' is hidden there. Run on the integration copy (needs WP-07's playwright.config.ts and fixtures.ts)."
+    },
+    {
+      "id": "A5",
+      "criterion": "Recruiter fast path inside the first viewport at 360x640 and 390x844, JS off and JS on before ready; LCP element is the h1",
+      "command": "PORT=4176 npx playwright test tests/e2e/fast-path.spec.ts",
+      "result": "pass",
+      "evidence": "pixel7 project at both sizes: JS off (javaScriptEnabled false) and JS on with **/MuseumCanvas* aborted (ready stays false, fallback notice shows) keep h1, role line, education line and the 3 hero links inside the viewport with scrollY 0 (360x640 JS off: lowest box bottom 537 px, under the noscript notice); LCP element is the h1 at both sizes and on desktop 1440x900. 7 passed."
+    },
+    {
+      "id": "A6",
+      "criterion": "CSP holds with the inline boot script: no securitypolicyviolation; _headers CSP has one sha256 source",
+      "command": "PORT=4176 npx playwright test tests/e2e/shell.spec.ts --grep @smoke",
+      "result": "pass",
+      "evidence": "Local part passes with WP-07's global guards and WP-06's headers.ts and serve-dist: the museum boots with data-mode museum and no guard trips on desktop, pixel7 and pixel7-landscape; the served CSP has exactly one 'sha256-...' and it equals the SHA-256 of the one inline script in the served HTML ('sha256-+K4My7TjagK9t1eFGv194CPVEAwdJ4t70ARPXFiQ3ag=' for this build). The remote GitHub Actions run is deferred to R0 after push."
+    },
+    {
+      "id": "A7",
+      "criterion": "0 axe violations (wcag2a, wcag2aa, wcag21aa, wcag22aa) on /resume/ light and dark, /404.html, / at the lobby",
+      "command": "PORT=4176 npm run a11y -- tests/e2e/shell.spec.ts",
+      "result": "pass",
+      "evidence": "20 passed, 4 skipped (project scoping), 0 violations. Also covered: /resume/#why-software (a banner shown) and the no-webgl landing /resume/#why-no-webgl2."
+    }
+  ],
+  "deviations": [
+    "The worktree was created from main (4f1ab2b, the legacy site) instead of the integration branch; the local branch was reset to a4625f7 (integration HEAD) before any work.",
+    "The lobby intro paragraph is hidden below 480 px (like the card caption, EXPERIENCE §5.8 and §9.2). Measured: at 360x640 and 390x844 the paragraph is about twice the h1's area and would otherwise be the LCP element (WP-10 A5, EXPERIENCE §8.6). The lead sentence and the static hint stay. See openQuestions.",
+    "The entry statically imports four pure, three-free modules under src/museum/: rail/navigation.ts (travelTo, enterWing, exitWing, which the brief requires the HUD and door card to call), rail/progress.ts (the bead and phone bar read progress.current), rail/layout.ts (computeLayout for layout.ageT paper colors and year ticks, which the brief requires) and quality/tiers.ts (chooseTier, required in main.tsx). The Forbidden line was read as 'never MuseumCanvas, the scene or three.js': the canvas is reached only through MuseumGate's import(), and check-budgets shows an 87 KB entry with the museum chunk separate.",
+    "404 styles are global `.nf-*` rules in src/app/global.css, not a CSS module: dist/404.html links the gallery stylesheet and nothing imports NotFound on the client, so a module's CSS would never reach a bundle.",
+    "The loading row's percentage is derived, not a download meter: 10% once the museum chunk is requested, 40% once it arrived, then 40 + 55 x the share of the peak (compilePending + textPending) already done; it hides at ready and on failure. It stays at 40% until WP-08 and WP-09 write ready.",
+    "The <!--preload--> marker is left as is (font preload hints are WP-28's).",
+    "Wing HUD, minimal: inside a wing the rail shows the wing's exhibit dots, 'Projects wing, 1 of 2' and 'Return to the aisle' (exit-wing, calls exitWing); on phones only that control shows. WP-27 polishes the phone version.",
+    "The HUD wordmark is hidden below 640 px so the year chip, PDF and Classic fit at 360 px.",
+    "New UI strings beyond EXPERIENCE §8.4: the fallback notice ('The gallery couldn't load. The resume is still here:' with 'Classic resume' and 'Resume (PDF)'), a second noscript sentence ('The PDF is at /resume.pdf.', since the brief asks for both links), the /resume/ title 'Resume | Chukwuemeka (Emeka) Nduka-Nwagbo' with CONTENT_DRAFT §6.6's suggested description, and the 404 meta description (its body sentence). No facts about Emeka were added.",
+    "Lucide paths were copied from the lucide-static 1.57.0 tarball (npm pack into a scratch folder; nothing installed). The ISC credit goes in public/credits.html (WP-28).",
+    "LCP is measured with JS on (a PerformanceObserver cannot run with JS off); the JS-off check is the bounding boxes."
+  ],
+  "openQuestions": [
+    {
+      "question": "Hiding the lobby intro paragraph below 480 px keeps the h1 the LCP element on phones. Alternatives: let the lobby section grow past 100svh on phones so the paragraph sits below the fold (interacts with WP-09's mandatory snapping and the one-stop flick), or shorten the copy. Keep the hide?",
+      "for": "R2",
+      "default": "Hidden below 480 px; lead sentence and static hint remain"
+    },
+    {
+      "question": "Confirm the reading of Forbidden 'Importing src/museum/** statically from the entry' as 'no canvas, scene or three.js', given the brief requires travelTo, enterWing, chooseTier, progress.current and layout.ageT. If the rule is literal, those helpers need to move (for example to src/app/) through R4 and R7.",
+      "for": "R0",
+      "default": "Static imports of the four pure helpers only; MuseumCanvas only through import()"
+    },
+    {
+      "question": "tests/e2e/shell.spec.ts and fast-path.spec.ts import WP-07's tests/e2e/fixtures.ts (the global guards A6 relies on). On this branch alone `tsc -p tsconfig.node.json` therefore fails on those two files until WP-07 is merged; the four feature commits pass npm run verify on their own. Merge order WP-06, WP-07, WP-10 resolves it.",
+      "for": "R0",
+      "default": "Specs written against WP-07's fixtures API (test, expect, Guards.acknowledge)"
+    },
+    {
+      "question": "WP-09: ScrollTrack still renders only main-track sections. renderStopCard already handles every stop id, wing exhibits included (stopCards order), so the wing sections only need to be added in ScrollTrack.",
+      "for": "R4",
+      "default": "No change to ScrollTrack (R4's file)"
+    },
+    {
+      "question": "global.css adds `#track { position: relative; z-index: 1 }` (ARCHITECTURE §6.1 root rule, so the cards sit above WP-08's fixed stage) and `html:has(dialog[open]) { overflow: hidden }`. WP-09's ScrollTrack CSS may repeat them; harmless, but one owner is cleaner.",
+      "for": "R4",
+      "default": "Kept in R6's global.css"
+    },
+    {
+      "question": "Copy review at G5: the new UI strings listed in deviations (fallback notice, the noscript PDF sentence, the /resume/ title and description).",
+      "for": "Emeka",
+      "default": "As written; none of it states a fact about Emeka beyond CONTENT_DRAFT"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Local proof ran on a plain (non-git) integration copy in the session scratchpad: this branch plus WP-06's committed scripts/headers.ts, serve-dist.ts, check-budgets.ts, check-copy.ts, perf/budgets.json, .github, lighthouserc files and netlify.toml (wp/WP-06 at c124beb), WP-07's playwright.config.ts, tests/e2e and check-glyphs.ts (WP-07 worktree branch tip 9b96229), and the e2e, visual, a11y and lh script keys. There: npm run build (prerender, _headers with one boot hash, PDF, budgets ok), the full npm run e2e (111 passed, including WP-07's smoke, guards and harness specs), npm run a11y -- tests/e2e/shell.spec.ts (20 passed), and shell plus fast-path together (47 passed, 33 skipped by project scoping). check-copy (WP-06's script) passes on this branch's tracked files and dist; RELEASE=1 fails only on the existing draft content. The spec that loads /nope/ acknowledges the browser's own 404 console error, and the blocked-chunk fast-path test acknowledges exactly 'Failed to load resource: net::ERR_FAILED' and 'Failed to fetch dynamically imported module: ...MuseumCanvas...'. Not proven locally: the remote CI run and anything on Netlify (deferred to R0 after push)."
+}

@@ -1,0 +1,126 @@
+/*
+ * Design tokens as CSS custom properties (EXPERIENCE §7.2 to §7.4, §7.7, §7.8).
+ * Values mirror src/design/tokens.ts; css.test.ts fails when the two drift.
+ * Names follow EXPERIENCE. Values are tuned only by R2 (docs/ART_DIRECTION.md).
+ * The gallery is always dark (EXPERIENCE §7.10); /resume/ uses the --cv-* set below.
+ */
+
+:root {
+  /* Surfaces */
+  --ink: #0b0b0d;
+  --wall: #141418;
+  --floor: #0e0e11;
+  --plinth: #1f1f24;
+  --panel: rgba(14, 14, 17, 0.86);
+  --panel-solid: #0f0f12;
+
+  /* Text on dark. --text-3 is for decorative strokes only, never text (3.66:1). */
+  --text: #f2ede4;
+  --text-2: #a8a29a;
+  --text-3: #6e6a64;
+
+  /* Brass and the one cool accent */
+  --brass: #c9a36a;
+  --brass-hi: #e4c48f;
+  --brass-metal: #b08d57;
+  --signal: #7fd1c7;
+
+  /* Placard paper, newest (--paper) to oldest (--paper-old) */
+  --paper: #efebe4;
+  --paper-old: #e9dcc4;
+  --paper-ink: #1a1a1e;
+  --paper-ink-2: #5a554d;
+
+  /* Material and light colors (3D; mirrored here for reference and the portrait duotone) */
+  --ceramic: #e6e1d8;
+  --graphite: #34343b;
+  --walnut: #4e3322;
+  --frost: #dde3e4;
+  --ceiling-slot: #2a2622;
+  --light-0: #fff4e8;
+  --light-1: #ffe9d2;
+  --light-2: #ffddb8;
+  --light-3: #ffcf9c;
+  --duo-shadow: #16161a;
+  --duo-light: #f2ede4;
+
+  /* Motion (EXPERIENCE §7.4) */
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-slow: 600ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --rail-smooth: 0.25s;
+  --fade-cut: 200ms;
+
+  /* Stage vignette: CSS only, no post-processing (EXPERIENCE §7.5, ARCHITECTURE §8.6) */
+  --vignette: radial-gradient(ellipse at center, transparent 55%, rgba(11, 11, 13, 0.55) 100%);
+
+  /* Type (EXPERIENCE §7.7). Fallback faces come from fonts.css. */
+  --font-serif: 'Instrument Serif', 'Instrument Serif Fallback', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', 'IBM Plex Sans Fallback', Arial, sans-serif;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --type-display: clamp(36px, 6vw, 88px);
+  --lh-display: 1.05;
+  --type-h2: clamp(32px, 3vw, 44px);
+  --lh-h2: 1.1;
+  --type-title: 28px;
+  --type-title-phone: 24px;
+  --lh-title: 1.15;
+  --type-role: 16px;
+  --lh-role: 1.4;
+  --type-body: 16px;
+  --type-body-dialog: 17px;
+  --lh-body: 1.6;
+  --type-small: 14px;
+  --lh-small: 1.5;
+  --type-label: 12px;
+  --lh-label: 1.3;
+  --tracking-label: 0.08em;
+
+  /* UI chrome (EXPERIENCE §7.8, §7.9; docs/ART_DIRECTION.md §6) */
+  --hairline: rgba(201, 163, 106, 0.28);
+  --border-secondary: rgba(201, 163, 106, 0.6);
+  --radius: 2px;
+  --panel-blur: 14px;
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --focus-dark: var(--brass-hi);
+  --focus-paper: var(--paper-ink);
+  --target-min: 44px;
+  --icon-size: 18px;
+  --icon-stroke: 1.5;
+}
+
+/* Classic page (/resume/, EXPERIENCE §7.3): follows the system theme, prints on white. */
+[data-page='classic'] {
+  color-scheme: light;
+  --cv-bg: #fbfaf7;
+  --cv-text: #1a1a1e;
+  --cv-text-2: #55524c;
+  --cv-link: #7a5c2b;
+  --cv-focus: #1a1a1e;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-page='classic'] {
+    color-scheme: dark;
+    --cv-bg: #0b0b0d;
+    --cv-text: #f2ede4;
+    --cv-text-2: #a8a29a;
+    --cv-link: #e4c48f;
+    --cv-focus: #e4c48f;
+  }
+}
+
+@media print {
+  [data-page='classic'] {
+    color-scheme: light;
+    --cv-bg: #ffffff;
+    --cv-text: #000000;
+    --cv-text-2: #000000;
+    --cv-link: #000000;
+    --cv-focus: #000000;
+  }
+}

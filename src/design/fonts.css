@@ -1,0 +1,63 @@
+/*
+ * DOM fonts (EXPERIENCE §7.7, ARCHITECTURE §8.3). Self-hosted from npm: Vite hashes the latin
+ * .woff2 files into /assets/ (no CDN, CSP is self-only). troika reads the .woff files of the
+ * same packages through _kit/fonts.ts, never this file. WP-28 may switch these imports to
+ * subsets in public/fonts/ and tunes the fallback metrics below.
+ */
+@import '@fontsource/instrument-serif/latin-400.css';
+@import '@fontsource/instrument-serif/latin-400-italic.css';
+@import '@fontsource/ibm-plex-sans/latin-400.css';
+@import '@fontsource/ibm-plex-sans/latin-500.css';
+
+/*
+ * Metric-matched fallbacks, so the swap from Georgia or Arial to the web font barely moves the
+ * layout (CLS at most 0.02). First-pass values (docs/ART_DIRECTION.md §3): size-adjust is the
+ * ratio of average character widths (English letter frequencies plus spaces), measured with
+ * fontkit against Gelasio (metric-compatible with Georgia) and Liberation Sans (metric-compatible
+ * with Arial); the overrides are the web font's ascent, descent and line gap divided by it.
+ */
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Georgia'), local('Gelasio'), local('Gelasio Regular'), local('Gelasio-Regular');
+  size-adjust: 76.8%;
+  ascent-override: 128.91%;
+  descent-override: 40.37%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  font-style: italic;
+  font-weight: 400;
+  src:
+    local('Georgia Italic'), local('Georgia-Italic'), local('Gelasio Italic'),
+    local('Gelasio-Italic');
+  size-adjust: 79.38%;
+  ascent-override: 124.72%;
+  descent-override: 39.05%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Fallback';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans');
+  size-adjust: 101.25%;
+  ascent-override: 101.24%;
+  descent-override: 27.16%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Fallback';
+  font-style: normal;
+  font-weight: 500;
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('LiberationSans');
+  size-adjust: 103.4%;
+  ascent-override: 99.13%;
+  descent-override: 26.6%;
+  line-gap-override: 0%;
+}

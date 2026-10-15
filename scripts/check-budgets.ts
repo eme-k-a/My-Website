@@ -10,7 +10,9 @@
 //   uses;
 // - debug: the ?debug chunk is reported, never budgeted.
 // It also fails when leva, r3f-perf or leva's private zustand 3 copy reaches the entry or museum
-// chunk (PLAN Addendum, R0 rulings after WP-01). Prints a table and exits 1 on any breach.
+// chunk (PLAN Addendum, R0 rulings after WP-01), and when three.js, React Three Fiber, drei or
+// troika code reaches the entry chunk (ruling R-M1-2: the entry may import only the small pure
+// helpers of src/museum). Prints a table and exits 1 on any breach.
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -55,7 +57,7 @@ export interface BudgetRow {
 
 export interface BudgetReport {
   rows: BudgetRow[];
-  /** Debug-only code found in the entry or museum chunk. */
+  /** Debug-only code in the entry or museum chunk, or three.js-family code in the entry. */
   forbidden: string[];
   ok: boolean;
 }
@@ -76,6 +78,24 @@ export const DEBUG_FINGERPRINTS: ReadonlyArray<{ what: string; needle: string }>
   },
 ];
 const DEBUG_PACKAGE = /(^|[/_])(leva|r3f-perf)([/._-]|$)/;
+
+/**
+ * Strings that survive minification in three.js, React Three Fiber and troika (checked in a
+ * minified Vite build of three, @react-three/fiber, @react-three/drei and troika-three-text; none
+ * is in the current entry chunk). `__THREE__` is three's module-level revision check, so it comes
+ * along with any three.js import, even a lone Vector3. drei is caught through the three.js, R3F
+ * and troika code it imports. Ruling R-M1-2: none of it may reach the entry chunk; the museum
+ * chunk is where it lives.
+ */
+export const THREE_FINGERPRINTS: ReadonlyArray<{ what: string; needle: string }> = [
+  { what: 'three.js', needle: '__THREE__' },
+  { what: 'three.js', needle: 'WebGLRenderer' },
+  { what: 'three.js', needle: 'isBufferGeometry' },
+  { what: 'three.js shader', needle: '#include <common>' },
+  { what: 'React Three Fiber', needle: '__r3f' },
+  { what: 'React Three Fiber', needle: 'R3F: ' },
+  { what: 'troika', needle: 'troika' },
+];
 
 /** The chunk keys reachable from `start` through static imports, `start` included. */
 export function staticClosure(manifest: Manifest, start: string): Set<string> {
@@ -108,6 +128,7 @@ async function forbiddenCode(
   manifest: Manifest,
   keys: Iterable<string>,
   label: string,
+  fingerprints: ReadonlyArray<{ what: string; needle: string }> = DEBUG_FINGERPRINTS,
 ): Promise<string[]> {
   const found: string[] = [];
   for (const key of keys) {
@@ -119,7 +140,7 @@ async function forbiddenCode(
       }
     }
     const code = await readFile(join(dist, chunk.file), 'utf8');
-    for (const { what, needle } of DEBUG_FINGERPRINTS) {
+    for (const { what, needle } of fingerprints) {
       if (code.includes(needle)) {
         found.push(`${label}: ${chunk.file} contains ${what} code ("${needle}")`);
       }
@@ -163,7 +184,12 @@ export async function measureBundles(
   if (!manifest[ENTRY_KEY]) throw new Error(`manifest: no "${ENTRY_KEY}" entry chunk`);
   const entry = staticClosure(manifest, ENTRY_KEY);
   rows.push(row('entry', await gzipBytes(dist, manifest, entry), budgets.entryJsGzipKB));
-  forbidden.push(...(await forbiddenCode(dist, manifest, entry, 'entry')));
+  forbidden.push(
+    ...(await forbiddenCode(dist, manifest, entry, 'entry', [
+      ...DEBUG_FINGERPRINTS,
+      ...THREE_FINGERPRINTS,
+    ])),
+  );
 
   const museum = new Set<string>();
   if (manifest[MUSEUM_KEY]) {

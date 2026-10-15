@@ -14,6 +14,7 @@ import {
   measureBundles,
   readBundleBudgets,
   staticClosure,
+  THREE_FINGERPRINTS,
   type BundleBudgets,
   type Manifest,
 } from './check-budgets';
@@ -184,6 +185,40 @@ describe('measureBundles', () => {
     ]);
   });
 
+  it('fails when three.js, R3F or troika code reaches the entry chunk (R-M1-2)', async () => {
+    const contents = fullContents();
+    contents['assets/main.js'] += 'const r=new WebGLRenderer({antialias:!0});';
+    contents['assets/shared.js'] += 'e.__r3f.root=n;var t="troika-text";';
+    await writeDist(FULL, contents);
+    const report = await measureBundles(dist, FULL, BUDGETS);
+    expect(report.ok).toBe(false);
+    expect(report.forbidden).toEqual([
+      'entry: assets/main.js contains three.js code ("WebGLRenderer")',
+      'entry: assets/shared.js contains React Three Fiber code ("__r3f")',
+      'entry: assets/shared.js contains troika code ("troika")',
+    ]);
+  });
+
+  it('allows three.js, R3F and troika code in the museum chunk', async () => {
+    const contents = fullContents();
+    contents['assets/three.js'] += THREE_FINGERPRINTS.map(({ needle }) => needle).join(';');
+    contents['assets/MuseumCanvas.js'] += 'e.__r3f.root=n;';
+    await writeDist(FULL, contents);
+    const report = await measureBundles(dist, FULL, BUDGETS);
+    expect(report.forbidden).toEqual([]);
+    expect(report.ok).toBe(true);
+  });
+
+  it('flags every three.js fingerprint on its own', async () => {
+    for (const { what, needle } of THREE_FINGERPRINTS) {
+      const contents = fullContents();
+      contents['assets/react.js'] += needle;
+      await writeDist(FULL, contents);
+      const { forbidden } = await measureBundles(dist, FULL, BUDGETS);
+      expect(forbidden).toEqual([`entry: assets/react.js contains ${what} code ("${needle}")`]);
+    }
+  });
+
   it('fails when a debug-only package chunk is statically imported by the entry', async () => {
     const manifest: Manifest = {
       'index.html': { file: 'assets/main.js', isEntry: true, imports: ['_leva.esm-abc.js'] },
@@ -226,6 +261,20 @@ describe('checkBudgets', () => {
     expect(await checkBudgets({ dist, budgets })).toBe(0);
     await writeFile(budgets, JSON.stringify({ bundles: { ...BUDGETS, entryJsGzipKB: 1 } }));
     expect(await checkBudgets({ dist, budgets })).toBe(1);
+  });
+
+  it('returns 1 when the entry chunk holds three.js code', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const contents = fullContents();
+    contents['assets/main.js'] += '"#include <common>"';
+    await writeDist(FULL, contents);
+    const budgets = join(dist, 'budgets.json');
+    await writeFile(budgets, JSON.stringify({ bundles: BUDGETS }));
+    expect(await checkBudgets({ dist, budgets })).toBe(1);
+    expect(error).toHaveBeenCalledWith(
+      'check-budgets: entry: assets/main.js contains three.js shader code ("#include <common>")',
+    );
   });
 
   it('returns 1 when dist/ has no manifest', async () => {

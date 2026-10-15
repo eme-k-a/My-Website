@@ -173,7 +173,7 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
     ]);
     expect(rows).toEqual([
       // prettier-ignore
-      ['No. 01', 'verafin', 'The Reporting Engine', 'Software Development Co-op Student', "Nasdaq Verafin, St. John's, NL", 'Sep 2026 - Dec 2026', '4 months', 'ON VIEW NOW'],
+      ['No. 01', 'verafin', 'The Reporting Engine', 'Software Development Co-op Student', "Nasdaq Verafin, St. John's, NL / Hybrid", 'Sep 2026 - Dec 2026', '4 months', 'ON VIEW NOW'],
       ['No. P1', 'klarup', 'The Climb', null, 'KlarUp, Project', null, null, null],
       // prettier-ignore
       ['No. P2', 'finance-tracker', 'The Balance', null, 'Personal Finance Tracker, Project', null, null, null],
@@ -360,7 +360,7 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
     expect(verafin).toMatchObject({
       role: 'Software Development Co-op Student',
       org: 'Nasdaq Verafin',
-      location: "St. John's, NL",
+      location: "St. John's, NL / Hybrid",
       dates: { text: `Sep 2026 ${EN_DASH} Dec 2026`, tex: 'Sep 2026 -- Dec 2026' },
     });
     expect(entryOf(experience, 'wailo').location).toBe('Calgary, AB / Remote');

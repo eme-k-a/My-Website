@@ -52,30 +52,30 @@ export const resume = {
       shortRole: 'Software Development Co-op',
       org: 'Nasdaq Verafin',
       employment: 'co-op',
-      // On-site is assumed until Emeka confirms (CONTENT_DRAFT §7 item 1).
-      location: { city: "St. John's", region: 'NL', mode: 'on-site' },
+      // Hybrid, confirmed by Emeka at G0 (2026-10-15).
+      location: { city: "St. John's", region: 'NL', mode: 'hybrid' },
       dates: { start: '2026-09', end: '2026-12' },
       // From the first build after 2026-12, check-content fails until this is 'past' (§8).
       tense: 'present',
-      // The three safe bullets: draft until Emeka (and ideally his manager) clears them at G0.
+      // The three safe bullets: approved by Emeka at G0 (2026-10-15), cleared by his manager.
       bullets: [
         {
           text: 'Develop data platform features supporting fraud detection and anti-money laundering software.',
           print: true,
           priority: 1,
-          draft: true,
+          draft: false,
         },
         {
           text: 'Build data reporting features that turn platform data into accurate, readable reports for end users.',
           print: true,
           priority: 2,
-          draft: true,
+          draft: false,
         },
         {
           text: 'Develop data reporting plugins that extend reporting capabilities with modular, reusable components.',
           print: true,
           priority: 2,
-          draft: true,
+          draft: false,
         },
       ],
       exhibit: {

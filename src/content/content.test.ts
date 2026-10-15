@@ -150,10 +150,10 @@ describe('bullets and flags', () => {
     }
   });
 
-  it('verafin has the three safe bullets, all draft, priorities 1, 2, 2', () => {
+  it('verafin has the three safe bullets, approved at G0, priorities 1, 2, 2', () => {
     const verafin = work('verafin');
     expect(verafin.bullets).toHaveLength(3);
-    expect(verafin.bullets.every((b) => b.draft)).toBe(true);
+    expect(verafin.bullets.every((b) => !b.draft)).toBe(true);
     expect(verafin.bullets.map((b) => b.priority)).toEqual([1, 2, 2]);
     expect(verafin.bullets.every((b) => b.print)).toBe(true);
   });
@@ -162,11 +162,11 @@ describe('bullets and flags', () => {
     expect(work('verafin').exhibit.draft).toBe(true);
   });
 
-  it('only verafin bullets are draft', () => {
+  it('no resume bullet is draft after G0', () => {
     const drafts = [...content.experiences, ...content.projects, ...content.volunteer].flatMap(
       (e) => e.bullets.filter((b) => b.draft).map(() => e.id),
     );
-    expect(new Set(drafts)).toEqual(new Set(['verafin']));
+    expect(drafts).toEqual([]);
   });
 
   it('every Finance Tracker bullet is print: false; every other bullet is print: true', () => {

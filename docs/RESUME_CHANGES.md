@@ -1,7 +1,14 @@
 # Resume changes for Gate G0
 
-**Owner:** R1 Content & Resume Editor (WP-04). **Status:** waiting for Emeka at Gate G0.
-**Approval:** not yet given. When Emeka replies "approved" (or with edits), record the date and every edit here, then a commit with the trailer `WP: WP-04` flips the Verafin bullets to `draft: false` (CONTENT_DRAFT §1).
+**Owner:** R1 Content & Resume Editor (WP-04). **Status:** approved by Emeka at Gate G0 on 2026-10-15.
+
+**Approval record (2026-10-15):**
+- **Resume:** Emeka replied "approved" to the before and after package.
+- **Verafin location:** hybrid. `location.mode` is `hybrid`, so the PDF and `.tex` print "St. John's, NL / Hybrid".
+- **Verafin bullets:** his manager has cleared them for public use. All three bullets are now `draft: false`. The Verafin exhibit copy (title, caption, tags, object, story) stays `exhibit.draft: true` until the G5 copy review.
+- **Title style:** "(Co-op)" and "(Intern)" are confirmed.
+- **GitHub:** not on the PDF for now. It will be revisited later.
+- **LaTeX:** `resume.tex` now compiles at 10pt, matching his original Overleaf file, and fits on one page (commit `1431a5c`).
 
 This file lists everything that changed between the one-page PDF Emeka supplied ("before") and the generated `dist/resume.pdf` ("after"). The phone number is deliberately not reproduced anywhere in this file or in the repo.
 

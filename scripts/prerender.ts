@@ -2,6 +2,10 @@
 // Called first by scripts/postbuild.ts, so the CSP hash in _headers is taken from the final HTML.
 // It imports dist-ssr/entry-server.js (ARCHITECTURE §5.1, §11.1) and writes:
 // - dist/index.html: the Vite template with <!--ssr:head--> and <!--ssr:app--> filled in;
+// - dist/exhibit/<id>/index.html for every id in EXHIBIT_IDS (WP-14): the same gallery shell with
+//   <body data-page="exhibit">, the exhibit's own head tags, and its story in <!--ssr:story-->
+//   (`#story-static`, readable with JS off). The shell keeps exactly one inline script, the boot
+//   script, so one CSP hash covers every page;
 // - dist/resume/index.html: the classic resume, linking the hashed `classic` CSS from
 //   dist/.vite/manifest.json, with no script at all;
 // - dist/404.html: the 404 page with the gallery CSS, `noindex`, and no script at all.
@@ -13,12 +17,17 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const DIST = join(ROOT, 'dist');
 export const DIST_SSR = join(ROOT, 'dist-ssr');
 
+export type ExhibitRoute = { kind: 'exhibit'; id: string };
+export type HeadRoute = 'gallery' | 'classic' | 'notFound' | ExhibitRoute;
+
 /** What dist-ssr/entry-server.js exports (src/entry-server.tsx). */
 export interface EntryServer {
   renderApp(path: string): string;
+  renderStory(id: string): string;
   renderClassic(): string;
   renderNotFound(): string;
-  headTags(route: 'gallery' | 'classic' | 'notFound'): string;
+  headTags(route: HeadRoute): string;
+  EXHIBIT_IDS: readonly string[];
 }
 
 export interface ManifestChunk {
@@ -53,12 +62,32 @@ function fill(html: string, marker: string, value: string): string {
   return html.replace(marker, () => value);
 }
 
+const GALLERY_BODY = '<body data-page="gallery">';
+
 /** The gallery page from the Vite template. The template's dev-only <title> gives way to head tags. */
 export function galleryPage(template: string, entry: EntryServer): string {
   let html = template.replace(/[ \t]*<title>[^<]*<\/title>\n?/, '');
   html = fill(html, MARKERS.head, entry.headTags('gallery'));
   html = fill(html, MARKERS.app, entry.renderApp('/'));
   return fill(html, MARKERS.story, '');
+}
+
+/** An exhibit page: the gallery shell, the exhibit's head tags and its static story. */
+export function exhibitPage(template: string, entry: EntryServer, id: string): string {
+  let html = template.replace(/[ \t]*<title>[^<]*<\/title>\n?/, '');
+  if (!html.includes(GALLERY_BODY)) throw new Error(`dist/index.html has no ${GALLERY_BODY}`);
+  html = html.replace(GALLERY_BODY, '<body data-page="exhibit">');
+  html = fill(html, MARKERS.head, entry.headTags({ kind: 'exhibit', id }));
+  html = fill(html, MARKERS.app, entry.renderApp(`/exhibit/${id}/`));
+  html = fill(html, MARKERS.story, entry.renderStory(id));
+  const inline = html.match(/<script(?![^>]*\bsrc=)(?![^>]*type="application\/ld\+json")[^>]*>/gi);
+  if ((inline?.length ?? 0) > 1) {
+    throw new Error(`exhibit/${id}/index.html would have more than one inline script`);
+  }
+  if (/<[a-z][^>]*\son[a-z]+=/i.test(html.replace(/<script[\s\S]*?<\/script>/gi, ''))) {
+    throw new Error(`exhibit/${id}/index.html would have an inline event handler attribute`);
+  }
+  return html;
 }
 
 interface StaticPage {
@@ -116,6 +145,9 @@ export async function prerenderPages(options: PrerenderOptions = {}): Promise<st
 
   const template = await readFile(join(dist, 'index.html'), 'utf8');
   await write('index.html', galleryPage(template, entry));
+  for (const id of entry.EXHIBIT_IDS) {
+    await write(join('exhibit', id, 'index.html'), exhibitPage(template, entry, id));
+  }
 
   await write(
     join('resume', 'index.html'),

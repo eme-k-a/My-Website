@@ -91,7 +91,6 @@ test.describe('greybox', () => {
   });
 
   test('every stop renders within the draw-call budget', async ({ page }) => {
-    test.skip(true, 'needs WP-09 goTo');
     await page.goto(museumUrl('/'));
     await waitForMuseum(page);
     for (const stop of ALL_STOPS) {

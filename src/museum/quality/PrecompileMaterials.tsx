@@ -6,11 +6,10 @@
 // - It waits for the scene to be assembled (fog or a light present), because the light count,
 //   fog and environment are part of every program's key; compiling earlier would build programs
 //   nobody uses. After ASSEMBLY_TIMEOUT_MS it compiles anyway, so `ready` can never hang on it.
-// - It uses the canvas's own library when it sits inside <MaterialsProvider> (the R0 ruling of
-//   2026-10-15). Until MuseumCanvas mounts it there, it builds a private library from the same
-//   factory: three shares programs between materials with equal parameters, so compiling equal
-//   materials warms the same programs. Its meshes stay mounted (hidden) so those programs live
-//   as long as the canvas.
+// - It compiles the canvas's own library: MuseumCanvas mounts QualityController, and with it this
+//   component, inside <MaterialsProvider> (R0 ruling of 2026-10-15, F-011). Only outside a
+//   provider (never in the app) does it build a private library from the same factory. Its
+//   meshes stay mounted (hidden) so those programs live as long as the canvas.
 // - A texture slot the kit fills later (wall wash, floor pools, portrait) gets a 1 x 1 stand-in on
 //   a clone, so the precompiled program is the one the kit's material will ask for.
 import { useFrame, useThree } from '@react-three/fiber';
@@ -65,13 +64,13 @@ export function sceneAssembled(scene: Scene): boolean {
   return lit;
 }
 
-interface Precompile {
+export interface Precompile {
   materials: { name: MaterialName; material: Material }[];
   dispose: () => void;
 }
 
 /** One material per library row, with stand-ins for the kit's empty texture slots. */
-function precompileSet(shared: BuiltMaterialLibrary | null): Precompile {
+export function precompileSet(shared: BuiltMaterialLibrary | null): Precompile {
   const grain = shared ? undefined : createWalnutGrain();
   const library = shared ?? createMaterialLibrary({ grain });
   const standIn = new DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, RGBAFormat);

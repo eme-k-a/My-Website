@@ -91,11 +91,12 @@ export default function MuseumCanvas() {
         }}
         camera={camera}
       >
-        <QualityController />
         <FrameDriver />
         <StatsProbe />
         <ContextLossHandler />
         <MaterialsProvider>
+          {/* Inside the provider (R0 ruling, 2026-10-15): the precompile warms the real library. */}
+          <QualityController />
           <Suspense fallback={null}>
             <Scene />
             <CameraRig />

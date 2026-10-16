@@ -87,3 +87,12 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
 - **WP-14:** `story.ts` keeps `inApp: false` after Newer or Older on a cold deep link. The frozen `transitions.stepStory` is unchanged (contracts-v1). In museum mode a cold deep link shows the story when the dialog opens at hydration; that is accepted, because classic mode and JS-off pages show `#story-static`. `/og/*.png` images arrive in WP-31.
 - **WP-15:** `screenPos` stays the hit-box center (frozen contract). Specs check framing at the case center. `travelTo` fade-cuts any move over 3 stops, and `jumpTo(id, { fade })` is exported for R6. The wider keyboard and HUD announcement windows are accepted. `greybox.spec.ts` samples the lobby at the framed case point, not the canvas center (R0 grant to the WP-15 integrator).
 - **WP-16 interfaces:** rig-driven frame requests (gaze, framing, dolly, parallax, fade) must keep rendering under the demand frameloop. Any render pause reads `html[data-sheet='open']` and the store's `openId`.
+- **WP-16 rulings:**
+  - The 15 s idle stop may freeze exhibit motion mid-cycle; motion resumes without a jump (answers WP-12).
+  - `ready` resets to false when the canvas remounts.
+  - Context-loss recovery (test c): 5 s is the target on real GPUs, checked by hand at G5. Under SwiftShader (any `?test=1` run, CI included) the spec allows 10 s, because shader linking alone takes about 4.8 s there.
+  - The boot tier must not demote iOS Safari on `hardwareConcurrency` alone. Confirm on Emeka's iPhone at G5.
+- **M2 follow-ups (F-M2, after integration):**
+  - F-011 (R3): move `QualityController` inside `MaterialsProvider`.
+  - F-012 (R4): CameraRig stops requesting frames once the camera reaches the pose for the current scroll progress, so a scroll resting between stops lets frames stop.
+  - F-013 (R6): MuseumGate unmounts the canvas when the store's mode is `classic`.

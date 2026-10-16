@@ -1,0 +1,118 @@
+{
+  "wp": "WP-15",
+  "role": "R4 Camera & Interaction Engineer",
+  "status": "done",
+  "branch": "wp/WP-15",
+  "commits": [
+    "84eea05 feat(rail): gaze turn toward each case",
+    "24b2583 feat(rail): projection framing and parallax",
+    "6ee454c feat(rail): reduced-motion fade cuts and dialog dolly",
+    "490aa36 feat(rail): onboarding hint and keyboard-only announcements",
+    "b8e5478 fix(rail): no fade-cut for a wing door track swap under reduced motion",
+    "test(e2e): camera feel specs (the commit that carries this report)"
+  ],
+  "changedFiles": [
+    "src/museum/rail/gaze.ts",
+    "src/museum/rail/gaze.test.ts",
+    "src/museum/rail/framing.ts",
+    "src/museum/rail/framing.test.ts",
+    "src/museum/rail/parallax.ts",
+    "src/museum/rail/parallax.test.ts",
+    "src/museum/rail/dolly.ts",
+    "src/museum/rail/dolly.test.ts",
+    "src/museum/rail/fade.ts",
+    "src/museum/rail/fade.test.ts",
+    "src/museum/rail/hint.ts",
+    "src/museum/rail/hint.test.ts",
+    "src/museum/rail/announce.ts",
+    "src/museum/rail/announce.test.ts",
+    "src/museum/rail/CameraRig.tsx",
+    "src/museum/rail/rail.ts",
+    "src/museum/rail/navigation.ts",
+    "src/museum/rail/keys.ts",
+    "src/overlay/ScrollTrack.tsx",
+    "src/overlay/ScrollTrack.module.css",
+    "src/overlay/Intro.tsx",
+    "src/overlay/LiveRegion.tsx",
+    "tests/e2e/camera.spec.ts",
+    "review/reports/WP-15.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Reduced motion has no in-between camera positions: every 30 Hz sample within 1 mm of a stop pose",
+      "command": "npx playwright test tests/e2e/camera.spec.ts --project=desktop --project=pixel7 --workers=1 (test a)",
+      "result": "pass",
+      "evidence": "desktop: 97 samples at 30 Hz, 18 mid-scroll, worst 0.00e+0 m from a stop pose; pixel7 (two flicks verafin > door > mysa): 108 samples, 64 mid-scroll, worst 0.00e+0 m"
+    },
+    {
+      "id": "A2",
+      "criterion": "Framing: 62% +-3% of the width (desktop), 36% +-3% of the height (Pixel 7) at every settled main stop",
+      "command": "same run (test b)",
+      "result": "pass",
+      "evidence": "desktop: case (look-at) 62.0% x 50.0% at verafin, mysa, wailo, cfia, mun, certifications, screenPos x 62.0% at all six; pixel7: case 50.0% x 36.0% at all six (screenPos is the hit-box center, 45.3% height for standard plinths; see openQuestions)"
+    },
+    {
+      "id": "A3",
+      "criterion": "Announcements only for keyboard and HUD moves: zero text after the wheel walk, one announcement per ArrowDown arrival",
+      "command": "same run (test c, desktop)",
+      "result": "pass",
+      "evidence": "desktop: wheel walk lobby > wailo (600 px gestures) recorded no live-region text; ArrowDown x3 gave exactly 3 messages: verafin row, 'Projects wing door. Press Enter to step inside, or keep scrolling.', 'No. 02, Warm Start. Full Stack Software Developer (Co-op), Mysa, Jan 2026 – May 2026.' (pixel7 skipped: wheel and stepping keys are desktop input)"
+    },
+    {
+      "id": "A4",
+      "criterion": "Hint visible at the lobby, hidden at verafin",
+      "command": "same run (test d)",
+      "result": "pass",
+      "evidence": "desktop and pixel7: hint visible at the lobby under ?test=1 (variant fine / coarse), hidden (visibility hidden) after goTo verafin"
+    },
+    {
+      "id": "A5",
+      "criterion": "WP-09 behavior intact: rail-input.spec.ts and wings.spec.ts pass",
+      "command": "npx playwright test tests/e2e/rail-input.spec.ts tests/e2e/wings.spec.ts --project=desktop --project=pixel7 --workers=1",
+      "result": "pass",
+      "evidence": "rail-input.spec + wings.spec + camera.spec on desktop and pixel7, --workers=1: 32 passed, 10 skipped (project scoping), 0 failed, 14.6 min; camera.spec rerun after the last rail commit: 8 passed, 2 skipped"
+    },
+    {
+      "id": "A6",
+      "criterion": "Unit tests: gaze, framing and announce tests pass",
+      "command": "npx vitest run --project unit src/museum/rail",
+      "result": "pass",
+      "evidence": "13 files, 109 tests pass (gaze, framing, parallax, dolly, fade, hint, announce plus WP-09's); npm run verify: 590 unit tests pass, lint and typecheck clean"
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "Smoke regression outside this brief's acceptance: tests/e2e/greybox.spec.ts 'the stage renders the lobby within budget' @smoke fails on pixel7 only, because it samples luminance at the canvas center. With the EXPERIENCE §6.2 portrait framing (FOV 68, look-at moved to 36% of the height) the center now shows the lobby floor: 6.9/255 against its 8/255 floor (deterministic over two runs), while the framed look-at point measures 23.7/255. The spec is R8's; suggested fix for WP-17 or an R0 grant: sample at the framed look-at point (50% x 36% in portrait, 62% x 50% on desktop) or at the stage's brightest region. WP-11's lighting may move the number at integration.",
+      "for": "R0",
+      "default": "greybox.spec.ts unchanged (not WP-15's path); all other @smoke tests pass (79 passed, 4 skipped)"
+    },
+    {
+      "question": "EXPERIENCE §6.11 asks for screenPos(id) at 36% of the height on Pixel 7, but screenPos is frozen as the hit-box center (ARCHITECTURE §13.3), and that box covers plinth and case, so it lands about 9% lower than the look-at point (the case center, EXPERIENCE §6.2). camera.spec (b) asserts the case center at 62% x 50% (desktop) and 50% x 36% (Pixel 7), derived from screenPos through the measured camera, plus screenPos itself at 62% of the width on desktop. Accept this reading, or change screenPos to project the case center (a contracts-v1 change)?",
+      "for": "R0",
+      "default": "Case center asserted; screenPos unchanged"
+    },
+    {
+      "question": "Intro.tsx wiring renders the EXPERIENCE §8.3 keys variant ('Scroll, or press' plus a visually hidden 'down arrow') and an inline visibility/opacity style from hintStyle(), because Intro.module.css is R6's. That goes slightly beyond 'wiring only'. Accept, or have R6 move the copy and the hidden state into Intro.module.css?",
+      "for": "R0",
+      "default": "Inline style and EXPERIENCE copy, no CSS module change"
+    },
+    {
+      "question": "Announcements: a stepping key's scroll counts as a keyboard move even when SwiftShader starts the smooth scroll more than 1 s after the keydown (keys.ts lastStepAt since the last arrival), and a HUD mark is honored for 3 s (a HUD move out of a wing scrolls only after the 1.2 s exit glide). Both are supersets of the EXPERIENCE §10.3 1 s rule; wheel, trackpad and touch never announce. OK?",
+      "for": "R0",
+      "default": "As implemented"
+    },
+    {
+      "question": "Settle: CameraRig's 'moved' now also counts the gaze turn (change of the view direction at 1 m) so settled means the case is framed; the dolly, parallax and the framing shift do not hold back the settle. Confirm this reading of ARCHITECTURE §6.3 'camera moved less than 0.1 mm'.",
+      "for": "R0",
+      "default": "As implemented"
+    },
+    {
+      "question": "WP-16: CameraRig asks for frames while the framing shift, the dolly or parallax damp (and on pointermove for parallax), and fade.ts wakes the rig at ink. When WP-16 replaces the interim FrameDriver, those invalidations must still render; parallax frames come from pointermove, which does not touch lastInputAt.",
+      "for": "R7",
+      "default": "No change to WP-16 files"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Base: integration tip 5eb6e5c. HUD jumps: travelTo now fade-cuts any same-track move of more than 3 stops (instant scroll behind the 200 ms ink layer; no fade without a canvas), so R6's ProgressRail and 'Walk the aisle again' (travelTo('lobby'), 9 stops) already follow EXPERIENCE §6.5 without an R6 change; navigation.ts also exports jumpTo(id, { fade }) for R6 to adopt (it marks the move as a HUD move). The fade layer is the first child of #track (fixed, z-index -1 inside the track's stacking context: over the canvas, under the cards), driven by data-fade. Reduced motion: the camera holds its stop and cuts behind the fade once the scroll target is within 0.02 of another whole stop; wing entry under reduced motion fades once and announces (checked with a throwaway probe). Wing entry and exit always announce (except a wing restored at boot). Framing uses setViewOffset in px of the drawing size, so R3F's own aspect stays right on resize; with the desktop dialog open it frames into the area left of dialog.offsetLeft (the current WP-10 skeleton is full width, so this takes effect once WP-14's panel lands). Missing slice specs for WP-17 (tests/** is R8's): (1) dialog dolly about 0.6 m toward the case on open and back on close, instant under reduced motion (needs WP-14); (2) framing with the desktop panel open (look-at at the center of the area left of the panel, needs WP-14); (3) a HUD jump of more than 3 stops and 'Walk the aisle again' sample no in-between camera poses, and 1 to 3 stops scroll smoothly; (4) HUD and wing entry/exit announcements ('Entered the Projects wing. No. P1, The Climb.', 'Back in the main aisle at the Projects wing door.', 'Lobby.' after 'Walk the aisle again'); (5) the hint keys variant after a key press and its return after 8 s idle in the lobby; (6) parallax on fine pointers without ?test=1 (bounded to 1.5 and 1 degrees), which ?test=1 cannot exercise; (7) camera.spec runs on desktop and pixel7 only, (c) on desktop only (wheel and stepping keys). Smoke: npx playwright test --grep @smoke --workers=1 on all four projects: 79 passed, 4 skipped, 1 failed (greybox lobby luminance on pixel7, see openQuestions; the guards.spec 'trips the ... guard' rows are expected failures). The build passes: entry 92.68 KB, museum 300.19 KB gzip, budgets ok, check-copy ok. Not proven locally: the remote CI run (deferred to R0 after push)."
+}

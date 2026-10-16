@@ -78,3 +78,12 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
 - `threeDStrings(c, now?)` returns objects `{ kind, text, font, for }` and takes the build date. `check-glyphs` (WP-07) reads `.text` and `.font`; WP-28 font subsetting reads `.text` grouped by `.font`.
 - The print font is CMU Serif; `@fontsource/source-serif-4` is not used.
 - Small-phone CLS: at 360x640, swapping in the web font shifts the page by about 0.041, caused by the fallback-font metrics. WP-28 adds Linux and Android serif fallback overrides in `src/design/fonts.css` (R2 and R7). Tracked as a G4 item.
+
+## M2a (2026-10-16)
+
+- **Netlify:** site `emeka-nduka-nwagbo` (https://emeka-nduka-nwagbo.netlify.app) has no Git link. A `workflow_run` trigger fires only from the default branch, so pushes deploy through a final `deploy` job in `ci.yml` that calls `deploy.yml` (`workflow_call`, `secrets: inherit`, same-repo pushes only). `workflow_run` handles pull request runs only. Production deploys only from a push to `main`. The preview alias for this branch is `claude-intelligent-sagan-poq45q`.
+- **Real `SITE_URL`:** the print header shows the site host before the location. `resume.tex` and `selectors.test.ts` follow it (R0 grant to WP-18).
+- **WP-11:** a local `LightformerEnvironment` replaces drei `<Environment>`, because drei's version bundles HDR loaders and a CDN URL. Environment modules are renamed: `lighting.ts` is now `lightPlan.ts`, `fixtures.ts` is now `fixtureMatrices.ts`, and desk logic is in `deskParts.ts`. `GreyboxLighting.tsx` is gone. Tone mapping is frozen at ACES, exposure 1.0.
+- **WP-14:** `story.ts` keeps `inApp: false` after Newer or Older on a cold deep link. The frozen `transitions.stepStory` is unchanged (contracts-v1). In museum mode a cold deep link shows the story when the dialog opens at hydration; that is accepted, because classic mode and JS-off pages show `#story-static`. `/og/*.png` images arrive in WP-31.
+- **WP-15:** `screenPos` stays the hit-box center (frozen contract). Specs check framing at the case center. `travelTo` fade-cuts any move over 3 stops, and `jumpTo(id, { fade })` is exported for R6. The wider keyboard and HUD announcement windows are accepted. `greybox.spec.ts` samples the lobby at the framed case point, not the canvas center (R0 grant to the WP-15 integrator).
+- **WP-16 interfaces:** rig-driven frame requests (gaze, framing, dolly, parallax, fade) must keep rendering under the demand frameloop. Any render pause reads `html[data-sheet='open']` and the store's `openId`.

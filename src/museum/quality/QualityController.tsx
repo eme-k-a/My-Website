@@ -8,6 +8,8 @@
 // each such run gets a fresh monitor: with frameloop="demand" a pause between frames would read
 // as a very low frame rate, and coarse-pointer idle motion is paced at 30 fps on purpose, so it is
 // judged against 30 fps bounds.
+//
+// It also mounts PrecompileMaterials (boot-time shader compile).
 import { PerformanceMonitor } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
@@ -15,6 +17,7 @@ import { useMuseum } from '../../app/store';
 import { testParams } from '../../app/testHooks';
 import { adaptDpr, initialDprState, monitorBounds, type DprState } from './dpr';
 import { frameState, subscribeFrameState } from './frameDemand';
+import { PrecompileMaterials } from './PrecompileMaterials';
 import { startDpr } from './tiers';
 
 function useFrameState() {
@@ -49,5 +52,10 @@ function DprMonitor() {
 
 export function QualityController() {
   const [params] = useState(() => ({ test: testParams(window.location.search).test }));
-  return params.test ? null : <DprMonitor />;
+  return (
+    <>
+      {!params.test && <DprMonitor />}
+      <PrecompileMaterials />
+    </>
+  );
 }

@@ -3,7 +3,9 @@
 // the first scroll, pointerdown or keydown, whichever comes first; under ?test=1 immediately. So
 // it never competes with the hero (the LCP element). A chunk that fails to load, or an error thrown
 // while the museum renders, shows the fallback notice with links to /resume/ and the PDF.
-// `src/museum/**` is reached only through the dynamic import below.
+// `src/museum/**` is reached only through the dynamic import below. When the store's mode turns
+// `classic` (the context-loss fallback on an exhibit page), the canvas unmounts, which disposes
+// the renderer and every listener the museum installed (F-013); CSS alone would only hide it.
 import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { create } from 'zustand';
 import { useMuseum } from '../app/store';
@@ -116,6 +118,7 @@ class MuseumBoundary extends Component<{ children: ReactNode }, BoundaryState> {
 
 export function MuseumGate() {
   const start = useStartSignal();
+  const classic = useMuseum((s) => s.mode === 'classic');
   useEffect(
     () =>
       useMuseum.subscribe((s) => {
@@ -127,7 +130,7 @@ export function MuseumGate() {
   useEffect(() => {
     if (start && useGate.getState().status === 'idle') useGate.setState({ status: 'loading' });
   }, [start]);
-  if (!start) return null;
+  if (!start || classic) return null;
   return (
     <MuseumBoundary>
       <Suspense fallback={null}>

@@ -1,8 +1,9 @@
 // Quality checks (WP-16, ARCHITECTURE §8.4, §8.5, §10.1, §10.2, §13.3; R8 owns this spec after the
 // merge): shader programs stay stable after arrival, the demand frame loop stops 15 s after the
 // last input and pauses under the phone sheet, a lost WebGL context remounts the canvas (and the
-// second loss falls back to the classic resume), a back/forward-cache return renders, and phones
-// get the medium tier at DPR 1 under ?test=1. Desktop unless noted.
+// second loss falls back to the classic resume, or on an exhibit page to classic mode without a
+// canvas), a back/forward-cache return renders, and phones get the medium tier at DPR 1 under
+// ?test=1. Desktop unless noted.
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
 import { content } from '../../src/content/index';
@@ -28,6 +29,12 @@ const SWIFTSHADER = [
 ];
 
 const layout = computeLayout(content, buildDateFromEnv());
+/**
+ * Context-loss recovery under SwiftShader (any ?test=1 run, CI included): 10 s, because shader
+ * linking alone takes about 4.8 s there (WP-16 ruling, docs/RULINGS.md M2a). Real GPUs: 5 s,
+ * checked by hand at G5.
+ */
+const SWIFTSHADER_RECOVERY_MS = 10_000;
 const MAIN_STOPS = layout.tracks.main.stops.map((s) => s.id);
 
 const onlyOn = (project: string) =>
@@ -174,6 +181,45 @@ test.describe('quality', () => {
     const url = new URL(page.url());
     expect(url.pathname + url.hash).toBe('/resume/#why-context-loss');
     await expect(page.locator('#why-context-loss')).toBeVisible();
+  });
+
+  test('(h) the classic fallback on an exhibit page unmounts the canvas (F-013)', async ({
+    page,
+  }) => {
+    onlyOn('desktop');
+    await page.goto(museumUrl('/exhibit/verafin/'));
+    await waitForMuseum(page);
+    const first = await generation(page);
+    expect((await stats(page)).frames).toBeGreaterThan(0);
+
+    await loseContext(page);
+    await expect(page.getByTestId(TEST_IDS.contextVeil)).toBeVisible();
+    await page.evaluate(() => window.__LOSE_CONTEXT__?.restoreContext());
+    await page.waitForFunction(
+      (old) => {
+        const canvas = document.querySelector<HTMLCanvasElement>('[data-testid="stage"] canvas');
+        return Number(canvas?.dataset.generation) > old && window.__MUSEUM__?.ready === true;
+      },
+      first,
+      { timeout: SWIFTSHADER_RECOVERY_MS },
+    );
+
+    // The second loss: an exhibit page stays and switches to classic (ARCHITECTURE §10.1).
+    await loseContext(page);
+    await expect(page.locator('html')).toHaveAttribute('data-mode', 'classic');
+    await expect(page.getByTestId(TEST_IDS.storyStatic)).toBeVisible();
+    // MuseumGate unmounted the canvas, so the renderer and its probes are gone, not just hidden.
+    await expect(page.locator('canvas')).toHaveCount(0);
+    const probe = await page.evaluate(() => {
+      try {
+        window.__MUSEUM__?.stats();
+        return 'the stats provider is still registered';
+      } catch (error) {
+        return (error as Error).message;
+      }
+    });
+    expect(probe).toBe('not available yet: stats');
+    expect(new URL(page.url()).pathname).toBe('/exhibit/verafin/');
   });
 
   test('(f) phones get the medium tier at DPR 1 under ?test=1', async ({ page }) => {

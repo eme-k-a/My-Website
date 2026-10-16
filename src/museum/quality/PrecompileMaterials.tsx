@@ -10,6 +10,7 @@
 //   component, inside <MaterialsProvider> (R0 ruling of 2026-10-15, F-011). Only outside a
 //   provider (never in the app) does it build a private library from the same factory. Its
 //   meshes stay mounted (hidden) so those programs live as long as the canvas.
+// - Rows no scene mesh draws as they are (PRECOMPILE_SKIP, F-016) are left out.
 // - A texture slot the kit fills later (wall wash, floor pools, portrait) gets a 1 x 1 stand-in on
 //   a clone, so the precompiled program is the one the kit's material will ask for.
 import { useFrame, useThree } from '@react-three/fiber';
@@ -40,6 +41,13 @@ import {
 /** Compile anyway this long after mount if the scene never shows fog or a light. */
 export const ASSEMBLY_TIMEOUT_MS = 3000;
 
+/**
+ * Library rows no scene mesh draws as they are (F-016): the beams use an instanced clone of
+ * `beam` (Beams.tsx), a different program, and nothing mounts `shadowDecal` yet. Compiling them
+ * cost about 10% of the link time of every load and recovery under SwiftShader (F-M2).
+ */
+export const PRECOMPILE_SKIP: ReadonlySet<MaterialName> = new Set(['beam', 'shadowDecal']);
+
 /** Slots the kit fills on its own materials; the library leaves them empty. */
 const KIT_SLOTS: ReadonlySet<TextureSlot> = new Set(['wallWash', 'floorPools', 'portrait']);
 
@@ -69,14 +77,20 @@ export interface Precompile {
   dispose: () => void;
 }
 
-/** One material per library row, with stand-ins for the kit's empty texture slots. */
+/**
+ * One material per library row the scene draws (all but PRECOMPILE_SKIP), with stand-ins for the
+ * kit's empty texture slots.
+ */
 export function precompileSet(shared: BuiltMaterialLibrary | null): Precompile {
   const grain = shared ? undefined : createWalnutGrain();
   const library = shared ?? createMaterialLibrary({ grain });
   const standIn = new DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, RGBAFormat);
   standIn.needsUpdate = true;
   const clones: Material[] = [];
-  const materials = (Object.keys(materialSpecs) as MaterialName[]).map((name) => {
+  const names = (Object.keys(materialSpecs) as MaterialName[]).filter(
+    (name) => !PRECOMPILE_SKIP.has(name),
+  );
+  const materials = names.map((name) => {
     const spec: MaterialSpec = materialSpecs[name];
     const source = library[name] as Material & { map?: Texture | null; lightMap?: Texture | null };
     const needsMap = spec.map !== undefined && KIT_SLOTS.has(spec.map) && !source.map;

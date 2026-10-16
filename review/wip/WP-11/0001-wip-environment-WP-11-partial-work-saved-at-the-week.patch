@@ -1,0 +1,1153 @@
+From 1477dd02171c461b53c7ca93857c1cd7a2abe42f Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 16 Oct 2026 01:55:05 +0000
+Subject: [PATCH] wip(environment): WP-11 partial work saved at the weekly
+ usage limit
+
+Unfinished and unverified: light pools, trim, 3D labels, shell and lighting changes.
+A resumed WP-11 builder continues from here.
+
+WP: WP-11
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016CcKJFMWCyXKspJx4YvMS7
+---
+ src/museum/environment/labels3d.ts   | 183 ++++++++++++++
+ src/museum/environment/lightPools.ts | 358 +++++++++++++++++++++++++++
+ src/museum/environment/lighting.ts   | 355 +++++++++++++++++++++-----
+ src/museum/environment/shell.test.ts |   3 +-
+ src/museum/environment/shell.ts      |  61 ++++-
+ src/museum/environment/trim.ts       |  94 +++++++
+ 6 files changed, 991 insertions(+), 63 deletions(-)
+ create mode 100644 src/museum/environment/labels3d.ts
+ create mode 100644 src/museum/environment/lightPools.ts
+ create mode 100644 src/museum/environment/trim.ts
+
+diff --git a/src/museum/environment/labels3d.ts b/src/museum/environment/labels3d.ts
+new file mode 100644
+index 0000000..0d7416d
+--- /dev/null
++++ b/src/museum/environment/labels3d.ts
+@@ -0,0 +1,183 @@
++// Every 3D string the environment draws (EXPERIENCE §5.4, §6.9, §11.1) and where each one hangs.
++// Each duplicates DOM text: the lobby h1 and title, the door cards, the Foundations section, the
++// desk card headline and the year marks on the rail. `npm run check:glyphs` imports this module
++// in Node and checks every exported `{ text, font }` in its .woff (so no three.js imports here).
++// Strings come from the content where the content has them; the label specs are EXPERIENCE §5.4.
++import { doorId, type StopId } from '../../content/ids';
++import { content } from '../../content/index';
++import type { ThreeDFont } from '../../content/selectors';
++import { ARCH_Z, type Layout, type Vec3 } from '../rail/layout';
++
++export interface EnvironmentLabel {
++  kind: 'sign' | 'room' | 'year';
++  text: string;
++  font: ThreeDFont;
++  /** The fixture or door it belongs to. */
++  for: string;
++  /** Cap height in meters (EXPERIENCE §5.4: R3 may raise these, never lower them). */
++  capHeight: number;
++  /** Baseline above the floor (signs) in meters; 0 for the flat year numerals. */
++  baselineY: number;
++  /** troika letterSpacing in em. */
++  tracking: number;
++}
++
++/** "COMMIT HISTORY" above the lobby arch: Instrument Serif, cap 0.28 m, baseline 4.1. */
++export const COMMIT_HISTORY: EnvironmentLabel = {
++  kind: 'sign',
++  text: content.gallery.title.toUpperCase(),
++  font: 'serif',
++  for: 'lobby',
++  capHeight: 0.28,
++  baselineY: 4.1,
++  tracking: 0,
++};
++
++/** Room names above each door, aisle side: Plex Sans 500, cap 0.14 m, baseline 3.05, 0.12em. */
++export const ROOM_NAMES: readonly EnvironmentLabel[] = content.wings.map((wing) => ({
++  kind: 'room',
++  text: wing.title.toUpperCase(),
++  font: 'sans',
++  for: doorId(wing.id),
++  capHeight: 0.14,
++  baselineY: 3.05,
++  tracking: 0.12,
++}));
++
++/** "FOUNDATIONS" on the header beam at the aisle end: Plex Sans 500, cap 0.22 m, baseline 4.3. */
++export const FOUNDATIONS_SIGN: EnvironmentLabel = {
++  kind: 'sign',
++  text: 'FOUNDATIONS',
++  font: 'sans',
++  for: 'foundations',
++  capHeight: 0.22,
++  baselineY: 4.3,
++  tracking: 0.12,
++};
++
++/** The end wall (the desk card headline): Instrument Serif, cap 0.20 m, baseline 2.6. */
++export const END_WALL: EnvironmentLabel = {
++  kind: 'sign',
++  text: content.gallery.desk.headline,
++  font: 'serif',
++  for: 'desk',
++  capHeight: 0.2,
++  baselineY: 2.6,
++  tracking: 0,
++};
++
++/** Year numerals lie flat beside each strip: Plex Sans 500, cap 0.22 m, tracking 0.2em. */
++export const YEAR_NUMERAL = { font: 'sans', capHeight: 0.22, tracking: 0.2 } as const;
++
++/** Every glyph a year numeral can use (the years themselves are in threeDStrings). */
++export const YEAR_DIGITS = { text: '0123456789', font: 'sans', for: 'year-strip' } as const;
++
++/** A year numeral for `year`. */
++export function yearLabel(year: number): EnvironmentLabel {
++  return {
++    kind: 'year',
++    text: String(year),
++    font: YEAR_NUMERAL.font,
++    for: 'year-strip',
++    capHeight: YEAR_NUMERAL.capHeight,
++    baselineY: 0,
++    tracking: YEAR_NUMERAL.tracking,
++  };
++}
++
++// ---------------------------------------------------------------------------------------------
++// Placement
++
++/** Signs stand this far in front of their wall or beam face. */
++export const SIGN_WALL_GAP = 0.02;
++/** Year numerals lie this far from their strip, toward the far end (EXPERIENCE §6.9). */
++export const YEAR_NUMERAL_DZ = 0.45;
++/** Height of the year strips and numerals above the floor (flush, without z-fighting). */
++export const FLOOR_INLAY_Y = 0.002;
++
++export interface LabelPlacement {
++  label: EnvironmentLabel;
++  /** Group origin: on the wall face plus the gap, at floor level (the label adds its baseline). */
++  position: Vec3;
++  /** Euler XYZ; signs face into the room, numerals lie flat reading toward -z. */
++  rotation: Vec3;
++  /** The stop camera it is read from (the legibility rule). Null for the exempt year numerals. */
++  stop: StopId | null;
++}
++
++function room(layout: Layout, id: string) {
++  const found = layout.rooms.find((r) => r.id === id);
++  if (!found) throw new Error(`The layout has no '${id}' room`);
++  return found;
++}
++
++/** Where every environment label goes for this layout. */
++export function labelPlacements(layout: Layout): LabelPlacement[] {
++  const aisle = room(layout, 'aisle');
++  const desk = room(layout, 'desk');
++  const out: LabelPlacement[] = [
++    {
++      label: COMMIT_HISTORY,
++      position: [0, 0, ARCH_Z + SIGN_WALL_GAP],
++      rotation: [0, 0, 0],
++      stop: 'lobby',
++    },
++  ];
++  for (const door of layout.doors) {
++    const label = ROOM_NAMES.find((r) => r.for === doorId(door.wing));
++    if (!label) continue;
++    const right = door.side === 'right';
++    out.push({
++      label,
++      position: [right ? aisle.max[0] - SIGN_WALL_GAP : aisle.min[0] + SIGN_WALL_GAP, 0, door.z],
++      rotation: [0, right ? -Math.PI / 2 : Math.PI / 2, 0],
++      stop: doorId(door.wing),
++    });
++  }
++  // FOUNDATIONS is read on the approach, from the last stop of the aisle.
++  const aisleStops = layout.tracks.main.stops.filter((s) => s.camera[2] > aisle.min[1]);
++  out.push({
++    label: FOUNDATIONS_SIGN,
++    position: [0, 0, aisle.min[1] + SIGN_WALL_GAP],
++    rotation: [0, 0, 0],
++    stop: aisleStops.at(-1)?.id ?? null,
++  });
++  out.push({
++    label: END_WALL,
++    position: [0, 0, desk.min[1] + SIGN_WALL_GAP],
++    rotation: [0, 0, 0],
++    stop: 'desk',
++  });
++  for (const mark of layout.yearMarks) {
++    out.push({
++      label: yearLabel(mark.year),
++      position: [0, FLOOR_INLAY_Y, mark.z - YEAR_NUMERAL_DZ],
++      rotation: [-Math.PI / 2, 0, 0],
++      stop: null,
++    });
++  }
++  return out;
++}
++
++// ---------------------------------------------------------------------------------------------
++// Legibility (EXPERIENCE §5.4): projected cap height >= 14 CSS px from the label's stop camera
++
++export const MIN_CAP_PX = 14;
++
++export interface Viewport {
++  name: string;
++  width: number;
++  height: number;
++  /** Vertical field of view in degrees. */
++  fov: number;
++}
++
++/**
++ * Projected cap height in CSS px of a cap `capHeight` m tall, `distance` m from the camera:
++ * cap / (2 d tan(fov / 2)) * viewport height. Using the straight-line distance (not the depth
++ * along the view axis) errs small for labels off the screen center, so the check is conservative.
++ */
++export function projectedCapPx(capHeight: number, distance: number, viewport: Viewport): number {
++  const fov = (viewport.fov * Math.PI) / 180;
++  return (capHeight / (2 * distance * Math.tan(fov / 2))) * viewport.height;
++}
+diff --git a/src/museum/environment/lightPools.ts b/src/museum/environment/lightPools.ts
+new file mode 100644
+index 0000000..70940ff
+--- /dev/null
++++ b/src/museum/environment/lightPools.ts
+@@ -0,0 +1,358 @@
++// Baked light (EXPERIENCE §7.5, ART_DIRECTION §4, ARCHITECTURE §8.1): no shadow maps and only one
++// to three real lights, so the gallery's warmth is painted once at boot.
++// - Floor pools: one lightmap per floor zone (room). Per light target a warm radial pool (radius
++//   1.6 m, 0.3 m from the plinth toward the visitor, peak alpha 0.85, smoothstep falloff, color by
++//   age); per door a threshold pool on the aisle floor (1.2 m, alpha 0.35, light-0); under every
++//   plinth and the desk a soft contact patch (footprint plus a 0.25 m edge, darkness 0.55).
++// - Wall wash: one shared 256 px "scallop" (a wall-washer arc fading toward the floor) with a
++//   panel seam at each side, so seams repeat every 2 m. The bottom rows carry only the base level
++//   and the seams: the hall shell samples them, the wash bays behind each target the whole tile.
++// Everything is a pure function of the layout plus a fixed seed (the dither), so the textures are
++// identical on every run and can be rebuilt after a context restore. Values are linear light,
++// stored sRGB-encoded in 8 bits (colorSpace SRGB) so the dark end keeps its precision.
++import { CanvasTexture, ClampToEdgeWrapping, RepeatWrapping, SRGBColorSpace } from 'three';
++import { tokens } from '../../design/tokens';
++import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
++import { rng } from '../exhibits/_kit/noise';
++import { AISLE_HALF, type Layout, type Room } from '../rail/layout';
++import { lightTargets, rampColor } from './lighting';
++
++const light = tokens.light;
++
++/** Floor lightmap resolution, capped so a long aisle stays within MAX_LIGHTMAP_SIZE. */
++export const POOL_PX_PER_M = 32;
++export const MAX_LIGHTMAP_SIZE = 2048;
++/** Floor lightmap level outside the pools (linear, light-0 tinted). */
++export const FLOOR_BASE = 0.05;
++/** The door pool's center sits this far into the aisle from the door line. */
++export const DOOR_POOL_INSET = 0.6;
++/** Desk footprint for its contact patch (Desk.tsx). */
++export const DESK_FOOTPRINT = [1.8, 0.7] as const;
++/**
++ * lightMapIntensity of the floor per floor type. The floor is near black (`#0E0E11`), so its
++ * pools need a strong lightmap; the reflector floor (metalness 0.5) has half the diffuse albedo
++ * and gets twice the intensity to read the same.
++ */
++export const FLOOR_LIGHTMAP_INTENSITY = { standard: 48, reflector: 96 } as const;
++
++/** Wall wash tile: side in px, base level, and the lightMapIntensity of the `wall` material. */
++export const WALL_WASH_SIZE = 256;
++export const WALL_WASH_BASE = 0.04;
++export const WALL_WASH_INTENSITY = 14;
++/** Shell faces sample the wash at this v: base level and seams only, no scallop. */
++export const WALL_WASH_PLAIN_V = 0.03;
++
++export interface PoolSpec {
++  kind: 'pool' | 'door';
++  /** The target or door it belongs to. */
++  for: string;
++  center: [number, number];
++  radius: number;
++  alpha: number;
++  color: string;
++}
++
++export interface ContactSpec {
++  for: string;
++  center: [number, number];
++  /** Footprint [x, z] before rotation. */
++  size: [number, number];
++  rotationY: number;
++  soft: number;
++  darkness: number;
++}
++
++export interface FloorPaint {
++  pools: PoolSpec[];
++  contacts: ContactSpec[];
++}
++
++/** Everything painted into the floor lightmaps, in world [x, z]. */
++export function floorPaint(layout: Layout): FloorPaint {
++  const pools: PoolSpec[] = lightTargets(layout).map((t) => ({
++    kind: 'pool',
++    for: t.id,
++    center: [...t.pool],
++    radius: light.poolRadius,
++    alpha: light.poolAlpha,
++    color: t.color,
++  }));
++  for (const door of layout.doors) {
++    const s = door.side === 'left' ? -1 : 1;
++    pools.push({
++      kind: 'door',
++      for: `${door.wing}-door`,
++      center: [s * (AISLE_HALF - DOOR_POOL_INSET), door.z],
++      radius: light.doorPoolRadius,
++      alpha: light.doorPoolAlpha,
++      color: rampColor(0),
++    });
++  }
++  const contacts: ContactSpec[] = [];
++  for (const slot of layout.slots) {
++    if (slot.plinth === 'none') continue;
++    const [w, , d] = PLINTH_SIZE[slot.plinth];
++    contacts.push({
++      for: slot.id,
++      center: [slot.position[0], slot.position[2]],
++      size: [w, d],
++      rotationY: slot.rotationY,
++      soft: light.contactSoftEdge,
++      darkness: light.contactDarkness,
++    });
++  }
++  const desk = layout.tracks.main.stops.find((s) => s.id === 'desk');
++  if (desk) {
++    contacts.push({
++      for: 'desk',
++      center: [desk.look[0], desk.look[2]],
++      size: [...DESK_FOOTPRINT],
++      rotationY: 0,
++      soft: light.contactSoftEdge,
++      darkness: light.contactDarkness,
++    });
++  }
++  return { pools, contacts };
++}
++
++// ---------------------------------------------------------------------------------------------
++// Color and encoding helpers
++
++const smoothstep = (a: number, b: number, x: number) => {
++  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
++  return t * t * (3 - 2 * t);
++};
++
++const srgbToLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
++const linearToSrgb = (c: number) =>
++  c <= 0.0031308 ? c * 12.92 : 1.055 * Math.max(0, c) ** (1 / 2.4) - 0.055;
++
++/** `#RRGGBB` to linear RGB in [0, 1]. */
++export function hexToLinear(hex: string): [number, number, number] {
++  const n = Number.parseInt(hex.replace('#', ''), 16);
++  return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => srgbToLinear(v / 255)) as [
++    number,
++    number,
++    number,
++  ];
++}
++
++/** Linear [0, 1] to an sRGB byte, with a seeded dither of up to half a step against banding. */
++function encode(value: number, dither: number): number {
++  const v = linearToSrgb(Math.min(1, Math.max(0, value))) * 255 + dither;
++  return Math.min(255, Math.max(0, Math.round(v)));
++}
++
++// ---------------------------------------------------------------------------------------------
++// Floor zones
++
++export interface ZoneRaster {
++  room: Room['id'];
++  width: number;
++  height: number;
++  /** Meters per pixel along x and z. */
++  scale: [number, number];
++  /** RGBA, row 0 at the room's min z (the far end), column 0 at its min x. */
++  data: Uint8ClampedArray<ArrayBuffer>;
++}
++
++/** Pixel size of a zone's lightmap. */
++export function zoneSize(room: Room, pxPerM = POOL_PX_PER_M): { width: number; height: number } {
++  const w = room.max[0] - room.min[0];
++  const d = room.max[1] - room.min[1];
++  const density = Math.min(pxPerM, MAX_LIGHTMAP_SIZE / Math.max(w, d));
++  return {
++    width: Math.max(1, Math.round(w * density)),
++    height: Math.max(1, Math.round(d * density)),
++  };
++}
++
++/** World [x, z] of a pixel center (see ZoneRaster for the orientation). */
++export function zonePixelToWorld(
++  room: Room,
++  size: { width: number; height: number },
++  col: number,
++  row: number,
++): [number, number] {
++  const w = room.max[0] - room.min[0];
++  const d = room.max[1] - room.min[1];
++  return [
++    room.min[0] + ((col + 0.5) * w) / size.width,
++    room.min[1] + ((row + 0.5) * d) / size.height,
++  ];
++}
++
++/** Signed distance outside a rotated rectangle (0 inside). */
++function outsideRect(spec: ContactSpec, x: number, z: number): number {
++  const dx = x - spec.center[0];
++  const dz = z - spec.center[1];
++  // Into the footprint's local frame (rotation about +Y by rotationY).
++  const c = Math.cos(spec.rotationY);
++  const s = Math.sin(spec.rotationY);
++  const lx = c * dx - s * dz;
++  const lz = s * dx + c * dz;
++  const ox = Math.max(0, Math.abs(lx) - spec.size[0] / 2);
++  const oz = Math.max(0, Math.abs(lz) - spec.size[1] / 2);
++  return Math.hypot(ox, oz);
++}
++
++/** Paints one floor zone. Pure and deterministic (the dither is seeded by `seed`). */
++export function paintZone(
++  room: Room,
++  paint: FloorPaint,
++  seed = 1,
++  pxPerM = POOL_PX_PER_M,
++): ZoneRaster {
++  const size = zoneSize(room, pxPerM);
++  const { width, height } = size;
++  const sx = (room.max[0] - room.min[0]) / width;
++  const sz = (room.max[1] - room.min[1]) / height;
++  const rgb = new Float32Array(width * height * 3);
++  const base = hexToLinear(rampColor(0)).map((v) => v * FLOOR_BASE);
++  for (let i = 0; i < width * height; i++) rgb.set(base, i * 3);
++
++  const colOf = (x: number) => (x - room.min[0]) / sx - 0.5;
++  const rowOf = (z: number) => (z - room.min[1]) / sz - 0.5;
++  const span = (cx: number, cz: number, r: number) => ({
++    c0: Math.max(0, Math.floor(colOf(cx - r))),
++    c1: Math.min(width - 1, Math.ceil(colOf(cx + r))),
++    r0: Math.max(0, Math.floor(rowOf(cz - r))),
++    r1: Math.min(height - 1, Math.ceil(rowOf(cz + r))),
++  });
++
++  for (const pool of paint.pools) {
++    const color = hexToLinear(pool.color);
++    const { c0, c1, r0, r1 } = span(pool.center[0], pool.center[1], pool.radius);
++    for (let row = r0; row <= r1; row++) {
++      for (let col = c0; col <= c1; col++) {
++        const [x, z] = zonePixelToWorld(room, size, col, row);
++        const r = Math.hypot(x - pool.center[0], z - pool.center[1]);
++        if (r >= pool.radius) continue;
++        const a = pool.alpha * (1 - smoothstep(0, pool.radius, r));
++        const i = (row * width + col) * 3;
++        for (let k = 0; k < 3; k++) rgb[i + k] = rgb[i + k]! * (1 - a) + color[k]! * a;
++      }
++    }
++  }
++
++  for (const contact of paint.contacts) {
++    const reach = Math.hypot(contact.size[0], contact.size[1]) / 2 + contact.soft;
++    const { c0, c1, r0, r1 } = span(contact.center[0], contact.center[1], reach);
++    for (let row = r0; row <= r1; row++) {
++      for (let col = c0; col <= c1; col++) {
++        const [x, z] = zonePixelToWorld(room, size, col, row);
++        const d = outsideRect(contact, x, z);
++        if (d >= contact.soft) continue;
++        const k = 1 - contact.darkness * (1 - smoothstep(0, contact.soft, d));
++        const i = (row * width + col) * 3;
++        rgb[i] = rgb[i]! * k;
++        rgb[i + 1] = rgb[i + 1]! * k;
++        rgb[i + 2] = rgb[i + 2]! * k;
++      }
++    }
++  }
++
++  const random = rng(seed);
++  const data = new Uint8ClampedArray(width * height * 4);
++  for (let i = 0; i < width * height; i++) {
++    const dither = random() - 0.5;
++    data[i * 4] = encode(rgb[i * 3]!, dither);
++    data[i * 4 + 1] = encode(rgb[i * 3 + 1]!, dither);
++    data[i * 4 + 2] = encode(rgb[i * 3 + 2]!, dither);
++    data[i * 4 + 3] = 255;
++  }
++  return { room: room.id, width, height, scale: [sx, sz], data };
++}
++
++/** Every floor zone of the layout, painted (seed = 1 + the room's index). */
++export function paintFloorZones(layout: Layout, pxPerM = POOL_PX_PER_M): ZoneRaster[] {
++  const paint = floorPaint(layout);
++  return layout.rooms.map((room, i) => paintZone(room, paint, 1 + i, pxPerM));
++}
++
++// ---------------------------------------------------------------------------------------------
++// Wall wash
++
++/** Tile geometry: the tile spans one 2 m panel and, nominally, a 5 m wall. */
++const TILE_W = 2;
++const TILE_H = 5;
++const SCALLOP_TOP = 0.45; // m below the ceiling at the tile center
++const SCALLOP_CURVE = 1.1; // edge drop per m^2 off center
++const SCALLOP_FALLOFF = 2.4; // m, exponential falloff toward the floor
++const SEAM_HALF_PX = 1.25;
++const SEAM_DARKEN = 0.55;
++
++/** Wash level at tile coordinates (u across, v up), linear, before seams and base. */
++export function scallop(u: number, v: number): number {
++  const x = (u - 0.5) * TILE_W;
++  const down = (1 - v) * TILE_H;
++  const edge = SCALLOP_TOP + SCALLOP_CURVE * x * x;
++  const lit = smoothstep(0, 0.35, down - edge);
++  const fall = Math.exp(-Math.max(0, down - SCALLOP_TOP) / SCALLOP_FALLOFF);
++  const sides = 1 - smoothstep(0.55, 0.98, Math.abs(x));
++  // Nothing reaches the bottom rows: the shell samples them for base and seams only.
++  const floor = smoothstep(0.08, 0.22, v);
++  return lit * fall * sides * floor;
++}
++
++/** RGBA pixels of the shared wall-wash tile (greyscale, sRGB-encoded, row 0 at the top). */
++export function wallWashPixels(size = WALL_WASH_SIZE, seed = 7): Uint8ClampedArray<ArrayBuffer> {
++  const data = new Uint8ClampedArray(size * size * 4);
++  const random = rng(seed);
++  for (let row = 0; row < size; row++) {
++    const v = 1 - (row + 0.5) / size;
++    for (let col = 0; col < size; col++) {
++      const u = (col + 0.5) / size;
++      const edgePx = Math.min(col + 0.5, size - col - 0.5);
++      const seam = 1 - SEAM_DARKEN * (1 - smoothstep(0, SEAM_HALF_PX, edgePx));
++      const value = (WALL_WASH_BASE + (1 - WALL_WASH_BASE) * scallop(u, v)) * seam;
++      const byte = encode(value, random() - 0.5);
++      const i = (row * size + col) * 4;
++      data[i] = byte;
++      data[i + 1] = byte;
++      data[i + 2] = byte;
++      data[i + 3] = 255;
++    }
++  }
++  return data;
++}
++
++// ---------------------------------------------------------------------------------------------
++// Browser: CanvasTextures
++
++function canvasFrom(width: number, height: number, data: Uint8ClampedArray<ArrayBuffer>) {
++  const canvas = document.createElement('canvas');
++  canvas.width = width;
++  canvas.height = height;
++  const ctx = canvas.getContext('2d');
++  if (!ctx) throw new Error('No 2D context for a lightmap');
++  ctx.putImageData(new ImageData(data, width, height), 0, 0);
++  return canvas;
++}
++
++function asLightmap(texture: CanvasTexture, name: string): CanvasTexture {
++  texture.name = name;
++  texture.colorSpace = SRGBColorSpace;
++  texture.channel = 0;
++  texture.needsUpdate = true;
++  return texture;
++}
++
++/** One floor lightmap CanvasTexture per room (lightMap.channel 0, the plane's own UVs). */
++export function createFloorLightmaps(layout: Layout): Map<Room['id'], CanvasTexture> {
++  const out = new Map<Room['id'], CanvasTexture>();
++  for (const zone of paintFloorZones(layout)) {
++    const texture = new CanvasTexture(canvasFrom(zone.width, zone.height, zone.data));
++    out.set(zone.room, asLightmap(texture, `floorPools-${zone.room}`));
++  }
++  return out;
++}
++
++/** The shared wall-wash tile (repeat-wrapped along the wall). */
++export function createWallWash(): CanvasTexture {
++  const size = WALL_WASH_SIZE;
++  const texture = new CanvasTexture(canvasFrom(size, size, wallWashPixels(size)));
++  texture.wrapS = RepeatWrapping;
++  texture.wrapT = ClampToEdgeWrapping;
++  return asLightmap(texture, 'wallWash');
++}
+diff --git a/src/museum/environment/lighting.ts b/src/museum/environment/lighting.ts
+index b297d3f..03c8ec8 100644
+--- a/src/museum/environment/lighting.ts
++++ b/src/museum/environment/lighting.ts
+@@ -1,77 +1,316 @@
+-// Greybox lighting plan (WP-08 only; WP-11 replaces it with the full EXPERIENCE §6.8 plan). One
+-// spotlight follows the visitor: it lights the current stop's target, or the next target ahead
+-// when the stop has none (the lobby and door stops). Targets are the slots and the desk. The
+-// mount follows EXPERIENCE §5.5: 0.6 m from the target toward its stop camera along the room's
+-// main axis (1.6 m out from the wall for the wall vitrine), just under the ceiling.
+-import type { StopId } from '../../content/ids';
+-import type { Layout, Room, StopPose, Vec3 } from '../rail/layout';
+-
+-/** Horizontal distance from a plinth target to its spotlight mount. */
++// The lighting plan (EXPERIENCE §5.5, §6.8, §6.9, §7.5; ARCHITECTURE §8.1; ART_DIRECTION §4).
++// Pure, so the unit tests pin it:
++// - `lightPlan(tier)`: what each tier gets, fixed at boot (3 real spotlights on high, 1 on medium
++//   and low; beam cones off on low; the reflector floor only on high). Only DPR adapts at runtime.
++// - Light targets: the portrait (lobby), every slot and the desk, each with its spotlight mount,
++//   the point it aims at, its baked pool center and its temperature color from the age ramp.
++// - `assignLights(trackStops, stopIndex, tier)`: light 1 takes the current stop's target (or the
++//   next one ahead), on high lights 2 and 3 take the next two targets ahead.
++// - `matchLights(current, wanted)`: which physical light goes where, so a light that already
++//   holds a wanted target stays put and only the others move (and fade up from 0).
++import { doorId, WING_IDS, type ExhibitId, type StopId } from '../../content/ids';
++import { tokens } from '../../design/tokens';
++import { slotOrigin, slotVariant } from '../exhibits/_kit/anatomy';
++import type { QualityTier } from '../exhibits/_kit/types';
++import { ARCH_Z, LOBBY_CEILING, type Layout, type Room, type Slot, type Vec3 } from '../rail/layout';
++
++const light = tokens.light;
++
++/** A light target: an exhibit slot, the lobby portrait or the front desk. */
++export type TargetId = ExhibitId | 'portrait' | 'desk';
++
++export interface SpotSpec {
++  angle: number;
++  penumbra: number;
++  decay: number;
++  /** Candela at full level (tokens.light.spotIntensity). */
++  intensity: number;
++}
++
++export interface LightPlan {
++  tier: QualityTier;
++  hemisphere: { sky: string; ground: string; intensity: number };
++  /** One entry per real spotlight; the count never changes after boot. */
++  spots: SpotSpec[];
++  /** Additive beam cones from each mount to its target (off on low). */
++  beams: boolean;
++  /** drei MeshReflectorMaterial floor (high) or the env-mapped library `floor` (medium, low). */
++  floor: 'reflector' | 'standard';
++  fog: { color: string; density: number };
++}
++
++/** EXPERIENCE §7.5 tier table. */
++export function lightPlan(tier: QualityTier): LightPlan {
++  const spot: SpotSpec = {
++    angle: light.spotAngle,
++    penumbra: light.spotPenumbra,
++    decay: light.spotDecay,
++    intensity: light.spotIntensity,
++  };
++  return {
++    tier,
++    hemisphere: { sky: light.hemiSky, ground: light.hemiGround, intensity: light.hemiIntensity },
++    spots: Array.from({ length: tier === 'high' ? 3 : 1 }, () => ({ ...spot })),
++    beams: tier !== 'low',
++    floor: tier === 'high' ? 'reflector' : 'standard',
++    fog: { color: tokens.color.ink, density: light.fogDensity },
++  };
++}
++
++// ---------------------------------------------------------------------------------------------
++// The age ramp (EXPERIENCE §6.9)
++
++const hexToRgb = (hex: string): [number, number, number] => {
++  const n = Number.parseInt(hex.replace('#', ''), 16);
++  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
++};
++const rgbToHex = (rgb: readonly number[]) =>
++  `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
++
++/**
++ * The light ramp `light-0` (t = 0, newest) to `light-3` (t = 1, oldest) with stops at 0, 1/3,
++ * 2/3 and 1, interpolated linearly per RGB component. Returns `#RRGGBB`.
++ */
++export function rampColor(t: number): string {
++  const ramp = light.ramp;
++  const k = Math.min(1, Math.max(0, Number.isFinite(t) ? t : 0)) * (ramp.length - 1);
++  const i = Math.min(ramp.length - 2, Math.floor(k));
++  const f = k - i;
++  const a = hexToRgb(ramp[i]!);
++  const b = hexToRgb(ramp[i + 1]!);
++  return rgbToHex(a.map((v, c) => v + (b[c]! - v) * f));
++}
++
++/**
++ * A target's temperature: exhibits by `layout.ageT` (wings use their door's t, Foundations 1),
++ * the portrait like the lobby (`light-0`), the desk `light-1`.
++ */
++export function targetColor(layout: Layout, target: TargetId): string {
++  if (target === 'portrait') return rampColor(layout.ageT.lobby ?? 0);
++  if (target === 'desk') return rampColor(layout.ageT.desk ?? 1 / 3);
++  return rampColor(layout.ageT[target] ?? 0);
++}
++
++// ---------------------------------------------------------------------------------------------
++// Targets, mounts and aim points
++
++/** Lobby portrait (EXPERIENCE §2.3): 0.8 x 1.0 m, center (3.4, 1.7, -3.95), facing +Z. */
++export const PORTRAIT_CENTER: Vec3 = [3.4, 1.7, ARCH_Z + 0.05];
++export const PORTRAIT_SIZE = [0.8, 1.0] as const;
++/** Portrait spotlight (EXPERIENCE §5.5): (2.6, 5.4, -2.6), i.e. up and out from the frame. */
++export const PORTRAIT_MOUNT: Vec3 = [
++  PORTRAIT_CENTER[0] - 0.8,
++  LOBBY_CEILING - 0.6,
++  ARCH_Z + 1.4,
++];
++
++/** Desk top height above the floor (the low walnut desk, Desk.tsx). */
++export const DESK_TOP_Y = 0.765;
++/** Horizontal distance from a plinth or the desk to its spotlight mount. */
+ export const SPOT_OFFSET = 0.6;
+ /** Distance from the wall to the wall vitrine's spotlight mount. */
+ export const WALL_SPOT_OFFSET = 1.6;
+ /** Mount height: 0.3 m under the ceiling, never above 4.6 m (EXPERIENCE §5.5). */
+ export const SPOT_CEILING_GAP = 0.3;
+ export const SPOT_MAX_Y = 4.6;
+-/**
+- * Greybox hemisphere light: light-0 from above, ink from below. EXPERIENCE §7.5 asks for 0.15
+- * (sky #1A1C22) because the finished hall is lit by baked pools, wall washes and the Lightformer
+- * environment; the greybox has none of them yet, so this fill keeps it readable until WP-11
+- * replaces the lighting.
+- */
+-export const GREYBOX_HEMI_INTENSITY = 8;
++/** The baked floor pool sits this far from the plinth toward the visitor (EXPERIENCE §7.5). */
++export const POOL_SHIFT = 0.3;
++/** Width of the wall-wash bay behind each target (one 2 m wall panel). */
++export const WASH_BAY_WIDTH = 2;
++
++const EPS = 1e-6;
++const inside = (room: Room, x: number, z: number) =>
++  x >= room.min[0] - EPS &&
++  x <= room.max[0] + EPS &&
++  z >= room.min[1] - EPS &&
++  z <= room.max[1] + EPS;
+ 
+-export interface SpotPlan {
+-  /** The stop whose target is lit. */
+-  for: StopId;
+-  position: Vec3;
+-  target: Vec3;
++/** The room that holds a floor point (the first one in layout order). */
++export function roomAt(layout: Layout, x: number, z: number): Room | undefined {
++  return layout.rooms.find((r) => inside(r, x, z));
+ }
+ 
+-const inside = (room: Room, x: number, z: number) =>
+-  x >= room.min[0] - 1e-6 &&
+-  x <= room.max[0] + 1e-6 &&
+-  z >= room.min[1] - 1e-6 &&
+-  z <= room.max[1] + 1e-6;
++/** Where a target's wall-wash bay hangs: the wall line, its axis and the room side it faces. */
++export interface WashBay {
++  /** 'x': the wall runs along x at z = `at`; 'z': along z at x = `at`. */
++  axis: 'x' | 'z';
++  at: number;
++  /** Bay center along the wall. */
++  center: number;
++  /** Unit normal of the wall face, pointing into the room, in the horizontal plane. */
++  normal: [number, number];
++  /** Room ceiling: the bay runs from the floor to it. */
++  height: number;
++}
++
++export interface LightTarget {
++  id: TargetId;
++  /** The stop whose arrival lights it. */
++  stop: StopId;
++  /** Spotlight mount (EXPERIENCE §5.5). */
++  mount: Vec3;
++  /** What the spotlight and the beam cone aim at: the slot center, the desk top, the portrait. */
++  aim: Vec3;
++  /** Temperature color (`#RRGGBB`). */
++  color: string;
++  /** Floor pool center [x, z]. */
++  pool: [number, number];
++  wash: WashBay;
++}
++
++function slotAim(layout: Layout, slot: Slot): Vec3 {
++  const pose = Object.values(layout.tracks)
++    .flatMap((t) => t.stops)
++    .find((s) => s.id === slot.id);
++  if (pose) return [...pose.look];
++  const [x, y, z] = slotOrigin(slot);
++  return [x, y + 0.35, z];
++}
+ 
+-function hasTarget(layout: Layout, id: StopId): boolean {
+-  return id === 'desk' || layout.slots.some((s) => s.id === id);
++function slotMount(layout: Layout, slot: Slot, aim: Vec3): Vec3 {
++  const room = roomAt(layout, slot.position[0], slot.position[2]);
++  const y = room ? Math.min(room.ceiling - SPOT_CEILING_GAP, SPOT_MAX_Y) : SPOT_MAX_Y;
++  if (slotVariant(slot) === 'wall') {
++    // Out from the wall, toward the room (local +Z of the slot).
++    return [
++      slot.position[0] + Math.sin(slot.rotationY) * WALL_SPOT_OFFSET,
++      y,
++      slot.position[2] + Math.cos(slot.rotationY) * WALL_SPOT_OFFSET,
++    ];
++  }
++  if (slot.track === 'main') return [aim[0], y, aim[2] + SPOT_OFFSET];
++  // Wing plinths: toward the door side of the wing, at the plinth z.
++  const toAisle = -Math.sign(slot.position[0]);
++  return [slot.position[0] + toAisle * SPOT_OFFSET, y, aim[2]];
+ }
+ 
+-function poseOf(layout: Layout, id: StopId): StopPose {
+-  for (const track of Object.values(layout.tracks)) {
+-    const pose = track.stops.find((s) => s.id === id);
+-    if (pose) return pose;
++/** The wall behind a target, seen from its stop: the nearest wall in the direction it faces away from. */
++function washBehind(room: Room, x: number, z: number, away: [number, number]): WashBay {
++  const [ax, az] = away;
++  if (Math.abs(ax) >= Math.abs(az)) {
++    const at = ax > 0 ? room.max[0] : room.min[0];
++    return {
++      axis: 'z',
++      at,
++      center: z,
++      normal: [ax > 0 ? -1 : 1, 0],
++      height: room.ceiling,
++    };
+   }
+-  throw new Error(`No pose for stop '${id}'`);
++  const at = az > 0 ? room.max[1] : room.min[1];
++  return { axis: 'x', at, center: x, normal: [0, az > 0 ? -1 : 1], height: room.ceiling };
+ }
+ 
+-/** The stop whose target the greybox spotlight lights while the visitor is at `here`. */
+-export function litStop(layout: Layout, here: StopId): StopId {
+-  if (hasTarget(layout, here)) return here;
+-  const main = layout.tracks.main.stops.map((s) => s.id);
+-  const start = main.indexOf(here);
+-  const ahead = main.slice(Math.max(0, start + 1)).find((id) => hasTarget(layout, id));
+-  return ahead ?? main.find((id) => hasTarget(layout, id)) ?? here;
++function roomOrThrow(layout: Layout, x: number, z: number, what: string): Room {
++  const room = roomAt(layout, x, z);
++  if (!room) throw new Error(`No room holds the ${what}`);
++  return room;
+ }
+ 
+-export function spotPlan(layout: Layout, here: StopId): SpotPlan {
+-  const id = litStop(layout, here);
+-  const pose = poseOf(layout, id);
+-  const slot = layout.slots.find((s) => s.id === id);
+-  const target = pose.look;
+-  const room = layout.rooms.find((r) => inside(r, target[0], target[2]));
+-  const y = room ? Math.min(room.ceiling - SPOT_CEILING_GAP, SPOT_MAX_Y) : SPOT_MAX_Y;
+-  const dx = pose.camera[0] - target[0];
+-  const dz = pose.camera[2] - target[2];
+-  let x = target[0];
+-  let z = target[2];
+-  if (slot?.mount === 'wall') {
+-    x = slot.position[0] + Math.sign(dx) * WALL_SPOT_OFFSET;
+-  } else if (Math.abs(dz) >= Math.abs(dx)) {
+-    z += Math.sign(dz) * SPOT_OFFSET;
+-  } else {
+-    x += Math.sign(dx) * SPOT_OFFSET;
++/** Every light target in main-track order, then the wing items (portrait first, desk last on main). */
++export function lightTargets(layout: Layout): LightTarget[] {
++  const targets: LightTarget[] = [];
++  const lobby = roomOrThrow(layout, PORTRAIT_CENTER[0], PORTRAIT_CENTER[2], 'portrait');
++  targets.push({
++    id: 'portrait',
++    stop: 'lobby',
++    mount: [...PORTRAIT_MOUNT],
++    aim: [...PORTRAIT_CENTER],
++    color: targetColor(layout, 'portrait'),
++    pool: [PORTRAIT_CENTER[0], PORTRAIT_CENTER[2] + POOL_SHIFT],
++    wash: { ...washBehind(lobby, PORTRAIT_CENTER[0], PORTRAIT_CENTER[2], [0, -1]) },
++  });
++  for (const slot of layout.slots) {
++    const aim = slotAim(layout, slot);
++    const room = roomOrThrow(layout, slot.position[0], slot.position[2], `slot '${slot.id}'`);
++    const facing: [number, number] = [Math.sin(slot.rotationY), Math.cos(slot.rotationY)];
++    // A wall vitrine washes its own wall; a plinth the side wall its wall titles hang on
++    // (placard.ts): the aisle wall on its side, a wing's outer wall, the Foundations side wall.
++    const away: [number, number] =
++      slotVariant(slot) === 'wall'
++        ? [-facing[0], -facing[1]]
++        : [Math.sign(slot.position[0]) || -1, 0];
++    targets.push({
++      id: slot.id,
++      stop: slot.id,
++      mount: slotMount(layout, slot, aim),
++      aim,
++      color: targetColor(layout, slot.id),
++      pool: [
++        slot.position[0] + facing[0] * POOL_SHIFT,
++        slot.position[2] + facing[1] * POOL_SHIFT,
++      ],
++      wash: washBehind(room, slot.position[0], slot.position[2], away),
++    });
++  }
++  const desk = layout.tracks.main.stops.find((s) => s.id === 'desk');
++  if (desk) {
++    const [x, , z] = desk.look;
++    const room = roomOrThrow(layout, x, z, 'desk');
++    targets.push({
++      id: 'desk',
++      stop: 'desk',
++      mount: [x, Math.min(room.ceiling - SPOT_CEILING_GAP, SPOT_MAX_Y), z + SPOT_OFFSET],
++      aim: [x, DESK_TOP_Y, z],
++      color: targetColor(layout, 'desk'),
++      pool: [x, z + POOL_SHIFT],
++      wash: washBehind(room, x, z, [0, -1]),
++    });
++  }
++  return targets;
++}
++
++// ---------------------------------------------------------------------------------------------
++// Assignment (EXPERIENCE §6.8)
++
++const DOORS = new Set<string>(WING_IDS.map(doorId));
++
++/** The light target a stop owns: the lobby lights the portrait; doors own none. */
++export function targetOfStop(id: StopId): TargetId | null {
++  if (id === 'lobby') return 'portrait';
++  if (DOORS.has(id)) return null;
++  return id as TargetId;
++}
++
++/**
++ * Light targets for the visitor at `trackStops[stopIndex]`: light 1 takes the stop's own target,
++ * or the next target ahead on the track when the stop has none; on high, lights 2 and 3 take the
++ * next two targets ahead. A light with nothing left ahead gets null (it stays dark). The array has
++ * one entry per real spotlight of the tier.
++ */
++export function assignLights(
++  trackStops: readonly StopId[],
++  stopIndex: number,
++  tier: QualityTier,
++): (TargetId | null)[] {
++  const count = lightPlan(tier).spots.length;
++  const start = Math.min(Math.max(0, stopIndex), Math.max(0, trackStops.length - 1));
++  const ahead: TargetId[] = [];
++  for (let i = start; i < trackStops.length && ahead.length < count; i++) {
++    const target = targetOfStop(trackStops[i]!);
++    if (target && !ahead.includes(target)) ahead.push(target);
++  }
++  return Array.from({ length: count }, (_, i) => ahead[i] ?? null);
++}
++
++/**
++ * Maps wanted targets onto physical lights. A light that already holds one of the wanted targets
++ * keeps it; the remaining wanted targets go, in order, to the remaining lights. Returns the new
++ * target per light (same length as `current`).
++ */
++export function matchLights(
++  current: readonly (TargetId | null)[],
++  wanted: readonly (TargetId | null)[],
++): (TargetId | null)[] {
++  const next: (TargetId | null)[] = current.map((t) => (t && wanted.includes(t) ? t : null));
++  const kept = new Set(next.filter((t): t is TargetId => t !== null));
++  const free = next.map((t, i) => (t === null ? i : -1)).filter((i) => i >= 0);
++  for (const target of wanted) {
++    if (!target || kept.has(target)) continue;
++    const slot = free.shift();
++    if (slot === undefined) break;
++    next[slot] = target;
++    kept.add(target);
+   }
+-  return { for: id, position: [x, y, z], target: [...target] };
++  return next;
+ }
+diff --git a/src/museum/environment/shell.test.ts b/src/museum/environment/shell.test.ts
+index 184ebbb..82a524c 100644
+--- a/src/museum/environment/shell.test.ts
++++ b/src/museum/environment/shell.test.ts
+@@ -8,6 +8,7 @@ import {
+   ARCH_HEIGHT,
+   FOUNDATIONS_BEAM_BOTTOM,
+   FOUNDATIONS_BEAM_DEPTH,
++  FLOOR_ROTATION_X,
+   floorGeometry,
+   openings,
+   shellBoxes,
+@@ -62,7 +63,7 @@ describe('greybox shell (EXPERIENCE §2.2, §2.3)', () => {
+     const ceilings = boxes.filter((b) => b.kind === 'ceiling');
+     expect(ceilings).toHaveLength(layout.rooms.length);
+     for (const room of layout.rooms) {
+-      const floor = floorGeometry(room);
++      const floor = floorGeometry(room).rotateX(FLOOR_ROTATION_X);
+       floor.computeBoundingBox();
+       const bb = floor.boundingBox!;
+       expect([bb.min.x, bb.max.x, bb.min.z, bb.max.z], room.id).toEqual([
+diff --git a/src/museum/environment/shell.ts b/src/museum/environment/shell.ts
+index 74264b7..e6f2005 100644
+--- a/src/museum/environment/shell.ts
++++ b/src/museum/environment/shell.ts
+@@ -241,11 +241,64 @@ export function shellGeometry(layout: Layout): BufferGeometry {
+   return merged;
+ }
+ 
+-/** The floor of one room: a plane at y 0 covering the room's footprint. */
++/**
++ * Floor meshes lie in their local XY plane and are turned flat by the mesh rotation, so every
++ * floor shares one world matrix (local +Z is world up). drei's reflector takes its mirror plane
++ * from the mesh matrix, and one reflection pass then serves every floor zone (Floor.tsx).
++ */
++export const FLOOR_ROTATION_X = -Math.PI / 2;
++
++/**
++ * The floor of one room in the floor frame (see FLOOR_ROTATION_X): world (x, 0, z) is local
++ * (x, -z, 0). Its UVs span the room, v = 1 at the far end (min z), like the zone lightmap.
++ */
+ export function floorGeometry(room: Room): BufferGeometry {
+   const width = room.max[0] - room.min[0];
+   const depth = room.max[1] - room.min[1];
+-  return new PlaneGeometry(width, depth)
+-    .rotateX(-Math.PI / 2)
+-    .translate(midX(room), 0, (room.min[1] + room.max[1]) / 2);
++  return new PlaneGeometry(width, depth).translate(
++    midX(room),
++    -(room.min[1] + room.max[1]) / 2,
++    0,
++  );
++}
++
++/** A wall line with a wash bay: seams fall at `phase + 2k` along it (the bay's edges). */
++export interface SeamLine {
++  axis: 'x' | 'z';
++  at: number;
++  phase: number;
++}
++
++/**
++ * Wall-wash UVs for the merged shell (lightMap channel 0). Vertical faces get u = (along - phase)
++ * / 2 m, so the tile's seams repeat every 2 m and meet the wash bays' edges; every face samples v
++ * = `plainV`, the tile's rows with no scallop. Horizontal faces sample the tile center. A face
++ * takes the phase of a seam line within one wall thickness of it, otherwise 0.
++ */
++export function applyWashUVs(
++  geometry: BufferGeometry,
++  lines: readonly SeamLine[],
++  plainV: number,
++  panel = 2,
++): BufferGeometry {
++  const position = geometry.getAttribute('position');
++  const normal = geometry.getAttribute('normal');
++  const uv = geometry.getAttribute('uv');
++  if (!position || !normal || !uv) throw new Error('The shell needs positions, normals and UVs');
++  const phaseOf = (axis: 'x' | 'z', at: number) =>
++    lines.find((l) => l.axis === axis && Math.abs(l.at - at) <= WALL_THICKNESS + EPS)?.phase ?? 0;
++  for (let i = 0; i < position.count; i++) {
++    const nx = normal.getX(i);
++    const nz = normal.getZ(i);
++    let u = 0.5;
++    if (Math.abs(nx) > 0.5) {
++      // A face of a wall running along z.
++      u = (position.getZ(i) - phaseOf('z', position.getX(i))) / panel;
++    } else if (Math.abs(nz) > 0.5) {
++      u = (position.getX(i) - phaseOf('x', position.getZ(i))) / panel;
++    }
++    uv.setXY(i, u, plainV);
++  }
++  uv.needsUpdate = true;
++  return geometry;
+ }
+diff --git a/src/museum/environment/trim.ts b/src/museum/environment/trim.ts
+new file mode 100644
+index 0000000..90330a1
+--- /dev/null
++++ b/src/museum/environment/trim.ts
+@@ -0,0 +1,94 @@
++// Brass trim (EXPERIENCE §2.3): 4 cm reveals lining the lobby arch and the wing doors, the thin
++// frame around the lobby portrait, and the year-strip inlays (§6.9). Pure boxes in world meters;
++// Scene draws all of one kind as one instanced mesh of the shared `brass` material.
++import { Matrix4 } from 'three';
++import type { Layout, Vec3 } from '../rail/layout';
++import { FLOOR_INLAY_Y } from './labels3d';
++import { PORTRAIT_CENTER, PORTRAIT_SIZE } from './lighting';
++import { openings, wallSpans, WALL_THICKNESS, type Opening } from './shell';
++
++/** Visible width of a door or arch reveal. */
++export const REVEAL_WIDTH = 0.04;
++/** A reveal stands this far proud of each wall face. */
++export const REVEAL_PROUD = 0.005;
++/** Portrait frame: bar width and depth. */
++export const FRAME_BAR = 0.03;
++export const FRAME_DEPTH = 0.03;
++/** Year strips: brass inlay 0.03 m wide across x -3.3 to 3.3, flush with the floor. */
++export const YEAR_STRIP_HALF = 3.3;
++export const YEAR_STRIP_WIDTH = 0.03;
++export const YEAR_STRIP_THICKNESS = 0.002;
++
++export interface TrimBox {
++  name: string;
++  center: Vec3;
++  size: Vec3;
++}
++
++const EPS = 1e-6;
++
++/** The side of the wall line its thickness goes to (+1 toward +x or +z). */
++function outwardOf(layout: Layout, opening: Opening): 1 | -1 {
++  const span = wallSpans(layout).find(
++    (s) =>
++      s.axis === opening.axis &&
++      Math.abs(s.at - opening.at) < EPS &&
++      s.from <= opening.from + EPS &&
++      s.to >= opening.to - EPS,
++  );
++  return span?.outward ?? 1;
++}
++
++/** Two jambs and a head lining an opening, each 4 cm wide on the wall faces. */
++export function revealBoxes(layout: Layout, opening: Opening): TrimBox[] {
++  const depth = WALL_THICKNESS + 2 * REVEAL_PROUD;
++  const across = opening.at + (outwardOf(layout, opening) * WALL_THICKNESS) / 2;
++  const box = (name: string, along: number, alongSize: number, y: number, h: number): TrimBox =>
++    opening.axis === 'x'
++      ? { name, center: [along, y, across], size: [alongSize, h, depth] }
++      : { name, center: [across, y, along], size: [depth, h, alongSize] };
++  const w = REVEAL_WIDTH;
++  const top = opening.top;
++  return [
++    box(`${opening.name}-jamb-a`, opening.from + w / 2, w, top / 2, top),
++    box(`${opening.name}-jamb-b`, opening.to - w / 2, w, top / 2, top),
++    box(`${opening.name}-head`, (opening.from + opening.to) / 2, opening.to - opening.from, top - w / 2, w),
++  ];
++}
++
++/** The four bars of the portrait frame, just in front of the lobby back wall. */
++export function portraitFrameBoxes(): TrimBox[] {
++  const [cx, cy, cz] = PORTRAIT_CENTER;
++  const [w, h] = PORTRAIT_SIZE;
++  const b = FRAME_BAR;
++  const z = cz - 0.01;
++  return [
++    { name: 'frame-top', center: [cx, cy + h / 2 + b / 2, z], size: [w + 2 * b, b, FRAME_DEPTH] },
++    { name: 'frame-bottom', center: [cx, cy - h / 2 - b / 2, z], size: [w + 2 * b, b, FRAME_DEPTH] },
++    { name: 'frame-left', center: [cx - w / 2 - b / 2, cy, z], size: [b, h, FRAME_DEPTH] },
++    { name: 'frame-right', center: [cx + w / 2 + b / 2, cy, z], size: [b, h, FRAME_DEPTH] },
++  ];
++}
++
++/** Reveals for the arch and every wing door, plus the portrait frame. */
++export function brassTrimBoxes(layout: Layout): TrimBox[] {
++  const lined = openings(layout).filter((o) => o.name === 'arch' || o.name.endsWith('-door'));
++  return [...lined.flatMap((o) => revealBoxes(layout, o)), ...portraitFrameBoxes()];
++}
++
++/** One brass inlay per `layout.yearMarks` entry. */
++export function yearStripBoxes(layout: Layout): TrimBox[] {
++  return layout.yearMarks.map((mark) => ({
++    name: `year-${mark.year}`,
++    center: [0, FLOOR_INLAY_Y / 2, mark.z],
++    size: [2 * YEAR_STRIP_HALF, YEAR_STRIP_THICKNESS, YEAR_STRIP_WIDTH],
++  }));
++}
++
++/** A unit-box instance matrix for an axis-aligned trim box. */
++export function trimMatrix(box: TrimBox, rotationY = 0): Matrix4 {
++  return new Matrix4()
++    .makeTranslation(...box.center)
++    .multiply(new Matrix4().makeRotationY(rotationY))
++    .multiply(new Matrix4().makeScale(...box.size));
++}
+-- 
+2.43.0
+

@@ -45,7 +45,7 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Done and verified (WP-08 3df75cb..705ed8e, WP-09 to bcc065a); CI run 11 green |
 | Context packs | docs/RULINGS.md + docs/wp/packs/ (cost rules) | Done (33b5492) |
 | Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Passed 2026-10-16: CI run 13 green on c10c67f; smoke tests pass on desktop and Pixel 7 (139 e2e). Next: M2 on Emeka's "go" |
-| WP-11 to WP-16 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers | Running since 2026-10-16 as workflow wf_d85f0435-5ee (saved `milestone` workflow; WP-11, WP-12, WP-15, WP-16 at xhigh). Merge order WP-16, WP-11, WP-15, WP-14, WP-12, WP-13. If it stops, resume with `resumeFromRunId` |
+| WP-11 to WP-16 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers | Paused 2026-10-16 by the weekly usage limit (resets 2026-10-20 02:00 UTC). Run wf_d85f0435-5ee: **WP-12 built** (3 commits, report in its review/reports/WP-12.json; needs integrate + verify only). **WP-11 partial** (one WIP commit: light pools, trim, 3D labels, shell and lighting edits; unverified; the builder continues from it). **WP-13, WP-14, WP-15, WP-16 not started** (no saved work). Local branches `wp/WP-11` and `wp/WP-12` hold the work; the same commits are saved as patches in `review/wip/` in case the container was reclaimed (see section 8) |
 | WP-17 to WP-19 | M2b: slice tests, preview deploy, slice review | Not started. WP-17 after M2a merges; WP-18 after both Netlify secrets exist; WP-19 last, then Gate G2 |
 | WP-20 onward | M3 to M7 | Not started |
 
@@ -119,3 +119,12 @@ claude/intelligent-sagan-poq45q. Act as R0, the orchestrator described in docs/P
 - **Exit desk:** the target roles to mention.
 - **Identity:** GitHub handle, display form of his name, favicon monogram letters.
 - **Testing:** his phone model, for the real-device checklist.
+
+## 8. Resuming M2a after the usage-limit pause (2026-10-16)
+
+1. If `git branch --list 'wp/WP-1*'` does not show `wp/WP-11` and `wp/WP-12` (a fresh container), rebuild them from the patches:
+   `git branch wp/WP-12 350e3f8 && git worktree add /tmp/r12 wp/WP-12 && git -C /tmp/r12 am "$PWD"/review/wip/WP-12/*.patch && git worktree remove /tmp/r12`, then the same for WP-11.
+2. Run M2a again with the saved `milestone` workflow, but skip the WP-12 build (reuse its report) and start the WP-11 builder from `wp/WP-11`. The workflow needs a small edit for that: a `fromBranch` field per WP (the builder checks out that branch in its worktree and continues) and a `built: true` field (skip the build; read the report from the branch). Same efforts as before: WP-11, WP-12, WP-15, WP-16 at xhigh; WP-13, WP-14 at high. Merge order WP-16, WP-11, WP-15, WP-14, WP-12, WP-13.
+3. Delete `review/wip/` in the first commit after WP-11 and WP-12 are integrated.
+4. Netlify: the site exists (section 5). WP-18 waits for Emeka's two GitHub secrets.
+

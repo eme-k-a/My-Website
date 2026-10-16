@@ -1,0 +1,749 @@
+From 13f0c2b9ffa56b077d19391c54dade467e694707 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 16 Oct 2026 01:50:02 +0000
+Subject: [PATCH 1/3] feat(exhibit-verafin): the reporting engine
+
+Exhibit No. 01 (EXPERIENCE 4.1): a frosted glass column with a static
+accentGlow core feeds a 6 x 6 instanced ceramic bar grid on a walnut tray,
+with a brass collar, three docked brass cartridges and a brass conduit.
+One slow motion: every 8 s the bars ease to the next seeded set over 1.6 s,
+40 ms per column left to right, driven only by useExhibitClock(). Reduced
+motion and ?test=1 hold seeded set 0. Measured 2,732 triangles, 9 draw
+calls, in bounds; lazy chunk 2.81 KB gzip.
+
+WP: WP-12
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016CcKJFMWCyXKspJx4YvMS7
+---
+ src/museum/exhibits/verafin/README.md         |  52 ++++
+ .../exhibits/verafin/ReportingEngine.tsx      | 117 ++++++++
+ src/museum/exhibits/verafin/engine.test.ts    | 242 ++++++++++++++++
+ src/museum/exhibits/verafin/engine.ts         | 266 ++++++++++++++++++
+ src/museum/exhibits/verafin/index.ts          |  10 +
+ 5 files changed, 687 insertions(+)
+ create mode 100644 src/museum/exhibits/verafin/README.md
+ create mode 100644 src/museum/exhibits/verafin/ReportingEngine.tsx
+ create mode 100644 src/museum/exhibits/verafin/engine.test.ts
+ create mode 100644 src/museum/exhibits/verafin/engine.ts
+ create mode 100644 src/museum/exhibits/verafin/index.ts
+
+diff --git a/src/museum/exhibits/verafin/README.md b/src/museum/exhibits/verafin/README.md
+new file mode 100644
+index 0000000..78aa82e
+--- /dev/null
++++ b/src/museum/exhibits/verafin/README.md
+@@ -0,0 +1,52 @@
++# verafin: "The Reporting Engine" (No. 01)
++
++Spec: `docs/spec/EXPERIENCE.md` §4.1. Work package: `docs/wp/WP-12.md`. Concept checklist and R2 verdict: [`review/concepts/verafin.md`](../../../../review/concepts/verafin.md).
++
++## Concept
++
++Platform data becoming accurate, readable reports, and reporting plugins that extend the engine. A frosted glass column with a softly glowing core stands at the back left of a walnut tray; a brass conduit leaves its base and runs to a six-by-six block of bone ceramic bars, the report. Three brass cartridges docked through a collar on the column are the plugins. Every 8 s the report refreshes: the bars ease to new heights in a slow sweep from left to right. It depicts reporting and data platform work only (copy guard): no colored, flagged or highlighted bar, no alert or magnifier, no particles or streams, no text or numbers.
++
++## Object description (DOM, `exhibit.object`)
++
++"A frosted glass column feeds a six-by-six grid of bars that refreshes like a report. Three brass cartridges docked in the column are the plugins that extend it."
++
++## Slot and bounds
++
++Standard slot (EXPERIENCE §5.3), local meters, origin at the plinth top center, +Z toward the stop camera: x and z in [-0.325, 0.325], y in [0.025, 0.675].
++
++| Part           | Material                                           | Placement                                                                                                                                                                                   |
++| -------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
++| Base tray      | `walnut`                                           | RoundedBox 0.60 x 0.03 x 0.44, radius 0.008, center (0, 0.04, 0); top at y 0.055                                                                                                            |
++| Column         | `frostedGlass`                                     | cylinder r 0.07, h 0.46, 48 segments, axis (-0.19, z -0.10), y 0.055 to 0.515                                                                                                               |
++| Core           | `accentGlow` (own instance, emissive 0.35, static) | cylinder r 0.012, h 0.42, centered on the column axis                                                                                                                                       |
++| Dock collar    | `brass`                                            | torus at y 0.30, radius 0.078, tube 0.008 (inner edge on the glass)                                                                                                                         |
++| Cartridges (3) | `brass`                                            | RoundedBox 0.07 radial x 0.10 tall x 0.018, radius 0.004, azimuths 90, 210, 330 degrees (0 = +X, 90 = +Z), radius 0.07 to 0.14, centered at y 0.30                                          |
++| Conduit        | `brass`                                            | strip 0.24 x 0.006 x 0.03 on the tray, on the line from the column axis to the grid center; it starts inside the column base and its far corner meets the left face of the first bar column |
++| Report grid    | `ceramic`                                          | 36 bars 0.038 x h x 0.038, pitch 0.048, centered at (0.12, z 0.06), standing on the tray, h in [0.02, 0.18], one InstancedMesh                                                              |
++
++Measured under `?test=1` (`stats().exhibits.verafin`): `inBounds: true`, 2,732 triangles, 9 draw calls. Overall box (analytic, sharp corners): x -0.316 to 0.300, y 0.025 to 0.515, z -0.220 to 0.220.
++
++The slot floor is 2.5 cm above the plinth top, so the tray stands on that reveal; the kit's contact shadow reads as a shadow line under it at the stop.
++
++## Budget
++
++`index.ts`: 4,000 triangles, 12 draw calls, 0 MB textures (no textures of its own). Actual: 2,732 triangles (tray 556, cartridges 3 x 236, collar 768, column 192, core 64, conduit 12, bars 36 x 12), 9 draw calls. Lazy chunk `ReportingEngine` (with `engine.ts` and drei's RoundedBox): 2.81 KB gzip of the 40 KB limit.
++
++## Materials
++
++`walnut`, `frostedGlass`, `accentGlow`, `brass`, `ceramic` only, from the kit hooks. The core uses `useMaterialInstance('accentGlow')` so its static 0.35 glow never changes the shared material; nothing else is cloned or mutated.
++
++## Motion (one)
++
++The report refresh, driven only by `useExhibitClock()`. Every 8 s (from t = 8 s) the 36 heights ease from seeded set k - 1 to set k over 1.6 s (easeInOutCubic), each bar column starting 40 ms after the one to its left, so a sweep lasts 1.8 s. Set k comes from `rng()` seeded per set: a level, a left-right trend, a rise toward the back row (so back rows show over front rows from the camera) and per-bar variation, clamped to [0.02, 0.18]. A stepped block, never a lone outlier bar. The column, core, collar, cartridges and conduit never move.
++
++Instance matrices are written only during a sweep, plus once when the held set changes; between sweeps nothing changes, so the frame driver can stop rendering. The bounding sphere is sized once for the tallest possible bars.
++
++**Reduced-motion and `?test=1` pose:** bars frozen at seeded set 0 (`prefers-reduced-motion` pins set 0 whatever the clock says; `?test=1` freezes the clock at 0, which is set 0). Hover adds nothing (the kit's light lift).
++
++## Files
++
++- `index.ts`: the eager manifest (id, title, lazy loader, budget, `motion: 'slow'`).
++- `ReportingEngine.tsx`: the lazy component (default export, `ExhibitProps`).
++- `engine.ts`: measurements, placements, seeded report sets and the refresh driver (pure, Node-tested).
++- `engine.test.ts`: bounds, docking, conduit, grid layout, timing, determinism and the driver.
+diff --git a/src/museum/exhibits/verafin/ReportingEngine.tsx b/src/museum/exhibits/verafin/ReportingEngine.tsx
+new file mode 100644
+index 0000000..72bb054
+--- /dev/null
++++ b/src/museum/exhibits/verafin/ReportingEngine.tsx
+@@ -0,0 +1,117 @@
++// Exhibit No. 01, "The Reporting Engine" (EXPERIENCE §4.1): a frosted glass column feeds a
++// six-by-six grid of ceramic bars that refreshes like a report; three brass cartridges docked in
++// the column's collar are the plugins that extend it. Shared library materials only, no lights,
++// no text. One slow motion: the 8 s report refresh, driven only by useExhibitClock(). Under
++// reduced motion and ?test=1 the bars hold seeded set 0. Measurements live in ./engine.
++import { RoundedBox } from '@react-three/drei';
++import { useFrame } from '@react-three/fiber';
++import { useLayoutEffect, useMemo, useRef } from 'react';
++import { DynamicDrawUsage, type InstancedMesh } from 'three';
++import { useExhibitClock, useMaterial, useMaterialInstance, type ExhibitProps } from '../_kit';
++import {
++  AXIS,
++  BAR_COUNT,
++  CARTRIDGE,
++  cartridgePlacement,
++  COLLAR,
++  COLUMN,
++  COLUMN_CENTER_Y,
++  conduitPlacement,
++  CONDUIT,
++  CORE,
++  createRefreshDriver,
++  GRID,
++  TRAY,
++} from './engine';
++
++const CARTRIDGES = CARTRIDGE.azimuthsDeg.map((deg) => ({ deg, ...cartridgePlacement(deg) }));
++const CONDUIT_PLACEMENT = conduitPlacement();
++
++export default function ReportingEngine({ runtime }: ExhibitProps) {
++  const walnut = useMaterial('walnut');
++  const frostedGlass = useMaterial('frostedGlass');
++  const brass = useMaterial('brass');
++  const ceramic = useMaterial('ceramic');
++  // The core's own clone, so its static glow level never touches the shared accentGlow.
++  const core = useMaterialInstance('accentGlow');
++  const clock = useExhibitClock();
++  const bars = useRef<InstancedMesh>(null);
++  const driver = useMemo(() => createRefreshDriver(), []);
++  const reducedMotion = runtime.reducedMotion;
++
++  // The first pose is in place before the kit compiles and reveals the exhibit.
++  useLayoutEffect(() => {
++    const mesh = bars.current;
++    if (!mesh) return;
++    mesh.instanceMatrix.setUsage(DynamicDrawUsage);
++    driver.prepare(mesh);
++    driver.apply(mesh, clock.current, reducedMotion);
++  }, [driver, clock, reducedMotion]);
++
++  // Writes matrices only while a sweep runs (and once when a held set changes).
++  useFrame(() => {
++    const mesh = bars.current;
++    if (mesh) driver.apply(mesh, clock.current, reducedMotion);
++  });
++
++  return (
++    <group name="reporting-engine">
++      <RoundedBox
++        name="tray"
++        args={TRAY.size}
++        radius={TRAY.radius}
++        smoothness={TRAY.smoothness}
++        bevelSegments={TRAY.bevelSegments}
++        position={TRAY.center}
++        material={walnut}
++      />
++      <mesh
++        name="conduit"
++        position={CONDUIT_PLACEMENT.position}
++        rotation-y={CONDUIT_PLACEMENT.rotationY}
++        material={brass}
++      >
++        <boxGeometry args={CONDUIT.size} />
++      </mesh>
++      <group name="column" position={[AXIS.x, 0, AXIS.z]}>
++        <mesh
++          name="core"
++          position-y={COLUMN_CENTER_Y}
++          material={core}
++          material-emissiveIntensity={CORE.glow}
++        >
++          <cylinderGeometry args={[CORE.radius, CORE.radius, CORE.height, CORE.segments]} />
++        </mesh>
++        <mesh name="glass" position-y={COLUMN_CENTER_Y} material={frostedGlass}>
++          <cylinderGeometry args={[COLUMN.radius, COLUMN.radius, COLUMN.height, COLUMN.segments]} />
++        </mesh>
++        <mesh name="collar" position-y={COLLAR.y} rotation-x={Math.PI / 2} material={brass}>
++          <torusGeometry
++            args={[COLLAR.radius, COLLAR.tube, COLLAR.tubeSegments, COLLAR.ringSegments]}
++          />
++        </mesh>
++      </group>
++      {CARTRIDGES.map(({ deg, position, rotationY }) => (
++        <RoundedBox
++          key={deg}
++          name={`cartridge-${deg}`}
++          args={CARTRIDGE.size}
++          radius={CARTRIDGE.radius}
++          smoothness={CARTRIDGE.smoothness}
++          bevelSegments={CARTRIDGE.bevelSegments}
++          position={position}
++          rotation-y={rotationY}
++          material={brass}
++        />
++      ))}
++      <instancedMesh
++        ref={bars}
++        name="report-grid"
++        args={[undefined, undefined, BAR_COUNT]}
++        material={ceramic}
++      >
++        <boxGeometry args={[GRID.bar, 1, GRID.bar]} />
++      </instancedMesh>
++    </group>
++  );
++}
+diff --git a/src/museum/exhibits/verafin/engine.test.ts b/src/museum/exhibits/verafin/engine.test.ts
+new file mode 100644
+index 0000000..affde53
+--- /dev/null
++++ b/src/museum/exhibits/verafin/engine.test.ts
+@@ -0,0 +1,242 @@
++import { BoxGeometry, InstancedMesh, Matrix4, Quaternion, Vector3 } from 'three';
++import { describe, expect, it } from 'vitest';
++import {
++  AXIS,
++  BAR_COUNT,
++  barCell,
++  barHeights,
++  CARTRIDGE,
++  cartridgePlacement,
++  COLLAR,
++  COLUMN,
++  COLUMN_CENTER_Y,
++  columnProgress,
++  CONDUIT,
++  conduitPlacement,
++  CORE,
++  createRefreshDriver,
++  easeInOutCubic,
++  GRID,
++  gridFootprint,
++  heightsAt,
++  REFRESH,
++  refreshPhase,
++  SWEEP_S,
++  TRAY,
++  TRAY_TOP,
++} from './engine';
++
++/** EXPERIENCE §4: the standard slot, local meters. */
++const SLOT = { min: [-0.325, 0.025, -0.325], max: [0.325, 0.675, 0.325] };
++
++/** Corners of a box of `size` centered at `center`, yawed by `rotationY`. */
++function corners(size: number[], center: number[], rotationY = 0): Vector3[] {
++  const m = new Matrix4().makeRotationY(rotationY).setPosition(center[0]!, center[1]!, center[2]!);
++  const out: Vector3[] = [];
++  for (const sx of [-0.5, 0.5])
++    for (const sy of [-0.5, 0.5])
++      for (const sz of [-0.5, 0.5])
++        out.push(new Vector3(sx * size[0]!, sy * size[1]!, sz * size[2]!).applyMatrix4(m));
++  return out;
++}
++
++function inSlot(p: Vector3): boolean {
++  const v = p.toArray();
++  return [0, 1, 2].every((i) => v[i]! >= SLOT.min[i]! - 1e-9 && v[i]! <= SLOT.max[i]! + 1e-9);
++}
++
++describe('verafin geometry (EXPERIENCE §4.1)', () => {
++  it('stands the column, conduit and bars on the tray top at y 0.055', () => {
++    expect(TRAY_TOP).toBeCloseTo(0.055, 9);
++    expect(COLUMN_CENTER_Y - COLUMN.height / 2).toBeCloseTo(0.055, 9);
++    expect(COLUMN_CENTER_Y + COLUMN.height / 2).toBeCloseTo(0.515, 9);
++    expect(CORE.height).toBeLessThan(COLUMN.height);
++    expect(CORE.glow).toBe(0.35);
++  });
++
++  it('keeps every part inside the standard slot', () => {
++    const points: Vector3[] = [
++      ...corners(TRAY.size, TRAY.center),
++      ...[0, 1, 2, 3].map(
++        (q) =>
++          new Vector3(
++            AXIS.x + COLUMN.radius * Math.cos((q * Math.PI) / 2),
++            COLUMN_CENTER_Y + (q % 2 ? 0.5 : -0.5) * COLUMN.height,
++            AXIS.z + COLUMN.radius * Math.sin((q * Math.PI) / 2),
++          ),
++      ),
++      ...CARTRIDGE.azimuthsDeg.flatMap((deg) => {
++        const { position, rotationY } = cartridgePlacement(deg);
++        return corners(CARTRIDGE.size, position, rotationY);
++      }),
++      ...(() => {
++        const c = conduitPlacement();
++        return corners(CONDUIT.size, c.position, c.rotationY);
++      })(),
++    ];
++    const grid = gridFootprint();
++    for (const x of [grid.minX, grid.maxX])
++      for (const z of [grid.minZ, grid.maxZ])
++        points.push(new Vector3(x, TRAY_TOP + GRID.maxHeight, z));
++    for (const p of points) expect(inSlot(p), p.toArray().join(', ')).toBe(true);
++  });
++
++  it('docks exactly three cartridges at 90, 210 and 330 degrees, from the glass through the collar', () => {
++    expect(CARTRIDGE.azimuthsDeg).toEqual([90, 210, 330]);
++    for (const deg of CARTRIDGE.azimuthsDeg) {
++      const { position, rotationY } = cartridgePlacement(deg);
++      const radial = Math.hypot(position[0] - AXIS.x, position[2] - AXIS.z);
++      expect(radial - CARTRIDGE.size[0] / 2).toBeCloseTo(COLUMN.radius, 9);
++      expect(radial + CARTRIDGE.size[0] / 2).toBeCloseTo(0.14, 9);
++      // Its local +X (the radial edge) points away from the axis.
++      const dir = new Vector3(1, 0, 0).applyAxisAngle(new Vector3(0, 1, 0), rotationY);
++      expect(dir.x).toBeCloseTo(Math.cos((deg * Math.PI) / 180), 9);
++      expect(dir.z).toBeCloseTo(Math.sin((deg * Math.PI) / 180), 9);
++      // The collar tube (radially 0.070 to 0.086, y 0.292 to 0.308) runs through the cartridge.
++      expect(COLLAR.radius - COLLAR.tube).toBeCloseTo(COLUMN.radius, 9);
++      expect(position[1] - CARTRIDGE.size[1] / 2).toBeLessThan(COLLAR.y - COLLAR.tube);
++      expect(position[1] + CARTRIDGE.size[1] / 2).toBeGreaterThan(COLLAR.y + COLLAR.tube);
++    }
++    // 90 degrees is local +Z: the cartridge facing the camera.
++    expect(cartridgePlacement(90).position[2]).toBeGreaterThan(AXIS.z);
++  });
++
++  it('runs the conduit from inside the column base to the first bar column', () => {
++    const c = conduitPlacement();
++    expect(Math.hypot(c.end[0] - c.start[0], c.end[1] - c.start[1])).toBeCloseTo(
++      CONDUIT.size[0],
++      9,
++    );
++    expect(c.position[1] - CONDUIT.size[1] / 2).toBeCloseTo(TRAY_TOP, 9);
++    // The start (with its full width) is inside the column footprint.
++    const startCorners = corners(CONDUIT.size, c.position, c.rotationY).filter(
++      (p) => Math.hypot(p.x - AXIS.x, p.z - AXIS.z) < 0.1,
++    );
++    expect(startCorners.length).toBe(4);
++    for (const p of startCorners)
++      expect(Math.hypot(p.x - AXIS.x, p.z - AXIS.z)).toBeLessThan(COLUMN.radius);
++    // The far corner touches the grid's left edge, alongside a bar of the first column.
++    const xs = corners(CONDUIT.size, c.position, c.rotationY).map((p) => p.x);
++    expect(Math.max(...xs)).toBeCloseTo(gridFootprint().minX, 9);
++  });
++
++  it('lays the 6 x 6 grid on a 0.048 pitch around (0.12, 0.06), 0.278 m square', () => {
++    expect(BAR_COUNT).toBe(36);
++    const grid = gridFootprint();
++    expect(grid.maxX - grid.minX).toBeCloseTo(0.278, 9);
++    expect(grid.maxZ - grid.minZ).toBeCloseTo(0.278, 9);
++    expect(barCell(0)).toMatchObject({ col: 0, row: 0 });
++    expect(barCell(35)).toMatchObject({ col: 5, row: 5 });
++    expect(barCell(1).x - barCell(0).x).toBeCloseTo(GRID.pitch, 9);
++    // Columns run left to right (+X), rows from the back toward the camera (+Z).
++    expect(barCell(GRID.n).z - barCell(0).z).toBeCloseTo(GRID.pitch, 9);
++  });
++});
++
++describe('verafin report refresh (the one motion)', () => {
++  it('draws every set from the seeded rng: deterministic, in range, different per set', () => {
++    for (const set of [0, 1, 2, 7, 1000]) {
++      const a = barHeights(set);
++      expect(Array.from(a)).toEqual(Array.from(barHeights(set)));
++      for (const h of a) {
++        expect(h).toBeGreaterThanOrEqual(GRID.minHeight);
++        expect(h).toBeLessThanOrEqual(GRID.maxHeight);
++      }
++    }
++    expect(Array.from(barHeights(0))).not.toEqual(Array.from(barHeights(1)));
++  });
++
++  it('holds set 0 for the first period, then sweeps every 8 s over 1.6 s plus the stagger', () => {
++    expect(refreshPhase(0)).toEqual({ set: 0, elapsed: 0, easing: false });
++    expect(refreshPhase(-3).set).toBe(0);
++    expect(refreshPhase(7.99).easing).toBe(false);
++    expect(refreshPhase(8)).toMatchObject({ set: 1, easing: true });
++    expect(SWEEP_S).toBeCloseTo(REFRESH.easeS + 5 * REFRESH.staggerS, 9);
++    expect(refreshPhase(8 + SWEEP_S - 0.001).easing).toBe(true);
++    expect(refreshPhase(8 + SWEEP_S).easing).toBe(false);
++    expect(refreshPhase(16.5)).toMatchObject({ set: 2, easing: true });
++    expect(REFRESH.periodS).toBe(8);
++  });
++
++  it('eases with easeInOutCubic, each column 40 ms after the one to its left', () => {
++    expect(easeInOutCubic(0)).toBe(0);
++    expect(easeInOutCubic(0.5)).toBeCloseTo(0.5, 9);
++    expect(easeInOutCubic(1)).toBe(1);
++    expect(columnProgress(0.04, 1)).toBe(0);
++    expect(columnProgress(0.04 + 0.8, 1)).toBeCloseTo(0.5, 9);
++    expect(columnProgress(0.2 + 1.6, 5)).toBe(1);
++    const mid = 0.9;
++    for (let col = 1; col < GRID.n; col++)
++      expect(columnProgress(mid, col)).toBeLessThan(columnProgress(mid, col - 1));
++  });
++
++  it('shows set 0 at t = 0 (the reduced-motion and ?test=1 pose) and lands on each set', () => {
++    expect(Array.from(heightsAt(0))).toEqual(Array.from(barHeights(0)));
++    expect(Array.from(heightsAt(8))).toEqual(Array.from(barHeights(0)));
++    expect(Array.from(heightsAt(8 + SWEEP_S))).toEqual(Array.from(barHeights(1)));
++    expect(Array.from(heightsAt(23.9))).toEqual(Array.from(barHeights(2)));
++  });
++});
++
++describe('createRefreshDriver', () => {
++  const mesh = () =>
++    new InstancedMesh(new BoxGeometry(GRID.bar, 1, GRID.bar), undefined, BAR_COUNT);
++  const heightOf = (m: InstancedMesh, i: number) => {
++    const matrix = new Matrix4();
++    m.getMatrixAt(i, matrix);
++    const position = new Vector3();
++    const scale = new Vector3();
++    matrix.decompose(position, new Quaternion(), scale);
++    return { h: scale.y, bottom: position.y - scale.y / 2, x: position.x, z: position.z };
++  };
++
++  it('writes set 0 once and then nothing while the clock holds still', () => {
++    const m = mesh();
++    const driver = createRefreshDriver();
++    driver.prepare(m);
++    expect(driver.apply(m, 0, false)).toBe(true);
++    expect(driver.apply(m, 0, false)).toBe(false);
++    expect(driver.apply(m, 5, false)).toBe(false);
++    const set0 = barHeights(0);
++    for (const i of [0, 7, 35]) {
++      const bar = heightOf(m, i);
++      expect(bar.h).toBeCloseTo(set0[i]!, 6);
++      expect(bar.bottom).toBeCloseTo(TRAY_TOP, 6);
++      expect(bar.x).toBeCloseTo(barCell(i).x, 6);
++      expect(bar.z).toBeCloseTo(barCell(i).z, 6);
++    }
++  });
++
++  it('writes every frame of a sweep, then holds the new set', () => {
++    const m = mesh();
++    const driver = createRefreshDriver();
++    driver.apply(m, 0, false);
++    expect(driver.apply(m, 8.5, false)).toBe(true);
++    expect(driver.apply(m, 8.5, false)).toBe(false);
++    expect(driver.apply(m, 8.6, false)).toBe(true);
++    expect(driver.apply(m, 10, false)).toBe(true);
++    expect(driver.apply(m, 11, false)).toBe(false);
++    expect(heightOf(m, 0).h).toBeCloseTo(barHeights(1)[0]!, 6);
++  });
++
++  it('pins set 0 under reduced motion whatever the clock says', () => {
++    const m = mesh();
++    const driver = createRefreshDriver();
++    driver.apply(m, 13, false);
++    expect(heightOf(m, 3).h).toBeCloseTo(barHeights(1)[3]!, 6);
++    expect(driver.apply(m, 13, true)).toBe(true);
++    expect(driver.apply(m, 21, true)).toBe(false);
++    expect(heightOf(m, 3).h).toBeCloseTo(barHeights(0)[3]!, 6);
++  });
++
++  it('sizes the bounding sphere for the tallest bars', () => {
++    const m = mesh();
++    const driver = createRefreshDriver();
++    driver.prepare(m);
++    const sphere = m.boundingSphere!;
++    const grid = gridFootprint();
++    for (const x of [grid.minX, grid.maxX])
++      for (const z of [grid.minZ, grid.maxZ])
++        expect(sphere.containsPoint(new Vector3(x, TRAY_TOP + GRID.maxHeight, z))).toBe(true);
++  });
++});
+diff --git a/src/museum/exhibits/verafin/engine.ts b/src/museum/exhibits/verafin/engine.ts
+new file mode 100644
+index 0000000..448821a
+--- /dev/null
++++ b/src/museum/exhibits/verafin/engine.ts
+@@ -0,0 +1,266 @@
++// The Reporting Engine's measurements and its one motion (EXPERIENCE §4.1), kept apart from the
++// component so Node unit tests check them without WebGL. Local frame (EXPERIENCE §4): origin =
++// plinth top center, +Y up, +Z toward the stop camera, +X the viewer's right. Meters, seconds.
++import { Matrix4, type InstancedMesh } from 'three';
++import { rng } from '../_kit/noise';
++
++export type Vec3 = [number, number, number];
++
++/** Base tray: walnut RoundedBox, its bottom on the slot floor (y 0.025). */
++export const TRAY = {
++  size: [0.6, 0.03, 0.44] as Vec3,
++  radius: 0.008,
++  center: [0, 0.04, 0] as Vec3,
++  /** RoundedBox tessellation: the 8 mm radius needs little at 3 m (556 triangles). */
++  smoothness: 3,
++  bevelSegments: 2,
++} as const;
++
++/** Top face of the tray: the column, conduit and bars all stand on it. */
++export const TRAY_TOP = TRAY.center[1] + TRAY.size[1] / 2;
++
++/** Column axis on the tray (x, z), back left of the grid. */
++export const AXIS = { x: -0.19, z: -0.1 } as const;
++
++/** Frosted glass column, y 0.055 to 0.515. */
++export const COLUMN = { radius: 0.07, height: 0.46, segments: 48 } as const;
++export const COLUMN_CENTER_Y = TRAY_TOP + COLUMN.height / 2;
++
++/** The glowing core on the column axis, centered in the column; its emissive level is static. */
++export const CORE = { radius: 0.012, height: 0.42, segments: 16, glow: 0.35 } as const;
++
++/** Brass dock collar around the column; its inner edge rests on the glass (0.078 - 0.008). */
++export const COLLAR = { y: 0.3, radius: 0.078, tube: 0.008, tubeSegments: 8, ringSegments: 48 };
++
++/** Brass plugin cartridges: radial x tall x thick, docked through the collar. */
++export const CARTRIDGE = {
++  size: [0.07, 0.1, 0.018] as Vec3,
++  radius: 0.004,
++  /** 0 degrees = local +X, 90 degrees = local +Z (toward the camera). */
++  azimuthsDeg: [90, 210, 330] as const,
++  /** Radial span from the column axis: the glass surface out to 0.14. */
++  inner: 0.07,
++  y: 0.3,
++  smoothness: 2,
++  bevelSegments: 1,
++} as const;
++
++/** Brass conduit strip lying on the tray (length along its run x height x width). */
++export const CONDUIT = { size: [0.24, 0.006, 0.03] as Vec3 } as const;
++
++/** The report grid: 6 x 6 ceramic bars on a 0.048 pitch, one InstancedMesh. */
++export const GRID = {
++  n: 6,
++  bar: 0.038,
++  pitch: 0.048,
++  center: { x: 0.12, z: 0.06 },
++  minHeight: 0.02,
++  maxHeight: 0.18,
++} as const;
++export const BAR_COUNT = GRID.n * GRID.n;
++
++/** The report refresh: every 8 s, a 1.6 s ease per column, columns 40 ms apart left to right. */
++export const REFRESH = { periodS: 8, easeS: 1.6, staggerS: 0.04 } as const;
++/** From the first column starting to the last column landing. */
++export const SWEEP_S = REFRESH.easeS + (GRID.n - 1) * REFRESH.staggerS;
++
++/** Seed of the report sets; set k uses its own stream, so set 0 never changes. */
++export const REPORT_SEED = 0x7e9a01;
++
++const DEG = Math.PI / 180;
++const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
++
++export function easeInOutCubic(u: number): number {
++  const t = clamp01(u);
++  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
++}
++
++/** A cartridge's center and yaw: its long (radial) edge points away from the column axis. */
++export function cartridgePlacement(azimuthDeg: number): { position: Vec3; rotationY: number } {
++  const a = azimuthDeg * DEG;
++  const mid = CARTRIDGE.inner + CARTRIDGE.size[0] / 2;
++  return {
++    position: [AXIS.x + mid * Math.cos(a), CARTRIDGE.y, AXIS.z + mid * Math.sin(a)],
++    // A yaw of -a turns local +X to (cos a, 0, sin a).
++    rotationY: -a,
++  };
++}
++
++/** Bar `index` (row-major, rows along z from the back, columns along x from the left). */
++export function barCell(index: number): { col: number; row: number; x: number; z: number } {
++  const col = index % GRID.n;
++  const row = Math.floor(index / GRID.n);
++  const offset = (k: number) => (k - (GRID.n - 1) / 2) * GRID.pitch;
++  return { col, row, x: GRID.center.x + offset(col), z: GRID.center.z + offset(row) };
++}
++
++/** The grid's footprint on the tray. */
++export function gridFootprint(): { minX: number; maxX: number; minZ: number; maxZ: number } {
++  const half = ((GRID.n - 1) / 2) * GRID.pitch + GRID.bar / 2;
++  return {
++    minX: GRID.center.x - half,
++    maxX: GRID.center.x + half,
++    minZ: GRID.center.z - half,
++    maxZ: GRID.center.z + half,
++  };
++}
++
++/**
++ * The conduit runs from the column axis toward the grid center. Its far corner touches the left
++ * face of the grid's first bar column; its near end starts inside the column base, so through the
++ * frosted glass it reads as leaving the column and feeding the grid.
++ */
++export function conduitPlacement(): {
++  position: Vec3;
++  rotationY: number;
++  start: [number, number];
++  end: [number, number];
++} {
++  const dx = GRID.center.x - AXIS.x;
++  const dz = GRID.center.z - AXIS.z;
++  const length = Math.hypot(dx, dz);
++  const ux = dx / length;
++  const uz = dz / length;
++  const halfWidth = CONDUIT.size[2] / 2;
++  // The end corner nearest the grid sits at end + halfWidth * (uz, -ux); put its x on the grid edge.
++  const edgeX = gridFootprint().minX;
++  const endS = (edgeX - halfWidth * uz - AXIS.x) / ux;
++  const startS = endS - CONDUIT.size[0];
++  const midS = (startS + endS) / 2;
++  return {
++    position: [AXIS.x + midS * ux, TRAY_TOP + CONDUIT.size[1] / 2, AXIS.z + midS * uz],
++    rotationY: -Math.atan2(uz, ux),
++    start: [AXIS.x + startS * ux, AXIS.z + startS * uz],
++    end: [AXIS.x + endS * ux, AXIS.z + endS * uz],
++  };
++}
++
++/**
++ * Report set `set`: 36 bar heights in [minHeight, maxHeight], all from rng(seed). A seeded level,
++ * a left-right trend and a rise toward the back row (so the back rows show over the front ones
++ * from the stop camera) plus per-bar variation: a stepped block, never one lone bar that stands
++ * out from the rest.
++ */
++export function barHeights(set: number): Float32Array {
++  const next = rng((REPORT_SEED ^ Math.imul(set + 1, 0x9e3779b1)) >>> 0);
++  const level = 0.3 + 0.25 * next();
++  const trendX = (next() - 0.5) * 0.7;
++  const rise = 0.25 + 0.2 * next();
++  const out = new Float32Array(BAR_COUNT);
++  const span = GRID.maxHeight - GRID.minHeight;
++  for (let i = 0; i < BAR_COUNT; i++) {
++    const { col, row } = barCell(i);
++    const across = col / (GRID.n - 1) - 0.5;
++    const back = 0.5 - row / (GRID.n - 1);
++    const value = level + trendX * across + rise * back + (next() - 0.5) * 0.3;
++    out[i] = GRID.minHeight + span * clamp01(value);
++  }
++  return out;
++}
++
++export interface RefreshPhase {
++  /** The set shown once this cycle's sweep lands (cycle index). */
++  set: number;
++  /** Seconds since this cycle began. */
++  elapsed: number;
++  /** True while the bars move from set - 1 to set. */
++  easing: boolean;
++}
++
++/** Where clock `t` falls in the refresh cycle. Set 0 holds for the first 8 s (and at t = 0). */
++export function refreshPhase(t: number): RefreshPhase {
++  const clock = t > 0 ? t : 0;
++  const set = Math.floor(clock / REFRESH.periodS);
++  const elapsed = clock - set * REFRESH.periodS;
++  return { set, elapsed, easing: set > 0 && elapsed < SWEEP_S };
++}
++
++/** Ease progress (0 to 1) of bar column `col` at `elapsed` seconds into a sweep. */
++export function columnProgress(elapsed: number, col: number): number {
++  return easeInOutCubic((elapsed - col * REFRESH.staggerS) / REFRESH.easeS);
++}
++
++/** The 36 heights at clock `t` (the reduced-motion and ?test=1 pose is `t = 0`, set 0). */
++export function heightsAt(t: number, out: Float32Array = new Float32Array(BAR_COUNT)) {
++  const phase = refreshPhase(t);
++  const to = barHeights(phase.set);
++  if (!phase.easing) {
++    out.set(to);
++    return out;
++  }
++  const from = barHeights(phase.set - 1);
++  for (let i = 0; i < BAR_COUNT; i++) {
++    const k = columnProgress(phase.elapsed, i % GRID.n);
++    out[i] = from[i]! + (to[i]! - from[i]!) * k;
++  }
++  return out;
++}
++
++export interface RefreshDriver {
++  /** Writes the bars for clock `t`; returns true when the instance matrices changed. */
++  apply(mesh: InstancedMesh, t: number, reducedMotion: boolean): boolean;
++  /** Sizes the mesh's bounding sphere for the tallest possible bars (frustum culling). */
++  prepare(mesh: InstancedMesh): void;
++}
++
++/**
++ * Drives the grid from the exhibit clock. Outside a sweep nothing is written (the held set is
++ * remembered), so a settled, idle scene has nothing to render. Reduced motion pins set 0.
++ */
++export function createRefreshDriver(): RefreshDriver {
++  const heights = new Float32Array(BAR_COUNT);
++  const matrix = new Matrix4();
++  const sets = new Map<number, Float32Array>();
++  let held = -1;
++  let lastT = Number.NaN;
++
++  const setHeights = (set: number) => {
++    let found = sets.get(set);
++    if (!found) {
++      if (sets.size >= 3) sets.clear();
++      found = barHeights(set);
++      sets.set(set, found);
++    }
++    return found;
++  };
++
++  const write = (mesh: InstancedMesh, values: ArrayLike<number>) => {
++    for (let i = 0; i < BAR_COUNT; i++) {
++      const h = values[i]!;
++      const { x, z } = barCell(i);
++      matrix.makeScale(1, h, 1).setPosition(x, TRAY_TOP + h / 2, z);
++      mesh.setMatrixAt(i, matrix);
++    }
++    mesh.instanceMatrix.needsUpdate = true;
++  };
++
++  return {
++    prepare(mesh) {
++      write(mesh, new Float32Array(BAR_COUNT).fill(GRID.maxHeight));
++      mesh.computeBoundingSphere();
++      held = -1;
++      lastT = Number.NaN;
++    },
++    apply(mesh, t, reducedMotion) {
++      const phase = refreshPhase(reducedMotion ? 0 : t);
++      if (!phase.easing) {
++        if (held === phase.set) return false;
++        held = phase.set;
++        lastT = Number.NaN;
++        write(mesh, setHeights(phase.set));
++        return true;
++      }
++      if (t === lastT) return false;
++      held = -1;
++      lastT = t;
++      const from = setHeights(phase.set - 1);
++      const to = setHeights(phase.set);
++      for (let i = 0; i < BAR_COUNT; i++) {
++        const k = columnProgress(phase.elapsed, i % GRID.n);
++        heights[i] = from[i]! + (to[i]! - from[i]!) * k;
++      }
++      write(mesh, heights);
++      return true;
++    },
++  };
++}
+diff --git a/src/museum/exhibits/verafin/index.ts b/src/museum/exhibits/verafin/index.ts
+new file mode 100644
+index 0000000..c780099
+--- /dev/null
++++ b/src/museum/exhibits/verafin/index.ts
+@@ -0,0 +1,10 @@
++// Exhibit manifest (ARCHITECTURE §7.2, §7.3): eager and tiny; the object is its own lazy chunk.
++import { defineExhibit } from '../_kit';
++
++export default defineExhibit({
++  id: 'verafin',
++  title: 'The Reporting Engine',
++  load: () => import('./ReportingEngine'),
++  budget: { triangles: 4000, drawCalls: 12, textureMB: 0 },
++  motion: 'slow',
++});
+-- 
+2.43.0
+

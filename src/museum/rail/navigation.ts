@@ -9,8 +9,11 @@
 // - Leaving: `history.back()` when the app entered the wing (the rest runs on popstate), else
 //   `replaceState` with the main track. CameraRig glides back to the door (1.2 s), then the main
 //   track returns, a layout effect restores `mainScrollY` and focus moves to "Step inside".
-// - Glides are skipped with `instant`, under reduced motion (WP-15 adds the fade-cut) and while no
-//   CameraRig is mounted, so the DOM side never waits on the canvas.
+// - Glides are skipped with `instant`, under reduced motion (CameraRig fade-cuts instead) and
+//   while no CameraRig is mounted, so the DOM side never waits on the canvas.
+// - Moves on one track (EXPERIENCE §6.5): up to 3 stops scroll smoothly and the rail follows; more
+//   than 3 (and "Walk the aisle again") scroll instantly behind the 200 ms ink fade, no
+//   fly-through. `jumpTo` is the HUD's entry point: it marks the move as a HUD move (announced).
 import { applyHistoryOp, deriveUi, readHere, transitions } from '../../app/routes';
 import { useMuseum } from '../../app/store';
 import { TEST_IDS } from '../../app/testIds';
@@ -18,12 +21,18 @@ import { doorId, type StopId, type TrackId, type WingId } from '../../content/id
 import { content } from '../../content/index';
 import { trackOf } from '../../content/selectors';
 import { tokens } from '../../design/tokens';
+import { fadeCut } from './fade';
 import { finishGlide, progress, rig, wake } from './progress';
 import { measure, sectionOf, stopScrollY, syncTarget, trackStops } from './scrollRuntime';
 
 export interface TravelOptions {
   instant?: boolean;
+  /** Always cross behind the ink fade, however near the stop ("Walk the aisle again"). */
+  fade?: boolean;
 }
+
+/** HUD jumps up to this many stops scroll smoothly; longer ones fade-cut (EXPERIENCE §6.5). */
+export const SMOOTH_JUMP_STOPS = 3;
 
 const reduced = () => useMuseum.getState().reducedMotion;
 const behaviorFor = (instant: boolean | undefined): ScrollBehavior =>
@@ -242,7 +251,8 @@ function trackFor(id: StopId, current: TrackId): TrackId {
 
 /**
  * Travel to stop `id`: on the same track, scroll to its section (`instant` or under reduced
- * motion without animation); on another track, leave or enter the wing first.
+ * motion without animation, where CameraRig fade-cuts); more than 3 stops away, or with `fade`,
+ * scroll instantly behind the ink fade; on another track, leave or enter the wing first.
  */
 export async function travelTo(id: StopId, opts: TravelOptions = {}): Promise<void> {
   if (!trackStops('main').includes(id) && !content.wings.some((w) => w.items.includes(id))) {
@@ -260,8 +270,29 @@ export async function travelTo(id: StopId, opts: TravelOptions = {}): Promise<vo
   const m = measure();
   const index = m.ids.indexOf(id);
   if (index < 0 || !sectionOf(id)) throw new Error(`No section for stop '${id}'`);
+  const far = !!opts.fade || Math.abs(index - Math.round(progress.target)) > SMOOTH_JUMP_STOPS;
+  if (far && !instant && !reduced()) {
+    const cut = () => {
+      window.scrollTo({ top: stopScrollY(index), behavior: 'instant' });
+      syncTarget(true);
+    };
+    // Without a canvas there is nothing to hide: the instant scroll alone.
+    if (rig.attached) await fadeCut(cut);
+    else cut();
+    return;
+  }
   window.scrollTo({ top: stopScrollY(index), behavior: behaviorFor(instant) });
   syncTarget(instant);
+}
+
+/**
+ * A HUD jump (EXPERIENCE §6.5) for R6's controls (the progress rail, "Walk the aisle again" with
+ * `fade`): marks the move as a HUD move, which the live region announces (EXPERIENCE §10.3), and
+ * travels by the jump rules of `travelTo`.
+ */
+export function jumpTo(id: StopId, opts: { fade?: boolean } = {}): Promise<void> {
+  useMuseum.setState({ inputSource: 'hud' });
+  return travelTo(id, { fade: !!opts.fade });
 }
 
 // ---------------------------------------------------------------------------------------------

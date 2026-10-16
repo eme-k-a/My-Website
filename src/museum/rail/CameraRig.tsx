@@ -4,10 +4,12 @@
 // track's rail with `poseAt` and turns it toward the gaze point of gaze.ts with `easing.dampLookAt`
 // (`tokens.motion.gazeSmoothTime`), adds the damped pointer parallax of parallax.ts on top, and
 // frames the result by projection shift (framing.ts: FOV by aspect, `setViewOffset`, shift changes
-// damped over 0.4 s). Under reduced motion it holds the last stop's pose and cuts to the next one
-// once the scroll arrives. It writes `settled` and `stop` to the store, only on change,
-// and registers the test hook's nav provider: goTo travels through navigation.ts (the same path as
-// the UI) and resolves when settled at the stop; screenPos projects a hit-box center.
+// damped over 0.4 s). An open story dollies the camera 0.6 m toward the case (dolly.ts). Under
+// reduced motion there is no damping and no in-between pose: the camera holds the last stop and,
+// once the scroll arrives at another, cuts to it behind ScrollTrack's ink fade (fade.ts). It
+// writes `settled` and `stop` to the store, only on change, and registers the test hook's nav
+// provider: goTo travels through navigation.ts (the same path as the UI) and resolves when settled
+// at the stop; screenPos projects a hit-box center.
 import { useFrame, useThree } from '@react-three/fiber';
 import { easing } from 'maath';
 import { useEffect, useState } from 'react';
@@ -22,10 +24,12 @@ import {
 } from 'three';
 import { useMuseum } from '../../app/store';
 import { registerNavProvider, testParams } from '../../app/testHooks';
-import type { ExhibitId, StopId } from '../../content/ids';
+import type { ExhibitId, StopId, TrackId } from '../../content/ids';
 import { tokens } from '../../design/tokens';
 import { LAYOUT } from '../../overlay/model';
 import { reportCameraTarget } from '../quality/StatsProbe';
+import { aimDolly, createDolly, stepDolly } from './dolly';
+import { fadeCut } from './fade';
 import { applyFraming, fovFor, framingFor, viewOffsetFor } from './framing';
 import { gazeAt } from './gaze';
 import {
@@ -36,7 +40,7 @@ import {
   pointer,
 } from './parallax';
 import { travelTo } from './navigation';
-import { easeInOutCubic, finishGlide, progress, rig, setWaker } from './progress';
+import { easeInOutCubic, finishGlide, progress, rig, setWaker, wake } from './progress';
 import { buildRails, poseAt } from './rail';
 import { SETTLE, settledStop } from './settle';
 
@@ -47,6 +51,9 @@ const MAX_DELTA = 0.1;
 
 const position = new Vector3();
 const look = new Vector3();
+/** The rail position of the previous frame (the settle's "moved" ignores the dolly). */
+const lastRail = new Vector3();
+const toCase = new Vector3();
 const box = new Box3();
 const projected = new Vector3();
 /** The damped gaze orientation (a Camera, so `lookAt` points its -Z at the target). */
@@ -61,6 +68,25 @@ const swayEuler = new Euler(0, 0, 0, 'YXZ');
 const swayQuaternion = new Quaternion();
 /** Parallax damping stops this close to its goal, in radians. */
 const SWAY_EPS = 1e-4;
+
+/** The dialog dolly (EXPERIENCE §6.5). */
+const dolly = createDolly();
+
+/**
+ * Reduced motion (EXPERIENCE §6.6): the stop whose pose the camera holds, the whole stop the scroll
+ * last arrived at (`next`), and the fade-cut in progress (`cutting`; `swap` once it reached ink).
+ */
+interface Held {
+  track: TrackId;
+  index: number;
+}
+const hold = {
+  at: { track: 'main', index: 0 } as Held,
+  next: null as Held | null,
+  cutting: false,
+  swap: false,
+};
+const sameStop = (a: Held, b: Held) => a.track === b.track && a.index === b.index;
 
 /** The open story panel's left edge as a fraction of the stage width, measured once per open. */
 const panel = { openId: null as ExhibitId | null, width: 0, left: null as number | null };
@@ -140,6 +166,35 @@ function hitCenter(scene: Object3D, id: ExhibitId): Vector3 | null {
   return listedAsMounted(id) ? layoutCenter(id) : null;
 }
 
+/**
+ * Reduced motion (EXPERIENCE §6.6, ARCHITECTURE §6.5): no damping and no in-between poses. The
+ * camera holds its stop while the visitor scrolls; once the scroll target is (within 0.02 of) a
+ * different whole stop, the ink fade starts, the held stop swaps to the latest arrival at ink, and
+ * the fade clears. Returns the stop to show this frame.
+ */
+function holdStop(): Held {
+  const nearest = Math.round(progress.target);
+  if (Math.abs(progress.target - nearest) < SETTLE.whole) {
+    const last = rails[progress.track].stops.length - 1;
+    hold.next = { track: progress.track, index: Math.max(0, Math.min(last, nearest)) };
+  }
+  if (hold.swap) {
+    hold.swap = false;
+    if (hold.next) hold.at = hold.next;
+  } else if (!hold.cutting && hold.next && !sameStop(hold.next, hold.at)) {
+    hold.cutting = true;
+    void fadeCut(() => {
+      hold.swap = true;
+      wake();
+    }).then(() => {
+      hold.cutting = false;
+      wake();
+    });
+  }
+  if (hold.at.track === progress.track) progress.current = hold.at.index;
+  return hold.at;
+}
+
 export function CameraRig() {
   const get = useThree((s) => s.get);
   const invalidate = useThree((s) => s.invalidate);
@@ -151,6 +206,12 @@ export function CameraRig() {
     shift.framed = false;
     const offWaker = setWaker(invalidate);
     const offParallax = installParallax(invalidate);
+    // A story opening or closing starts the dolly and the framing change: ask for frames.
+    const offStore = useMuseum.subscribe((next, previous) => {
+      if (next.openId !== previous.openId || next.reducedMotion !== previous.reducedMotion) {
+        invalidate();
+      }
+    });
     const unregister = registerNavProvider({
       async goTo(id, opts) {
         await travelTo(id, opts);
@@ -176,6 +237,7 @@ export function CameraRig() {
       finishGlide();
       offWaker();
       offParallax();
+      offStore();
       unregister();
     };
   }, [get, invalidate]);
@@ -184,47 +246,64 @@ export function CameraRig() {
     const state = useMuseum.getState();
     const glide = rig.glide;
     const dt = Math.min(delta, MAX_DELTA);
+    const now = performance.now();
+    const reduced = state.reducedMotion;
     // Jumps and reduced motion turn the gaze at once; walking and glides damp it.
-    let jump = state.reducedMotion;
+    let jump = reduced;
+    // Under reduced motion the camera shows the held stop, not `progress.current`.
+    let held: Held | null = null;
     if (glide) {
-      const now = performance.now();
       glide.start ??= now;
       const t = Math.min(1, (now - glide.start) / glide.ms);
       progress.current = glide.from + (glide.to - glide.from) * easeInOutCubic(t);
       rig.teleport = false;
       resetVelocity();
       if (t >= 1) finishGlide();
+    } else if (reduced && state.ready) {
+      held = holdStop();
+      rig.teleport = false;
+      resetVelocity();
     } else if (rig.teleport || !state.ready) {
       // Instant travel, and everything before the canvas is revealed: no fly-through at load.
       progress.current = progress.target;
       rig.teleport = false;
       resetVelocity();
       jump = true;
-    } else if (state.reducedMotion) {
-      // No in-between poses: hold until the scroll target is (almost) a whole stop, then cut.
-      if (Math.abs(progress.target - Math.round(progress.target)) < SETTLE.whole) {
-        progress.current = progress.target;
-      }
-      resetVelocity();
     } else {
       easing.damp(progress, 'current', progress.target, tokens.motion.railSmoothTime, dt);
     }
+    if (!held) {
+      // Reduced motion starts (or resumes) from the stop nearest to where the camera is.
+      hold.at = { track: progress.track, index: Math.round(progress.current) };
+      hold.next = null;
+    }
 
-    const rail = rails[progress.track];
-    const p = state.reducedMotion && !glide ? Math.round(progress.current) : progress.current;
+    const rail = rails[held?.track ?? progress.track];
+    const p = held ? held.index : progress.current;
     poseAt(rail, p, position, look);
     gazeAt(rail, p, look);
-    const movedM = camera.position.distanceTo(position);
-    camera.position.copy(position);
+    const movedM = lastRail.distanceTo(position);
+    lastRail.copy(position);
     aim.position.copy(position);
     if (jump) snapGaze(look);
     else easing.dampLookAt(aim, look, tokens.motion.gazeSmoothTime, dt);
-    // "Moved" covers the turn too: the gaze direction's change, in meters at 1 m. Parallax and
-    // framing are not rail movement and never hold back the settle.
+    // "Moved" covers the turn too: the gaze direction's change, in meters at 1 m. The dolly,
+    // parallax and framing are not rail movement and never hold back the settle.
     forward.set(0, 0, -1).applyQuaternion(aim.quaternion);
     const moved = Math.max(movedM, forward.distanceTo(lastForward));
     lastForward.copy(forward);
-    const lookDistance = position.distanceTo(look);
+
+    // The dialog dolly: toward the case along the gaze, never closer than 0.5 m to it.
+    aimDolly(dolly, state.openId !== null, reduced);
+    const dollying = stepDolly(dolly, now);
+    camera.position.copy(position);
+    if (dolly.value > 0) {
+      toCase.subVectors(look, position);
+      const room = Math.max(0, toCase.length() - 0.5);
+      if (room > 0)
+        camera.position.addScaledVector(toCase.normalize(), Math.min(dolly.value, room));
+    }
+    const lookDistance = camera.position.distanceTo(look);
 
     // Parallax on top of the gaze (fine pointers only; never under reduced motion or ?test=1).
     const swayGoal = parallaxEnabled({
@@ -281,17 +360,19 @@ export function CameraRig() {
       applyFraming(lens, fovFor(aspect), shift, size.width, size.height);
       framing = shift.x !== goal.x || shift.y !== goal.y;
     }
-    const animating = framing || sway.yaw !== swayGoal.yaw || sway.pitch !== swayGoal.pitch;
+    const animating =
+      framing || dollying || sway.yaw !== swayGoal.yaw || sway.pitch !== swayGoal.pitch;
 
     const index = settledStop({
-      current: progress.current,
+      // Under reduced motion the rail is where the held pose is, and a cut is a move.
+      current: held ? (held.track === progress.track ? held.index : Number.NaN) : progress.current,
       target: progress.target,
       moved,
       compilePending: state.compilePending,
-      gliding: rig.glide !== null,
+      gliding: rig.glide !== null || (held !== null && hold.cutting),
     });
     if (index !== null) {
-      const stop = rail.stops[index]?.id;
+      const stop = rails[progress.track].stops[index]?.id;
       const patch: { settled?: boolean; stop?: StopId } = {};
       if (!state.settled) patch.settled = true;
       if (stop && stop !== state.stop) patch.stop = stop;

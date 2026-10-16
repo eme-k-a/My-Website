@@ -5,12 +5,16 @@
 // at hydration. Walking is the browser's own scroll: this component installs the measurement and
 // the passive scroll listener, the popstate handler and the Enter/Esc and stepping keys, and
 // applies track swaps in a layout effect before paint. The `renderCard` prop is the contract.
-import { useEffect, useLayoutEffect, type ReactNode } from 'react';
+// Its first child is the fade-cut layer (EXPERIENCE §6.6, ARCHITECTURE §6.5): a fixed ink layer
+// over the canvas, under the cards, driven by the rail's fade.ts (reduced-motion cuts and HUD
+// jumps of more than 3 stops).
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
 import { doorId, type StopId, type WingId } from '../content/ids';
 import { content } from '../content/index';
 import { mainTrack } from '../content/selectors';
+import { onFade } from '../museum/rail/fade';
 import { installKeys } from '../museum/rail/keys';
 import { applyTrackSwap, installNavigation } from '../museum/rail/navigation';
 import { installScrollMap } from '../museum/rail/scrollRuntime';
@@ -45,6 +49,7 @@ const SECTIONS: readonly SectionSpec[] = mainTrack(content).flatMap((id): Sectio
 
 export function ScrollTrack({ renderCard }: ScrollTrackProps) {
   const track = useMuseum((s) => s.track);
+  const fade = useRef<HTMLDivElement>(null);
 
   // Before paint after every track change: measure the new sections and place the scroll.
   useLayoutEffect(() => {
@@ -52,12 +57,20 @@ export function ScrollTrack({ renderCard }: ScrollTrackProps) {
   }, [track]);
 
   useEffect(() => {
-    const uninstall = [installScrollMap(), installNavigation(), installKeys()];
+    const uninstall = [
+      installScrollMap(),
+      installNavigation(),
+      installKeys(),
+      onFade((phase) => {
+        if (fade.current) fade.current.dataset.fade = phase;
+      }),
+    ];
     return () => uninstall.forEach((off) => off());
   }, []);
 
   return (
     <main id="track" data-track={track}>
+      <div ref={fade} className={styles.fade} aria-hidden="true" />
       {SECTIONS.map(({ id, door, wing, last }) => (
         <section
           key={id}

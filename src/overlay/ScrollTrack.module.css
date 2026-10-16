@@ -64,3 +64,27 @@
   .section:not([data-wing='volunteer']):not([data-door='volunteer']) {
   display: none;
 }
+
+/*
+ * The fade-cut layer (EXPERIENCE §6.6, ARCHITECTURE §6.5): fixed over the stage and under the
+ * cards (z-index -1 inside the track's stacking context, which sits above the stage). fade.ts sets
+ * data-fade: 'out' goes to ink over half of --fade-cut (100 ms), 'in' and 'clear' come back.
+ */
+.fade {
+  display: none;
+}
+
+:global(html[data-mode='museum']) .fade {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  background: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity calc(var(--fade-cut) / 2) linear;
+}
+
+:global(html[data-mode='museum']) .fade[data-fade='out'] {
+  opacity: 1;
+}

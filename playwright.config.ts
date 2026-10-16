@@ -37,7 +37,11 @@ export const SHARDS: Record<string, Record<string, RegExp | 'rest'>> = {
   'desktop-dialog': { desktop: spec('dialog', 'exhibits', 'exhibit-contract', 'greybox') },
   'desktop-rest': { desktop: 'rest' },
   pixel7: { pixel7: 'rest' },
-  'phones-rest': { pixel7: spec('visual'), 'pixel7-landscape': 'rest', 'no-webgl': 'rest' },
+  'phones-rest': {
+    pixel7: spec('visual', 'exhibits'),
+    'pixel7-landscape': 'rest',
+    'no-webgl': 'rest',
+  },
 };
 
 const SHARD = process.env.E2E_SHARD;

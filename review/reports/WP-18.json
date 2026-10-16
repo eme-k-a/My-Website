@@ -1,0 +1,95 @@
+{
+  "wp": "WP-18",
+  "role": "R10 DevOps & Release",
+  "status": "partial",
+  "branch": "wp/WP-18",
+  "commits": [
+    "8b06d17 ci: deploy tested dist to netlify previews and production",
+    "6ce7e77 chore(content): set SITE_URL",
+    "fb6d654 docs(readme): deploy notes",
+    "<this commit> docs(wp-18): add the WP-18 report"
+  ],
+  "changedFiles": [
+    ".github/workflows/deploy.yml",
+    ".github/workflows/ci.yml",
+    "src/content/site.ts",
+    "README.md",
+    "review/reports/WP-18.json"
+  ],
+  "previewUrl": "https://claude-intelligent-sagan-poq45q--emeka-nduka-nwagbo.netlify.app",
+  "productionUrl": "https://emeka-nduka-nwagbo.netlify.app",
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Workflow valid",
+      "command": "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/deploy.yml')); print('yaml ok')\"",
+      "result": "pass",
+      "evidence": "yaml ok (ci.yml too). actionlint 1.7.7 with shellcheck 0.10.0 (scratch binaries, not deps): 0 findings on deploy.yml and ci.yml. Step scripts run locally: alias claude-intelligent-sagan-poq45q, pr-42, production empty, a long dependabot branch trims to 36 chars; missing token exits 1 with a named ::error."
+    },
+    {
+      "id": "A2",
+      "criterion": "SITE_URL used everywhere",
+      "command": "npm run build && grep -o 'https://[a-z0-9-]*\\.netlify\\.app' dist/index.html | sort -u; grep -c '\\[placeholder: netlify' src/content/site.ts",
+      "result": "pass",
+      "evidence": "Placeholder count 0. This branch alone: dist/index.html has no canonical or OG tags yet (WP-14 adds them), the host is in the main bundle and the PDF header. Scratch merge of HEAD with wp/WP-14 (cf1542e), then npm run build: exactly one host, https://emeka-nduka-nwagbo.netlify.app (canonical and og:url), 33 occurrences across exhibit and resume pages, all that host. Re-run after WP-14 merges."
+    },
+    {
+      "id": "A3",
+      "criterion": "Deploy succeeds on the branch",
+      "command": "gh run list --workflow deploy.yml --limit 1 --json conclusion,url",
+      "result": "skipped",
+      "evidence": "Deferred to R0 after push. The deploy runs as the ci 'deploy' job (workflow_call), so look at the ci run's deploy job and its summary; gh run list --workflow deploy.yml lists only workflow_run runs, which start after launch."
+    },
+    {
+      "id": "A4",
+      "criterion": "Preview boots in museum mode without CSP violations",
+      "command": "BASE_URL=https://claude-intelligent-sagan-poq45q--emeka-nduka-nwagbo.netlify.app npx playwright test --grep @smoke --project=desktop",
+      "result": "skipped",
+      "evidence": "Deferred to R0 after push. Local stand-in: dist with the workflow's noindex edit served by serve-dist on :4179, BASE_URL=http://localhost:4179 (no webServer started): 21 passed (35.9s), --workers=1."
+    },
+    {
+      "id": "A5",
+      "criterion": "Preview is not indexable",
+      "command": "curl -sI https://claude-intelligent-sagan-poq45q--emeka-nduka-nwagbo.netlify.app/ | grep -iE '^(content-security-policy|x-robots-tag)'",
+      "result": "skipped",
+      "evidence": "Deferred to R0 after push. Local stand-in on :4179: X-Robots-Tag: noindex on / and /resume/, Content-Security-Policy present; the edit lands inside the single /* rule (asserted in the step), production skips it."
+    }
+  ],
+  "deviations": [
+    "Dedupe (R0 asked for one deploy per commit): pushes deploy only through the workflow_call job in ci.yml; the workflow_run path deploys pull_request runs only, never push or workflow_dispatch runs. Production therefore only ever comes from a push to main.",
+    "The alias also drops leading '-' (a DNS label cannot start with one); the brief only names trailing.",
+    "Previews run in a GitHub environment named 'preview' (GitHub creates it on first use) so the URL shows as an environment link; production uses 'production' as specified.",
+    "The PR comment edits the bot's last comment (gh pr comment --edit-last --create-if-none, falling back to a new comment) instead of adding one per run.",
+    "Production deploys warn (not fail) when Netlify's site url differs from SITE_URL, read with the ARCHITECTURE §3.1 tsx command."
+  ],
+  "openQuestions": [
+    {
+      "question": "Setting SITE_URL adds the site host to the PDF header (CONTENT_DRAFT site host rule), which breaks two R1 paths outside my allow: src/content/selectors.test.ts pins the placeholder header (npm run verify: 1 failed, 540 passed), and resume/resume.tex is regenerated (+1 header line), so the CI verify step 'resume.tex is up to date' fails. Please apply the patch in notes.r1FollowupPatch (or grant R1/WP-18) at integration. With it: verify exits 0 (542 passed), test:pdf 9 passed 1 skipped, dist/resume.pdf 1 page, pdflatex of the new resume.tex 1 page.",
+      "for": "R0",
+      "default": "Not applied; site.ts committed as the brief requires."
+    },
+    {
+      "question": "OWNERS.json wps['WP-18'].allow lacks .github/workflows/ci.yml; commit 8b06d17 adds only the granted 'deploy' job there. Add it to the allow list so the merge check passes.",
+      "for": "R0",
+      "default": "Relied on the R0 grant in the milestone notes."
+    },
+    {
+      "question": "After launch, a claude/** branch with an open PR deploys the same commit twice by §14.3 design: the push run to the branch alias and the PR run to pr-<number>. Keep both aliases, or deploy PR runs only when the head branch is not pushed by ci (for example not claude/**)?",
+      "for": "R0",
+      "default": "Kept both, per §14.3."
+    },
+    {
+      "question": "ci.yml's concurrency (cancel-in-progress per ref) can cancel a deploy that is still uploading when a newer push lands; the newer run deploys afterwards and the alias only moves on a finished deploy. Consider a required-reviewer or main-only rule on the 'production' environment.",
+      "for": "R0",
+      "default": "No environment rules set (needs repo settings)."
+    }
+  ],
+  "depsRequest": [],
+  "missingSpecs": [
+    "WP-17/R8: a @smoke check that a preview (BASE_URL host contains '--') sends X-Robots-Tag: noindex and production does not (A5 is a manual curl today)."
+  ],
+  "notes": {
+    "summary": "Netlify site emeka-nduka-nwagbo (team eme-k-a, Git builds off, created by R0). No secrets, site ids or tokens in the repo or this report. If NETLIFY_AUTH_TOKEN or NETLIFY_SITE_ID is missing the deploy job fails with a named ::error. G2 fallback without a deploy: npm run build && npm run preview (serve-dist with production headers). Where to look after push: the ci run's 'deploy / deploy' job summary and its 'preview' environment link.",
+    "r1FollowupPatch": "diff --git a/resume/resume.tex b/resume/resume.tex\nindex e4eb2cc..53655bf 100644\n--- a/resume/resume.tex\n+++ b/resume/resume.tex\n@@ -115,6 +115,7 @@\n     \\textbf{\\Huge \\scshape Chukwuemeka Nduka-Nwagbo} \\\\ \\vspace{1pt}\n     \\small \\href{mailto:cndukanwagbo@mun.ca}{\\underline{cndukanwagbo@mun.ca}} $|$\n     \\href{https://linkedin.com/in/emekanduka}{\\underline{linkedin.com/in/emekanduka}} $|$\n+    \\href{https://emeka-nduka-nwagbo.netlify.app}{\\underline{emeka-nduka-nwagbo.netlify.app}} $|$\n     St. John's, NL\n \\end{center}\n \ndiff --git a/src/content/selectors.test.ts b/src/content/selectors.test.ts\nindex cc55cc7..3a0a087 100644\n--- a/src/content/selectors.test.ts\n+++ b/src/content/selectors.test.ts\n@@ -440,7 +440,7 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {\n     expect(model.keywords).toEqual(content.skills.flatMap((s) => s.items));\n   });\n \n-  it('has a public header of email, LinkedIn and location while SITE_URL is a placeholder', () => {\n+  it('has a public header of email, LinkedIn, the site host and location', () => {\n     expect(model.name).toBe('Chukwuemeka Nduka-Nwagbo');\n     expect(model.contact).toEqual([\n       { kind: 'email', text: 'cndukanwagbo@mun.ca', href: 'mailto:cndukanwagbo@mun.ca' },\n@@ -449,12 +449,26 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {\n         text: 'linkedin.com/in/emekanduka',\n         href: 'https://linkedin.com/in/emekanduka',\n       },\n+      {\n+        kind: 'site',\n+        text: 'emeka-nduka-nwagbo.netlify.app',\n+        href: 'https://emeka-nduka-nwagbo.netlify.app',\n+      },\n       { kind: 'location', text: \"St. John's, NL\" },\n     ]);\n-    expect(content.meta.siteUrl).toContain('[placeholder');\n     expect(JSON.stringify(model)).not.toContain('[placeholder');\n   });\n \n+  it('leaves the site host out while SITE_URL is a placeholder', () => {\n+    const c = clone();\n+    c.meta.siteUrl = 'https://[placeholder: netlify-subdomain].netlify.app';\n+    expect(printModel(c, { now: OCT_2026 }).contact.map((i) => i.kind)).toEqual([\n+      'email',\n+      'linkedin',\n+      'location',\n+    ]);\n+  });\n+\n   it('adds the site host before the location once SITE_URL is real', () => {\n     const c = clone();\n     c.meta.siteUrl = 'https://emeka.netlify.app';\n"
+  }
+}

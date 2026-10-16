@@ -1,0 +1,1312 @@
+From eb6d4074e0f8d2aec0e4e9b30df1287e1a02488b Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 16 Oct 2026 02:30:34 +0000
+Subject: [PATCH 1/3] feat(exhibit-safe-sip): tamper evident
+
+Frosted cup with a layer-stepped, cut-away ceramic lid (Pico W board,
+brass pads, sensor chip) rocking in a one-ring brass gimbal on a walnut
+base; the tamper ring glows only while |roll| passes 8 degrees, from the
+same clock. Static three-arc Euler gizmo (radius 0.20 to clear the lid).
+5,620 triangles, 12 draw calls, 3.37 KB gzip chunk.
+
+WP: WP-13
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016CcKJFMWCyXKspJx4YvMS7
+---
+ src/museum/exhibits/safe-sip/README.md        |  60 ++
+ .../exhibits/safe-sip/TamperEvident.tsx       | 242 ++++++++
+ src/museum/exhibits/safe-sip/index.ts         |  10 +
+ src/museum/exhibits/safe-sip/tamper.test.ts   | 415 ++++++++++++++
+ src/museum/exhibits/safe-sip/tamper.ts        | 525 ++++++++++++++++++
+ 5 files changed, 1252 insertions(+)
+ create mode 100644 src/museum/exhibits/safe-sip/README.md
+ create mode 100644 src/museum/exhibits/safe-sip/TamperEvident.tsx
+ create mode 100644 src/museum/exhibits/safe-sip/index.ts
+ create mode 100644 src/museum/exhibits/safe-sip/tamper.test.ts
+ create mode 100644 src/museum/exhibits/safe-sip/tamper.ts
+
+diff --git a/src/museum/exhibits/safe-sip/README.md b/src/museum/exhibits/safe-sip/README.md
+new file mode 100644
+index 0000000..35b9830
+--- /dev/null
++++ b/src/museum/exhibits/safe-sip/README.md
+@@ -0,0 +1,60 @@
++# safe-sip: "Tamper Evident" (No. V1)
++
++Spec: `docs/spec/EXPERIENCE.md` §4.7. Work package: `docs/wp/WP-13.md`. Concept checklist and R2 verdict: [`review/concepts/safe-sip.md`](../../../../review/concepts/safe-sip.md).
++
++## Concept
++
++The Safe Sip hardware MVP: a 3D-printed smart lid with a Raspberry Pi Pico W and an I2C orientation sensor that detects tampering from the tilt. A frosted cup hangs in a brass gimbal on a walnut base. Its bone ceramic lid is built from 3 mm print layers (real stepped geometry) and has a 90 degree cut-away wedge facing the visitor, where a graphite Pico W board with brass castellated pads and a sensor chip sit on the lid floor. The cup rocks gently; the tamper ring on the lid lights only while the roll is past the 8 degree threshold. Three static brass arcs with arrowheads (roll, pitch, yaw) stand around it as the Euler-angle diagram. No text, no liquid, no hands or figures, no green board.
++
++## Object description (DOM, `exhibit.object`)
++
++"A cup rocks gently inside a brass gimbal. Its cut-away lid shows a Raspberry Pi Pico W and an orientation sensor, and the ring on the lid lights when the tilt crosses the tamper threshold."
++
++## Slot and bounds
++
++Standard slot (EXPERIENCE §5.3), local meters, origin at the plinth top center, +Z toward the stop camera: x and z in [-0.325, 0.325], y in [0.025, 0.675].
++
++The whole object is turned -30 degrees about Y (`OBJECT_YAW`), so the camera sees the gimbal, both pin axes and the gizmo arcs in three-quarter view instead of edge-on. The lid's cut-away is turned back by the same angle (`LID.cutCenter`), so the wedge faces the camera exactly. Positions below are in the object frame.
++
++| Part           | Material                    | Placement                                                                                                                                                                                                                                                                                              |
++| -------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
++| Base           | `walnut`                    | disc r 0.20, h 0.03, center (0, 0.04, 0), 64 segments; top at y 0.055                                                                                                                                                                                                                                  |
++| Posts (2)      | `brass`                     | cylinders r 0.005 at x = +-0.15, y 0.055 to 0.166                                                                                                                                                                                                                                                      |
++| Gimbal ring    | `brass`                     | horizontal torus r 0.13, tube 0.006, at the pivot (0, 0.16, 0)                                                                                                                                                                                                                                         |
++| Pivot pins (4) | `brass`                     | outer pins on X (ring to post, r 0.004), inner pins on Z (ring to cup wall, r 0.003)                                                                                                                                                                                                                   |
++| Cup            | `frostedGlass`              | hard-edged Lathe, 48 segments, bottom r 0.075 at y 0.10, top r 0.095 at y 0.36, wall 4 mm, floor 6 mm                                                                                                                                                                                                  |
++| Lid            | `ceramic`                   | r 0.10, 0.03 tall, ten 3 mm layers stepping in to r 0.090 at the top (quadratic shoulder). Layers 0 to 1: full-circle floor (48 segments). Layers 2 to 9: the cover, a 270 degree Lathe (36 segments) with a pocket r 0.072 under a 6 mm top plate; both cut faces are closed with the stepped section |
++| Board          | `ceramicGraphite`           | box 0.06 x 0.004 x 0.024 (Pico W proportions) on the lid floor in the wedge, long axis across it                                                                                                                                                                                                       |
++| Pads (20)      | `brass`                     | 0.0032 x 0.005 x 0.0045, ten per long edge at 6 mm pitch, wrapping the edge (instanced)                                                                                                                                                                                                                |
++| Sensor chip    | `ceramicGraphite`           | box 0.008 x 0.002 x 0.008 on the board top                                                                                                                                                                                                                                                             |
++| Tamper ring    | `accentGlow` (own instance) | torus r 0.085, tube 0.003, on the lid top; a 270 degree arc cut like the cover                                                                                                                                                                                                                         |
++| Euler gizmo    | `brass`                     | three quarter-torus arcs r 0.20, tube 0.003, centered (0, 0.24, 0), one per axis, each with a cone arrowhead (r 0.008, h 0.022); static, instanced                                                                                                                                                     |
++
++Gizmo arcs (object frame): roll in the XY plane on the +X side from -20 to 70 degrees elevation; pitch in the YZ plane over the top from 60 degrees above the front to 30 degrees past the top; yaw in the XZ plane at y 0.24 from 70 to 160 degrees (0 = +X, 90 = +Z).
++
++**Deviation, gizmo radius 0.20 (spec 0.16).** Measured from the gizmo center (0, 0.24, 0), the rocking lid edge sweeps 0.15 to 0.18 m and the gimbal ring sits at 0.153 m, so 0.16 m arcs would cut through the lid or graze the ring. At 0.20 the unit tests prove at least 5 mm of clearance to the cup, lid and tamper ring in every pose of the cycle.
++
++**Gimbal mechanics.** The spec gives one ring with pivot pins at +-X. To keep every join real, the ring pitches on the outer pins (X) and the cup rolls on inner pins (Z) inside it: a one-ring, two-axis gimbal. The gizmo, base and posts never move.
++
++Measured under `?test=1` (`stats().exhibits['safe-sip']`): `inBounds: true`, 5,620 triangles, 12 draw calls, on desktop and Pixel 7, medium and high tier.
++
++## Budget
++
++`index.ts`: 9,000 triangles, 14 draw calls, 0 MB textures (no textures of its own). Actual: 5,620 triangles (base 256, posts 128, pins 192, gimbal 1,024, cup 384, lid 1,716, board 12, pads 240, chip 12, tamper ring 432, arcs 1,152, arrowheads 72), 12 draw calls. Lazy chunk `TamperEvident` (with `tamper.ts`): 3.37 KB gzip of the 40 KB limit.
++
++## Materials
++
++`walnut`, `brass`, `frostedGlass`, `ceramic`, `ceramicGraphite`, `accentGlow` only, from the kit hooks. The tamper ring uses `useMaterialInstance('accentGlow')`, a clone that shares the compiled program, and animates only its `emissiveIntensity`; nothing else is cloned or mutated.
++
++## Motion (one)
++
++The rocking, driven only by `useExhibitClock()`, period 9 s: roll = 9 degrees x sin(2 pi t / 9) about Z (cup, lid, board, ring), pitch = 6 degrees x sin(4 pi t / 9 + pi / 4) about X (gimbal ring and everything inside it). The ring's glow is a pure function of the same clock: 0.2 while |roll| <= 8 degrees; once past it, a 0.6 s smoothstep rise to 1.6, held at the peak, and a 0.6 s fall that ends exactly as the roll comes back under 8 degrees (ramps of at least 0.5 s, EXPERIENCE §10.4; about 1.4 s lit twice per period).
++
++**Reduced-motion, low-tier and `?test=1` pose:** rolled 10 degrees, pitch 0, ring at 1.2. Whenever `runtime.motion` is false the object eases (smoothstep, 1 s) to this pose instead of freezing mid-cycle, and eases back into the rocking when motion resumes; it starts in the pose when it mounts without motion, so `?test=1` frames are identical from the first one. While an ease runs the component calls `invalidate()`, so it finishes even if the frame driver has stopped. Hover adds nothing (the kit's light lift).
++
++## Files
++
++- `index.ts`: the eager manifest (id, title, lazy loader, budget, `motion: 'slow'`).
++- `TamperEvident.tsx`: the lazy component (default export, `ExhibitProps`).
++- `tamper.ts`: measurements, the hard-edged lathe builder (lid and cup), gizmo placement and the motion (pure, Node-tested).
++- `tamper.test.ts`: spec dimensions, wedge and ring cut, board placement, winding, triangle budget, slot bounds over the whole cycle, clearances, period, glow threshold and ramps, pose and easing.
+diff --git a/src/museum/exhibits/safe-sip/TamperEvident.tsx b/src/museum/exhibits/safe-sip/TamperEvident.tsx
+new file mode 100644
+index 0000000..88a93eb
+--- /dev/null
++++ b/src/museum/exhibits/safe-sip/TamperEvident.tsx
+@@ -0,0 +1,242 @@
++// Exhibit No. V1, "Tamper Evident" (EXPERIENCE §4.7): a frosted cup with a cut-away, layer-stepped
++// lid showing a Pico W board and an orientation sensor, rocking gently in a brass gimbal on a
++// walnut base; the tamper ring on the lid lights only while the roll is past the threshold. Shared
++// library materials only, no lights, no text. One slow motion (the 9 s rocking), driven only by
++// useExhibitClock(); the ring's glow is a function of the same clock. Under reduced motion, the low
++// tier and ?test=1 it holds the still pose (rolled 10 degrees, ring at 1.2). Measurements, geometry
++// and the motion live in ./tamper.
++import { useFrame, useThree } from '@react-three/fiber';
++import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
++import {
++  Matrix4,
++  Quaternion,
++  Vector3,
++  type BufferGeometry,
++  type Group,
++  type InstancedMesh,
++  type Mesh,
++  type MeshStandardMaterial,
++} from 'three';
++import { useExhibitClock, useMaterial, useMaterialInstance, type ExhibitProps } from '../_kit';
++import {
++  BASE,
++  BOARD,
++  CHIP,
++  COVER_PHI,
++  cupGeometry,
++  CUP,
++  GIMBAL,
++  GIZMO,
++  GIZMO_AXES,
++  gizmoArcMatrix,
++  gizmoConeMatrix,
++  LID,
++  LID_Y,
++  lidGeometry,
++  OBJECT_YAW,
++  PADS,
++  padCenters,
++  pinPlacements,
++  PIVOT,
++  POST,
++  poseAt,
++  stepBlend,
++  TAMPER_RING,
++  tamperRingTurn,
++  type Pose,
++} from './tamper';
++
++const ONE = new Vector3(1, 1, 1);
++const Y_UP = new Vector3(0, 1, 0);
++const AXIS = { x: new Vector3(1, 0, 0), z: new Vector3(0, 0, 1) } as const;
++
++function setMatrices(mesh: InstancedMesh | null, matrices: Matrix4[]): void {
++  if (!mesh) return;
++  matrices.forEach((m, i) => mesh.setMatrixAt(i, m));
++  mesh.instanceMatrix.needsUpdate = true;
++  mesh.computeBoundingBox();
++  mesh.computeBoundingSphere();
++}
++
++const POST_MATRICES = [-1, 1].map((side) =>
++  new Matrix4().makeTranslation(side * POST.x, (POST.bottom + POST.top) / 2, 0),
++);
++
++const PIN_MATRICES = pinPlacements().map(({ center, axis, length, radius }) =>
++  new Matrix4().compose(
++    new Vector3(...center),
++    new Quaternion().setFromUnitVectors(Y_UP, AXIS[axis]),
++    new Vector3(radius, length, radius),
++  ),
++);
++
++const PAD_MATRICES = padCenters().map((c) =>
++  new Matrix4().compose(new Vector3(...c), new Quaternion(), ONE),
++);
++
++/** The one motion's output: the gimbal pitches, the cup and lid roll, the ring's own clone glows. */
++function applyPose(
++  gimbal: Group | null,
++  rocker: Group | null,
++  ring: Mesh<BufferGeometry, MeshStandardMaterial> | null,
++  pose: Pose,
++): void {
++  if (gimbal) gimbal.rotation.x = pose.pitch;
++  if (rocker) rocker.rotation.z = pose.roll;
++  if (ring) ring.material.emissiveIntensity = pose.glow;
++}
++
++const ARC_MATRICES = GIZMO_AXES.map(gizmoArcMatrix);
++const CONE_MATRICES = GIZMO_AXES.map(gizmoConeMatrix);
++
++export default function TamperEvident({ runtime }: ExhibitProps) {
++  const walnut = useMaterial('walnut');
++  const brass = useMaterial('brass');
++  const frostedGlass = useMaterial('frostedGlass');
++  const ceramic = useMaterial('ceramic');
++  const graphite = useMaterial('ceramicGraphite');
++  // The ring's own clone, so its animated glow never touches the shared accentGlow.
++  const glow = useMaterialInstance('accentGlow');
++  const clock = useExhibitClock();
++  const invalidate = useThree((s) => s.invalidate);
++
++  const cup = useMemo(() => cupGeometry(), []);
++  const lid = useMemo(() => lidGeometry(), []);
++  useEffect(
++    () => () => {
++      cup.dispose();
++      lid.dispose();
++    },
++    [cup, lid],
++  );
++
++  const gimbal = useRef<Group>(null);
++  const rocker = useRef<Group>(null);
++  const posts = useRef<InstancedMesh>(null);
++  const pins = useRef<InstancedMesh>(null);
++  const pads = useRef<InstancedMesh>(null);
++  const arcs = useRef<InstancedMesh>(null);
++  const cones = useRef<InstancedMesh>(null);
++  const ring = useRef<Mesh<BufferGeometry, MeshStandardMaterial>>(null);
++
++  // 0 = the still pose, 1 = the live rocking; eased in between when motion starts or stops.
++  const blend = useRef(runtime.motion ? 1 : 0);
++  const motion = useRef(runtime.motion);
++  useEffect(() => {
++    motion.current = runtime.motion;
++    invalidate();
++  }, [runtime.motion, invalidate]);
++
++  // Static instances and the first pose are in place before the kit compiles and reveals.
++  useLayoutEffect(() => {
++    setMatrices(posts.current, POST_MATRICES);
++    setMatrices(pins.current, PIN_MATRICES);
++    setMatrices(pads.current, PAD_MATRICES);
++    setMatrices(arcs.current, ARC_MATRICES);
++    setMatrices(cones.current, CONE_MATRICES);
++    applyPose(gimbal.current, rocker.current, ring.current, poseAt(clock.current, blend.current));
++  }, [clock]);
++
++  useFrame((_, delta) => {
++    const next = stepBlend(blend.current, delta, motion.current);
++    const easing = next !== blend.current;
++    blend.current = next;
++    applyPose(gimbal.current, rocker.current, ring.current, poseAt(clock.current, next));
++    // Finish an ease even if the frame driver has stopped asking for frames.
++    if (easing) invalidate();
++  });
++
++  return (
++    <group name="tamper-evident" rotation-y={OBJECT_YAW}>
++      <mesh name="base" position={BASE.center} material={walnut}>
++        <cylinderGeometry args={[BASE.radius, BASE.radius, BASE.height, BASE.segments]} />
++      </mesh>
++      <instancedMesh ref={posts} name="posts" args={[undefined, undefined, 2]} material={brass}>
++        <cylinderGeometry
++          args={[POST.radius, POST.radius, POST.top - POST.bottom, POST.segments]}
++        />
++      </instancedMesh>
++
++      <group ref={gimbal} name="gimbal" position={PIVOT}>
++        <mesh name="gimbal-ring" rotation-x={Math.PI / 2} material={brass}>
++          <torusGeometry
++            args={[GIMBAL.radius, GIMBAL.tube, GIMBAL.radialSegments, GIMBAL.tubularSegments]}
++          />
++        </mesh>
++        <instancedMesh
++          ref={pins}
++          name="pivot-pins"
++          args={[undefined, undefined, 4]}
++          material={brass}
++        >
++          <cylinderGeometry args={[1, 1, 1, 12]} />
++        </instancedMesh>
++
++        <group ref={rocker} name="cup-and-lid">
++          <mesh
++            name="cup"
++            position-y={CUP.bottomY - PIVOT[1]}
++            geometry={cup}
++            material={frostedGlass}
++          />
++          <group name="lid" position-y={LID_Y - PIVOT[1]}>
++            <mesh name="lid-body" geometry={lid} material={ceramic} />
++            <group name="wedge" rotation-y={LID.cutCenter}>
++              <mesh name="board" position={BOARD.center} material={graphite}>
++                <boxGeometry args={BOARD.size} />
++              </mesh>
++              <instancedMesh
++                ref={pads}
++                name="board-pads"
++                args={[undefined, undefined, PADS.count]}
++                material={brass}
++              >
++                <boxGeometry args={PADS.size} />
++              </instancedMesh>
++              <mesh name="sensor" position={CHIP.center} material={graphite}>
++                <boxGeometry args={CHIP.size} />
++              </mesh>
++            </group>
++            {/* Cut like the cover: a 270 degree arc, laid flat and turned onto the cover's range. */}
++            <mesh
++              ref={ring}
++              name="tamper-ring"
++              position-y={TAMPER_RING.y}
++              rotation={[Math.PI / 2, tamperRingTurn(), 0, 'YXZ']}
++              material={glow}
++            >
++              <torusGeometry
++                args={[
++                  TAMPER_RING.radius,
++                  TAMPER_RING.tube,
++                  TAMPER_RING.radialSegments,
++                  TAMPER_RING.tubularSegments,
++                  COVER_PHI.length,
++                ]}
++              />
++            </mesh>
++          </group>
++        </group>
++      </group>
++
++      <instancedMesh
++        ref={arcs}
++        name="euler-arcs"
++        args={[undefined, undefined, GIZMO_AXES.length]}
++        material={brass}
++      >
++        <torusGeometry
++          args={[GIZMO.radius, GIZMO.tube, GIZMO.radialSegments, GIZMO.tubularSegments, GIZMO.arc]}
++        />
++      </instancedMesh>
++      <instancedMesh
++        ref={cones}
++        name="euler-arrowheads"
++        args={[undefined, undefined, GIZMO_AXES.length]}
++        material={brass}
++      >
++        <coneGeometry args={[GIZMO.cone.radius, GIZMO.cone.height, GIZMO.cone.segments]} />
++      </instancedMesh>
++    </group>
++  );
++}
+diff --git a/src/museum/exhibits/safe-sip/index.ts b/src/museum/exhibits/safe-sip/index.ts
+new file mode 100644
+index 0000000..99cdafa
+--- /dev/null
++++ b/src/museum/exhibits/safe-sip/index.ts
+@@ -0,0 +1,10 @@
++// Exhibit manifest (ARCHITECTURE §7.2, §7.3): eager and tiny; the object is its own lazy chunk.
++import { defineExhibit } from '../_kit';
++
++export default defineExhibit({
++  id: 'safe-sip',
++  title: 'Tamper Evident',
++  load: () => import('./TamperEvident'),
++  budget: { triangles: 9000, drawCalls: 14, textureMB: 0 },
++  motion: 'slow',
++});
+diff --git a/src/museum/exhibits/safe-sip/tamper.test.ts b/src/museum/exhibits/safe-sip/tamper.test.ts
+new file mode 100644
+index 0000000..564b511
+--- /dev/null
++++ b/src/museum/exhibits/safe-sip/tamper.test.ts
+@@ -0,0 +1,415 @@
++import {
++  BoxGeometry,
++  ConeGeometry,
++  CylinderGeometry,
++  Matrix4,
++  TorusGeometry,
++  Vector3,
++  type BufferGeometry,
++} from 'three';
++import { describe, expect, it } from 'vitest';
++import manifest from './index';
++import {
++  BASE,
++  BASE_TOP,
++  BOARD,
++  CHIP,
++  COVER_PHI,
++  CUP,
++  cupGeometry,
++  cupRadiusAt,
++  GIMBAL,
++  GIZMO,
++  GIZMO_AXES,
++  gizmoArcMatrix,
++  gizmoArcPoints,
++  gizmoConeMatrix,
++  GLOW,
++  GLOW_RAMP_S,
++  glowAt,
++  layerRadius,
++  LID,
++  LID_Y,
++  lidCoverProfile,
++  lidFloorProfile,
++  lidGeometry,
++  OBJECT_YAW,
++  PADS,
++  padCenters,
++  PERIOD_S,
++  pinPlacements,
++  pitchAt,
++  PIVOT,
++  POSE,
++  poseAt,
++  POST,
++  rollAt,
++  stepBlend,
++  TAMPER_RING,
++  tamperRingTurn,
++  THRESHOLD,
++} from './tamper';
++
++const DEG = Math.PI / 180;
++const SLOT = { min: [-0.325, 0.025, -0.325], max: [0.325, 0.675, 0.325] } as const;
++
++function triangles(geometry: BufferGeometry): number {
++  const count = geometry.index ? geometry.index.count : geometry.getAttribute('position').count;
++  return count / 3;
++}
++
++/** Lathe angle of a lid-frame point from the wedge's center line, in (-pi, pi]. */
++function wedgeAngle(v: Vector3): number {
++  const phi = Math.atan2(v.x, v.z) - LID.cutCenter;
++  return Math.atan2(Math.sin(phi), Math.cos(phi));
++}
++
++function vertices(geometry: BufferGeometry, matrix = new Matrix4()): Vector3[] {
++  const position = geometry.getAttribute('position');
++  const out: Vector3[] = [];
++  for (let i = 0; i < position.count; i++) {
++    out.push(new Vector3().fromBufferAttribute(position, i).applyMatrix4(matrix));
++  }
++  return out;
++}
++
++/** Exhibit-frame matrix of the rocking (cup and lid) frame at a pose, plus a local offset. */
++function rockerMatrix(roll: number, pitch: number, offsetY: number): Matrix4 {
++  return new Matrix4()
++    .makeTranslation(...PIVOT)
++    .multiply(new Matrix4().makeRotationX(pitch))
++    .multiply(new Matrix4().makeRotationZ(roll))
++    .multiply(new Matrix4().makeTranslation(0, offsetY, 0));
++}
++
++/** Every vertex that rocks (cup, lid, tamper ring) at a pose. */
++function rockingVertices(roll: number, pitch: number): Vector3[] {
++  const ring = new TorusGeometry(TAMPER_RING.radius, TAMPER_RING.tube, 6, 36, COVER_PHI.length)
++    .rotateX(Math.PI / 2)
++    .rotateY(tamperRingTurn());
++  return [
++    ...vertices(cupGeometry(), rockerMatrix(roll, pitch, CUP.bottomY - PIVOT[1])),
++    ...vertices(lidGeometry(), rockerMatrix(roll, pitch, LID_Y - PIVOT[1])),
++    ...vertices(ring, rockerMatrix(roll, pitch, LID_Y - PIVOT[1] + TAMPER_RING.y)),
++  ];
++}
++
++const POSES = [
++  { roll: POSE.roll, pitch: POSE.pitch },
++  ...Array.from({ length: 36 }, (_, i) => {
++    const t = (i * PERIOD_S) / 36;
++    return { roll: rollAt(t), pitch: pitchAt(t) };
++  }),
++  { roll: 9 * DEG, pitch: 6 * DEG },
++  { roll: -9 * DEG, pitch: -6 * DEG },
++  { roll: 10 * DEG, pitch: -6 * DEG },
++];
++
++describe('safe-sip manifest', () => {
++  it('declares the brief budget and one slow motion', () => {
++    expect(manifest.id).toBe('safe-sip');
++    expect(manifest.title).toBe('Tamper Evident');
++    expect(manifest.budget).toEqual({ triangles: 9000, drawCalls: 14, textureMB: 0 });
++    expect(manifest.motion).toBe('slow');
++  });
++});
++
++describe('safe-sip measurements (EXPERIENCE §4.7)', () => {
++  it('base disc sits on the slot floor', () => {
++    expect(BASE.radius).toBe(0.2);
++    expect(BASE.center).toEqual([0, 0.04, 0]);
++    expect(BASE_TOP).toBeCloseTo(0.055, 6);
++    expect(BASE.center[1] - BASE.height / 2).toBeCloseTo(SLOT.min[1], 6);
++  });
++
++  it('cup hangs from y 0.10 to 0.36 with the spec radii and 48 segments', () => {
++    expect(CUP.bottomY).toBe(0.1);
++    expect(CUP.bottomY + CUP.height).toBeCloseTo(0.36, 6);
++    expect(cupRadiusAt(0)).toBe(0.075);
++    expect(cupRadiusAt(CUP.height)).toBeCloseTo(0.095, 6);
++    expect(CUP.segments).toBe(48);
++  });
++
++  it('lid is ten 3 mm print layers stepping in, 0.03 tall, on the cup rim', () => {
++    expect(LID.layers * LID.layer).toBeCloseTo(LID.height, 9);
++    expect(LID.layer).toBe(0.003);
++    expect(layerRadius(0)).toBe(0.1);
++    for (let i = 1; i < LID.layers; i++) {
++      expect(layerRadius(i)).toBeLessThan(layerRadius(i - 1));
++    }
++    expect(LID_Y).toBeCloseTo(0.36, 6);
++    // Every horizontal step in the profile is a real 3 mm riser (geometry, not a shader).
++    const risers = [...lidFloorProfile(), ...lidCoverProfile()]
++      .map(([, y]) => y)
++      .filter((y, i, all) => i > 0 && y !== all[i - 1]);
++    expect(risers.length).toBeGreaterThanOrEqual(LID.layers);
++  });
++
++  it('the cover spans 270 degrees and leaves a 90 degree wedge facing the camera', () => {
++    expect(COVER_PHI.length).toBeCloseTo((270 * Math.PI) / 180, 9);
++    // After the object's turn, the wedge's center line is exhibit +Z.
++    const center = new Vector3(Math.sin(LID.cutCenter), 0, Math.cos(LID.cutCenter));
++    center.applyAxisAngle(new Vector3(0, 1, 0), OBJECT_YAW);
++    expect(center.z).toBeCloseTo(1, 9);
++    const floorTop = LID.floorLayers * LID.layer;
++    const lid = lidGeometry();
++    for (const v of vertices(lid)) {
++      if (v.y <= floorTop + 1e-6) continue;
++      const r = Math.hypot(v.x, v.z);
++      if (r < 1e-6) continue;
++      expect(Math.abs(wedgeAngle(v))).toBeGreaterThanOrEqual(Math.PI / 4 - 1e-6);
++    }
++  });
++
++  it('the tamper ring lies on the lid top, inside its edge', () => {
++    expect(TAMPER_RING.radius).toBe(0.085);
++    expect(TAMPER_RING.tube).toBe(0.003);
++    expect(TAMPER_RING.y - TAMPER_RING.tube).toBeCloseTo(LID.height, 9);
++    expect(TAMPER_RING.radius + TAMPER_RING.tube).toBeLessThan(layerRadius(LID.layers - 1));
++    expect(TAMPER_RING.radius - TAMPER_RING.tube).toBeGreaterThan(LID.pocketRadius);
++    // Laid flat and turned onto the cover: no part of it crosses the open wedge.
++    const ring = new TorusGeometry(TAMPER_RING.radius, TAMPER_RING.tube, 6, 36, COVER_PHI.length)
++      .rotateX(Math.PI / 2)
++      .rotateY(tamperRingTurn());
++    const tubeAngle = TAMPER_RING.tube / TAMPER_RING.radius;
++    let nearest = Infinity;
++    for (const v of vertices(ring)) {
++      expect(Math.abs(v.y)).toBeLessThanOrEqual(TAMPER_RING.tube + 1e-9);
++      nearest = Math.min(nearest, Math.abs(wedgeAngle(v)));
++    }
++    expect(nearest).toBeGreaterThanOrEqual(Math.PI / 4 - tubeAngle - 1e-6);
++    expect(nearest).toBeLessThan(Math.PI / 4 + 0.01);
++  });
++
++  it('board, pads and sensor sit on the lid floor inside the wedge and the pocket', () => {
++    expect(BOARD.size).toEqual([0.06, 0.004, 0.024]);
++    expect(CHIP.size).toEqual([0.008, 0.002, 0.008]);
++    expect(PADS.count).toBe(20);
++    const floorTop = LID.floorLayers * LID.layer;
++    expect(BOARD.center[1] - BOARD.size[1] / 2).toBeCloseTo(floorTop, 9);
++    expect(CHIP.center[1] - CHIP.size[1] / 2).toBeCloseTo(BOARD.center[1] + BOARD.size[1] / 2, 9);
++    const corners: [number, number][] = [];
++    const boxes: { c: readonly number[]; s: readonly number[] }[] = [
++      { c: BOARD.center, s: BOARD.size },
++      { c: CHIP.center, s: CHIP.size },
++      ...padCenters().map((c) => ({ c, s: PADS.size })),
++    ];
++    for (const { c, s } of boxes) {
++      expect(c[1]! - s[1]! / 2).toBeGreaterThanOrEqual(floorTop - 1e-9);
++      expect(c[1]! + s[1]! / 2).toBeLessThan(LID.height - LID.topPlate);
++      for (const dx of [-1, 1]) {
++        for (const dz of [-1, 1])
++          corners.push([c[0]! + (dx * s[0]!) / 2, c[2]! + (dz * s[2]!) / 2]);
++      }
++    }
++    expect(padCenters()).toHaveLength(PADS.count);
++    for (const [x, z] of corners) {
++      expect(Math.hypot(x, z)).toBeLessThan(LID.pocketRadius);
++      expect(Math.abs(Math.atan2(x, z))).toBeLessThan(Math.PI / 4);
++    }
++  });
++
++  it('pins join posts to the ring and the ring to the cup wall', () => {
++    const pins = pinPlacements();
++    expect(pins).toHaveLength(4);
++    for (const pin of pins) {
++      const along = pin.axis === 'x' ? pin.center[0] : pin.center[2];
++      const from = Math.abs(along) - pin.length / 2;
++      const to = Math.abs(along) + pin.length / 2;
++      if (pin.axis === 'x') {
++        expect(from).toBeLessThanOrEqual(GIMBAL.radius);
++        expect(to).toBeGreaterThanOrEqual(POST.x);
++      } else {
++        expect(from).toBeLessThanOrEqual(cupRadiusAt(PIVOT[1] - CUP.bottomY));
++        expect(to).toBeGreaterThanOrEqual(GIMBAL.radius - GIMBAL.tube);
++      }
++    }
++    expect(POST.bottom).toBeCloseTo(BASE_TOP, 9);
++    expect(POST.top).toBeGreaterThan(PIVOT[1]);
++  });
++});
++
++describe('safe-sip geometry', () => {
++  it('every lathe triangle faces the way its normals point', () => {
++    for (const geometry of [cupGeometry(), lidGeometry()]) {
++      const p = geometry.getAttribute('position');
++      const n = geometry.getAttribute('normal');
++      const index = geometry.index!;
++      const a = new Vector3();
++      const b = new Vector3();
++      const c = new Vector3();
++      const face = new Vector3();
++      const normal = new Vector3();
++      for (let i = 0; i < index.count; i += 3) {
++        const [ia, ib, ic] = [index.getX(i), index.getX(i + 1), index.getX(i + 2)];
++        a.fromBufferAttribute(p, ia);
++        b.fromBufferAttribute(p, ib);
++        c.fromBufferAttribute(p, ic);
++        face.subVectors(b, a).cross(c.clone().sub(a));
++        normal
++          .fromBufferAttribute(n, ia)
++          .add(new Vector3().fromBufferAttribute(n, ib))
++          .add(new Vector3().fromBufferAttribute(n, ic));
++        expect(face.dot(normal)).toBeGreaterThan(0);
++      }
++    }
++  });
++
++  it('stays inside the 9,000 triangle budget (spec estimate about 6,500)', () => {
++    const parts = {
++      base: triangles(new CylinderGeometry(1, 1, 1, BASE.segments)),
++      posts: 2 * triangles(new CylinderGeometry(1, 1, 1, POST.segments)),
++      pins: 4 * triangles(new CylinderGeometry(1, 1, 1, 12)),
++      gimbal: triangles(new TorusGeometry(1, 0.1, GIMBAL.radialSegments, GIMBAL.tubularSegments)),
++      cup: triangles(cupGeometry()),
++      lid: triangles(lidGeometry()),
++      board: triangles(new BoxGeometry()),
++      pads: PADS.count * triangles(new BoxGeometry()),
++      chip: triangles(new BoxGeometry()),
++      ring: triangles(
++        new TorusGeometry(1, 0.1, TAMPER_RING.radialSegments, TAMPER_RING.tubularSegments),
++      ),
++      arcs: 3 * triangles(new TorusGeometry(1, 0.1, GIZMO.radialSegments, GIZMO.tubularSegments)),
++      cones: 3 * triangles(new ConeGeometry(1, 1, GIZMO.cone.segments)),
++    };
++    const total = Object.values(parts).reduce((sum, n) => sum + n, 0);
++    expect(total).toBeLessThanOrEqual(manifest.budget.triangles);
++    expect(total).toBeGreaterThan(4000);
++  });
++
++  it('fits the standard slot in every pose of the cycle', () => {
++    const fixed: Vector3[] = [
++      new Vector3(BASE.radius, BASE.center[1] - BASE.height / 2, 0),
++      new Vector3(-BASE.radius, BASE.center[1] + BASE.height / 2, BASE.radius),
++      ...GIZMO_AXES.flatMap((axis) => gizmoArcPoints(axis)),
++      ...GIZMO_AXES.flatMap((axis) =>
++        vertices(new ConeGeometry(GIZMO.cone.radius, GIZMO.cone.height, 12), gizmoConeMatrix(axis)),
++      ),
++    ];
++    const tol = 1e-6;
++    const turn = new Matrix4().makeRotationY(OBJECT_YAW);
++    for (const { roll, pitch } of POSES) {
++      for (const point of [...fixed, ...rockingVertices(roll, pitch)]) {
++        const v = point.clone().applyMatrix4(turn);
++        expect(v.x).toBeGreaterThanOrEqual(SLOT.min[0] - tol);
++        expect(v.x).toBeLessThanOrEqual(SLOT.max[0] + tol);
++        expect(v.y).toBeGreaterThanOrEqual(SLOT.min[1] - tol);
++        expect(v.y).toBeLessThanOrEqual(SLOT.max[1] + tol);
++        expect(v.z).toBeGreaterThanOrEqual(SLOT.min[2] - tol);
++        expect(v.z).toBeLessThanOrEqual(SLOT.max[2] + tol);
++      }
++    }
++  });
++
++  it('the rocking cup and lid never touch the gizmo, the gimbal ring or the base', () => {
++    const arcPoints = GIZMO_AXES.flatMap((axis) => gizmoArcPoints(axis, 96));
++    const conePoints = GIZMO_AXES.flatMap((axis) =>
++      vertices(new ConeGeometry(GIZMO.cone.radius, GIZMO.cone.height, 12), gizmoConeMatrix(axis)),
++    );
++    let arcGap = Infinity;
++    let ringGap = Infinity;
++    let lowest = Infinity;
++    for (const { roll, pitch } of POSES) {
++      const pitchFrame = new Matrix4()
++        .makeTranslation(...PIVOT)
++        .multiply(new Matrix4().makeRotationX(pitch));
++      const toPitch = pitchFrame.clone().invert();
++      for (const v of rockingVertices(roll, pitch)) {
++        for (const a of arcPoints) arcGap = Math.min(arcGap, v.distanceTo(a) - GIZMO.tube);
++        for (const c of conePoints) arcGap = Math.min(arcGap, v.distanceTo(c));
++        // Distance to the gimbal ring's tube, measured in the ring's own (pitched) frame.
++        const local = v.clone().applyMatrix4(toPitch);
++        const radial = Math.hypot(local.x, local.z) - GIMBAL.radius;
++        ringGap = Math.min(ringGap, Math.hypot(radial, local.y) - GIMBAL.tube);
++        lowest = Math.min(lowest, v.y);
++      }
++    }
++    expect(arcGap).toBeGreaterThan(0.005);
++    expect(ringGap).toBeGreaterThan(0.005);
++    expect(lowest).toBeGreaterThan(BASE_TOP + 0.01);
++  });
++
++  it('the gizmo has three quarter arcs, one per axis, with arrowheads at their ends', () => {
++    expect(GIZMO_AXES).toEqual(['roll', 'pitch', 'yaw']);
++    expect(GIZMO.arc).toBeCloseTo(Math.PI / 2, 9);
++    const center = new Vector3(...GIZMO.center);
++    const normals = GIZMO_AXES.map((axis) => {
++      const m = gizmoArcMatrix(axis);
++      const points = gizmoArcPoints(axis, 8);
++      for (const p of points) expect(p.distanceTo(center)).toBeCloseTo(GIZMO.radius, 9);
++      // The arc's plane normal is the axis it turns about.
++      return new Vector3(0, 0, 1).transformDirection(m);
++    });
++    expect(Math.abs(normals[0]!.z)).toBeCloseTo(1, 9);
++    expect(Math.abs(normals[1]!.x)).toBeCloseTo(1, 9);
++    expect(Math.abs(normals[2]!.y)).toBeCloseTo(1, 9);
++    for (const axis of GIZMO_AXES) {
++      const end = gizmoArcPoints(axis, 8).at(-1)!;
++      const cone = new Vector3().setFromMatrixPosition(gizmoConeMatrix(axis));
++      expect(cone.distanceTo(end)).toBeCloseTo(GIZMO.cone.height / 2, 9);
++    }
++  });
++});
++
++describe('safe-sip motion (one, 9 s)', () => {
++  it('rocks with the spec amplitudes and a 9 s period', () => {
++    for (let t = 0; t < 20; t += 0.37) {
++      expect(rollAt(t + PERIOD_S)).toBeCloseTo(rollAt(t), 9);
++      expect(pitchAt(t + PERIOD_S)).toBeCloseTo(pitchAt(t), 9);
++      expect(Math.abs(rollAt(t))).toBeLessThanOrEqual(9 * DEG + 1e-12);
++      expect(Math.abs(pitchAt(t))).toBeLessThanOrEqual(6 * DEG + 1e-12);
++    }
++    expect(rollAt(PERIOD_S / 4)).toBeCloseTo(9 * DEG, 9);
++    expect(pitchAt(0)).toBeCloseTo(6 * DEG * Math.sin(Math.PI / 4), 9);
++  });
++
++  it('the ring lights only while |roll| is past 8 degrees, up to 1.6', () => {
++    let peak = 0;
++    for (let t = 0; t < PERIOD_S; t += 0.005) {
++      const g = glowAt(t);
++      if (Math.abs(rollAt(t)) <= THRESHOLD) expect(g).toBeCloseTo(GLOW.rest, 9);
++      expect(g).toBeGreaterThanOrEqual(GLOW.rest - 1e-12);
++      expect(g).toBeLessThanOrEqual(GLOW.peak + 1e-12);
++      peak = Math.max(peak, g);
++    }
++    expect(peak).toBeCloseTo(GLOW.peak, 6);
++    expect(glowAt(PERIOD_S / 4)).toBeCloseTo(GLOW.peak, 9);
++  });
++
++  it('glow ramps take at least 0.5 s (EXPERIENCE §10.4)', () => {
++    expect(GLOW_RAMP_S).toBeGreaterThanOrEqual(0.5);
++    const dt = 0.001;
++    let rising: number | null = null;
++    for (let t = 0; t < PERIOD_S / 2; t += dt) {
++      const g = glowAt(t);
++      if (rising === null && g > GLOW.rest + 1e-9) rising = t;
++      if (rising !== null && g >= GLOW.peak - 1e-9) {
++        expect(t - rising).toBeGreaterThanOrEqual(0.5);
++        return;
++      }
++    }
++    throw new Error('the ring never reached its peak');
++  });
++
++  it('the still pose is rolled 10 degrees with the ring at 1.2, whatever the clock', () => {
++    for (const t of [0, 1.3, 4.5, 100]) {
++      expect(poseAt(t, 0)).toEqual({ roll: POSE.roll, pitch: 0, glow: 1.2 });
++    }
++    expect(POSE.roll).toBeCloseTo(10 * DEG, 12);
++    expect(poseAt(2, 1).roll).toBeCloseTo(rollAt(2), 12);
++    expect(poseAt(2, 1).glow).toBeCloseTo(glowAt(2), 12);
++  });
++
++  it('eases between the pose and the rocking, never snapping', () => {
++    expect(stepBlend(0, 0.016, false)).toBe(0);
++    expect(stepBlend(1, 0.016, true)).toBe(1);
++    let b = 0;
++    let frames = 0;
++    while (b < 1) {
++      b = stepBlend(b, 1 / 60, true);
++      frames++;
++    }
++    expect(frames).toBeGreaterThanOrEqual(55);
++    expect(stepBlend(0.5, 5, false)).toBeCloseTo(0.4, 9);
++  });
++});
+diff --git a/src/museum/exhibits/safe-sip/tamper.ts b/src/museum/exhibits/safe-sip/tamper.ts
+new file mode 100644
+index 0000000..21303d5
+--- /dev/null
++++ b/src/museum/exhibits/safe-sip/tamper.ts
+@@ -0,0 +1,525 @@
++// Tamper Evident's measurements, geometry and its one motion (EXPERIENCE §4.7), kept apart from
++// the component so Node unit tests check them without WebGL. Local frame (EXPERIENCE §4): origin =
++// plinth top center, +Y up, +Z toward the stop camera, +X the viewer's right. Meters, seconds.
++//
++// Hierarchy: the walnut base, the two brass posts and the Euler gizmo are static. The gimbal ring
++// and its four pivot pins pitch about X at the gimbal center; the cup, the lid, the board and the
++// tamper ring roll about Z inside it (a real one-ring gimbal: outer pins at +-X carry the ring on
++// the posts, inner pins at +-Z carry the cup). Both angles come from one clock.
++//
++// The object frame below is the exhibit frame turned by OBJECT_YAW about Y: the whole object
++// stands a third of a turn off square, so the camera sees the gimbal, both pin axes and the gizmo
++// arcs in three-quarter view instead of edge-on, while the lid's cut-away wedge still faces it.
++import {
++  BufferGeometry,
++  Float32BufferAttribute,
++  Matrix4,
++  Quaternion,
++  ShapeUtils,
++  Vector2,
++  Vector3,
++} from 'three';
++
++export type Vec3 = [number, number, number];
++/** A point of a lathe profile: [radius, y]. */
++export type ProfilePoint = [number, number];
++
++const DEG = Math.PI / 180;
++const TAU = Math.PI * 2;
++
++/**
++ * Turn of the whole object about Y in the exhibit frame (negative: its front turns to the
++ * viewer's left, its +X side comes forward on the right).
++ */
++export const OBJECT_YAW = -30 * DEG;
++
++/** Walnut base disc, its bottom on the slot floor (y 0.025), top at y 0.055. */
++export const BASE = { radius: 0.2, height: 0.03, center: [0, 0.04, 0] as Vec3, segments: 64 };
++export const BASE_TOP = BASE.center[1] + BASE.height / 2;
++
++/** Gimbal center: the pivot of both rotations, on the ring's plane. */
++export const PIVOT: Vec3 = [0, 0.16, 0];
++
++/** Brass gimbal ring, horizontal, around the pivot. */
++export const GIMBAL = { radius: 0.13, tube: 0.006, radialSegments: 8, tubularSegments: 64 };
++
++/** Brass posts at +-X carrying the ring through the outer pins. */
++export const POST = {
++  x: 0.15,
++  radius: 0.005,
++  bottom: BASE_TOP,
++  top: PIVOT[1] + 0.006,
++  segments: 16,
++} as const;
++
++/** Frosted cup: Lathe, bottom at y 0.10, top (rim) at y 0.36; wall 4 mm, floor 6 mm. */
++export const CUP = {
++  height: 0.26,
++  bottomRadius: 0.075,
++  topRadius: 0.095,
++  wall: 0.004,
++  floor: 0.006,
++  bottomY: 0.1,
++  segments: 48,
++} as const;
++
++/** Cup outer radius at a height above the cup bottom. */
++export function cupRadiusAt(h: number): number {
++  return CUP.bottomRadius + ((CUP.topRadius - CUP.bottomRadius) * h) / CUP.height;
++}
++
++/** The cup's lathe profile, counterclockwise in (radius, y), y from the cup bottom. */
++export function cupProfile(): ProfilePoint[] {
++  const innerBottom = cupRadiusAt(CUP.floor) - CUP.wall;
++  return [
++    [0, 0],
++    [CUP.bottomRadius, 0],
++    [CUP.topRadius, CUP.height],
++    [CUP.topRadius - CUP.wall, CUP.height],
++    [innerBottom, CUP.floor],
++    [0, CUP.floor],
++  ];
++}
++
++/**
++ * Lid: bone ceramic, radius 0.10, 0.03 tall, ten 3 mm print layers stepping in toward the top.
++ * The first two layers are the full-circle floor the board rests on; the eight above form the
++ * cover, a 270 degree Lathe whose 90 degree cut-away wedge faces the camera. The cover holds
++ * a pocket (radius 0.072, from the floor up to a 6 mm top plate) where the board sits.
++ */
++export const LID = {
++  radius: 0.1,
++  height: 0.03,
++  layer: 0.003,
++  layers: 10,
++  floorLayers: 2,
++  /** How far the top layer steps in from the bottom one (quadratic shoulder). */
++  shoulder: 0.01,
++  pocketRadius: 0.072,
++  topPlate: 0.006,
++  /**
++   * The cut-away wedge is 90 degrees wide, centered at lathe phi -OBJECT_YAW in the object frame,
++   * which is exhibit +Z: straight at the stop camera.
++   */
++  cutCenter: -OBJECT_YAW,
++  cutWidth: Math.PI / 2,
++  floorSegments: 48,
++  coverSegments: 36,
++} as const;
++
++/** Lid y (bottom) in the exhibit frame: it sits on the cup rim. */
++export const LID_Y = CUP.bottomY + CUP.height;
++
++/** The lathe phi range of the cover (and the tamper ring): everything but the wedge. */
++export const COVER_PHI = {
++  start: LID.cutCenter + LID.cutWidth / 2,
++  length: TAU - LID.cutWidth,
++} as const;
++
++/** Radius of print layer i (0 = bottom). */
++export function layerRadius(i: number): number {
++  const top = LID.layers - 1;
++  return LID.radius - LID.shoulder * (i / top) ** 2;
++}
++
++/** Stair-stepped outer wall from layer `from` up to the lid top, as profile points. */
++function steps(from: number, to: number): ProfilePoint[] {
++  const out: ProfilePoint[] = [];
++  for (let i = from; i < to; i++) {
++    const r = layerRadius(i);
++    out.push([r, i * LID.layer], [r, (i + 1) * LID.layer]);
++  }
++  return out;
++}
++
++/** Floor: layers 0 and 1, full circle (counterclockwise in (radius, y), y from the lid bottom). */
++export function lidFloorProfile(): ProfilePoint[] {
++  const top = LID.floorLayers * LID.layer;
++  return [[0, 0], ...steps(0, LID.floorLayers), [0, top]];
++}
++
++/** Cover: layers 2 to 9 with the pocket, an inverted L in section (counterclockwise). */
++export function lidCoverProfile(): ProfilePoint[] {
++  const floorTop = LID.floorLayers * LID.layer;
++  const plateBottom = LID.height - LID.topPlate;
++  return [
++    [LID.pocketRadius, floorTop],
++    ...steps(LID.floorLayers, LID.layers),
++    [0, LID.height],
++    [0, plateBottom],
++    [LID.pocketRadius, plateBottom],
++  ];
++}
++
++/**
++ * Pico W board (graphite) on the lid floor, in the wedge, long axis across it. Board, pads and
++ * chip are given in the wedge frame: the lid frame turned by LID.cutCenter about Y, so its +Z is
++ * the wedge's center line.
++ */
++export const BOARD = {
++  size: [0.06, 0.004, 0.024] as Vec3,
++  center: [0, LID.floorLayers * LID.layer + 0.002, 0.045] as Vec3,
++} as const;
++
++/** Twenty brass castellated pads, ten along each long edge, wrapping the edge. */
++export const PADS = {
++  count: 20,
++  perEdge: 10,
++  size: [0.0032, 0.005, 0.0045] as Vec3,
++  pitch: 0.006,
++  /** Pad center offset from the board's center line (the edge is at 0.012). */
++  edgeOffset: 0.0113,
++} as const;
++
++/** Orientation sensor chip on the board top (graphite). */
++export const CHIP = {
++  size: [0.008, 0.002, 0.008] as Vec3,
++  center: [0.013, BOARD.center[1] + BOARD.size[1] / 2 + 0.001, BOARD.center[2]] as Vec3,
++} as const;
++
++/** Pad centers in the wedge frame. */
++export function padCenters(): Vec3[] {
++  const [cx, cy, cz] = BOARD.center;
++  const out: Vec3[] = [];
++  for (const side of [-1, 1]) {
++    for (let k = 0; k < PADS.perEdge; k++) {
++      const x = cx + (k - (PADS.perEdge - 1) / 2) * PADS.pitch;
++      // Bottom on the lid floor, 1 mm proud of the board top.
++      out.push([x, cy + 0.0005, cz + side * PADS.edgeOffset]);
++    }
++  }
++  return out;
++}
++
++/** Tamper ring: accentGlow torus on the lid top, cut like the cover (lid frame). */
++export const TAMPER_RING = {
++  radius: 0.085,
++  tube: 0.003,
++  y: LID.height + 0.003,
++  radialSegments: 6,
++  tubularSegments: 36,
++} as const;
++
++/**
++ * Pivot pins (brass), in the pitch frame: outer pins on X between the ring and the posts, inner
++ * pins on Z between the ring and the cup wall. Each is [center, axis, length, radius].
++ */
++export function pinPlacements(): {
++  center: Vec3;
++  axis: 'x' | 'z';
++  length: number;
++  radius: number;
++}[] {
++  const outerFrom = GIMBAL.radius - GIMBAL.tube;
++  const outerTo = POST.x + POST.radius + 0.001;
++  const cupWall = cupRadiusAt(PIVOT[1] - CUP.bottomY) - 0.001;
++  const innerTo = GIMBAL.radius - GIMBAL.tube / 2;
++  const outer = { length: outerTo - outerFrom, radius: 0.004 };
++  const inner = { length: innerTo - cupWall, radius: 0.003 };
++  const oc = (outerFrom + outerTo) / 2;
++  const ic = (cupWall + innerTo) / 2;
++  return [
++    { center: [oc, 0, 0], axis: 'x', ...outer },
++    { center: [-oc, 0, 0], axis: 'x', ...outer },
++    { center: [0, 0, ic], axis: 'z', ...inner },
++    { center: [0, 0, -ic], axis: 'z', ...inner },
++  ];
++}
++
++/**
++ * Euler gizmo: three static brass quarter-torus arcs around the cup at y 0.24, one per axis, each
++ * with a cone arrowhead at its end. Radius 0.20, not the spec's 0.16: at 0.16 the arcs would cut
++ * through the rocking lid (0.15 to 0.18 m from this center) and graze the gimbal ring (0.153 m).
++ */
++export const GIZMO = {
++  center: [0, 0.24, 0] as Vec3,
++  radius: 0.2,
++  tube: 0.003,
++  radialSegments: 6,
++  tubularSegments: 32,
++  arc: Math.PI / 2,
++  cone: { radius: 0.008, height: 0.022, segments: 12 },
++} as const;
++
++export type GizmoAxis = 'roll' | 'pitch' | 'yaw';
++export const GIZMO_AXES: readonly GizmoAxis[] = ['roll', 'pitch', 'yaw'];
++
++/**
++ * Orientation of each arc, applied to a three.js TorusGeometry arc (its plane XY, from +X toward
++ * +Y over `arc` radians), about the gizmo center, in the object frame:
++ * - roll (about Z): in the XY plane on the +X side, from 20 degrees below the equator up to 70
++ *   degrees above it;
++ * - pitch (about X): in the YZ plane over the top, from 60 degrees above the front to 30 degrees
++ *   past the top toward the back;
++ * - yaw (about Y): in the XZ plane at the gizmo height, from 70 to 160 degrees (0 = +X, 90 = +Z),
++ *   which after OBJECT_YAW runs from just left of the camera line round to the viewer's left.
++ */
++export function gizmoArcMatrix(axis: GizmoAxis): Matrix4 {
++  const r = new Matrix4();
++  switch (axis) {
++    case 'roll':
++      r.makeRotationZ(-20 * DEG);
++      break;
++    case 'pitch':
++      r.makeRotationX(-60 * DEG).multiply(new Matrix4().makeRotationY(-90 * DEG));
++      break;
++    case 'yaw':
++      r.makeRotationY(-70 * DEG).multiply(new Matrix4().makeRotationX(90 * DEG));
++      break;
++  }
++  return new Matrix4().makeTranslation(...GIZMO.center).multiply(r);
++}
++
++/** The arrowhead at the arc's end (u = arc), pointing along the arc, base on the arc end. */
++export function gizmoConeMatrix(axis: GizmoAxis): Matrix4 {
++  const u = GIZMO.arc;
++  const R = GIZMO.radius;
++  const tangent = new Vector3(-Math.sin(u), Math.cos(u), 0);
++  const at = new Vector3(Math.cos(u) * R, Math.sin(u) * R, 0).addScaledVector(
++    tangent,
++    GIZMO.cone.height / 2,
++  );
++  const q = new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), tangent);
++  return gizmoArcMatrix(axis).multiply(new Matrix4().compose(at, q, new Vector3(1, 1, 1)));
++}
++
++/** Points along an arc's center line (exhibit frame), for clearance checks. */
++export function gizmoArcPoints(axis: GizmoAxis, n = 64): Vector3[] {
++  const m = gizmoArcMatrix(axis);
++  const out: Vector3[] = [];
++  for (let i = 0; i <= n; i++) {
++    const u = (GIZMO.arc * i) / n;
++    out.push(
++      new Vector3(Math.cos(u) * GIZMO.radius, Math.sin(u) * GIZMO.radius, 0).applyMatrix4(m),
++    );
++  }
++  return out;
++}
++
++// ---------------------------------------------------------------------------------------------
++// Motion (one): the cup and lid rock in the gimbal, period 9 s. The ring's glow follows the roll.
++
++export const PERIOD_S = 9;
++export const ROLL_AMPLITUDE = 9 * DEG;
++export const PITCH_AMPLITUDE = 6 * DEG;
++export const THRESHOLD = 8 * DEG;
++
++/** Tamper ring glow: below the threshold, at its peak, and in the still pose. */
++export const GLOW = { rest: 0.2, peak: 1.6, pose: 1.2 } as const;
++
++/** Seconds the glow takes to rise after the roll crosses the threshold (and to fall before). */
++export const GLOW_RAMP_S = 0.6;
++
++/** Reduced-motion, low-tier and ?test=1 pose: rolled 10 degrees, ring lit at 1.2. */
++export const POSE = { roll: 10 * DEG, pitch: 0, glow: GLOW.pose } as const;
++
++/** Seconds to ease between the still pose and the live rocking when motion starts or stops. */
++export const BLEND_S = 1;
++
++const OMEGA = TAU / PERIOD_S;
++
++export function rollAt(t: number): number {
++  return ROLL_AMPLITUDE * Math.sin(OMEGA * t);
++}
++
++export function pitchAt(t: number): number {
++  return PITCH_AMPLITUDE * Math.sin(2 * OMEGA * t + Math.PI / 4);
++}
++
++function smoothstep(e0: number, e1: number, x: number): number {
++  const k = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
++  return k * k * (3 - 2 * k);
++}
++
++/**
++ * The ring's emissive intensity at time t: GLOW.rest while |roll| <= 8 degrees; past it, a
++ * smoothstep rise to GLOW.peak over GLOW_RAMP_S, held, then a fall that ends exactly as the roll
++ * comes back under the threshold. Measured in phase (asin |sin|), so it is a pure function of the
++ * same clock as the rocking, not a second motion.
++ */
++export function glowAt(t: number): number {
++  const phase = Math.asin(Math.min(1, Math.abs(Math.sin(OMEGA * t))));
++  const start = Math.asin(THRESHOLD / ROLL_AMPLITUDE);
++  const k = smoothstep(start, start + GLOW_RAMP_S * OMEGA, phase);
++  return GLOW.rest + (GLOW.peak - GLOW.rest) * k;
++}
++
++export interface Pose {
++  roll: number;
++  pitch: number;
++  glow: number;
++}
++
++/**
++ * What the object shows: the still pose at blend 0, the live rocking at time t at blend 1, eased
++ * in between (smoothstep), so motion starting or stopping never snaps.
++ */
++export function poseAt(t: number, blend: number): Pose {
++  const k = smoothstep(0, 1, blend);
++  const mix = (a: number, b: number) => a + (b - a) * k;
++  return {
++    roll: mix(POSE.roll, rollAt(t)),
++    pitch: mix(POSE.pitch, pitchAt(t)),
++    glow: mix(POSE.glow, glowAt(t)),
++  };
++}
++
++/** The blend after a frame: toward 1 while motion runs, toward 0 otherwise, over BLEND_S. */
++export function stepBlend(blend: number, delta: number, motion: boolean): number {
++  const step = Math.max(0, Math.min(delta, 0.1)) / BLEND_S;
++  return motion ? Math.min(1, blend + step) : Math.max(0, blend - step);
++}
++
++// ---------------------------------------------------------------------------------------------
++// Geometry: a lathe with hard edges (each profile edge gets its own flat-in-section normals, so
++// the 3 mm print steps catch the light as crisp lines), optional caps on the cut faces, merged into
++// one BufferGeometry per material so the lid is one draw call.
++
++interface Mesh {
++  positions: number[];
++  normals: number[];
++  indices: number[];
++}
++
++function emptyMesh(): Mesh {
++  return { positions: [], normals: [], indices: [] };
++}
++
++const EPS = 1e-12;
++
++/** Adds a triangle wound so its face normal agrees with its vertices' normals; skips slivers. */
++function addTriangle(mesh: Mesh, a: number, b: number, c: number): void {
++  const p = mesh.positions;
++  const n = mesh.normals;
++  const ax = p[3 * a]!;
++  const ay = p[3 * a + 1]!;
++  const az = p[3 * a + 2]!;
++  const ux = p[3 * b]! - ax;
++  const uy = p[3 * b + 1]! - ay;
++  const uz = p[3 * b + 2]! - az;
++  const vx = p[3 * c]! - ax;
++  const vy = p[3 * c + 1]! - ay;
++  const vz = p[3 * c + 2]! - az;
++  const cx = uy * vz - uz * vy;
++  const cy = uz * vx - ux * vz;
++  const cz = ux * vy - uy * vx;
++  if (cx * cx + cy * cy + cz * cz < EPS * EPS) return;
++  const nx = n[3 * a]! + n[3 * b]! + n[3 * c]!;
++  const ny = n[3 * a + 1]! + n[3 * b + 1]! + n[3 * c + 1]!;
++  const nz = n[3 * a + 2]! + n[3 * b + 2]! + n[3 * c + 2]!;
++  if (cx * nx + cy * ny + cz * nz >= 0) mesh.indices.push(a, b, c);
++  else mesh.indices.push(a, c, b);
++}
++
++function addVertex(mesh: Mesh, p: Vec3, n: Vec3): number {
++  mesh.positions.push(...p);
++  mesh.normals.push(...n);
++  return mesh.positions.length / 3 - 1;
++}
++
++/** LatheGeometry's convention: (r, y) at phi maps to (r sin phi, y, r cos phi). */
++function onLathe(r: number, y: number, phi: number): Vec3 {
++  return [r * Math.sin(phi), y, r * Math.cos(phi)];
++}
++
++export interface LatheOptions {
++  segments: number;
++  phiStart?: number;
++  phiLength?: number;
++  /** Close both cut faces with the profile polygon (only for phiLength < 2 pi). */
++  caps?: boolean;
++  /** Vertical offset of the whole part. */
++  y?: number;
++}
++
++/**
++ * Revolves a closed counterclockwise (radius, y) polygon. Edges lying on the axis are skipped
++ * (they have no area), every other edge gets its own vertex rows with the edge's outward normal.
++ */
++export function hardLathe(
++  profile: ProfilePoint[],
++  options: LatheOptions,
++  into = emptyMesh(),
++): Mesh {
++  const { segments, phiStart = 0, phiLength = TAU, caps = false, y: dy = 0 } = options;
++  const count = profile.length;
++  for (let e = 0; e < count; e++) {
++    const [r0, y0] = profile[e]!;
++    const [r1, y1] = profile[(e + 1) % count]!;
++    if (r0 < 1e-9 && r1 < 1e-9) continue;
++    const len = Math.hypot(r1 - r0, y1 - y0);
++    if (len < 1e-9) continue;
++    const nr = (y1 - y0) / len;
++    const ny = -(r1 - r0) / len;
++    const first = into.positions.length / 3;
++    for (let j = 0; j <= segments; j++) {
++      const phi = phiStart + (phiLength * j) / segments;
++      const normal: Vec3 = [nr * Math.sin(phi), ny, nr * Math.cos(phi)];
++      addVertex(into, onLathe(r0, y0 + dy, phi), normal);
++      addVertex(into, onLathe(r1, y1 + dy, phi), normal);
++    }
++    for (let j = 0; j < segments; j++) {
++      const a0 = first + 2 * j;
++      const b0 = a0 + 1;
++      const a1 = a0 + 2;
++      const b1 = a0 + 3;
++      addTriangle(into, a0, b1, b0);
++      addTriangle(into, a0, a1, b1);
++    }
++  }
++  if (caps && phiLength < TAU) {
++    const contour = profile.map(([r, y]) => new Vector2(r, y));
++    const faces = ShapeUtils.triangulateShape(contour, []);
++    for (const [phi, sign] of [
++      [phiStart, -1],
++      [phiStart + phiLength, 1],
++    ] as const) {
++      // The cut face's normal points out of the solid, along -/+ d(position)/d(phi).
++      const normal: Vec3 = [sign * Math.cos(phi), 0, -sign * Math.sin(phi)];
++      const first = into.positions.length / 3;
++      for (const [r, y] of profile) addVertex(into, onLathe(r, y + dy, phi), normal);
++      for (const [a, b, c] of faces) addTriangle(into, first + a!, first + b!, first + c!);
++    }
++  }
++  return into;
++}
++
++function toGeometry(mesh: Mesh): BufferGeometry {
++  const geometry = new BufferGeometry();
++  geometry.setAttribute('position', new Float32BufferAttribute(mesh.positions, 3));
++  geometry.setAttribute('normal', new Float32BufferAttribute(mesh.normals, 3));
++  geometry.setIndex(mesh.indices);
++  geometry.computeBoundingBox();
++  geometry.computeBoundingSphere();
++  return geometry;
++}
++
++/** The cup (frosted glass): outer wall, rim, inner wall and floor, 48 segments. */
++export function cupGeometry(): BufferGeometry {
++  return toGeometry(hardLathe(cupProfile(), { segments: CUP.segments }));
++}
++
++/** The lid (ceramic): full floor plus the 270 degree cover with its cut faces closed. */
++export function lidGeometry(): BufferGeometry {
++  const mesh = hardLathe(lidFloorProfile(), { segments: LID.floorSegments });
++  hardLathe(
++    lidCoverProfile(),
++    {
++      segments: LID.coverSegments,
++      phiStart: COVER_PHI.start,
++      phiLength: COVER_PHI.length,
++      caps: true,
++    },
++    mesh,
++  );
++  return toGeometry(mesh);
++}
++
++/**
++ * Rotation that lays a TorusGeometry arc (plane XY, from +X toward +Y) flat on the lid top over
++ * the cover's phi range: rotateX(pi/2) puts u at lathe phi = pi/2 - u, then a turn about Y by
++ * `turn` shifts phi by `turn`.
++ */
++export function tamperRingTurn(): number {
++  return COVER_PHI.start + COVER_PHI.length - Math.PI / 2;
++}
+-- 
+2.43.0
+

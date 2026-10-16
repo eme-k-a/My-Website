@@ -1,0 +1,157 @@
+From ede6f91a9ff60f3472bf529f4d2ff8ee35f41a0c Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 16 Oct 2026 02:31:47 +0000
+Subject: [PATCH 3/3] docs(wp-13): add the WP-13 report
+
+WP: WP-13
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016CcKJFMWCyXKspJx4YvMS7
+---
+ review/reports/WP-13.json | 135 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 135 insertions(+)
+ create mode 100644 review/reports/WP-13.json
+
+diff --git a/review/reports/WP-13.json b/review/reports/WP-13.json
+new file mode 100644
+index 0000000..c286473
+--- /dev/null
++++ b/review/reports/WP-13.json
+@@ -0,0 +1,135 @@
++{
++  "wp": "WP-13",
++  "role": "R5 (Builder D), with R2 for the concept verdict",
++  "status": "partial",
++  "branch": "wp/WP-13",
++  "commits": [
++    "eb6d407 feat(exhibit-safe-sip): tamper evident",
++    "91fc657 docs(concepts): safe-sip checklist verdict"
++  ],
++  "changedFiles": [
++    "src/museum/exhibits/safe-sip/index.ts",
++    "src/museum/exhibits/safe-sip/TamperEvident.tsx",
++    "src/museum/exhibits/safe-sip/tamper.ts",
++    "src/museum/exhibits/safe-sip/tamper.test.ts",
++    "src/museum/exhibits/safe-sip/README.md",
++    "review/concepts/safe-sip.md",
++    "review/reports/WP-13.json"
++  ],
++  "measurements": {
++    "triangles": 5620,
++    "trianglesByPart": "base 256, posts 128, pins 192, gimbal 1024, cup 384, lid 1716, board 12, pads 240, chip 12, tamper ring 432, arcs 1152, arrowheads 72",
++    "drawCalls": 12,
++    "inBounds": true,
++    "budgetDeclared": {
++      "triangles": 9000,
++      "drawCalls": 14,
++      "textureMB": 0
++    },
++    "chunkGzipKB": 3.37,
++    "museumChunkGzipKB": 298.54
++  },
++  "evidencePaths": {
++    "desktop": "out/wp13/safe-sip-desktop.png",
++    "pixel7": "out/wp13/safe-sip-pixel7.png",
++    "desktopHigh": "out/wp13/high/safe-sip-desktop.png",
++    "thumbnail": "out/wp13/safe-sip-thumb.png",
++    "thumbnailHigh": "out/wp13/high/safe-sip-thumb.png",
++    "stats": "out/wp13/safe-sip-desktop.json, out/wp13/safe-sip-pixel7.json, out/wp13/high/safe-sip-desktop.json",
++    "motionProbe": "out/wp13/probe.mjs (scratch)"
++  },
++  "acceptance": [
++    {
++      "id": "A1",
++      "criterion": "Lint and types",
++      "command": "npm run verify",
++      "result": "pass",
++      "evidence": "eslint (exhibit rules of ARCHITECTURE §7.5) and prettier clean, typecheck clean, 43 files / 559 unit tests pass"
++    },
++    {
++      "id": "A2",
++      "criterion": "Registry",
++      "command": "npx vitest run --project unit src/museum/exhibits",
++      "result": "pass",
++      "evidence": "11 files / 69 tests pass, including registry.test.ts and the 18 tamper.test.ts tests"
++    },
++    {
++      "id": "A3",
++      "criterion": "safe-sip chunk <= 40 KB gzip",
++      "command": "npm run build && npm run check:budgets",
++      "result": "pass",
++      "evidence": "exhibits/safe-sip 3.37 KB gzip; entry 91.07, museum 298.54; budgets ok"
++    },
++    {
++      "id": "A4",
++      "criterion": "inBounds true and triangles <= 20000 on desktop and pixel7",
++      "command": "npx playwright test tests/e2e/exhibit-contract.spec.ts --grep safe-sip --project=desktop --project=pixel7 --workers=1",
++      "result": "pass",
++      "evidence": "stats().exhibits['safe-sip'] = { triangles: 5620, drawCalls: 12, inBounds: true } on desktop and pixel7 (goTo enters the volunteer wing through travelTo); the spec passes these steps"
++    },
++    {
++      "id": "A5",
++      "criterion": "Click at screenPos('safe-sip') opens the dialog with 'Tamper Evident'; Esc returns focus to open-safe-sip",
++      "command": "same spec",
++      "result": "fail",
++      "evidence": "Deferred to integration: the click/tap opens the dialog containing \"Tamper Evident\" and Esc closes it on both projects; only the final toBeFocused(open-safe-sip) fails, the same WP-14 dependency WP-12 reported (focus return on close is a WP-14 Todo). WP-14 merges before WP-13; the integrator re-runs the spec after that merge."
++    },
++    {
++      "id": "A6",
++      "criterion": "Two canvas screenshots 3 s apart identical under ?test=1",
++      "command": "same spec",
++      "result": "pass",
++      "evidence": "The stillness assertion passes on desktop and pixel7 (the run reaches the focus step). Probe: reducedMotion 'reduce' with &idle=1, canvas shots at 0, 2, 4 and 6 s byte-identical; motion on with &idle=1, every later shot differs"
++    },
++    {
++      "id": "A7",
++      "criterion": "Concept checklist: 0 unchecked boxes, Verdict PASS signed by R2",
++      "command": "grep -c '^- \\[ \\]' review/concepts/safe-sip.md",
++      "result": "pass",
++      "evidence": "grep -c prints 0; Verdict PASS, 2026-10-16, signed R2 (Art Director), WP-13, one evidence line per box"
++    }
++  ],
++  "otherChecks": [
++    "npx playwright test --grep @smoke --workers=1 (PORT=4176): 80 passed, 4 skipped",
++    "npm run check:copy: ok (315 files); no U+2014 in any WP-13 file",
++    "Captures: desktop medium and CAPTURE_TIER=high are byte-identical (expected before WP-16)",
++    "Unit tests prove every rocking vertex (cup, lid, tamper ring) stays inside the standard slot and at least 5 mm from the gizmo arcs, arrowheads and gimbal ring over the full 9 s cycle and the still pose"
++  ],
++  "deviations": [
++    "Euler gizmo radius 0.20 instead of 0.16: from the gizmo center (0, 0.24, 0) the rocking lid edge sweeps 0.15 to 0.18 m and the gimbal ring is at 0.153 m, so 0.16 m arcs would pass through the lid. Center, tube, quarter arcs, one per axis and arrowheads are as specified.",
++    "Gimbal mechanics: the ring pitches on the outer pins at +-X (as specified) and the cup rolls on two added inner pins at +-Z, so every join is real and nothing floats while it rocks.",
++    "Whole object turned -30 degrees about Y (OBJECT_YAW) for a three-quarter view: square on, the pitch and yaw arcs and the pin axes are edge-on to the stop camera (the pitch arc read as a stub on the lid). The cut-away wedge is turned back so it faces the camera exactly.",
++    "Lid split into a full-circle floor (print layers 0 and 1) and the 270 degree cover (layers 2 to 9) with a pocket, so the board rests on the floor inside the wedge; the cover's cut faces are closed with the stepped section. The tamper ring is a 270 degree arc cut like the cover, since a full ring would span the open wedge in mid-air.",
++    "When runtime.motion turns false (idle stop, reduced motion, low tier) the object eases over 1 s to the still pose instead of freezing mid-cycle; it mounts directly in the pose when motion is off, so ?test=1 is identical from the first frame."
++  ],
++  "missingSliceSpecsForWP17": [
++    "safe-sip motion: under ?test=1&idle=1 the canvas changes within the case region over 3 s, and under reducedMotion 'reduce' with &idle=1 it stays byte-identical over 10 s",
++    "safe-sip idle stop: after the 15 s idle stop (with &idle=1) the object settles to the still pose within about 1 s and then stays still",
++    "exhibit-contract focus step re-run after WP-14 merges (A5)",
++    "visual baseline for the safe-sip stop and its dialog on desktop and pixel7"
++  ],
++  "openQuestions": [
++    {
++      "question": "WP-16 idle stop: should exhibits freeze mid-cycle when motion stops? safe-sip eases to its still pose over 1 s and calls invalidate() only while that ease runs, so it finishes even under frameloop demand. Is that compatible with the WP-16 frame driver, or should the kit own a common settle rule?",
++      "for": "R0",
++      "default": "Keep the ease-to-pose; recheck after WP-16 merges."
++    },
++    {
++      "question": "Under the current lighting the frosted cup reads near white and the board in the wedge is about 25 px wide at the desktop stop, so the cut-away reads as a dark notch. WP-11 lighting may change this; if not, would R2 accept a slightly larger board/wedge read (for example a small fixed tilt of the lid toward the camera in the still pose)?",
++      "for": "R2",
++      "default": "No change now; re-capture after WP-11 merges and recheck the G2 rubric there."
++    },
++    {
++      "question": "The R2 checklist pass ran in the WP-13 builder session (no separate R2 agent in the milestone workflow). Should R11 confirm the safe-sip verdict independently at G2?",
++      "for": "R0",
++      "default": "Verdict PASS committed with one evidence line per box and the session noted in the Notes field."
++    },
++    {
++      "question": "The deviations listed (gizmo radius 0.20, inner pins, 30 degree object turn, 270 degree tamper ring) leave EXPERIENCE §4.7 text unchanged. Should R0 update §4.7 to match, or accept them as builder latitude?",
++      "for": "R0",
++      "default": "Recorded in the README and here; spec untouched (not in WP-13 globs)."
++    }
++  ],
++  "depsRequest": [],
++  "notes": "The worktree was created from main; its branch was reset to the integration tip 3a2c574 before any work. No changes outside the WP-13 globs; no tests/** written. The R0 note about Verafin lighting is routed to WP-11 and does not apply to this exhibit. Integrator: after merging WP-14, re-run exhibit-contract.spec.ts --grep safe-sip on desktop and pixel7 to close A5."
++}
+-- 
+2.43.0
+

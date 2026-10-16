@@ -1,0 +1,449 @@
+From 9710a6637534ab063a160e9969c62ac25c54cfb0 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 16 Oct 2026 03:04:10 +0000
+Subject: [PATCH 1/4] feat(routes): story history rules and cold deep links
+
+Open pushes one in-app entry, Newer and Older replace it, close goes back only for in-app entries and otherwise replaces a cold deep link with /. A cold load records its entry, opens the dialog and travels to the stop once the museum is ready.
+
+WP: WP-14
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016CcKJFMWCyXKspJx4YvMS7
+---
+ src/overlay/story.test.ts | 209 ++++++++++++++++++++++++++++++++++++++
+ src/overlay/story.ts      | 192 +++++++++++++++++++++++++++++++---
+ 2 files changed, 385 insertions(+), 16 deletions(-)
+ create mode 100644 src/overlay/story.test.ts
+
+diff --git a/src/overlay/story.test.ts b/src/overlay/story.test.ts
+new file mode 100644
+index 0000000..5d808c4
+--- /dev/null
++++ b/src/overlay/story.test.ts
+@@ -0,0 +1,209 @@
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++import { initialMuseumState, useMuseum } from '../app/store';
++import { content } from '../content/index';
++import { readingOrder } from '../content/selectors';
++
++const travelTo = vi.fn((_id: string, _opts?: { instant?: boolean }) => Promise.resolve());
++vi.mock('../museum/rail/navigation', () => ({
++  travelTo: (id: string, opts?: { instant?: boolean }) => travelTo(id, opts),
++}));
++
++const story = await import('./story');
++
++interface Entry {
++  url: string;
++  state: unknown;
++}
++
++/** A browser stand-in: one session history, location derived from the current entry. */
++function fakeBrowser(startUrl: string) {
++  const origin = 'https://example.test';
++  const entries: Entry[] = [{ url: startUrl, state: null }];
++  let index = 0;
++  const listeners = new Set<() => void>();
++  const current = () => new URL(entries[index]!.url, origin);
++  const history = {
++    scrollRestoration: 'auto',
++    get state() {
++      return entries[index]!.state;
++    },
++    get length() {
++      return entries.length;
++    },
++    pushState(state: unknown, _title: string, url: string) {
++      entries.splice(index + 1);
++      entries.push({ url, state });
++      index = entries.length - 1;
++    },
++    replaceState(state: unknown, _title: string, url: string) {
++      entries[index] = { url, state };
++    },
++    back() {
++      if (index === 0) throw new Error('back() would leave the site');
++      index -= 1;
++      listeners.forEach((fn) => fn());
++    },
++  };
++  const window = {
++    history,
++    location: {
++      get pathname() {
++        return current().pathname;
++      },
++      get search() {
++        return current().search;
++      },
++    },
++    addEventListener: (type: string, fn: () => void) => {
++      if (type === 'popstate') listeners.add(fn);
++    },
++    removeEventListener: (type: string, fn: () => void) => {
++      if (type === 'popstate') listeners.delete(fn);
++    },
++  };
++  return { window, history, entries, path: () => current().pathname + current().search };
++}
++
++let browser: ReturnType<typeof fakeBrowser>;
++let uninstall: () => void = () => {};
++
++function boot(url: string) {
++  browser = fakeBrowser(url);
++  vi.stubGlobal('window', browser.window);
++  vi.stubGlobal('history', browser.history);
++  vi.stubGlobal('HTMLElement', class {});
++  vi.stubGlobal('document', { activeElement: null, body: null, querySelector: () => null });
++  uninstall = story.installStory();
++}
++
++beforeEach(() => {
++  useMuseum.setState(initialMuseumState());
++  story.resetStoryForTests();
++  travelTo.mockClear();
++});
++
++afterEach(() => {
++  uninstall();
++  vi.unstubAllGlobals();
++});
++
++describe('catalogue order', () => {
++  it('steps Older from verafin through the projects wing, then mysa', () => {
++    expect(readingOrder(content).slice(0, 4)).toEqual([
++      'verafin',
++      'klarup',
++      'finance-tracker',
++      'mysa',
++    ]);
++    expect(story.neighbourOf('verafin', 'older')).toBe('klarup');
++    expect(story.neighbourOf('verafin', 'newer')).toBeNull();
++    expect(story.neighbourOf('certifications', 'older')).toBeNull();
++  });
++});
++
++describe('story history', () => {
++  it('opening pushes one in-app entry with the active track and keeps the query', () => {
++    boot('/?test=1&mode=museum');
++    story.openStory('verafin');
++    expect(browser.history.length).toBe(2);
++    expect(browser.path()).toBe('/exhibit/verafin/?test=1&mode=museum');
++    expect(browser.history.state).toEqual({ inApp: true, id: 'verafin', track: 'main' });
++    expect(useMuseum.getState().openId).toBe('verafin');
++  });
++
++  it('Newer and Older replace the entry and never add one', () => {
++    boot('/?test=1');
++    story.openStory('verafin');
++    const length = browser.history.length;
++    expect(story.stepStory('older')).toBe('klarup');
++    expect(story.stepStory('older')).toBe('finance-tracker');
++    expect(story.stepStory('older')).toBe('mysa');
++    expect(story.stepStory('newer')).toBe('finance-tracker');
++    expect(browser.history.length).toBe(length);
++    expect(browser.path()).toBe('/exhibit/finance-tracker/?test=1');
++    expect(browser.history.state).toEqual({ inApp: true, id: 'finance-tracker', track: 'main' });
++  });
++
++  it('moves the camera behind the dialog only for exhibits on the active track', () => {
++    boot('/');
++    story.openStory('verafin');
++    story.stepStory('older'); // klarup, projects wing: stays
++    expect(travelTo).not.toHaveBeenCalled();
++    story.stepStory('older');
++    story.stepStory('older'); // mysa, main aisle: follows
++    expect(travelTo).toHaveBeenCalledWith('mysa', undefined);
++  });
++
++  it('stops at either end of the catalogue', () => {
++    boot('/');
++    story.openStory('verafin');
++    expect(story.stepStory('newer')).toBeNull();
++    expect(useMuseum.getState().openId).toBe('verafin');
++  });
++
++  it('closing an in-app story goes back, and popstate closes the dialog', () => {
++    boot('/?test=1');
++    story.openStory('verafin');
++    story.stepStory('older');
++    story.stepStory('older');
++    story.stepStory('older');
++    story.closeStory();
++    expect(browser.path()).toBe('/?test=1');
++    expect(browser.history.state).toBeNull();
++    expect(useMuseum.getState().openId).toBeNull();
++  });
++
++  it('a second close while Back is pending does not go back twice', () => {
++    boot('/');
++    story.openStory('verafin');
++    const back = vi.spyOn(browser.history, 'back').mockImplementation(() => {});
++    story.closeStory();
++    story.closeStory();
++    expect(back).toHaveBeenCalledTimes(1);
++  });
++
++  it('browser Back closes an in-app dialog', () => {
++    boot('/');
++    story.openStory('mysa');
++    browser.history.back();
++    expect(useMuseum.getState().openId).toBeNull();
++  });
++
++  it('never writes history on a stop arrival', () => {
++    boot('/');
++    useMuseum.setState({ stop: 'mysa', settled: true });
++    expect(browser.entries).toEqual([{ url: '/', state: null }]);
++  });
++});
++
++describe('cold deep links', () => {
++  it('records the entry, opens the dialog and travels once ready', () => {
++    boot('/exhibit/verafin/?test=1&mode=museum');
++    expect(browser.history.state).toEqual({ inApp: false, id: 'verafin', track: 'main' });
++    expect(useMuseum.getState().openId).toBe('verafin');
++    expect(travelTo).not.toHaveBeenCalled();
++    useMuseum.setState({ ready: true });
++    expect(travelTo).toHaveBeenCalledWith('verafin', { instant: true });
++  });
++
++  it('records the wing track of a wing exhibit', () => {
++    boot('/exhibit/klarup/');
++    expect(browser.history.state).toEqual({ inApp: false, id: 'klarup', track: 'projects' });
++  });
++
++  it('closing replaces the deep link with / on the same entry, never going back', () => {
++    boot('/exhibit/verafin/?test=1&mode=museum');
++    story.stepStory('older');
++    story.closeStory();
++    expect(browser.history.length).toBe(1);
++    expect(browser.path()).toBe('/?test=1&mode=museum');
++    expect(browser.history.state).toEqual({ inApp: false, track: 'main' });
++    expect(useMuseum.getState().openId).toBeNull();
++  });
++
++  it('does nothing on the gallery', () => {
++    boot('/');
++    expect(browser.history.state).toBeNull();
++    expect(useMuseum.getState().openId).toBeNull();
++  });
++});
+diff --git a/src/overlay/story.ts b/src/overlay/story.ts
+index 231d788..6d25386 100644
+--- a/src/overlay/story.ts
++++ b/src/overlay/story.ts
+@@ -1,34 +1,194 @@
+-// Seam (WP-02): WP-10 and WP-14 (R6) add the history wiring (routes.ts transitions), focus return
+-// and the cold-load path. For now the dialog state lives only in the store.
++// Story state and history (ARCHITECTURE §5.6, EXPERIENCE §3.5, §5.10). Every history write goes
++// through the frozen transitions of src/app/routes.ts:
++// - open: pushState('/exhibit/<id>/', { inApp: true, id, track }), so Back closes the dialog;
++// - Newer and Older: replaceState with the next exhibit in catalogue order (never a new entry);
++//   the camera follows behind the dialog only when that exhibit is on the active track;
++// - close: history.back() when the entry is in-app (popstate closes the dialog), else, for a
++//   cold-loaded deep link, replaceState({ inApp: false, track }, '', '/');
++// - cold load of /exhibit/<id>/: replaceState({ inApp: false, id, track }), open at hydration,
++//   and travel to the exhibit's stop instantly once the museum is ready.
++// Stop arrivals never touch history. Focus after a close follows EXPERIENCE §5.10: the exhibit's
++// "Read the story" when the exhibit is on the active track (its section scrolled into view
++// instantly), otherwise the control that opened the dialog.
++import {
++  applyHistoryOp,
++  deriveUi,
++  parsePath,
++  readHere,
++  readHistoryState,
++  transitions,
++} from '../app/routes';
+ import { useMuseum } from '../app/store';
++import { TEST_IDS } from '../app/testIds';
+ import type { ExhibitId } from '../content/ids';
+ import { content } from '../content/index';
+-import { readingOrder } from '../content/selectors';
++import { readingOrder, trackOf } from '../content/selectors';
++import { travelTo } from '../museum/rail/navigation';
+ 
+ export interface OpenStoryOptions {
+-  /** The control that opened the dialog, for focus return (WP-14). */
++  /** The control that opened the dialog, for focus return. */
+   opener?: HTMLElement | null;
+-  /** What opened it (card button, case click, Enter, door-card link); WP-14 defines the values. */
+-  source?: string;
++  /** What opened it: 'card' (Read the story), 'card-link' (an artwork title or door-card link),
++   * 'case' (a click on the current case), 'enter' (the Enter key), 'cold' (a deep link). */
++  source?: 'card' | 'card-link' | 'case' | 'enter' | 'cold';
+ }
+ 
+ export type StoryDirection = 'newer' | 'older';
+ 
+-export function openStory(id: ExhibitId, _opts?: OpenStoryOptions): void {
+-  useMuseum.setState({ openId: id });
++const ignore = () => {};
++const ORDER: readonly ExhibitId[] = readingOrder(content);
++
++/** The neighbour in catalogue order (Newer is towards No. 01), or null at either end. */
++export function neighbourOf(id: ExhibitId, direction: StoryDirection): ExhibitId | null {
++  const index = ORDER.indexOf(id);
++  if (index < 0) return null;
++  return ORDER[index + (direction === 'newer' ? -1 : 1)] ?? null;
+ }
+ 
+-export function closeStory(): void {
+-  useMuseum.setState({ openId: null });
++/** Whether an exhibit is on the active track (the camera can stand at it without a track swap). */
++export const onActiveTrack = (id: ExhibitId): boolean =>
++  trackOf(content, id) === useMuseum.getState().track;
++
++let opener: HTMLElement | null = null;
++/** The exhibit of a cold-loaded deep link, until its dialog closes. */
++let coldId: ExhibitId | null = null;
++/** A history.back() is on its way; popstate will close the dialog. */
++let closing = false;
++/** Cancels the cold load's wait for `ready`. */
++let cancelColdTravel: () => void = ignore;
++
++const openButton = (id: ExhibitId) =>
++  document.querySelector<HTMLElement>(`[data-testid="${TEST_IDS.open(id)}"]`);
++
++/** Open `id`'s story from the app: push one entry, keep the active track, then show the dialog. */
++export function openStory(id: ExhibitId, opts: OpenStoryOptions = {}): void {
++  const state = useMuseum.getState();
++  if (state.openId !== null) return;
++  const active = document.activeElement;
++  opener =
++    opts.opener ?? (active instanceof HTMLElement && active !== document.body ? active : null);
++  coldId = null;
++  closing = false;
++  // The gallery entry restores nothing on Back: the close places the scroll itself (§5.10), and
++  // the browser's own restoration, which lands after popstate, would undo it. The story entry
++  // keeps 'auto', so a reload stays put.
++  window.history.scrollRestoration = 'manual';
++  applyHistoryOp(transitions.openStory(readHere(), id, state.track));
++  window.history.scrollRestoration = 'auto';
++  useMuseum.setState({ openId: id });
+ }
+ 
+-/** Moves along the catalogue order; returns the new id, or null at either end or when closed. */
++/** Newer or Older: replace the entry with the neighbour; returns it, or null at either end. */
+ export function stepStory(direction: StoryDirection): ExhibitId | null {
+-  const { openId } = useMuseum.getState();
+-  if (openId === null) return null;
+-  const order = readingOrder(content);
+-  const next = order[order.indexOf(openId) + (direction === 'newer' ? -1 : 1)];
+-  if (next === undefined) return null;
++  const { openId, track } = useMuseum.getState();
++  if (openId === null || closing) return null;
++  const next = neighbourOf(openId, direction);
++  if (next === null) return null;
++  const here = readHere();
++  const op = transitions.stepStory(here, next, track);
++  // A cold-loaded deep link stays `inApp: false` after Newer or Older, so its close still replaces
++  // with `/` instead of going back off the site (the frozen transition writes `inApp: true`; the
++  // R0 request is in review/reports/WP-14.json).
++  if (op.type === 'replace' && readHistoryState(here.state)?.inApp === false) {
++    op.state = { ...op.state, inApp: false };
++  }
++  applyHistoryOp(op);
+   useMuseum.setState({ openId: next });
++  // The camera moves behind the dialog only when the exhibit is on the active track (§3.5).
++  if (onActiveTrack(next)) travelTo(next).catch(ignore);
+   return next;
+ }
++
++/** Close (button, Esc, backdrop): back for an in-app entry, else replace the deep link with `/`. */
++export function closeStory(): void {
++  if (useMuseum.getState().openId === null || closing) return;
++  const op = transitions.closeStory(readHere());
++  if (op.type === 'back') {
++    closing = true;
++    applyHistoryOp(op);
++    return;
++  }
++  applyHistoryOp(op);
++  useMuseum.setState({ openId: null });
++}
++
++/**
++ * Called by the dialog right after it has closed for `id`: scroll the exhibit's section into view
++ * and focus its "Read the story" when it is on the active track, else return focus to the opener
++ * (after a cold deep link, the deep-linked exhibit's button).
++ */
++export function restoreFocus(id: ExhibitId): void {
++  cancelColdTravel();
++  cancelColdTravel = ignore;
++  const fallback = opener?.isConnected ? opener : coldId ? openButton(coldId) : null;
++  opener = null;
++  coldId = null;
++  closing = false;
++  const button = openButton(id);
++  if (button && onActiveTrack(id)) {
++    travelTo(id, { instant: true })
++      .catch(ignore)
++      .finally(() => button.focus({ preventScroll: true }));
++    // Focus now as well, so focus is never lost while a wing glide is still settling.
++    button.focus({ preventScroll: true });
++    return;
++  }
++  fallback?.focus();
++}
++
++function onPopState(): void {
++  closing = false;
++  const ui = deriveUi(window.location.pathname, window.history.state);
++  if (ui.openId === null && useMuseum.getState().openId !== null) {
++    useMuseum.setState({ openId: null });
++  }
++}
++
++/** Runs `fn` once the museum is ready (now, when it already is); returns a cancel function. */
++function whenReady(fn: () => void): () => void {
++  if (useMuseum.getState().ready) {
++    fn();
++    return ignore;
++  }
++  const off = useMuseum.subscribe((s) => {
++    if (!s.ready) return;
++    off();
++    fn();
++  });
++  return off;
++}
++
++/**
++ * Installs the popstate listener and handles a cold load of /exhibit/<id>/. The dialog calls it in
++ * a layout effect, so the cold-load entry is written before the rail's own popstate and wing
++ * handling installs (a deep link into a wing then enters it without a history entry).
++ */
++export function installStory(): () => void {
++  window.addEventListener('popstate', onPopState);
++  const parsed = parsePath(window.location.pathname);
++  if (parsed?.kind === 'exhibit' && useMuseum.getState().openId === null) {
++    const id = parsed.id;
++    applyHistoryOp(transitions.coldLoad(readHere(), (exhibit) => trackOf(content, exhibit)));
++    opener = null;
++    coldId = id;
++    closing = false;
++    useMuseum.setState({ openId: id });
++    cancelColdTravel = whenReady(() => {
++      cancelColdTravel = ignore;
++      if (useMuseum.getState().openId !== null) travelTo(id, { instant: true }).catch(ignore);
++    });
++  }
++  return () => {
++    window.removeEventListener('popstate', onPopState);
++    cancelColdTravel();
++    cancelColdTravel = ignore;
++  };
++}
++
++/** Test seam: forget the module state between unit tests. */
++export function resetStoryForTests(): void {
++  opener = null;
++  coldId = null;
++  closing = false;
++  cancelColdTravel = ignore;
++}
+-- 
+2.43.0
+

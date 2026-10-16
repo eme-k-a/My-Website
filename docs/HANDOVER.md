@@ -45,7 +45,7 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Done and verified (WP-08 3df75cb..705ed8e, WP-09 to bcc065a); CI run 11 green |
 | Context packs | docs/RULINGS.md + docs/wp/packs/ (cost rules) | Done (33b5492) |
 | Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Passed 2026-10-16: CI run 13 green on c10c67f; smoke tests pass on desktop and Pixel 7 (139 e2e). Next: M2 on Emeka's "go" |
-| WP-11 to WP-16, WP-18 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers, preview deploy | Resumed 2026-10-16 as workflow wf_ae671726-74d (WP-12 build skipped, WP-11 continues from `wp/WP-11`; Netlify secrets added by Emeka). Merge order WP-16, WP-11, WP-15, WP-14, WP-12, WP-13, WP-18. If it stops, resume with `resumeFromRunId`; section 8 covers restoring the saved work |
+| WP-11 to WP-16, WP-18 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers, preview deploy | As of 2026-10-16 07:00 UTC: **built, not merged:** WP-11 (`wp/WP-11`), WP-12 (`wp/WP-12`), WP-13 (`wp/WP-13`), WP-14 (`wp/WP-14`); patch copies in `review/wip/`. **Building** (resumed after usage limits, as background agents in `.claude/worktrees/wf_e3949175-4a8-2..4`): WP-15, WP-16, WP-18. Builder reports are saved in the session scratchpad as `WP-xx-report.txt`. Next: one integration run of the saved `milestone` workflow with `report` set for every WP, merge order WP-16, WP-11, WP-15, WP-14, WP-12, WP-13, WP-18 |
 | WP-17, WP-19 | M2b: slice tests, slice review | Not started. WP-17 after M2a merges; WP-19 last, then Gate G2 |
 | WP-20 onward | M3 to M7 | Not started |
 

@@ -1,0 +1,1262 @@
+From 458c3e6df90d7f01784a0650a9ed0d8ff6029259 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 16 Oct 2026 02:40:27 +0000
+Subject: [PATCH 3/5] feat(environment): lobby, doors, year strips, foundations
+ and desk
+
+labels3d.ts exports every environment string (COMMIT HISTORY, the room
+names, FOUNDATIONS, the end wall line, the year numerals) with placements,
+and a unit test checks each label's projected cap height from its stop
+camera (at least 14 CSS px on desktop and Pixel 7; numerals exempt). Brass
+trim: 4 cm reveals on the arch and wing doors, the portrait frame and the
+year-strip inlays in one instanced mesh. The lobby portrait shows the duotone
+and cross-fades to color over 600 ms on hover (fine pointer only, never
+under reduced motion or ?test=1). The front desk is walnut and brass with
+four objects that open the desk card's own URLs.
+
+WP: WP-11
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016CcKJFMWCyXKspJx4YvMS7
+---
+ src/museum/Scene.tsx                     |  21 ++-
+ src/museum/environment/BrassTrim.tsx     |  21 +++
+ src/museum/environment/Desk.tsx          | 107 ++++++++++++
+ src/museum/environment/Labels.tsx        |  42 +++++
+ src/museum/environment/Lobby.tsx         | 136 +++++++++++++++
+ src/museum/environment/deskParts.test.ts |  69 ++++++++
+ src/museum/environment/deskParts.ts      | 213 +++++++++++++++++++++++
+ src/museum/environment/labels.test.ts    | 173 ++++++++++++++++++
+ src/museum/environment/labels3d.ts       | 183 +++++++++++++++++++
+ src/museum/environment/trim.test.ts      |  67 +++++++
+ src/museum/environment/trim.ts           | 104 +++++++++++
+ 11 files changed, 1131 insertions(+), 5 deletions(-)
+ create mode 100644 src/museum/environment/BrassTrim.tsx
+ create mode 100644 src/museum/environment/Desk.tsx
+ create mode 100644 src/museum/environment/Labels.tsx
+ create mode 100644 src/museum/environment/Lobby.tsx
+ create mode 100644 src/museum/environment/deskParts.test.ts
+ create mode 100644 src/museum/environment/deskParts.ts
+ create mode 100644 src/museum/environment/labels.test.ts
+ create mode 100644 src/museum/environment/labels3d.ts
+ create mode 100644 src/museum/environment/trim.test.ts
+ create mode 100644 src/museum/environment/trim.ts
+
+diff --git a/src/museum/Scene.tsx b/src/museum/Scene.tsx
+index 12b3266..d97ebe5 100644
+--- a/src/museum/Scene.tsx
++++ b/src/museum/Scene.tsx
+@@ -1,11 +1,17 @@
+-// The scene (ARCHITECTURE §7.1), built entirely from computeLayout(content, build date): the
+-// greybox hall, the fixtures, the interim lighting and one ExhibitFrame per slot. WP-11 adds the
+-// environment v1 (light pools, reflector floor, signs, year strips, portrait, desk).
++// The scene (ARCHITECTURE §7.1), built entirely from computeLayout(content, build date): the hall
++// with its wall wash, the floors with their baked pools (reflector on high), the fixtures, the
++// brass trim, the 3D labels, the lobby portrait, the front desk, the lighting (hemisphere, the
++// tier's spotlights, the Lightformer environment, beam cones) and one ExhibitFrame per slot.
+ import { tokens } from '../design/tokens';
++import { Desk } from './environment/Desk';
+ import { Fixtures } from './environment/Fixtures';
++import { Floor } from './environment/Floor';
+ import { galleryLayout } from './environment/gallery';
+-import { GreyboxLighting } from './environment/GreyboxLighting';
+ import { Hall } from './environment/Hall';
++import { Labels } from './environment/Labels';
++import { Lighting } from './environment/Lighting';
++import { Portrait } from './environment/Lobby';
++import { BrassTrim } from './environment/BrassTrim';
+ import { useVisitorStop } from './environment/useVisitorStop';
+ import { ExhibitFrame } from './exhibits/_kit/ExhibitFrame';
+ 
+@@ -18,8 +24,13 @@ export default function Scene() {
+       <color attach="background" args={[tokens.color.ink]} />
+       <fogExp2 attach="fog" args={[tokens.color.ink, tokens.light.fogDensity]} />
+       <Hall layout={layout} />
++      <Floor layout={layout} />
+       <Fixtures layout={layout} />
+-      <GreyboxLighting layout={layout} here={here} />
++      <BrassTrim layout={layout} />
++      <Labels layout={layout} />
++      <Portrait />
++      <Desk layout={layout} />
++      <Lighting layout={layout} />
+       {layout.slots.map((slot) => (
+         <ExhibitFrame key={slot.id} slot={slot} layout={layout} here={here} />
+       ))}
+diff --git a/src/museum/environment/BrassTrim.tsx b/src/museum/environment/BrassTrim.tsx
+new file mode 100644
+index 0000000..4368e75
+--- /dev/null
++++ b/src/museum/environment/BrassTrim.tsx
+@@ -0,0 +1,21 @@
++// Brass trim (EXPERIENCE §2.3, §6.9): the 4 cm reveals of the arch and the wing doors, the thin
++// portrait frame and the year-strip inlays, one instanced mesh of the shared `brass` material.
++import { useEffect, useMemo } from 'react';
++import { useMaterialLibrary } from '../materials';
++import type { Layout } from '../rail/layout';
++import { Instanced } from './Fixtures';
++import { unitBox } from './fixtureMatrices';
++import { brassTrimBoxes, trimMatrix, yearStripBoxes } from './trim';
++
++export function BrassTrim({ layout }: { layout: Layout }) {
++  const library = useMaterialLibrary();
++  const box = useMemo(() => unitBox(), []);
++  useEffect(() => () => box.dispose(), [box]);
++  const matrices = useMemo(
++    () => [...brassTrimBoxes(layout), ...yearStripBoxes(layout)].map((b) => trimMatrix(b)),
++    [layout],
++  );
++  return (
++    <Instanced name="brass-trim" geometry={box} material={library.brass} matrices={matrices} />
++  );
++}
+diff --git a/src/museum/environment/Desk.tsx b/src/museum/environment/Desk.tsx
+new file mode 100644
+index 0000000..0feea0a
+--- /dev/null
++++ b/src/museum/environment/Desk.tsx
+@@ -0,0 +1,107 @@
++// The front desk (EXPERIENCE §2.3, §11.1 item 4): the walnut and brass desk at the desk stop's
++// look target, and the four gift-shop objects on it. Parts are instanced per material (walnut,
++// brass, paper). Each object has an invisible hit box: a click does what its DOM button on the
++// desk card does, with the same URL (`cardOf('desk')`, PDF_PATH), as a same-tab navigation like
++// the card's plain links. Clicks that land on DOM controls above the canvas never reach it.
++import { useThree, type ThreeEvent } from '@react-three/fiber';
++import { useCallback, useEffect, useMemo } from 'react';
++import type { Material, Matrix4 } from 'three';
++import { overDomControl } from '../exhibits/_kit/ExhibitFrame';
++import { useMaterialLibrary } from '../materials';
++import type { Layout } from '../rail/layout';
++import {
++  DESK_HIT_MARGIN,
++  deskBodyBoxes,
++  deskBoxMatrix,
++  deskHref,
++  deskLinks,
++  deskObjects,
++  deskOrigin,
++  type DeskMaterial,
++  type DeskObject,
++} from './deskParts';
++import { Instanced } from './Fixtures';
++import { unitBox } from './fixtureMatrices';
++
++function setCursor(element: HTMLElement | null | undefined, cursor: string): void {
++  if (element?.style) element.style.cursor = cursor;
++}
++
++function DeskObjectHit({ object, href }: { object: DeskObject; href: string }) {
++  const body = object.parts[0]!;
++  const source = useThree((s) => s.events.connected as HTMLElement | null | undefined);
++  const leave = useCallback(() => setCursor(source, ''), [source]);
++  useEffect(() => leave, [leave]);
++  const onPointerMove = useCallback(
++    (event: ThreeEvent<PointerEvent>) => {
++      if (overDomControl(event.nativeEvent)) {
++        leave();
++        return;
++      }
++      event.stopPropagation();
++      setCursor(source, 'pointer');
++    },
++    [leave, source],
++  );
++  const onClick = useCallback(
++    (event: ThreeEvent<MouseEvent>) => {
++      if (overDomControl(event.nativeEvent)) return;
++      event.stopPropagation();
++      window.location.assign(href);
++    },
++    [href],
++  );
++  const m = 2 * DESK_HIT_MARGIN;
++  return (
++    <mesh
++      name={`desk-${object.action}`}
++      position={body.center}
++      rotation-y={body.rotationY ?? 0}
++      visible={false}
++      onPointerMove={onPointerMove}
++      onPointerOut={leave}
++      onClick={onClick}
++    >
++      <boxGeometry args={[body.size[0] + m, body.size[1] + m, body.size[2] + m]} />
++    </mesh>
++  );
++}
++
++export function Desk({ layout }: { layout: Layout }) {
++  const library = useMaterialLibrary();
++  const origin = useMemo(() => deskOrigin(layout), [layout]);
++  const links = useMemo(() => deskLinks(), []);
++  const objects = useMemo(() => deskObjects(links.github !== undefined), [links]);
++  const box = useMemo(() => unitBox(), []);
++  useEffect(() => () => box.dispose(), [box]);
++  const byMaterial = useMemo(() => {
++    const out: Record<DeskMaterial, Matrix4[]> = { walnut: [], brass: [], paper: [] };
++    for (const b of [...deskBodyBoxes(), ...objects.flatMap((o) => o.parts)]) {
++      out[b.material].push(deskBoxMatrix(b));
++    }
++    return out;
++  }, [objects]);
++  if (!origin) return null;
++  const materials: Record<DeskMaterial, Material> = {
++    walnut: library.walnut,
++    brass: library.brass,
++    paper: library.paper,
++  };
++  return (
++    <group name="desk" position={origin}>
++      {(Object.keys(byMaterial) as DeskMaterial[]).map((name) => (
++        <Instanced
++          key={name}
++          name={`desk-${name}`}
++          geometry={box}
++          material={materials[name]}
++          matrices={byMaterial[name]}
++        />
++      ))}
++      {objects.map((object) => {
++        const href = deskHref(object.action, links);
++        return href ? <DeskObjectHit key={object.action} object={object} href={href} /> : null;
++      })}
++    </group>
++  );
++}
+diff --git a/src/museum/environment/Labels.tsx b/src/museum/environment/Labels.tsx
+new file mode 100644
+index 0000000..5caf9cb
+--- /dev/null
++++ b/src/museum/environment/Labels.tsx
+@@ -0,0 +1,42 @@
++// The environment's 3D labels (EXPERIENCE §5.4, §6.9): "COMMIT HISTORY", the room names above the
++// doors, "FOUNDATIONS", the end wall line and the flat year numerals, all brass troika text in the
++// self-hosted .woff fonts. Each duplicates DOM text; placements come from labels3d.ts. Every label
++// counts in the store's `textPending` until its first sync (the kit's WallText), so `ready` waits.
++import { useMemo } from 'react';
++import { fontSizeForCap } from '../exhibits/_kit/fonts';
++import type { PlacardLabel } from '../exhibits/_kit/placard';
++import { WallText } from '../exhibits/_kit/Placard';
++import { useMaterialLibrary } from '../materials';
++import type { Layout } from '../rail/layout';
++import { labelPlacements, type EnvironmentLabel } from './labels3d';
++
++/** An environment label in the kit's wall-text shape. */
++export function asWallLabel(label: EnvironmentLabel): PlacardLabel {
++  return {
++    text: label.text,
++    font: label.font,
++    capHeight: label.capHeight,
++    fontSize: fontSizeForCap(label.font, label.capHeight),
++    baselineY: label.baselineY,
++    letterSpacing: label.tracking,
++  };
++}
++
++export function Labels({ layout }: { layout: Layout }) {
++  const library = useMaterialLibrary();
++  const placements = useMemo(() => labelPlacements(layout), [layout]);
++  return (
++    <group name="labels">
++      {placements.map((p) => (
++        <group
++          key={`${p.label.kind}-${p.label.for}-${p.label.text}`}
++          name={`label-${p.label.for}`}
++          position={p.position}
++          rotation={p.rotation}
++        >
++          <WallText label={asWallLabel(p.label)} material={library.brass} />
++        </group>
++      ))}
++    </group>
++  );
++}
+diff --git a/src/museum/environment/Lobby.tsx b/src/museum/environment/Lobby.tsx
+new file mode 100644
+index 0000000..1ed43dc
+--- /dev/null
++++ b/src/museum/environment/Lobby.tsx
+@@ -0,0 +1,136 @@
++// The lobby portrait (EXPERIENCE §2.3, §11.1 item 5): 0.8 x 1.0 m in a thin brass frame (BrassTrim.tsx)
++// right of the arch, warm duotone at rest. On desktop it cross-fades to the color texture over
++// 600 ms while hovered: fine pointers only, never under reduced motion or ?test=1. Both textures
++// are the 512 px headshot crops in public/images (WP-03); the duotone fills the kit's `portrait`
++// material, the color layer is a transparent clone in front of it, drawn only while visible.
++// Decorative, no caption: the DOM hero carries the name. "COMMIT HISTORY" is in Labels.tsx.
++import { useTexture } from '@react-three/drei';
++import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
++import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
++import {
++  SRGBColorSpace,
++  type Material,
++  type Mesh,
++  type MeshBasicMaterial,
++  type Texture,
++} from 'three';
++import { useMuseum } from '../../app/store';
++import { testParams } from '../../app/testHooks';
++import { tokens } from '../../design/tokens';
++import { overDomControl } from '../exhibits/_kit/ExhibitFrame';
++import { useMaterialLibrary } from '../materials';
++import { approach, PORTRAIT_CENTER, PORTRAIT_SIZE } from './lightPlan';
++
++export const PORTRAIT_DUOTONE_URL = '/images/headshot-texture-512-duotone.webp';
++export const PORTRAIT_COLOR_URL = '/images/headshot-texture-512.webp';
++/** The color layer floats this far in front of the duotone one. */
++const LAYER_GAP = 0.001;
++
++/** May the portrait warm on hover here? Fine pointer, no reduced motion, not under ?test=1. */
++export function portraitHoverAllowed(opts: {
++  finePointer: boolean;
++  reducedMotion: boolean;
++  test: boolean;
++}): boolean {
++  return opts.finePointer && !opts.reducedMotion && !opts.test;
++}
++
++const asSrgb = (textures: Texture[]) => {
++  for (const t of textures) {
++    t.colorSpace = SRGBColorSpace;
++    t.needsUpdate = true;
++  }
++};
++
++/** Fills the kit's `portrait` texture slot (materials/library.ts) with the duotone. */
++function fillPortrait(material: MeshBasicMaterial, map: Texture): void {
++  material.map = map;
++  material.needsUpdate = true;
++}
++
++/** Steps the color layer's opacity toward `goal` (600 ms for the whole way); true while moving. */
++function stepWarmth(material: Material, mesh: Mesh | null, goal: number, delta: number): boolean {
++  if (material.opacity === goal) return false;
++  material.opacity = approach(material.opacity, goal, delta, tokens.motion.durSlow / 1000, 1);
++  if (mesh) mesh.visible = material.opacity > 0;
++  return true;
++}
++
++export function Portrait() {
++  const library = useMaterialLibrary();
++  const [duotone, color] = useTexture([PORTRAIT_DUOTONE_URL, PORTRAIT_COLOR_URL], asSrgb) as [
++    Texture,
++    Texture,
++  ];
++  useLayoutEffect(() => fillPortrait(library.portrait, duotone), [library, duotone]);
++  const warm = useMemo(() => {
++    const m = library.portrait.clone();
++    m.name = 'portraitColor';
++    m.map = color;
++    m.transparent = true;
++    m.depthWrite = false;
++    m.opacity = 0;
++    return m;
++  }, [library, color]);
++  useEffect(() => () => warm.dispose(), [warm]);
++
++  const reducedMotion = useMuseum((s) => s.reducedMotion);
++  const [test] = useState(() => testParams(window.location.search).test);
++  const [finePointer] = useState(() => window.matchMedia?.('(pointer: fine)').matches ?? false);
++  const allowed = portraitHoverAllowed({ finePointer, reducedMotion, test });
++  const hovered = useRef(false);
++  const layer = useRef<Mesh>(null);
++  const invalidate = useThree((s) => s.invalidate);
++
++  const leave = useCallback(() => {
++    if (!hovered.current) return;
++    hovered.current = false;
++    invalidate();
++  }, [invalidate]);
++  const onPointerMove = useCallback(
++    (event: ThreeEvent<PointerEvent>) => {
++      if (!allowed || overDomControl(event.nativeEvent)) {
++        leave();
++        return;
++      }
++      if (hovered.current) return;
++      hovered.current = true;
++      invalidate();
++    },
++    [allowed, leave, invalidate],
++  );
++  useEffect(() => leave, [leave]);
++  useEffect(() => {
++    if (!allowed) leave();
++  }, [allowed, leave]);
++
++  useFrame((_, delta) => {
++    const goal = hovered.current && allowed ? 1 : 0;
++    if (stepWarmth(warm, layer.current, goal, delta)) invalidate();
++  });
++
++  const [x, y, z] = PORTRAIT_CENTER;
++  const [w, h] = PORTRAIT_SIZE;
++  return (
++    <group name="portrait" position={[x, y, z]}>
++      <mesh
++        name="portrait-duotone"
++        material={library.portrait}
++        onPointerMove={allowed ? onPointerMove : undefined}
++        onPointerOut={allowed ? leave : undefined}
++      >
++        <planeGeometry args={[w, h]} />
++      </mesh>
++      <mesh
++        ref={layer}
++        name="portrait-color"
++        material={warm}
++        position-z={LAYER_GAP}
++        visible={false}
++        renderOrder={1}
++      >
++        <planeGeometry args={[w, h]} />
++      </mesh>
++    </group>
++  );
++}
+diff --git a/src/museum/environment/deskParts.test.ts b/src/museum/environment/deskParts.test.ts
+new file mode 100644
+index 0000000..8063953
+--- /dev/null
++++ b/src/museum/environment/deskParts.test.ts
+@@ -0,0 +1,69 @@
++import { Box3, Vector3 } from 'three';
++import { describe, expect, it } from 'vitest';
++import { PDF_PATH } from '../../app/routes';
++import { content } from '../../content/index';
++import { cardOf } from '../../overlay/model';
++import { computeLayout } from '../rail/layout';
++import { DESK_TOP_Y } from './lightPlan';
++import {
++  DESK_SIZE,
++  deskBodyBoxes,
++  deskBoxMatrix,
++  deskHref,
++  deskLinks,
++  deskObjects,
++  deskOrigin,
++  type DeskBox,
++} from './deskParts';
++
++const layout = computeLayout(content, new Date('2026-10-15T00:00:00Z'));
++
++/** The world-aligned bounds of a (possibly rotated) desk part. */
++function bounds(box: DeskBox): Box3 {
++  return new Box3(new Vector3(-0.5, -0.5, -0.5), new Vector3(0.5, 0.5, 0.5)).applyMatrix4(
++    deskBoxMatrix(box),
++  );
++}
++
++describe('front desk (EXPERIENCE §2.3, §11.1 item 4)', () => {
++  it('stands under the desk stop look target, its top at DESK_TOP_Y', () => {
++    const desk = layout.tracks.main.stops.find((s) => s.id === 'desk')!;
++    expect(deskOrigin(layout)).toEqual([desk.look[0], 0, desk.look[2]]);
++    expect(DESK_SIZE[1]).toBe(DESK_TOP_Y);
++    const top = Math.max(...deskBodyBoxes().map((b) => bounds(b).max.y));
++    expect(top).toBeCloseTo(DESK_TOP_Y, 9);
++    const floor = Math.min(...deskBodyBoxes().map((b) => bounds(b).min.y));
++    expect(floor).toBeCloseTo(0, 9);
++  });
++
++  it('is walnut and brass, the objects paper, walnut and brass (library materials only)', () => {
++    const all = [...deskBodyBoxes(), ...deskObjects(true).flatMap((o) => o.parts)];
++    expect(new Set(all.map((b) => b.material))).toEqual(new Set(['walnut', 'brass', 'paper']));
++  });
++
++  it('carries the envelope, postcard, catalogue and ledger, each on the desk top', () => {
++    const objects = deskObjects(true);
++    expect(objects.map((o) => o.action)).toEqual(['email', 'linkedin', 'pdf', 'github']);
++    for (const object of objects) {
++      for (const part of object.parts) {
++        const b = bounds(part);
++        expect(b.min.y, part.name).toBeGreaterThanOrEqual(DESK_TOP_Y - 1e-9);
++        expect(Math.abs(b.max.x), part.name).toBeLessThanOrEqual(DESK_SIZE[0] / 2);
++        expect(Math.abs(b.max.z), part.name).toBeLessThanOrEqual(DESK_SIZE[2] / 2);
++      }
++    }
++    expect(deskObjects(false).map((o) => o.action)).toEqual(['email', 'linkedin', 'pdf']);
++  });
++
++  it('opens exactly the URLs the desk card buttons use', () => {
++    const card = cardOf('desk');
++    if (card.kind !== 'desk') throw new Error('no desk card');
++    const links = deskLinks();
++    expect(deskHref('email', links)).toBe(card.email);
++    expect(deskHref('email', links)).toBe(`mailto:${content.contact.email}`);
++    expect(deskHref('linkedin', links)).toBe(card.linkedin);
++    expect(deskHref('pdf', links)).toBe(PDF_PATH);
++    expect(deskHref('github', links)).toBe(card.github ?? null);
++    expect(deskHref('github', { ...links, github: undefined })).toBeNull();
++  });
++});
+diff --git a/src/museum/environment/deskParts.ts b/src/museum/environment/deskParts.ts
+new file mode 100644
+index 0000000..581214b
+--- /dev/null
++++ b/src/museum/environment/deskParts.ts
+@@ -0,0 +1,213 @@
++// The front desk (EXPERIENCE §2.3, §11.1 item 4): a low walnut and brass desk at the desk stop's
++// look target, with the gift shop on top. Each object is the 3D twin of a DOM button on the desk
++// card and does exactly what that button does (StopCard.tsx DeskPlacard, same URLs from
++// cardOf('desk')): the sealed envelope is the email link, the postcard LinkedIn, the printed
++// catalogue the PDF, the ledger GitHub. No text, no logos. Pure boxes in desk-local meters
++// (origin on the floor under the desk center, +Z toward the visitor); Desk.tsx instances them
++// per material.
++import { Matrix4 } from 'three';
++import { cardOf, PDF_PATH } from '../../overlay/model';
++import type { Layout, Vec3 } from '../rail/layout';
++
++/** Overall desk: 1.8 m wide, 0.7 m deep, top surface at 0.765 m (lightPlan.ts DESK_TOP_Y). */
++export const DESK_SIZE = [1.8, 0.765, 0.7] as const;
++const [W, H, D] = DESK_SIZE;
++const TOP_T = 0.04;
++const PEDESTAL = [0.42, H - TOP_T, 0.6] as const;
++const PEDESTAL_X = W / 2 - PEDESTAL[0] / 2 - 0.04;
++const KICK_H = 0.05;
++const BAND_H = 0.018;
++
++export type DeskMaterial = 'walnut' | 'brass' | 'paper';
++
++export interface DeskBox {
++  name: string;
++  material: DeskMaterial;
++  center: Vec3;
++  size: Vec3;
++  /** Rotation about +Y (objects lie a little askew on the top). */
++  rotationY?: number;
++}
++
++/** The desk body: walnut top and pedestals, brass kick plates and a brass band under the top. */
++export function deskBodyBoxes(): DeskBox[] {
++  const ped = (sx: number): DeskBox[] => [
++    {
++      name: `pedestal-${sx < 0 ? 'left' : 'right'}`,
++      material: 'walnut',
++      center: [sx * PEDESTAL_X, KICK_H + (PEDESTAL[1] - KICK_H) / 2, 0],
++      size: [PEDESTAL[0], PEDESTAL[1] - KICK_H, PEDESTAL[2]],
++    },
++    {
++      name: `kick-${sx < 0 ? 'left' : 'right'}`,
++      material: 'brass',
++      center: [sx * PEDESTAL_X, KICK_H / 2, 0],
++      size: [PEDESTAL[0] + 0.01, KICK_H, PEDESTAL[2] + 0.01],
++    },
++  ];
++  return [
++    { name: 'top', material: 'walnut', center: [0, H - TOP_T / 2, 0], size: [W, TOP_T, D] },
++    {
++      name: 'modesty-panel',
++      material: 'walnut',
++      center: [0, (H - TOP_T) / 2 + 0.12, D / 2 - 0.06],
++      size: [W - 2 * PEDESTAL[0] - 0.08, H - TOP_T - 0.24, 0.025],
++    },
++    {
++      name: 'band',
++      material: 'brass',
++      center: [0, H - TOP_T - BAND_H / 2, D / 2 - 0.005],
++      size: [W - 0.02, BAND_H, 0.01],
++    },
++    ...ped(-1),
++    ...ped(1),
++  ];
++}
++
++/** What a desk object does: the same action as the DOM button it duplicates. */
++export type DeskAction = 'email' | 'linkedin' | 'pdf' | 'github';
++
++export interface DeskObject {
++  action: DeskAction;
++  /** Short accessible-style name, used as the mesh name and in the tests. */
++  name: string;
++  /** Its parts; the first one is the body the hit box is built around. */
++  parts: DeskBox[];
++}
++
++const ON_TOP = H;
++
++/**
++ * The four objects, left to right as the visitor sees them: envelope, postcard, catalogue,
++ * ledger. GitHub is optional in the content, so the ledger is left out when it has no link.
++ */
++export function deskObjects(hasGithub: boolean): DeskObject[] {
++  const objects: DeskObject[] = [
++    {
++      action: 'email',
++      name: 'sealed envelope',
++      parts: [
++        {
++          name: 'envelope',
++          material: 'paper',
++          center: [-0.6, ON_TOP + 0.003, 0.08],
++          size: [0.24, 0.006, 0.12],
++          rotationY: 0.12,
++        },
++        {
++          name: 'seal',
++          material: 'brass',
++          center: [-0.6, ON_TOP + 0.008, 0.08],
++          size: [0.03, 0.004, 0.03],
++          rotationY: 0.12 + Math.PI / 4,
++        },
++      ],
++    },
++    {
++      action: 'linkedin',
++      name: 'postcard',
++      parts: [
++        {
++          name: 'postcard',
++          material: 'paper',
++          center: [-0.26, ON_TOP + 0.002, 0.12],
++          size: [0.15, 0.004, 0.105],
++          rotationY: -0.18,
++        },
++      ],
++    },
++    {
++      action: 'pdf',
++      name: 'printed catalogue',
++      parts: [
++        {
++          name: 'catalogue',
++          material: 'paper',
++          center: [0.14, ON_TOP + 0.012, 0.02],
++          size: [0.21, 0.024, 0.297],
++          rotationY: 0.06,
++        },
++        {
++          name: 'catalogue-spine',
++          material: 'brass',
++          center: [0.14 - 0.105 * Math.cos(0.06), ON_TOP + 0.013, 0.02 + 0.105 * Math.sin(0.06)],
++          size: [0.006, 0.026, 0.297],
++          rotationY: 0.06,
++        },
++      ],
++    },
++  ];
++  if (hasGithub) {
++    objects.push({
++      action: 'github',
++      name: 'ledger',
++      parts: [
++        {
++          name: 'ledger',
++          material: 'walnut',
++          center: [0.56, ON_TOP + 0.025, 0.0],
++          size: [0.2, 0.05, 0.28],
++          rotationY: -0.1,
++        },
++        {
++          name: 'ledger-clasp',
++          material: 'brass',
++          center: [0.56 + 0.1 * Math.cos(0.1), ON_TOP + 0.025, 0.0 + 0.1 * Math.sin(0.1)],
++          size: [0.012, 0.02, 0.05],
++          rotationY: -0.1,
++        },
++      ],
++    });
++  }
++  return objects;
++}
++
++/** Hit boxes are the object's body plus this margin on every side, so small objects are easy to click. */
++export const DESK_HIT_MARGIN = 0.03;
++
++/** The href each action opens: the same values the desk card's links use. */
++export interface DeskLinks {
++  email: string;
++  linkedin: string;
++  pdf: string;
++  github?: string;
++}
++
++export function deskHref(action: DeskAction, links: DeskLinks): string | null {
++  switch (action) {
++    case 'email':
++      return links.email;
++    case 'linkedin':
++      return links.linkedin;
++    case 'pdf':
++      return links.pdf;
++    case 'github':
++      return links.github ?? null;
++  }
++}
++
++/** The desk card's links: the very values its DOM buttons use. */
++export function deskLinks(): DeskLinks {
++  const card = cardOf('desk');
++  if (card.kind !== 'desk') throw new Error('The desk stop has no desk card');
++  return {
++    email: card.email,
++    linkedin: card.linkedin,
++    pdf: PDF_PATH,
++    ...(card.github !== undefined && { github: card.github }),
++  };
++}
++
++/** The desk's floor origin: under the desk stop's look target. Null without a desk stop. */
++export function deskOrigin(layout: Layout): Vec3 | null {
++  const desk = layout.tracks.main.stops.find((s) => s.id === 'desk');
++  return desk ? [desk.look[0], 0, desk.look[2]] : null;
++}
++
++/** A unit-box instance matrix for a desk part (desk-local). */
++export function deskBoxMatrix(box: DeskBox): Matrix4 {
++  return new Matrix4()
++    .makeTranslation(...box.center)
++    .multiply(new Matrix4().makeRotationY(box.rotationY ?? 0))
++    .multiply(new Matrix4().makeScale(...box.size));
++}
+diff --git a/src/museum/environment/labels.test.ts b/src/museum/environment/labels.test.ts
+new file mode 100644
+index 0000000..6d2e24d
+--- /dev/null
++++ b/src/museum/environment/labels.test.ts
+@@ -0,0 +1,173 @@
++// Label legibility (EXPERIENCE §5.4; R0 ruling in the WP-11 brief): from each label's stop camera,
++// the projected cap height cap / (2 d tan(fov / 2)) * viewport height is at least 14 CSS px on the
++// desktop (1440 x 900, FOV 50) and on a Pixel 7 in portrait (412 x 915 CSS px, FOV 68). The year
++// numerals are decorative and exempt. Checked as projection math, not as an e2e.
++import { describe, expect, it } from 'vitest';
++import type { StopId } from '../../content/ids';
++import { content } from '../../content/index';
++import { entryById, exhibitNumber, threeDStrings, wallLabelOf } from '../../content/selectors';
++import { tokens } from '../../design/tokens';
++import { placardSpec } from '../exhibits/_kit/placard';
++import { computeLayout, type Layout, type StopPose, type Vec3 } from '../rail/layout';
++import {
++  COMMIT_HISTORY,
++  END_WALL,
++  FOUNDATIONS_SIGN,
++  labelPlacements,
++  MIN_CAP_PX,
++  projectedCapPx,
++  ROOM_NAMES,
++  YEAR_DIGITS,
++  type Viewport,
++} from './labels3d';
++
++const NOW = new Date('2026-10-15T00:00:00Z');
++const layout = computeLayout(content, NOW);
++
++const VIEWPORTS: Viewport[] = [
++  { name: 'desktop', width: 1440, height: 900, fov: tokens.camera.fovDesktop },
++  { name: 'pixel7', width: 412, height: 915, fov: tokens.camera.fovPortrait },
++];
++
++function poseOf(l: Layout, id: StopId): StopPose {
++  for (const track of Object.values(l.tracks)) {
++    const pose = track.stops.find((s) => s.id === id);
++    if (pose) return pose;
++  }
++  throw new Error(`No pose for '${id}'`);
++}
++
++const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
++const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
++const length = (a: Vec3) => Math.sqrt(dot(a, a));
++
++interface Check {
++  name: string;
++  stop: StopId;
++  center: Vec3;
++  cap: number;
++}
++
++/** The middle of a label's cap band, in world meters (signs stand upright on their wall). */
++function center(position: Vec3, baselineY: number, cap: number): Vec3 {
++  return [position[0], position[1] + baselineY + cap / 2, position[2]];
++}
++
++function environmentChecks(l: Layout): Check[] {
++  return labelPlacements(l)
++    .filter((p) => p.stop !== null)
++    .map((p) => ({
++      name: `${p.label.text} (${p.label.for})`,
++      stop: p.stop!,
++      center: center(p.position, p.label.baselineY, p.label.capHeight),
++      cap: p.label.capHeight,
++    }));
++}
++
++function placardChecks(l: Layout): Check[] {
++  return l.slots.flatMap((slot) => {
++    const spec = placardSpec(l, slot, {
++      number: exhibitNumber(content, slot.id),
++      organization: wallLabelOf(entryById(content, slot.id)).toUpperCase(),
++    });
++    return [spec.number, spec.organization].map((label) => ({
++      name: `${label.text} (${slot.id})`,
++      stop: slot.id,
++      center: center(spec.position, label.baselineY, label.capHeight),
++      cap: label.capHeight,
++    }));
++  });
++}
++
++function report(checks: Check[], viewport: Viewport) {
++  return checks.map((c) => {
++    const pose = poseOf(layout, c.stop);
++    const toLabel = sub(c.center, pose.camera);
++    const view = sub(pose.look, pose.camera);
++    return {
++      name: c.name,
++      px: projectedCapPx(c.cap, length(toLabel), viewport),
++      ahead: dot(toLabel, view) > 0,
++      viewport: viewport.name,
++    };
++  });
++}
++
++describe('3D label legibility (EXPERIENCE §5.4)', () => {
++  it('reads every environment label from its stop at 14 CSS px or more', () => {
++    const checks = environmentChecks(layout);
++    // COMMIT HISTORY, two room names, FOUNDATIONS and the end wall.
++    expect(checks).toHaveLength(3 + ROOM_NAMES.length);
++    for (const viewport of VIEWPORTS) {
++      for (const r of report(checks, viewport)) {
++        expect(r.ahead, `${r.name} is in front of its stop camera`).toBe(true);
++        expect(r.px, `${r.name} on ${r.viewport}`).toBeGreaterThanOrEqual(MIN_CAP_PX);
++      }
++    }
++  });
++
++  it('reads every wall title (number and organization) from its stop at 14 CSS px or more', () => {
++    const checks = placardChecks(layout);
++    expect(checks).toHaveLength(2 * layout.slots.length);
++    for (const viewport of VIEWPORTS) {
++      for (const r of report(checks, viewport)) {
++        expect(r.px, `${r.name} on ${r.viewport}`).toBeGreaterThanOrEqual(MIN_CAP_PX);
++      }
++    }
++  });
++
++  it('matches the hand formula on a known case', () => {
++    // 0.28 m cap, 8 m away, FOV 50, 900 px tall: 0.28 / (2 * 8 * tan 25deg) * 900.
++    const expected = (0.28 / (2 * 8 * Math.tan((25 * Math.PI) / 180))) * 900;
++    expect(projectedCapPx(0.28, 8, VIEWPORTS[0]!)).toBeCloseTo(expected, 9);
++    expect(expected).toBeCloseTo(33.77, 1);
++  });
++
++  it('exempts only the year numerals', () => {
++    const exempt = labelPlacements(layout).filter((p) => p.stop === null);
++    expect(exempt.map((p) => p.label.kind)).toEqual(layout.yearMarks.map(() => 'year'));
++  });
++});
++
++describe('labels3d.ts strings (EXPERIENCE §5.4, glyph check input)', () => {
++  it('uses the specified fonts, cap heights and baselines', () => {
++    expect(COMMIT_HISTORY).toMatchObject({
++      text: 'COMMIT HISTORY',
++      font: 'serif',
++      capHeight: 0.28,
++    });
++    expect(COMMIT_HISTORY.baselineY).toBe(4.1);
++    expect(FOUNDATIONS_SIGN).toMatchObject({ font: 'sans', capHeight: 0.22, baselineY: 4.3 });
++    expect(END_WALL).toMatchObject({ font: 'serif', capHeight: 0.2, baselineY: 2.6 });
++    expect(ROOM_NAMES.map((r) => r.text)).toEqual(['PROJECTS', 'VOLUNTEER & LEADERSHIP']);
++    for (const r of ROOM_NAMES) expect(r).toMatchObject({ font: 'sans', capHeight: 0.14 });
++    expect(YEAR_DIGITS.font).toBe('sans');
++  });
++
++  it('draws the same environment strings as threeDStrings', () => {
++    const fromContent = new Set(
++      threeDStrings(content, NOW)
++        .filter((s) => s.kind === 'room' || s.kind === 'sign')
++        .map((s) => `${s.font}:${s.text}`),
++    );
++    for (const label of [COMMIT_HISTORY, FOUNDATIONS_SIGN, END_WALL, ...ROOM_NAMES]) {
++      expect(fromContent.has(`${label.font}:${label.text}`), label.text).toBe(true);
++    }
++  });
++
++  it('places the signs on their walls and the numerals beside their strips', () => {
++    const placements = labelPlacements(layout);
++    const commit = placements.find((p) => p.label === COMMIT_HISTORY)!;
++    expect(commit.position[2]).toBeCloseTo(-3.98, 6);
++    const foundations = placements.find((p) => p.label === FOUNDATIONS_SIGN)!;
++    expect(foundations.position[2]).toBeCloseTo(-51.98, 6);
++    const end = placements.find((p) => p.label === END_WALL)!;
++    expect(end.position[2]).toBeCloseTo(-69.98, 6);
++    const years = placements.filter((p) => p.label.kind === 'year');
++    years.forEach((p, i) => {
++      expect(p.position[0]).toBe(0);
++      expect(p.position[2]).toBeCloseTo(layout.yearMarks[i]!.z - 0.45, 6);
++      expect(p.label.text).toBe(String(layout.yearMarks[i]!.year));
++    });
++  });
++});
+diff --git a/src/museum/environment/labels3d.ts b/src/museum/environment/labels3d.ts
+new file mode 100644
+index 0000000..0d7416d
+--- /dev/null
++++ b/src/museum/environment/labels3d.ts
+@@ -0,0 +1,183 @@
++// Every 3D string the environment draws (EXPERIENCE §5.4, §6.9, §11.1) and where each one hangs.
++// Each duplicates DOM text: the lobby h1 and title, the door cards, the Foundations section, the
++// desk card headline and the year marks on the rail. `npm run check:glyphs` imports this module
++// in Node and checks every exported `{ text, font }` in its .woff (so no three.js imports here).
++// Strings come from the content where the content has them; the label specs are EXPERIENCE §5.4.
++import { doorId, type StopId } from '../../content/ids';
++import { content } from '../../content/index';
++import type { ThreeDFont } from '../../content/selectors';
++import { ARCH_Z, type Layout, type Vec3 } from '../rail/layout';
++
++export interface EnvironmentLabel {
++  kind: 'sign' | 'room' | 'year';
++  text: string;
++  font: ThreeDFont;
++  /** The fixture or door it belongs to. */
++  for: string;
++  /** Cap height in meters (EXPERIENCE §5.4: R3 may raise these, never lower them). */
++  capHeight: number;
++  /** Baseline above the floor (signs) in meters; 0 for the flat year numerals. */
++  baselineY: number;
++  /** troika letterSpacing in em. */
++  tracking: number;
++}
++
++/** "COMMIT HISTORY" above the lobby arch: Instrument Serif, cap 0.28 m, baseline 4.1. */
++export const COMMIT_HISTORY: EnvironmentLabel = {
++  kind: 'sign',
++  text: content.gallery.title.toUpperCase(),
++  font: 'serif',
++  for: 'lobby',
++  capHeight: 0.28,
++  baselineY: 4.1,
++  tracking: 0,
++};
++
++/** Room names above each door, aisle side: Plex Sans 500, cap 0.14 m, baseline 3.05, 0.12em. */
++export const ROOM_NAMES: readonly EnvironmentLabel[] = content.wings.map((wing) => ({
++  kind: 'room',
++  text: wing.title.toUpperCase(),
++  font: 'sans',
++  for: doorId(wing.id),
++  capHeight: 0.14,
++  baselineY: 3.05,
++  tracking: 0.12,
++}));
++
++/** "FOUNDATIONS" on the header beam at the aisle end: Plex Sans 500, cap 0.22 m, baseline 4.3. */
++export const FOUNDATIONS_SIGN: EnvironmentLabel = {
++  kind: 'sign',
++  text: 'FOUNDATIONS',
++  font: 'sans',
++  for: 'foundations',
++  capHeight: 0.22,
++  baselineY: 4.3,
++  tracking: 0.12,
++};
++
++/** The end wall (the desk card headline): Instrument Serif, cap 0.20 m, baseline 2.6. */
++export const END_WALL: EnvironmentLabel = {
++  kind: 'sign',
++  text: content.gallery.desk.headline,
++  font: 'serif',
++  for: 'desk',
++  capHeight: 0.2,
++  baselineY: 2.6,
++  tracking: 0,
++};
++
++/** Year numerals lie flat beside each strip: Plex Sans 500, cap 0.22 m, tracking 0.2em. */
++export const YEAR_NUMERAL = { font: 'sans', capHeight: 0.22, tracking: 0.2 } as const;
++
++/** Every glyph a year numeral can use (the years themselves are in threeDStrings). */
++export const YEAR_DIGITS = { text: '0123456789', font: 'sans', for: 'year-strip' } as const;
++
++/** A year numeral for `year`. */
++export function yearLabel(year: number): EnvironmentLabel {
++  return {
++    kind: 'year',
++    text: String(year),
++    font: YEAR_NUMERAL.font,
++    for: 'year-strip',
++    capHeight: YEAR_NUMERAL.capHeight,
++    baselineY: 0,
++    tracking: YEAR_NUMERAL.tracking,
++  };
++}
++
++// ---------------------------------------------------------------------------------------------
++// Placement
++
++/** Signs stand this far in front of their wall or beam face. */
++export const SIGN_WALL_GAP = 0.02;
++/** Year numerals lie this far from their strip, toward the far end (EXPERIENCE §6.9). */
++export const YEAR_NUMERAL_DZ = 0.45;
++/** Height of the year strips and numerals above the floor (flush, without z-fighting). */
++export const FLOOR_INLAY_Y = 0.002;
++
++export interface LabelPlacement {
++  label: EnvironmentLabel;
++  /** Group origin: on the wall face plus the gap, at floor level (the label adds its baseline). */
++  position: Vec3;
++  /** Euler XYZ; signs face into the room, numerals lie flat reading toward -z. */
++  rotation: Vec3;
++  /** The stop camera it is read from (the legibility rule). Null for the exempt year numerals. */
++  stop: StopId | null;
++}
++
++function room(layout: Layout, id: string) {
++  const found = layout.rooms.find((r) => r.id === id);
++  if (!found) throw new Error(`The layout has no '${id}' room`);
++  return found;
++}
++
++/** Where every environment label goes for this layout. */
++export function labelPlacements(layout: Layout): LabelPlacement[] {
++  const aisle = room(layout, 'aisle');
++  const desk = room(layout, 'desk');
++  const out: LabelPlacement[] = [
++    {
++      label: COMMIT_HISTORY,
++      position: [0, 0, ARCH_Z + SIGN_WALL_GAP],
++      rotation: [0, 0, 0],
++      stop: 'lobby',
++    },
++  ];
++  for (const door of layout.doors) {
++    const label = ROOM_NAMES.find((r) => r.for === doorId(door.wing));
++    if (!label) continue;
++    const right = door.side === 'right';
++    out.push({
++      label,
++      position: [right ? aisle.max[0] - SIGN_WALL_GAP : aisle.min[0] + SIGN_WALL_GAP, 0, door.z],
++      rotation: [0, right ? -Math.PI / 2 : Math.PI / 2, 0],
++      stop: doorId(door.wing),
++    });
++  }
++  // FOUNDATIONS is read on the approach, from the last stop of the aisle.
++  const aisleStops = layout.tracks.main.stops.filter((s) => s.camera[2] > aisle.min[1]);
++  out.push({
++    label: FOUNDATIONS_SIGN,
++    position: [0, 0, aisle.min[1] + SIGN_WALL_GAP],
++    rotation: [0, 0, 0],
++    stop: aisleStops.at(-1)?.id ?? null,
++  });
++  out.push({
++    label: END_WALL,
++    position: [0, 0, desk.min[1] + SIGN_WALL_GAP],
++    rotation: [0, 0, 0],
++    stop: 'desk',
++  });
++  for (const mark of layout.yearMarks) {
++    out.push({
++      label: yearLabel(mark.year),
++      position: [0, FLOOR_INLAY_Y, mark.z - YEAR_NUMERAL_DZ],
++      rotation: [-Math.PI / 2, 0, 0],
++      stop: null,
++    });
++  }
++  return out;
++}
++
++// ---------------------------------------------------------------------------------------------
++// Legibility (EXPERIENCE §5.4): projected cap height >= 14 CSS px from the label's stop camera
++
++export const MIN_CAP_PX = 14;
++
++export interface Viewport {
++  name: string;
++  width: number;
++  height: number;
++  /** Vertical field of view in degrees. */
++  fov: number;
++}
++
++/**
++ * Projected cap height in CSS px of a cap `capHeight` m tall, `distance` m from the camera:
++ * cap / (2 d tan(fov / 2)) * viewport height. Using the straight-line distance (not the depth
++ * along the view axis) errs small for labels off the screen center, so the check is conservative.
++ */
++export function projectedCapPx(capHeight: number, distance: number, viewport: Viewport): number {
++  const fov = (viewport.fov * Math.PI) / 180;
++  return (capHeight / (2 * distance * Math.tan(fov / 2))) * viewport.height;
++}
+diff --git a/src/museum/environment/trim.test.ts b/src/museum/environment/trim.test.ts
+new file mode 100644
+index 0000000..dbcca3d
+--- /dev/null
++++ b/src/museum/environment/trim.test.ts
+@@ -0,0 +1,67 @@
++import { Vector3 } from 'three';
++import { describe, expect, it } from 'vitest';
++import { content } from '../../content/index';
++import { computeLayout } from '../rail/layout';
++import { PORTRAIT_CENTER, PORTRAIT_SIZE } from './lightPlan';
++import { openings } from './shell';
++import {
++  brassTrimBoxes,
++  portraitFrameBoxes,
++  REVEAL_WIDTH,
++  trimMatrix,
++  YEAR_STRIP_HALF,
++  YEAR_STRIP_WIDTH,
++  yearStripBoxes,
++} from './trim';
++
++const layout = computeLayout(content, new Date('2026-10-15T00:00:00Z'));
++
++describe('brass trim (EXPERIENCE §2.3, §6.9)', () => {
++  it('lines the arch and every wing door with 4 cm reveals: two jambs and a head', () => {
++    const lined = openings(layout).filter((o) => o.name === 'arch' || o.name.endsWith('-door'));
++    expect(lined).toHaveLength(1 + layout.doors.length);
++    const boxes = brassTrimBoxes(layout);
++    for (const opening of lined) {
++      const parts = boxes.filter((b) => b.name.startsWith(`${opening.name}-`));
++      expect(parts.map((p) => p.name.split('-').at(-1))).toEqual(['a', 'b', 'head']);
++      const [jamb, , head] = parts;
++      const alongIndex = opening.axis === 'x' ? 0 : 2;
++      expect(jamb!.size[alongIndex]).toBeCloseTo(REVEAL_WIDTH, 9);
++      expect(jamb!.size[1]).toBeCloseTo(opening.top, 9);
++      expect(head!.center[1] + head!.size[1] / 2).toBeCloseTo(opening.top, 9);
++    }
++  });
++
++  it('frames the 0.8 x 1.0 m portrait with four thin bars', () => {
++    const bars = portraitFrameBoxes();
++    expect(bars).toHaveLength(4);
++    const top = bars.find((b) => b.name === 'frame-top')!;
++    expect(top.center[1] - top.size[1] / 2).toBeCloseTo(
++      PORTRAIT_CENTER[1] + PORTRAIT_SIZE[1] / 2,
++      9,
++    );
++    const left = bars.find((b) => b.name === 'frame-left')!;
++    expect(left.center[0] + left.size[0] / 2).toBeCloseTo(
++      PORTRAIT_CENTER[0] - PORTRAIT_SIZE[0] / 2,
++      9,
++    );
++  });
++
++  it('lays one 3 cm brass inlay across x -3.3 to 3.3 at every year mark', () => {
++    const strips = yearStripBoxes(layout);
++    expect(strips.map((s) => s.name)).toEqual(layout.yearMarks.map((m) => `year-${m.year}`));
++    strips.forEach((strip, i) => {
++      expect(strip.size[0]).toBeCloseTo(2 * YEAR_STRIP_HALF, 9);
++      expect(strip.size[2]).toBeCloseTo(YEAR_STRIP_WIDTH, 9);
++      expect(strip.center[2]).toBeCloseTo(layout.yearMarks[i]!.z, 9);
++      expect(strip.center[1] - strip.size[1] / 2).toBeCloseTo(0, 9);
++    });
++  });
++
++  it('builds unit-box matrices that reproduce each box', () => {
++    const box = yearStripBoxes(layout)[1]!;
++    const corner = new Vector3(0.5, 0.5, 0.5).applyMatrix4(trimMatrix(box));
++    expect(corner.x).toBeCloseTo(box.center[0] + box.size[0] / 2, 9);
++    expect(corner.z).toBeCloseTo(box.center[2] + box.size[2] / 2, 9);
++  });
++});
+diff --git a/src/museum/environment/trim.ts b/src/museum/environment/trim.ts
+new file mode 100644
+index 0000000..867cad6
+--- /dev/null
++++ b/src/museum/environment/trim.ts
+@@ -0,0 +1,104 @@
++// Brass trim (EXPERIENCE §2.3): 4 cm reveals lining the lobby arch and the wing doors, the thin
++// frame around the lobby portrait, and the year-strip inlays (§6.9). Pure boxes in world meters;
++// Scene draws all of one kind as one instanced mesh of the shared `brass` material.
++import { Matrix4 } from 'three';
++import type { Layout, Vec3 } from '../rail/layout';
++import { FLOOR_INLAY_Y } from './labels3d';
++import { PORTRAIT_CENTER, PORTRAIT_SIZE } from './lightPlan';
++import { openings, wallSpans, WALL_THICKNESS, type Opening } from './shell';
++
++/** Visible width of a door or arch reveal. */
++export const REVEAL_WIDTH = 0.04;
++/** A reveal stands this far proud of each wall face. */
++export const REVEAL_PROUD = 0.005;
++/** Portrait frame: bar width and depth. */
++export const FRAME_BAR = 0.03;
++export const FRAME_DEPTH = 0.03;
++/** Year strips: brass inlay 0.03 m wide across x -3.3 to 3.3, flush with the floor. */
++export const YEAR_STRIP_HALF = 3.3;
++export const YEAR_STRIP_WIDTH = 0.03;
++export const YEAR_STRIP_THICKNESS = 0.002;
++
++export interface TrimBox {
++  name: string;
++  center: Vec3;
++  size: Vec3;
++}
++
++const EPS = 1e-6;
++
++/** The side of the wall line its thickness goes to (+1 toward +x or +z). */
++function outwardOf(layout: Layout, opening: Opening): 1 | -1 {
++  const span = wallSpans(layout).find(
++    (s) =>
++      s.axis === opening.axis &&
++      Math.abs(s.at - opening.at) < EPS &&
++      s.from <= opening.from + EPS &&
++      s.to >= opening.to - EPS,
++  );
++  return span?.outward ?? 1;
++}
++
++/** Two jambs and a head lining an opening, each 4 cm wide on the wall faces. */
++export function revealBoxes(layout: Layout, opening: Opening): TrimBox[] {
++  const depth = WALL_THICKNESS + 2 * REVEAL_PROUD;
++  const across = opening.at + (outwardOf(layout, opening) * WALL_THICKNESS) / 2;
++  const box = (name: string, along: number, alongSize: number, y: number, h: number): TrimBox =>
++    opening.axis === 'x'
++      ? { name, center: [along, y, across], size: [alongSize, h, depth] }
++      : { name, center: [across, y, along], size: [depth, h, alongSize] };
++  const w = REVEAL_WIDTH;
++  const top = opening.top;
++  return [
++    box(`${opening.name}-jamb-a`, opening.from + w / 2, w, top / 2, top),
++    box(`${opening.name}-jamb-b`, opening.to - w / 2, w, top / 2, top),
++    box(
++      `${opening.name}-head`,
++      (opening.from + opening.to) / 2,
++      opening.to - opening.from,
++      top - w / 2,
++      w,
++    ),
++  ];
++}
++
++/** The four bars of the portrait frame, just in front of the lobby back wall. */
++export function portraitFrameBoxes(): TrimBox[] {
++  const [cx, cy, cz] = PORTRAIT_CENTER;
++  const [w, h] = PORTRAIT_SIZE;
++  const b = FRAME_BAR;
++  const z = cz - 0.01;
++  return [
++    { name: 'frame-top', center: [cx, cy + h / 2 + b / 2, z], size: [w + 2 * b, b, FRAME_DEPTH] },
++    {
++      name: 'frame-bottom',
++      center: [cx, cy - h / 2 - b / 2, z],
++      size: [w + 2 * b, b, FRAME_DEPTH],
++    },
++    { name: 'frame-left', center: [cx - w / 2 - b / 2, cy, z], size: [b, h, FRAME_DEPTH] },
++    { name: 'frame-right', center: [cx + w / 2 + b / 2, cy, z], size: [b, h, FRAME_DEPTH] },
++  ];
++}
++
++/** Reveals for the arch and every wing door, plus the portrait frame. */
++export function brassTrimBoxes(layout: Layout): TrimBox[] {
++  const lined = openings(layout).filter((o) => o.name === 'arch' || o.name.endsWith('-door'));
++  return [...lined.flatMap((o) => revealBoxes(layout, o)), ...portraitFrameBoxes()];
++}
++
++/** One brass inlay per `layout.yearMarks` entry. */
++export function yearStripBoxes(layout: Layout): TrimBox[] {
++  return layout.yearMarks.map((mark) => ({
++    name: `year-${mark.year}`,
++    center: [0, FLOOR_INLAY_Y / 2, mark.z],
++    size: [2 * YEAR_STRIP_HALF, YEAR_STRIP_THICKNESS, YEAR_STRIP_WIDTH],
++  }));
++}
++
++/** A unit-box instance matrix for an axis-aligned trim box. */
++export function trimMatrix(box: TrimBox, rotationY = 0): Matrix4 {
++  return new Matrix4()
++    .makeTranslation(...box.center)
++    .multiply(new Matrix4().makeRotationY(rotationY))
++    .multiply(new Matrix4().makeScale(...box.size));
++}
+-- 
+2.43.0
+

@@ -1,0 +1,1982 @@
+From 2654cc2ee02d0903cd78daf1cddb5d55224e769d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 16 Oct 2026 02:40:10 +0000
+Subject: [PATCH 1/5] feat(environment): baked light pools and floor by tier
+
+One seeded CanvasTexture lightmap per floor zone: a warm pool per light
+target (1.6 m, 0.3 m toward the aisle center, alpha 0.85, color by age),
+door threshold pools and soft plinth contact patches. A shared 256 px
+wall-wash scallop with 2 m seams on wash bays behind each target, tinted
+per target and snapped to each wall line's seam grid. High tier floors use
+one MeshReflectorMaterial pass shared by every zone; medium and low use the
+library floor with the lightmap and no second pass. The pure light plan
+(lightPlan, assignLights, matchLights, light levels, beam cones) lives in
+lightPlan.ts; fixtures.ts becomes fixtureMatrices.ts without the desk block.
+
+WP: WP-11
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016CcKJFMWCyXKspJx4YvMS7
+---
+ src/museum/environment/Fixtures.tsx           |  40 +-
+ src/museum/environment/Floor.tsx              | 110 +++++
+ src/museum/environment/Hall.tsx               | 128 +++++-
+ ...xtures.test.ts => fixtureMatrices.test.ts} |  10 +-
+ .../{fixtures.ts => fixtureMatrices.ts}       |  17 +-
+ src/museum/environment/floorReflector.test.ts |  39 ++
+ src/museum/environment/floorReflector.ts      |  34 ++
+ src/museum/environment/lightPlan.test.ts      | 221 ++++++++++
+ src/museum/environment/lightPlan.ts           | 406 +++++++++++++++++
+ src/museum/environment/lightPools.test.ts     | 145 ++++++
+ src/museum/environment/lightPools.ts          | 412 ++++++++++++++++++
+ src/museum/environment/lighting.test.ts       |  34 --
+ src/museum/environment/lighting.ts            |  77 ----
+ src/museum/environment/shell.test.ts          |   3 +-
+ src/museum/environment/shell.ts               |  57 ++-
+ 15 files changed, 1546 insertions(+), 187 deletions(-)
+ create mode 100644 src/museum/environment/Floor.tsx
+ rename src/museum/environment/{fixtures.test.ts => fixtureMatrices.test.ts} (86%)
+ rename src/museum/environment/{fixtures.ts => fixtureMatrices.ts} (79%)
+ create mode 100644 src/museum/environment/floorReflector.test.ts
+ create mode 100644 src/museum/environment/floorReflector.ts
+ create mode 100644 src/museum/environment/lightPlan.test.ts
+ create mode 100644 src/museum/environment/lightPlan.ts
+ create mode 100644 src/museum/environment/lightPools.test.ts
+ create mode 100644 src/museum/environment/lightPools.ts
+ delete mode 100644 src/museum/environment/lighting.test.ts
+ delete mode 100644 src/museum/environment/lighting.ts
+
+diff --git a/src/museum/environment/Fixtures.tsx b/src/museum/environment/Fixtures.tsx
+index bc0069a..97c487a 100644
+--- a/src/museum/environment/Fixtures.tsx
++++ b/src/museum/environment/Fixtures.tsx
+@@ -1,10 +1,10 @@
+-// Plinths, base strips, glass cases, brass edges, the certifications wall panels and the desk
+-// block (EXPERIENCE §5.2, §5.3), one instanced draw call per kind. Matrices from fixtures.ts.
++// Plinths, base strips, glass cases, brass edges and the certifications wall panels (EXPERIENCE
++// §5.2, §5.3), one instanced draw call per material. Matrices from fixtureMatrices.ts.
+ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+ import type { BufferGeometry, InstancedMesh, Material, Matrix4 } from 'three';
+ import { useMaterialLibrary } from '../materials';
+ import type { Layout } from '../rail/layout';
+-import { fixtureInstances, openBottomBox, unitBox } from './fixtures';
++import { fixtureInstances, openBottomBox, unitBox } from './fixtureMatrices';
+ 
+ interface InstancedProps {
+   name: string;
+@@ -44,40 +44,22 @@ export function Fixtures({ layout }: { layout: Layout }) {
+   const glass = useMemo(() => openBottomBox(), []);
+   useEffect(() => () => box.dispose(), [box]);
+   useEffect(() => () => glass.dispose(), [glass]);
+-  const desk = useMemo(() => (instances.desk ? [instances.desk] : []), [instances]);
++  // One instanced mesh per material: every plinth, every brass strip and case edge.
++  const plinths = useMemo(
++    () => [...instances.standardPlinths, ...instances.widePlinths],
++    [instances],
++  );
++  const brass = useMemo(() => [...instances.baseStrips, ...instances.edges], [instances]);
+   return (
+     <group name="fixtures">
+-      <Instanced
+-        name="plinths"
+-        geometry={box}
+-        material={library.plinth}
+-        matrices={instances.standardPlinths}
+-      />
+-      <Instanced
+-        name="base-strips"
+-        geometry={box}
+-        material={library.brass}
+-        matrices={instances.baseStrips}
+-      />
+-      <Instanced
+-        name="wide-plinths"
+-        geometry={box}
+-        material={library.plinth}
+-        matrices={instances.widePlinths}
+-      />
++      <Instanced name="plinths" geometry={box} material={library.plinth} matrices={plinths} />
+       <Instanced
+         name="wall-panels"
+         geometry={box}
+         material={library.walnut}
+         matrices={instances.wallPanels}
+       />
+-      <Instanced name="desk" geometry={box} material={library.plinth} matrices={desk} />
+-      <Instanced
+-        name="case-edges"
+-        geometry={box}
+-        material={library.brass}
+-        matrices={instances.edges}
+-      />
++      <Instanced name="fixture-brass" geometry={box} material={library.brass} matrices={brass} />
+       {/* Glass last: transparent, no depth write. */}
+       <Instanced
+         name="cases"
+diff --git a/src/museum/environment/Floor.tsx b/src/museum/environment/Floor.tsx
+new file mode 100644
+index 0000000..88b1130
+--- /dev/null
++++ b/src/museum/environment/Floor.tsx
+@@ -0,0 +1,110 @@
++// The floors (ARCHITECTURE §8.2, EXPERIENCE §7.5, §7.6): one mesh per floor zone (room), each with
++// its own baked pool lightMap from lightPools.ts. The material is fixed at boot by the tier:
++// - high: drei's MeshReflectorMaterial (floorReflectorParams). Every floor mesh lies in its local
++//   XY plane under one shared rotation (shell.ts FLOOR_ROTATION_X), so they all have the same
++//   world matrix: the first zone hosts the drei component, which renders the one reflection pass,
++//   and the other zones use clones of its material that share its reflection uniforms. One pass
++//   serves every zone. Floors face up, so the mirrored camera below sees only their back faces.
++// - medium and low: the library `floor` (env-mapped, roughness 0.22), one clone per zone for its
++//   lightMap; the clones share one program, and there is no second pass.
++import { MeshReflectorMaterial } from '@react-three/drei';
++import { useEffect, useMemo, useState } from 'react';
++import type { BufferGeometry, MeshStandardMaterial, Texture } from 'three';
++import { useMuseum } from '../../app/store';
++import { floorReflectorParams, useMaterialLibrary } from '../materials';
++import type { Layout, Room } from '../rail/layout';
++import { lightPlan } from './lightPlan';
++import { reflectorFollower } from './floorReflector';
++import { createFloorLightmaps, FLOOR_LIGHTMAP_INTENSITY } from './lightPools';
++import { FLOOR_ROTATION_X, floorGeometry } from './shell';
++
++interface Zone {
++  id: Room['id'];
++  geometry: BufferGeometry;
++  lightMap: Texture;
++}
++
++function ReflectorFloor({ zones }: { zones: Zone[] }) {
++  const [leader, setLeader] = useState<MeshStandardMaterial | null>(null);
++  const [first, ...rest] = zones;
++  const followers = useMemo(
++    () => (leader ? zones.slice(1).map((zone) => reflectorFollower(leader, zone.lightMap)) : []),
++    [leader, zones],
++  );
++  useEffect(() => () => followers.forEach((m) => m.dispose()), [followers]);
++  if (!first) return null;
++  return (
++    <>
++      <mesh name={`floor-${first.id}`} geometry={first.geometry}>
++        <MeshReflectorMaterial
++          ref={setLeader}
++          {...floorReflectorParams}
++          lightMap={first.lightMap}
++          lightMapIntensity={FLOOR_LIGHTMAP_INTENSITY.reflector}
++        />
++      </mesh>
++      {followers.map((material, i) => (
++        <mesh
++          key={rest[i]!.id}
++          name={`floor-${rest[i]!.id}`}
++          geometry={rest[i]!.geometry}
++          material={material}
++        />
++      ))}
++    </>
++  );
++}
++
++function StandardFloor({ zones }: { zones: Zone[] }) {
++  const library = useMaterialLibrary();
++  const materials = useMemo(
++    () =>
++      zones.map((zone) => {
++        const m = library.floor.clone();
++        m.name = `floor-${zone.id}`;
++        m.lightMap = zone.lightMap;
++        m.lightMapIntensity = FLOOR_LIGHTMAP_INTENSITY.standard;
++        return m;
++      }),
++    [library, zones],
++  );
++  useEffect(() => () => materials.forEach((m) => m.dispose()), [materials]);
++  return (
++    <>
++      {zones.map((zone, i) => (
++        <mesh
++          key={zone.id}
++          name={`floor-${zone.id}`}
++          geometry={zone.geometry}
++          material={materials[i]}
++        />
++      ))}
++    </>
++  );
++}
++
++export function Floor({ layout }: { layout: Layout }) {
++  const tier = useMuseum((s) => s.tier);
++  const plan = useMemo(() => lightPlan(tier), [tier]);
++  const lightmaps = useMemo(() => createFloorLightmaps(layout), [layout]);
++  useEffect(() => () => lightmaps.forEach((t) => t.dispose()), [lightmaps]);
++  const zones = useMemo<Zone[]>(
++    () =>
++      layout.rooms.map((room) => ({
++        id: room.id,
++        geometry: floorGeometry(room),
++        lightMap: lightmaps.get(room.id)!,
++      })),
++    [layout, lightmaps],
++  );
++  useEffect(() => () => zones.forEach((z) => z.geometry.dispose()), [zones]);
++  return (
++    <group name="floors" rotation-x={FLOOR_ROTATION_X}>
++      {plan.floor === 'reflector' ? (
++        <ReflectorFloor zones={zones} />
++      ) : (
++        <StandardFloor zones={zones} />
++      )}
++    </group>
++  );
++}
+diff --git a/src/museum/environment/Hall.tsx b/src/museum/environment/Hall.tsx
+index 80cde33..1f31f91 100644
+--- a/src/museum/environment/Hall.tsx
++++ b/src/museum/environment/Hall.tsx
+@@ -1,31 +1,123 @@
+-// The greybox hall (WP-08): one floor per room with the medium and low floor material (the
+-// high-tier reflector and the baked pools are WP-11), and the whole shell (walls with their
+-// openings, lintels, the Foundations header beam and the ceilings) as one merged mesh.
+-import { useEffect, useMemo } from 'react';
++// The hall (EXPERIENCE §2.3, §7.5; ARCHITECTURE §8.1): the whole shell (walls with their openings,
++// lintels, the Foundations header beam and the ceilings) as one merged mesh of the `wall`
++// material, whose lightMap is the shared wall-wash tile (plain rows and 2 m seams on the shell);
++// one instanced mesh of wash bays (the full scallop, tinted per target) behind every light
++// target; and the dim ceiling light slot down the aisle. The floors are Floor.tsx.
++import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
++import {
++  Color,
++  PlaneGeometry,
++  type InstancedMesh,
++  type MeshStandardMaterial,
++  type Texture,
++} from 'three';
+ import { useMaterialLibrary } from '../materials';
+ import type { Layout } from '../rail/layout';
+-import { floorGeometry, shellGeometry } from './shell';
++import {
++  createWallWash,
++  WALL_WASH_INTENSITY,
++  WALL_WASH_PLAIN_V,
++  washLayout,
++  washMatrix,
++  type WashPlacement,
++} from './lightPools';
++import { applyWashUVs, shellGeometry } from './shell';
++
++/** The ceiling slot (EXPERIENCE §2.3): 0.12 m wide, 1 cm under the aisle ceiling. */
++export const CEILING_SLOT_WIDTH = 0.12;
++export const CEILING_SLOT_DROP = 0.01;
++
++/** Fills the `wall` material's wallWash slot; the returned cleanup empties it again. */
++function fillWallWash(wall: MeshStandardMaterial, wash: Texture): () => void {
++  wall.lightMap = wash;
++  wall.lightMapIntensity = WALL_WASH_INTENSITY;
++  wall.needsUpdate = true;
++  return () => {
++    wall.lightMap = null;
++    wall.needsUpdate = true;
++  };
++}
++
++/** Writes the bays' matrices and temperature colors into the instanced mesh. */
++function fillBays(mesh: InstancedMesh, bays: WashPlacement[]): void {
++  const color = new Color();
++  bays.forEach((b, i) => {
++    mesh.setMatrixAt(i, washMatrix(b.bay));
++    mesh.setColorAt(i, color.set(b.color));
++  });
++  mesh.instanceMatrix.needsUpdate = true;
++  if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
++  mesh.computeBoundingBox();
++  mesh.computeBoundingSphere();
++}
++
++/** A clone of `wall` carrying the wash tile (same program as the shell plus instancing). */
++function bayMaterial(wall: MeshStandardMaterial, wash: Texture): MeshStandardMaterial {
++  const m = wall.clone();
++  m.name = 'wallWashBay';
++  m.lightMap = wash;
++  m.lightMapIntensity = WALL_WASH_INTENSITY;
++  return m;
++}
++
++function WashBays({ layout, wash }: { layout: Layout; wash: Texture }) {
++  const library = useMaterialLibrary();
++  const { bays } = useMemo(() => washLayout(layout), [layout]);
++  const plane = useMemo(() => new PlaneGeometry(1, 1), []);
++  // The wall material plus instance colors: the same wash tile, tinted per bay.
++  const material = useMemo(() => bayMaterial(library.wall, wash), [library, wash]);
++  useEffect(() => () => plane.dispose(), [plane]);
++  useEffect(() => () => material.dispose(), [material]);
++  const ref = useRef<InstancedMesh>(null);
++  useLayoutEffect(() => {
++    if (ref.current) fillBays(ref.current, bays);
++  }, [bays, material]);
++  if (bays.length === 0) return null;
++  return (
++    <instancedMesh
++      key={bays.length}
++      ref={ref}
++      name="wash-bays"
++      args={[plane, material, bays.length]}
++    />
++  );
++}
++
++function CeilingSlot({ layout }: { layout: Layout }) {
++  const library = useMaterialLibrary();
++  const aisle = layout.rooms.find((r) => r.id === 'aisle');
++  if (!aisle) return null;
++  const length = aisle.max[1] - aisle.min[1];
++  return (
++    <mesh
++      name="ceiling-slot"
++      material={library.ceilingSlot}
++      position={[0, aisle.ceiling - CEILING_SLOT_DROP, (aisle.min[1] + aisle.max[1]) / 2]}
++      rotation-x={Math.PI / 2}
++    >
++      <planeGeometry args={[CEILING_SLOT_WIDTH, length]} />
++    </mesh>
++  );
++}
+ 
+ export function Hall({ layout }: { layout: Layout }) {
+   const library = useMaterialLibrary();
+-  const shell = useMemo(() => shellGeometry(layout), [layout]);
+-  const floors = useMemo(
+-    () => layout.rooms.map((room) => ({ id: room.id, geometry: floorGeometry(room) })),
+-    [layout],
++  const seams = useMemo(() => washLayout(layout).seams, [layout]);
++  const shell = useMemo(
++    () => applyWashUVs(shellGeometry(layout), seams, WALL_WASH_PLAIN_V),
++    [layout, seams],
+   );
+   useEffect(() => () => shell.dispose(), [shell]);
+-  useEffect(() => () => floors.forEach((f) => f.geometry.dispose()), [floors]);
++  // The `wall` texture slot is R3's (materials/library.ts): filled before the first render, so
++  // every program that uses `wall` is compiled with its lightMap from the start.
++  const [wash] = useState(createWallWash);
++  useLayoutEffect(() => fillWallWash(library.wall, wash), [library, wash]);
++  useEffect(() => () => wash.dispose(), [wash]);
+   return (
+     <group name="hall">
+       <mesh name="shell" geometry={shell} material={library.wall} />
+-      {floors.map((floor) => (
+-        <mesh
+-          key={floor.id}
+-          name={`floor-${floor.id}`}
+-          geometry={floor.geometry}
+-          material={library.floor}
+-        />
+-      ))}
++      <WashBays layout={layout} wash={wash} />
++      <CeilingSlot layout={layout} />
+     </group>
+   );
+ }
+diff --git a/src/museum/environment/fixtures.test.ts b/src/museum/environment/fixtureMatrices.test.ts
+similarity index 86%
+rename from src/museum/environment/fixtures.test.ts
+rename to src/museum/environment/fixtureMatrices.test.ts
+index f033c6d..0b8aac9 100644
+--- a/src/museum/environment/fixtures.test.ts
++++ b/src/museum/environment/fixtureMatrices.test.ts
+@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
+ import { content } from '../../content/index';
+ import { EDGES_PER_CASE, slotOrigin } from '../exhibits/_kit/anatomy';
+ import { computeLayout } from '../rail/layout';
+-import { fixtureInstances, openBottomBox } from './fixtures';
++import { fixtureInstances, openBottomBox } from './fixtureMatrices';
+ 
+ const layout = computeLayout(content, new Date('2026-10-15T00:00:00Z'));
+ const inst = fixtureInstances(layout);
+@@ -18,7 +18,6 @@ describe('fixture instancing (EXPERIENCE §5.2, §5.3)', () => {
+     expect(inst.cases).toHaveLength(layout.slots.length);
+     expect(inst.edges).toHaveLength(layout.slots.length * EDGES_PER_CASE);
+     expect(inst.wallPanels).toHaveLength(2 * count('none'));
+-    expect(inst.desk).not.toBeNull();
+   });
+ 
+   it('stands every plinth on the floor under its slot, top at the slot origin', () => {
+@@ -49,13 +48,6 @@ describe('fixture instancing (EXPERIENCE §5.2, §5.3)', () => {
+     });
+   });
+ 
+-  it('puts the desk block at the desk stop target', () => {
+-    const desk = layout.tracks.main.stops.find((s) => s.id === 'desk')!;
+-    const center = new Vector3().applyMatrix4(inst.desk!);
+-    expect(center.x).toBeCloseTo(desk.look[0], 6);
+-    expect(center.z).toBeCloseTo(desk.look[2], 6);
+-  });
+-
+   it('leaves the bottom face off the glass case geometry', () => {
+     const box = openBottomBox();
+     expect(box.getIndex()!.count / 3).toBe(10);
+diff --git a/src/museum/environment/fixtures.ts b/src/museum/environment/fixtureMatrices.ts
+similarity index 79%
+rename from src/museum/environment/fixtures.ts
+rename to src/museum/environment/fixtureMatrices.ts
+index 2a2121b..3a6635f 100644
+--- a/src/museum/environment/fixtures.ts
++++ b/src/museum/environment/fixtureMatrices.ts
+@@ -1,8 +1,8 @@
+ // Instance matrices for the gallery fixtures (EXPERIENCE §5.2, §5.3): plinths, base strips, glass
+ // cases, brass case edges and the certifications wall panels, each drawn as one instanced unit
+ // box per kind, so the fixture count never adds draw calls. Every matrix starts from a layout slot
+-// (anatomy.ts gives the kit-local offsets); the desk block stands at the desk stop's look target.
+-import { BoxGeometry, Matrix4, type BufferGeometry } from 'three';
++// (anatomy.ts gives the kit-local offsets). The front desk is its own module (deskParts.ts, Desk.tsx).
++import { BoxGeometry, type BufferGeometry, type Matrix4 } from 'three';
+ import type { Layout } from '../rail/layout';
+ import {
+   baseStripBox,
+@@ -15,9 +15,6 @@ import {
+   wallPanelBoxes,
+ } from '../exhibits/_kit/anatomy';
+ 
+-/** The greybox desk block (WP-11 replaces it with the walnut and brass desk). */
+-export const DESK_BLOCK_SIZE = [1.8, 1.0, 0.7] as const;
+-
+ export interface FixtureInstances {
+   /** One per standard slot (plinth material). */
+   standardPlinths: Matrix4[];
+@@ -31,8 +28,6 @@ export interface FixtureInstances {
+   edges: Matrix4[];
+   /** Walnut backing panel and vitrine back per wall slot. */
+   wallPanels: Matrix4[];
+-  /** The desk block, or null when the layout has no desk stop. */
+-  desk: Matrix4 | null;
+ }
+ 
+ export function fixtureInstances(layout: Layout): FixtureInstances {
+@@ -43,7 +38,6 @@ export function fixtureInstances(layout: Layout): FixtureInstances {
+     cases: [],
+     edges: [],
+     wallPanels: [],
+-    desk: null,
+   };
+   for (const slot of layout.slots) {
+     const frame = slotMatrix(slot);
+@@ -60,13 +54,6 @@ export function fixtureInstances(layout: Layout): FixtureInstances {
+     out.cases.push(boxMatrix(frame, glass));
+     for (const edge of edgeBoxes(glass)) out.edges.push(boxMatrix(frame, edge));
+   }
+-  const desk = layout.tracks.main.stops.find((s) => s.id === 'desk');
+-  if (desk) {
+-    const [w, h, d] = DESK_BLOCK_SIZE;
+-    out.desk = new Matrix4()
+-      .makeTranslation(desk.look[0], h / 2, desk.look[2])
+-      .multiply(new Matrix4().makeScale(w, h, d));
+-  }
+   return out;
+ }
+ 
+diff --git a/src/museum/environment/floorReflector.test.ts b/src/museum/environment/floorReflector.test.ts
+new file mode 100644
+index 0000000..ee91ce3
+--- /dev/null
++++ b/src/museum/environment/floorReflector.test.ts
+@@ -0,0 +1,39 @@
++// The high-tier floor shares one reflection pass between every zone (Floor.tsx): the follower
++// materials must keep the leader's parameters and defines (one program) and its reflection uniform
++// holders by reference, with their own lightMap. A stand-in leader with drei's `{ value }` holders
++// checks that without a WebGL context.
++import { MeshStandardMaterial, Texture } from 'three';
++import { describe, expect, it } from 'vitest';
++import { floorReflectorParams } from '../materials';
++import { reflectorFollower } from './floorReflector';
++
++class FakeReflector extends MeshStandardMaterial {
++  _tDiffuse = { value: new Texture() };
++  _mixBlur = { value: 1 };
++  _textureMatrix = { value: null };
++}
++
++describe('reflector floor followers', () => {
++  it('share the reflection uniforms and defines, and take their own lightMap', () => {
++    const leader = new FakeReflector({
++      roughness: floorReflectorParams.roughness,
++      metalness: floorReflectorParams.metalness,
++    });
++    leader.defines = { STANDARD: '', USE_BLUR: '' };
++    leader.lightMap = new Texture();
++    const own = new Texture();
++    own.name = 'floorPools-lobby';
++    const follower = reflectorFollower(leader, own) as FakeReflector;
++    expect(follower).toBeInstanceOf(FakeReflector);
++    expect(follower).not.toBe(leader);
++    expect(follower._tDiffuse).toBe(leader._tDiffuse);
++    expect(follower._mixBlur).toBe(leader._mixBlur);
++    expect(follower._textureMatrix).toBe(leader._textureMatrix);
++    expect(follower.defines).toEqual(leader.defines);
++    expect(follower.defines).not.toBe(leader.defines);
++    expect(follower.lightMap).toBe(own);
++    expect(leader.lightMap).not.toBe(own);
++    expect(follower.roughness).toBe(leader.roughness);
++    expect(follower.metalness).toBe(leader.metalness);
++  });
++});
+diff --git a/src/museum/environment/floorReflector.ts b/src/museum/environment/floorReflector.ts
+new file mode 100644
+index 0000000..bc1960d
+--- /dev/null
++++ b/src/museum/environment/floorReflector.ts
+@@ -0,0 +1,34 @@
++// The high-tier floor shares one reflection pass between every floor zone (Floor.tsx): the first
++// zone hosts drei's MeshReflectorMaterial, the other zones use followers of its material. Pure, so
++// it is unit-tested without a WebGL context.
++import type { MeshStandardMaterial, Texture } from 'three';
++
++/** drei keeps the reflection uniforms in `{ value }` holders on the material instance. */
++function isUniform(value: unknown): value is { value: unknown } {
++  return (
++    typeof value === 'object' &&
++    value !== null &&
++    Object.keys(value).length === 1 &&
++    'value' in value
++  );
++}
++
++/**
++ * A clone of the reflector material for another floor zone: same parameters and defines (so the
++ * same program), the leader's reflection uniforms by reference, its own lightMap.
++ */
++export function reflectorFollower(
++  leader: MeshStandardMaterial,
++  lightMap: Texture,
++): MeshStandardMaterial {
++  const follower = leader.clone();
++  follower.defines = { ...leader.defines };
++  for (const [key, value] of Object.entries(leader)) {
++    if (key.startsWith('_') && !key.startsWith('__') && isUniform(value)) {
++      (follower as unknown as Record<string, unknown>)[key] = value;
++    }
++  }
++  follower.lightMap = lightMap;
++  follower.name = `floorReflector-${lightMap.name}`;
++  return follower;
++}
+diff --git a/src/museum/environment/lightPlan.test.ts b/src/museum/environment/lightPlan.test.ts
+new file mode 100644
+index 0000000..ac2521b
+--- /dev/null
++++ b/src/museum/environment/lightPlan.test.ts
+@@ -0,0 +1,221 @@
++import { describe, expect, it } from 'vitest';
++import type { StopId } from '../../content/ids';
++import { content } from '../../content/index';
++import { tokens } from '../../design/tokens';
++import { computeLayout, type Vec3 } from '../rail/layout';
++import {
++  approach,
++  assignLights,
++  beamSpecs,
++  DIALOG_DIM,
++  lightPlan,
++  lightTargets,
++  matchLights,
++  rampColor,
++  spotIntensity,
++  spotScaleGoal,
++  targetColor,
++  targetOfStop,
++  type TargetId,
++} from './lightPlan';
++
++const layout = computeLayout(content, new Date('2026-10-15T00:00:00Z'));
++const ramp = tokens.light.ramp;
++const main = layout.tracks.main.stops.map((s) => s.id);
++const projects = layout.tracks.projects.stops.map((s) => s.id);
++const at = (ids: StopId[], id: StopId) => ids.indexOf(id);
++
++/** Linear sRGB mix of two #RRGGBB colors (the ramp interpolation). */
++function mix(a: string, b: string, t: number): string {
++  const rgb = (hex: string) => [0, 2, 4].map((i) => Number.parseInt(hex.slice(1 + i, 3 + i), 16));
++  const [ca, cb] = [rgb(a), rgb(b)];
++  return `#${ca
++    .map((v, i) =>
++      Math.round(v + (cb[i]! - v) * t)
++        .toString(16)
++        .padStart(2, '0'),
++    )
++    .join('')}`.toUpperCase();
++}
++
++describe('light plan per tier (EXPERIENCE §7.5, ART_DIRECTION §4)', () => {
++  it('fixes 3 spotlights on high and 1 on medium and low', () => {
++    expect(lightPlan('high').spots).toHaveLength(3);
++    expect(lightPlan('medium').spots).toHaveLength(1);
++    expect(lightPlan('low').spots).toHaveLength(1);
++  });
++
++  it('uses the recipe values and turns beams off only on low', () => {
++    for (const tier of ['low', 'medium', 'high'] as const) {
++      const plan = lightPlan(tier);
++      expect(plan.hemisphere).toEqual({ sky: '#1A1C22', ground: '#0B0B0D', intensity: 0.15 });
++      expect(plan.fog).toEqual({ color: '#0B0B0D', density: 0.045 });
++      for (const spot of plan.spots) {
++        expect(spot.angle).toBe(0.38);
++        expect(spot.penumbra).toBe(0.6);
++        expect(spot.decay).toBe(2);
++        expect(spot.intensity).toBe(tokens.light.spotIntensity);
++      }
++      expect(plan.beams).toBe(tier !== 'low');
++      expect(plan.floor).toBe(tier === 'high' ? 'reflector' : 'standard');
++    }
++  });
++});
++
++describe('warmth by age (EXPERIENCE §6.9 table)', () => {
++  it('samples the ramp at 0, 1/3, 2/3 and 1 exactly on the four tokens', () => {
++    expect([0, 1 / 3, 2 / 3, 1].map(rampColor)).toEqual([...ramp]);
++  });
++
++  it('gives every target the color of the table', () => {
++    const expected: [TargetId, string][] = [
++      ['verafin', ramp[0]],
++      ['mysa', ramp[1]],
++      ['wailo', ramp[2]],
++      ['cfia', ramp[3]],
++      ['mun', ramp[3]],
++      ['certifications', ramp[3]],
++      ['portrait', ramp[0]],
++      ['desk', ramp[1]],
++      // Wings take their door's t: projects 1/6 (between light-0 and light-1), volunteer 1/2.
++      ['klarup', mix(ramp[0], ramp[1], 0.5)],
++      ['finance-tracker', mix(ramp[0], ramp[1], 0.5)],
++      ['safe-sip', mix(ramp[1], ramp[2], 0.5)],
++      ['sdsj', mix(ramp[1], ramp[2], 0.5)],
++    ];
++    for (const [id, color] of expected) expect(targetColor(layout, id), id).toBe(color);
++    for (const t of lightTargets(layout)) expect(t.color, t.id).toBe(targetColor(layout, t.id));
++  });
++});
++
++describe('light targets (EXPERIENCE §5.5, §6.8)', () => {
++  const targets = new Map(lightTargets(layout).map((t) => [t.id, t]));
++
++  it('lists the portrait, every slot and the desk', () => {
++    expect(targets.size).toBe(layout.slots.length + 2);
++    expect(lightTargets(layout)[0]!.id).toBe('portrait');
++    expect(lightTargets(layout).at(-1)!.id).toBe('desk');
++  });
++
++  it('mounts each spotlight as EXPERIENCE §5.5 says and aims it at its target', () => {
++    const expected: [TargetId, Vec3, Vec3][] = [
++      ['portrait', [2.6, 5.4, -2.6], [3.4, 1.7, -3.95]],
++      ['verafin', [2.4, 4.6, -9.4], [2.4, 1.35, -10]],
++      ['klarup', [-8.4, 3.7, -13.8], [-9, 1.35, -13.8]],
++      ['sdsj', [8.4, 3.7, -30.2], [9, 1.35, -30.2]],
++      ['mun', [-2.5, 4.6, -56.4], [-2.5, 1.25, -57]],
++      ['certifications', [4.4, 4.6, -57], [5.85, 1.6, -57]],
++      ['desk', [0, 3.7, -66.9], [0, 0.765, -67.5]],
++    ];
++    for (const [id, mount, aim] of expected) {
++      const t = targets.get(id)!;
++      mount.forEach((v, i) => expect(t.mount[i], `${id} mount ${i}`).toBeCloseTo(v, 6));
++      aim.forEach((v, i) => expect(t.aim[i], `${id} aim ${i}`).toBeCloseTo(v, 6));
++    }
++  });
++
++  it('centers each aisle pool 0.3 m from the plinth toward the aisle center', () => {
++    const verafin = targets.get('verafin')!;
++    expect(verafin.pool[0]).toBeCloseTo(2.1, 6);
++    expect(verafin.pool[1]).toBeCloseTo(-10, 6);
++    const mysa = targets.get('mysa')!;
++    expect(mysa.pool[0]).toBeCloseTo(-2.1, 6);
++  });
++
++  it('hangs each wash bay on the wall behind its target, facing into the room', () => {
++    expect(targets.get('verafin')!.wash).toMatchObject({ axis: 'z', at: 3.5, normal: [-1, 0] });
++    expect(targets.get('klarup')!.wash).toMatchObject({ axis: 'z', at: -11.5, normal: [1, 0] });
++    expect(targets.get('certifications')!.wash).toMatchObject({ axis: 'z', at: 6 });
++    expect(targets.get('portrait')!.wash).toMatchObject({ axis: 'x', at: -4, normal: [0, 1] });
++    expect(targets.get('desk')!.wash).toMatchObject({ axis: 'x', at: -70, normal: [0, 1] });
++  });
++});
++
++describe('assignment on arrival (EXPERIENCE §6.8)', () => {
++  it('maps stops to targets: lobby the portrait, doors none', () => {
++    expect(targetOfStop('lobby')).toBe('portrait');
++    expect(targetOfStop('projects-door')).toBeNull();
++    expect(targetOfStop('volunteer-door')).toBeNull();
++    expect(targetOfStop('verafin')).toBe('verafin');
++    expect(targetOfStop('desk')).toBe('desk');
++  });
++
++  it('lights the current target, or the next one ahead, on medium and low', () => {
++    expect(assignLights(main, at(main, 'lobby'), 'medium')).toEqual(['portrait']);
++    expect(assignLights(main, at(main, 'verafin'), 'low')).toEqual(['verafin']);
++    expect(assignLights(main, at(main, 'projects-door'), 'medium')).toEqual(['mysa']);
++    expect(assignLights(main, at(main, 'volunteer-door'), 'medium')).toEqual(['wailo']);
++    expect(assignLights(main, at(main, 'desk'), 'medium')).toEqual(['desk']);
++    expect(assignLights(projects, at(projects, 'projects-door'), 'medium')).toEqual(['klarup']);
++  });
++
++  it('gives lights 2 and 3 the next two targets ahead on high', () => {
++    expect(assignLights(main, at(main, 'lobby'), 'high')).toEqual(['portrait', 'verafin', 'mysa']);
++    expect(assignLights(main, at(main, 'projects-door'), 'high')).toEqual([
++      'mysa',
++      'wailo',
++      'cfia',
++    ]);
++    expect(assignLights(main, at(main, 'certifications'), 'high')).toEqual([
++      'certifications',
++      'desk',
++      null,
++    ]);
++    expect(assignLights(projects, at(projects, 'klarup'), 'high')).toEqual([
++      'klarup',
++      'finance-tracker',
++      null,
++    ]);
++  });
++
++  it('keeps a light on a target it already holds and moves only the others', () => {
++    expect(matchLights(['portrait', 'verafin', 'mysa'], ['verafin', 'mysa', 'wailo'])).toEqual([
++      'wailo',
++      'verafin',
++      'mysa',
++    ]);
++    expect(matchLights(['verafin'], ['mysa'])).toEqual(['mysa']);
++    expect(matchLights([null, null, null], ['desk', null, null])).toEqual(['desk', null, null]);
++  });
++});
++
++describe('light levels (ART_DIRECTION §4)', () => {
++  const view = { current: 'verafin', hovered: null, openId: null } as const;
++
++  it("lifts the visitor's own hovered light to 1.35x and dims the others while a story is open", () => {
++    expect(spotScaleGoal('verafin', view)).toBe(1);
++    expect(spotScaleGoal('verafin', { ...view, hovered: 'verafin' })).toBe(1.35);
++    expect(spotScaleGoal('mysa', { ...view, hovered: 'mysa' })).toBe(1);
++    expect(spotScaleGoal('verafin', { ...view, openId: 'verafin' })).toBe(1);
++    expect(spotScaleGoal('mysa', { ...view, openId: 'verafin' })).toBe(DIALOG_DIM);
++    expect(spotScaleGoal(null, { ...view, openId: 'verafin' })).toBe(1);
++  });
++
++  it('fades at a constant rate and jumps when the duration is 0', () => {
++    expect(approach(0, 1, 0.25, 1, 1)).toBeCloseTo(0.25, 9);
++    expect(approach(0.9, 1, 0.25, 1, 1)).toBe(1);
++    expect(approach(1, 0.3, 0.2, 0.4, 0.7)).toBeCloseTo(0.65, 9);
++    expect(approach(0, 1, 0.016, 0, 1)).toBe(1);
++  });
++
++  it('emits nothing without a target and scales with level and lift', () => {
++    const spec = lightPlan('high').spots[0]!;
++    expect(spotIntensity(spec, { target: null, level: 1, scale: 1 })).toBe(0);
++    expect(spotIntensity(spec, { target: 'verafin', level: 0.5, scale: 1.35 })).toBeCloseTo(
++      spec.intensity * 0.675,
++      9,
++    );
++  });
++});
++
++describe('beam cones (EXPERIENCE §5.5)', () => {
++  it('runs one cone per target from its mount to its aim, as wide as the bright core', () => {
++    const beams = beamSpecs(layout);
++    const targets = lightTargets(layout);
++    expect(beams.map((b) => b.id)).toEqual(targets.map((t) => t.id));
++    const verafin = beams.find((b) => b.id === 'verafin')!;
++    const length = Math.hypot(0, 4.6 - 1.35, 0.6);
++    expect(verafin.radius).toBeCloseTo(length * Math.tan(0.38 * 0.4), 6);
++    expect(verafin.apex).toEqual(targets.find((t) => t.id === 'verafin')!.mount);
++  });
++});
+diff --git a/src/museum/environment/lightPlan.ts b/src/museum/environment/lightPlan.ts
+new file mode 100644
+index 0000000..2584bca
+--- /dev/null
++++ b/src/museum/environment/lightPlan.ts
+@@ -0,0 +1,406 @@
++// The lighting plan (EXPERIENCE §5.5, §6.8, §6.9, §7.5; ARCHITECTURE §8.1; ART_DIRECTION §4).
++// Pure, so the unit tests pin it:
++// - `lightPlan(tier)`: what each tier gets, fixed at boot (3 real spotlights on high, 1 on medium
++//   and low; beam cones off on low; the reflector floor only on high). Only DPR adapts at runtime.
++// - Light targets: the portrait (lobby), every slot and the desk, each with its spotlight mount,
++//   the point it aims at, its baked pool center and its temperature color from the age ramp.
++// - `assignLights(trackStops, stopIndex, tier)`: light 1 takes the current stop's target (or the
++//   next one ahead), on high lights 2 and 3 take the next two targets ahead.
++// - `matchLights(current, wanted)`: which physical light goes where, so a light that already
++//   holds a wanted target stays put and only the others move (and fade up from 0).
++import { doorId, WING_IDS, type ExhibitId, type StopId } from '../../content/ids';
++import { tokens } from '../../design/tokens';
++import { slotOrigin, slotVariant } from '../exhibits/_kit/anatomy';
++import type { QualityTier } from '../exhibits/_kit/types';
++import {
++  ARCH_Z,
++  LOBBY_CEILING,
++  type Layout,
++  type Room,
++  type Slot,
++  type Vec3,
++} from '../rail/layout';
++
++const light = tokens.light;
++
++/** A light target: an exhibit slot, the lobby portrait or the front desk. */
++export type TargetId = ExhibitId | 'portrait' | 'desk';
++
++export interface SpotSpec {
++  angle: number;
++  penumbra: number;
++  decay: number;
++  /** Candela at full level (tokens.light.spotIntensity). */
++  intensity: number;
++}
++
++export interface LightPlan {
++  tier: QualityTier;
++  hemisphere: { sky: string; ground: string; intensity: number };
++  /** One entry per real spotlight; the count never changes after boot. */
++  spots: SpotSpec[];
++  /** Additive beam cones from each mount to its target (off on low). */
++  beams: boolean;
++  /** drei MeshReflectorMaterial floor (high) or the env-mapped library `floor` (medium, low). */
++  floor: 'reflector' | 'standard';
++  fog: { color: string; density: number };
++}
++
++/** EXPERIENCE §7.5 tier table. */
++export function lightPlan(tier: QualityTier): LightPlan {
++  const spot: SpotSpec = {
++    angle: light.spotAngle,
++    penumbra: light.spotPenumbra,
++    decay: light.spotDecay,
++    intensity: light.spotIntensity,
++  };
++  return {
++    tier,
++    hemisphere: { sky: light.hemiSky, ground: light.hemiGround, intensity: light.hemiIntensity },
++    spots: Array.from({ length: tier === 'high' ? 3 : 1 }, () => ({ ...spot })),
++    beams: tier !== 'low',
++    floor: tier === 'high' ? 'reflector' : 'standard',
++    fog: { color: tokens.color.ink, density: light.fogDensity },
++  };
++}
++
++// ---------------------------------------------------------------------------------------------
++// The age ramp (EXPERIENCE §6.9)
++
++const hexToRgb = (hex: string): [number, number, number] => {
++  const n = Number.parseInt(hex.replace('#', ''), 16);
++  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
++};
++const rgbToHex = (rgb: readonly number[]) =>
++  `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
++
++/**
++ * The light ramp `light-0` (t = 0, newest) to `light-3` (t = 1, oldest) with stops at 0, 1/3,
++ * 2/3 and 1, interpolated linearly per RGB component. Returns `#RRGGBB`.
++ */
++export function rampColor(t: number): string {
++  const ramp = light.ramp;
++  const k = Math.min(1, Math.max(0, Number.isFinite(t) ? t : 0)) * (ramp.length - 1);
++  const i = Math.min(ramp.length - 2, Math.floor(k));
++  const f = k - i;
++  const a = hexToRgb(ramp[i]!);
++  const b = hexToRgb(ramp[i + 1]!);
++  return rgbToHex(a.map((v, c) => v + (b[c]! - v) * f));
++}
++
++/**
++ * A target's temperature: exhibits by `layout.ageT` (wings use their door's t, Foundations 1),
++ * the portrait like the lobby (`light-0`), the desk `light-1`.
++ */
++export function targetColor(layout: Layout, target: TargetId): string {
++  if (target === 'portrait') return rampColor(layout.ageT.lobby ?? 0);
++  if (target === 'desk') return rampColor(layout.ageT.desk ?? 1 / 3);
++  return rampColor(layout.ageT[target] ?? 0);
++}
++
++// ---------------------------------------------------------------------------------------------
++// Targets, mounts and aim points
++
++/** Lobby portrait (EXPERIENCE §2.3): 0.8 x 1.0 m, center (3.4, 1.7, -3.95), facing +Z. */
++export const PORTRAIT_CENTER: Vec3 = [3.4, 1.7, ARCH_Z + 0.05];
++export const PORTRAIT_SIZE = [0.8, 1.0] as const;
++/** Portrait spotlight (EXPERIENCE §5.5): (2.6, 5.4, -2.6), i.e. up and out from the frame. */
++export const PORTRAIT_MOUNT: Vec3 = [PORTRAIT_CENTER[0] - 0.8, LOBBY_CEILING - 0.6, ARCH_Z + 1.4];
++
++/** Desk top height above the floor (the low walnut desk, Desk.tsx). */
++export const DESK_TOP_Y = 0.765;
++/** Horizontal distance from a plinth or the desk to its spotlight mount. */
++export const SPOT_OFFSET = 0.6;
++/** Distance from the wall to the wall vitrine's spotlight mount. */
++export const WALL_SPOT_OFFSET = 1.6;
++/** Mount height: 0.3 m under the ceiling, never above 4.6 m (EXPERIENCE §5.5). */
++export const SPOT_CEILING_GAP = 0.3;
++export const SPOT_MAX_Y = 4.6;
++/** The baked floor pool sits this far from the plinth toward the aisle center (EXPERIENCE §7.5). */
++export const POOL_SHIFT = 0.3;
++/** Width of the wall-wash bay behind each target (one 2 m wall panel). */
++export const WASH_BAY_WIDTH = 2;
++
++const EPS = 1e-6;
++const inside = (room: Room, x: number, z: number) =>
++  x >= room.min[0] - EPS &&
++  x <= room.max[0] + EPS &&
++  z >= room.min[1] - EPS &&
++  z <= room.max[1] + EPS;
++
++/** The room that holds a floor point (the first one in layout order). */
++export function roomAt(layout: Layout, x: number, z: number): Room | undefined {
++  return layout.rooms.find((r) => inside(r, x, z));
++}
++
++/** Where a target's wall-wash bay hangs: the wall line, its axis and the room side it faces. */
++export interface WashBay {
++  /** 'x': the wall runs along x at z = `at`; 'z': along z at x = `at`. */
++  axis: 'x' | 'z';
++  at: number;
++  /** Bay center along the wall. */
++  center: number;
++  /** Unit normal of the wall face, pointing into the room, in the horizontal plane. */
++  normal: [number, number];
++  /** Room ceiling: the bay runs from the floor to it. */
++  height: number;
++}
++
++export interface LightTarget {
++  id: TargetId;
++  /** The stop whose arrival lights it. */
++  stop: StopId;
++  /** Spotlight mount (EXPERIENCE §5.5). */
++  mount: Vec3;
++  /** What the spotlight and the beam cone aim at: the slot center, the desk top, the portrait. */
++  aim: Vec3;
++  /** Temperature color (`#RRGGBB`). */
++  color: string;
++  /** Floor pool center [x, z]. */
++  pool: [number, number];
++  wash: WashBay;
++}
++
++function slotAim(layout: Layout, slot: Slot): Vec3 {
++  const pose = Object.values(layout.tracks)
++    .flatMap((t) => t.stops)
++    .find((s) => s.id === slot.id);
++  if (pose) return [...pose.look];
++  const [x, y, z] = slotOrigin(slot);
++  return [x, y + 0.35, z];
++}
++
++function slotMount(layout: Layout, slot: Slot, aim: Vec3): Vec3 {
++  const room = roomAt(layout, slot.position[0], slot.position[2]);
++  const y = room ? Math.min(room.ceiling - SPOT_CEILING_GAP, SPOT_MAX_Y) : SPOT_MAX_Y;
++  if (slotVariant(slot) === 'wall') {
++    // Out from the wall, toward the room (local +Z of the slot).
++    return [
++      slot.position[0] + Math.sin(slot.rotationY) * WALL_SPOT_OFFSET,
++      y,
++      slot.position[2] + Math.cos(slot.rotationY) * WALL_SPOT_OFFSET,
++    ];
++  }
++  if (slot.track === 'main') return [aim[0], y, aim[2] + SPOT_OFFSET];
++  // Wing plinths: toward the door side of the wing, at the plinth z.
++  const toAisle = -Math.sign(slot.position[0]);
++  return [slot.position[0] + toAisle * SPOT_OFFSET, y, aim[2]];
++}
++
++/** The wall behind a target, seen from its stop: the nearest wall in the direction it faces away from. */
++function washBehind(room: Room, x: number, z: number, away: [number, number]): WashBay {
++  const [ax, az] = away;
++  if (Math.abs(ax) >= Math.abs(az)) {
++    const at = ax > 0 ? room.max[0] : room.min[0];
++    return {
++      axis: 'z',
++      at,
++      center: z,
++      normal: [ax > 0 ? -1 : 1, 0],
++      height: room.ceiling,
++    };
++  }
++  const at = az > 0 ? room.max[1] : room.min[1];
++  return { axis: 'x', at, center: x, normal: [0, az > 0 ? -1 : 1], height: room.ceiling };
++}
++
++/**
++ * The pool sits POOL_SHIFT from the plinth toward the aisle center (EXPERIENCE §7.5): across the
++ * aisle for the main-aisle plinths, toward the stop camera for the wing plinths, mun and the wall
++ * vitrine (their rooms have no single aisle line).
++ */
++function poolCenter(slot: Slot, room: Room, facing: [number, number]): [number, number] {
++  const [x, , z] = slot.position;
++  if (room.id === 'aisle' && slot.mount === 'plinth') return [x - Math.sign(x) * POOL_SHIFT, z];
++  return [x + facing[0] * POOL_SHIFT, z + facing[1] * POOL_SHIFT];
++}
++
++function roomOrThrow(layout: Layout, x: number, z: number, what: string): Room {
++  const room = roomAt(layout, x, z);
++  if (!room) throw new Error(`No room holds the ${what}`);
++  return room;
++}
++
++/** Every light target in main-track order, then the wing items (portrait first, desk last on main). */
++export function lightTargets(layout: Layout): LightTarget[] {
++  const targets: LightTarget[] = [];
++  const lobby = roomOrThrow(layout, PORTRAIT_CENTER[0], PORTRAIT_CENTER[2], 'portrait');
++  targets.push({
++    id: 'portrait',
++    stop: 'lobby',
++    mount: [...PORTRAIT_MOUNT],
++    aim: [...PORTRAIT_CENTER],
++    color: targetColor(layout, 'portrait'),
++    pool: [PORTRAIT_CENTER[0], PORTRAIT_CENTER[2] + POOL_SHIFT],
++    wash: { ...washBehind(lobby, PORTRAIT_CENTER[0], PORTRAIT_CENTER[2], [0, -1]) },
++  });
++  for (const slot of layout.slots) {
++    const aim = slotAim(layout, slot);
++    const room = roomOrThrow(layout, slot.position[0], slot.position[2], `slot '${slot.id}'`);
++    const facing: [number, number] = [Math.sin(slot.rotationY), Math.cos(slot.rotationY)];
++    // A wall vitrine washes its own wall; a plinth the side wall its wall titles hang on
++    // (placard.ts): the aisle wall on its side, a wing's outer wall, the Foundations side wall.
++    const away: [number, number] =
++      slotVariant(slot) === 'wall'
++        ? [-facing[0], -facing[1]]
++        : [Math.sign(slot.position[0]) || -1, 0];
++    targets.push({
++      id: slot.id,
++      stop: slot.id,
++      mount: slotMount(layout, slot, aim),
++      aim,
++      color: targetColor(layout, slot.id),
++      pool: poolCenter(slot, room, facing),
++      wash: washBehind(room, slot.position[0], slot.position[2], away),
++    });
++  }
++  const desk = layout.tracks.main.stops.find((s) => s.id === 'desk');
++  if (desk) {
++    const [x, , z] = desk.look;
++    const room = roomOrThrow(layout, x, z, 'desk');
++    targets.push({
++      id: 'desk',
++      stop: 'desk',
++      mount: [x, Math.min(room.ceiling - SPOT_CEILING_GAP, SPOT_MAX_Y), z + SPOT_OFFSET],
++      aim: [x, DESK_TOP_Y, z],
++      color: targetColor(layout, 'desk'),
++      pool: [x, z + POOL_SHIFT],
++      wash: washBehind(room, x, z, [0, -1]),
++    });
++  }
++  return targets;
++}
++
++// ---------------------------------------------------------------------------------------------
++// Assignment (EXPERIENCE §6.8)
++
++const DOORS = new Set<string>(WING_IDS.map(doorId));
++
++/** The light target a stop owns: the lobby lights the portrait; doors own none. */
++export function targetOfStop(id: StopId): TargetId | null {
++  if (id === 'lobby') return 'portrait';
++  if (DOORS.has(id)) return null;
++  return id as TargetId;
++}
++
++/**
++ * Light targets for the visitor at `trackStops[stopIndex]`: light 1 takes the stop's own target,
++ * or the next target ahead on the track when the stop has none; on high, lights 2 and 3 take the
++ * next two targets ahead. A light with nothing left ahead gets null (it stays dark). The array has
++ * one entry per real spotlight of the tier.
++ */
++export function assignLights(
++  trackStops: readonly StopId[],
++  stopIndex: number,
++  tier: QualityTier,
++): (TargetId | null)[] {
++  const count = lightPlan(tier).spots.length;
++  const start = Math.min(Math.max(0, stopIndex), Math.max(0, trackStops.length - 1));
++  const ahead: TargetId[] = [];
++  for (let i = start; i < trackStops.length && ahead.length < count; i++) {
++    const target = targetOfStop(trackStops[i]!);
++    if (target && !ahead.includes(target)) ahead.push(target);
++  }
++  return Array.from({ length: count }, (_, i) => ahead[i] ?? null);
++}
++
++/**
++ * Maps wanted targets onto physical lights. A light that already holds one of the wanted targets
++ * keeps it; the remaining wanted targets go, in order, to the remaining lights. Returns the new
++ * target per light (same length as `current`).
++ */
++export function matchLights(
++  current: readonly (TargetId | null)[],
++  wanted: readonly (TargetId | null)[],
++): (TargetId | null)[] {
++  const next: (TargetId | null)[] = current.map((t) => (t && wanted.includes(t) ? t : null));
++  const kept = new Set(next.filter((t): t is TargetId => t !== null));
++  const free = next.map((t, i) => (t === null ? i : -1)).filter((i) => i >= 0);
++  for (const target of wanted) {
++    if (!target || kept.has(target)) continue;
++    const slot = free.shift();
++    if (slot === undefined) break;
++    next[slot] = target;
++    kept.add(target);
++  }
++  return next;
++}
++
++// ---------------------------------------------------------------------------------------------
++// Light levels (ART_DIRECTION §4): fade-in after a reassignment, hover lift, dialog dimming
++
++/** What a real spotlight is doing right now: `level` fades 0 to 1, `scale` is the lift or dim. */
++export interface SpotState {
++  target: TargetId | null;
++  level: number;
++  scale: number;
++}
++
++/** While a story is open, every other real spot dims to this fraction (ART_DIRECTION §4). */
++export const DIALOG_DIM = 0.3;
++/** Seconds the dialog dimming takes. */
++export const DIALOG_DIM_S = 0.4;
++
++/**
++ * The scale a spot heads for: 30% for every spot but the open exhibit's while a story is open,
++ * 1.35x on the visitor's own target while it is hovered, otherwise 1.
++ */
++export function spotScaleGoal(
++  target: TargetId | null,
++  view: { current: TargetId | null; hovered: TargetId | null; openId: TargetId | null },
++): number {
++  if (!target) return 1;
++  if (view.openId) return target === view.openId ? 1 : DIALOG_DIM;
++  if (view.hovered === target && view.current === target) return tokens.motion.hoverLift;
++  return 1;
++}
++
++/**
++ * Moves `value` toward `goal` at the constant rate that covers `span` in `duration` seconds. A
++ * duration of 0 (reduced motion, ?test=1) jumps straight to the goal.
++ */
++export function approach(
++  value: number,
++  goal: number,
++  dt: number,
++  duration: number,
++  span: number,
++): number {
++  if (duration <= 0) return goal;
++  const step = (Math.abs(span) * Math.max(0, dt)) / duration;
++  if (Math.abs(goal - value) <= step) return goal;
++  return value + Math.sign(goal - value) * step;
++}
++
++/** The candela a spot emits: the tier intensity times its fade level and its scale. */
++export function spotIntensity(spec: SpotSpec, state: SpotState): number {
++  return state.target ? spec.intensity * state.level * state.scale : 0;
++}
++
++// ---------------------------------------------------------------------------------------------
++// Beam cones (EXPERIENCE §5.5): one additive cone per target, from its mount to its aim point
++
++export interface BeamSpec {
++  id: TargetId;
++  /** The cone's apex (the mount) and the center of its open base (the aim point). */
++  apex: Vec3;
++  base: Vec3;
++  /** Base radius: the spot's bright core (angle times 1 - penumbra) at the aim distance. */
++  radius: number;
++  color: string;
++}
++
++/** The beam cone of every light target, in lightTargets order. */
++export function beamSpecs(layout: Layout): BeamSpec[] {
++  const core = light.spotAngle * (1 - light.spotPenumbra);
++  return lightTargets(layout).map((t) => {
++    const length = Math.hypot(t.aim[0] - t.mount[0], t.aim[1] - t.mount[1], t.aim[2] - t.mount[2]);
++    return {
++      id: t.id,
++      apex: [...t.mount],
++      base: [...t.aim],
++      radius: length * Math.tan(core),
++      color: t.color,
++    };
++  });
++}
+diff --git a/src/museum/environment/lightPools.test.ts b/src/museum/environment/lightPools.test.ts
+new file mode 100644
+index 0000000..5249fe4
+--- /dev/null
++++ b/src/museum/environment/lightPools.test.ts
+@@ -0,0 +1,145 @@
++import { Vector3 } from 'three';
++import { describe, expect, it } from 'vitest';
++import { content } from '../../content/index';
++import { tokens } from '../../design/tokens';
++import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
++import { computeLayout, type Room } from '../rail/layout';
++import { lightTargets, rampColor } from './lightPlan';
++import {
++  floorPaint,
++  MAX_LIGHTMAP_SIZE,
++  paintFloorZones,
++  paintZone,
++  WALL_WASH_SIZE,
++  wallWashPixels,
++  washLayout,
++  washMatrix,
++  zoneSize,
++  type ZoneRaster,
++} from './lightPools';
++
++const layout = computeLayout(content, new Date('2026-10-15T00:00:00Z'));
++const light = tokens.light;
++const room = (id: Room['id']) => layout.rooms.find((r) => r.id === id)!;
++
++/** The sRGB-encoded red byte of the zone pixel holding world [x, z]. */
++function byteAt(zone: ZoneRaster, r: Room, x: number, z: number): number {
++  const col = Math.min(zone.width - 1, Math.floor((x - r.min[0]) / zone.scale[0]));
++  const row = Math.min(zone.height - 1, Math.floor((z - r.min[1]) / zone.scale[1]));
++  return zone.data[(row * zone.width + col) * 4]!;
++}
++
++describe('floor paint (EXPERIENCE §7.5, ART_DIRECTION §4)', () => {
++  const paint = floorPaint(layout);
++
++  it('paints one pool per light target in its temperature, radius 1.6 m, alpha 0.85', () => {
++    const pools = paint.pools.filter((p) => p.kind === 'pool');
++    expect(pools.map((p) => p.for)).toEqual(lightTargets(layout).map((t) => t.id));
++    for (const pool of pools) {
++      expect(pool.radius).toBe(light.poolRadius);
++      expect(pool.alpha).toBe(light.poolAlpha);
++    }
++    expect(pools.find((p) => p.for === 'cfia')!.color).toBe(light.ramp[3]);
++  });
++
++  it('paints a light-0 threshold pool on the aisle side of every door', () => {
++    const doors = paint.pools.filter((p) => p.kind === 'door');
++    expect(doors).toHaveLength(layout.doors.length);
++    for (const pool of doors) {
++      expect(pool).toMatchObject({ radius: 1.2, alpha: 0.35, color: rampColor(0) });
++      expect(Math.abs(pool.center[0])).toBeLessThan(3.5);
++    }
++  });
++
++  it('puts a soft contact patch under every plinth and the desk', () => {
++    const plinths = layout.slots.filter((s) => s.plinth !== 'none').map((s) => s.id);
++    expect(paint.contacts.map((c) => c.for)).toEqual([...plinths, 'desk']);
++    for (const c of paint.contacts) {
++      expect(c.soft).toBe(0.25);
++      expect(c.darkness).toBe(0.55);
++    }
++  });
++});
++
++describe('floor lightmaps', () => {
++  const zones = paintFloorZones(layout);
++  const aisle = room('aisle');
++  const aisleZone = zones.find((z) => z.room === 'aisle')!;
++
++  it('paints one lightmap per floor zone, no larger than the cap', () => {
++    expect(zones.map((z) => z.room)).toEqual(layout.rooms.map((r) => r.id));
++    for (const zone of zones) {
++      expect(Math.max(zone.width, zone.height)).toBeLessThanOrEqual(MAX_LIGHTMAP_SIZE);
++      expect(zone.data).toHaveLength(zone.width * zone.height * 4);
++    }
++    expect(zoneSize(aisle)).toEqual({ width: aisleZone.width, height: aisleZone.height });
++  });
++
++  it('is deterministic (seeded dither, painted from the layout only)', () => {
++    const again = paintZone(aisle, floorPaint(layout), 2);
++    expect(Buffer.from(again.data).equals(Buffer.from(aisleZone.data))).toBe(true);
++  });
++
++  it('lights the pool, darkens under the plinth and leaves the dark floor between', () => {
++    const slot = layout.slots.find((s) => s.id === 'verafin')!;
++    const [w] = PLINTH_SIZE.standard;
++    // Toward the aisle center, just past the contact patch's soft edge: inside the pool.
++    const litX =
++      slot.position[0] - Math.sign(slot.position[0]) * (w / 2 + light.contactSoftEdge + 0.02);
++    const lit = byteAt(aisleZone, aisle, litX, slot.position[2]);
++    const under = byteAt(aisleZone, aisle, slot.position[0], slot.position[2]);
++    const between = byteAt(aisleZone, aisle, 0, -16 - 3);
++    expect(lit).toBeGreaterThan(200);
++    expect(under).toBeLessThan(lit * 0.8);
++    expect(between).toBeLessThan(100);
++  });
++});
++
++describe('wall wash (EXPERIENCE §7.5)', () => {
++  const pixels = wallWashPixels();
++  const at = (col: number, row: number) => pixels[(row * WALL_WASH_SIZE + col) * 4]!;
++  const mid = WALL_WASH_SIZE / 2;
++
++  it('is one deterministic 256 px tile', () => {
++    expect(pixels).toHaveLength(WALL_WASH_SIZE * WALL_WASH_SIZE * 4);
++    expect(Buffer.from(wallWashPixels()).equals(Buffer.from(pixels))).toBe(true);
++  });
++
++  it('draws the scallop high in the middle, fading toward the floor, and plain bottom rows', () => {
++    const scallop = at(mid, Math.round(WALL_WASH_SIZE * 0.2));
++    const low = at(mid, Math.round(WALL_WASH_SIZE * 0.8));
++    const plain = at(mid, WALL_WASH_SIZE - 2);
++    expect(scallop).toBeGreaterThan(low);
++    expect(low).toBeGreaterThan(plain);
++    expect(Math.abs(plain - at(mid - 40, WALL_WASH_SIZE - 2))).toBeLessThanOrEqual(2);
++  });
++
++  it('bakes a darker panel seam at both tile edges (every 2 m on the wall)', () => {
++    const row = WALL_WASH_SIZE - 2;
++    expect(at(0, row)).toBeLessThan(at(mid, row));
++    expect(at(WALL_WASH_SIZE - 1, row)).toBeLessThan(at(mid, row));
++  });
++
++  it('hangs one bay per target on its wall, edges on the wall line seam grid', () => {
++    const { bays, seams } = washLayout(layout);
++    expect(bays.map((b) => b.for)).toEqual(lightTargets(layout).map((t) => t.id));
++    for (const { bay } of bays) {
++      const line = seams.find((s) => s.axis === bay.axis && Math.abs(s.at - bay.at) < 1e-6)!;
++      const edge = (((bay.center - 1 - line.phase) % 2) + 2) % 2;
++      expect(Math.min(edge, 2 - edge), `${bay.axis} ${bay.at}`).toBeLessThan(1e-9);
++    }
++    expect(bays.find((b) => b.for === 'verafin')!.bay.center).toBeCloseTo(-10, 9);
++  });
++
++  it('turns each bay plane to face into its room, just off the wall', () => {
++    const { bays } = washLayout(layout);
++    const verafin = bays.find((b) => b.for === 'verafin')!;
++    const m = washMatrix(verafin.bay);
++    const normal = new Vector3(0, 0, 1).transformDirection(m);
++    expect(normal.x).toBeCloseTo(-1, 6);
++    const center = new Vector3().applyMatrix4(m);
++    expect(center.x).toBeLessThan(3.5);
++    expect(center.x).toBeGreaterThan(3.49);
++    expect(center.y).toBeCloseTo(verafin.bay.height / 2, 6);
++  });
++});
+diff --git a/src/museum/environment/lightPools.ts b/src/museum/environment/lightPools.ts
+new file mode 100644
+index 0000000..a5f6f3f
+--- /dev/null
++++ b/src/museum/environment/lightPools.ts
+@@ -0,0 +1,412 @@
++// Baked light (EXPERIENCE §7.5, ART_DIRECTION §4, ARCHITECTURE §8.1): no shadow maps and only one
++// to three real lights, so the gallery's warmth is painted once at boot.
++// - Floor pools: one lightmap per floor zone (room). Per light target a warm radial pool (radius
++//   1.6 m, 0.3 m from the plinth toward the aisle center, peak alpha 0.85, smoothstep falloff,
++//   color by age); per door a threshold pool on the aisle floor (1.2 m, alpha 0.35, light-0); under
++//   every plinth and the desk a soft contact patch (footprint plus a 0.25 m edge, darkness 0.55).
++// - Wall wash: one shared 256 px "scallop" (a wall-washer arc fading toward the floor) with a
++//   panel seam at each side, so seams repeat every 2 m. The bottom rows carry only the base level
++//   and the seams: the hall shell samples them, the wash bays behind each target the whole tile.
++//   Each bay is tinted by its target's temperature (instance color) and snapped to its wall's
++//   seam grid, so the bay edges and the shell's seams line up.
++// Everything is a pure function of the layout plus a fixed seed (the dither), so the textures are
++// identical on every run and can be rebuilt after a context restore. Values are linear light,
++// stored sRGB-encoded in 8 bits (colorSpace SRGB) so the dark end keeps its precision.
++import { CanvasTexture, ClampToEdgeWrapping, Matrix4, RepeatWrapping, SRGBColorSpace } from 'three';
++import { tokens } from '../../design/tokens';
++import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
++import { rng } from '../exhibits/_kit/noise';
++import { AISLE_HALF, type Layout, type Room } from '../rail/layout';
++import { lightTargets, rampColor, WASH_BAY_WIDTH, type TargetId, type WashBay } from './lightPlan';
++import type { SeamLine } from './shell';
++
++const light = tokens.light;
++
++/** Floor lightmap resolution, capped so a long aisle stays within MAX_LIGHTMAP_SIZE. */
++export const POOL_PX_PER_M = 32;
++export const MAX_LIGHTMAP_SIZE = 2048;
++/** Floor lightmap level outside the pools (linear, light-0 tinted). */
++export const FLOOR_BASE = 0.05;
++/** The door pool's center sits this far into the aisle from the door line. */
++export const DOOR_POOL_INSET = 0.6;
++/** Desk footprint for its contact patch (Desk.tsx). */
++export const DESK_FOOTPRINT = [1.8, 0.7] as const;
++/**
++ * lightMapIntensity of the floor per floor type. The floor is near black (`#0E0E11`), so its
++ * pools need a strong lightmap; the reflector floor (metalness 0.5) has half the diffuse albedo
++ * and gets twice the intensity to read the same.
++ */
++export const FLOOR_LIGHTMAP_INTENSITY = { standard: 32, reflector: 64 } as const;
++
++/** Wall wash tile: side in px, base level, and the lightMapIntensity of the `wall` material. */
++export const WALL_WASH_SIZE = 256;
++export const WALL_WASH_BASE = 0.04;
++export const WALL_WASH_INTENSITY = 40;
++/** Shell faces sample the wash at this v: base level and seams only, no scallop. */
++export const WALL_WASH_PLAIN_V = 0.03;
++
++export interface PoolSpec {
++  kind: 'pool' | 'door';
++  /** The target or door it belongs to. */
++  for: string;
++  center: [number, number];
++  radius: number;
++  alpha: number;
++  color: string;
++}
++
++export interface ContactSpec {
++  for: string;
++  center: [number, number];
++  /** Footprint [x, z] before rotation. */
++  size: [number, number];
++  rotationY: number;
++  soft: number;
++  darkness: number;
++}
++
++export interface FloorPaint {
++  pools: PoolSpec[];
++  contacts: ContactSpec[];
++}
++
++/** Everything painted into the floor lightmaps, in world [x, z]. */
++export function floorPaint(layout: Layout): FloorPaint {
++  const pools: PoolSpec[] = lightTargets(layout).map((t) => ({
++    kind: 'pool',
++    for: t.id,
++    center: [...t.pool],
++    radius: light.poolRadius,
++    alpha: light.poolAlpha,
++    color: t.color,
++  }));
++  for (const door of layout.doors) {
++    const s = door.side === 'left' ? -1 : 1;
++    pools.push({
++      kind: 'door',
++      for: `${door.wing}-door`,
++      center: [s * (AISLE_HALF - DOOR_POOL_INSET), door.z],
++      radius: light.doorPoolRadius,
++      alpha: light.doorPoolAlpha,
++      color: rampColor(0),
++    });
++  }
++  const contacts: ContactSpec[] = [];
++  for (const slot of layout.slots) {
++    if (slot.plinth === 'none') continue;
++    const [w, , d] = PLINTH_SIZE[slot.plinth];
++    contacts.push({
++      for: slot.id,
++      center: [slot.position[0], slot.position[2]],
++      size: [w, d],
++      rotationY: slot.rotationY,
++      soft: light.contactSoftEdge,
++      darkness: light.contactDarkness,
++    });
++  }
++  const desk = layout.tracks.main.stops.find((s) => s.id === 'desk');
++  if (desk) {
++    contacts.push({
++      for: 'desk',
++      center: [desk.look[0], desk.look[2]],
++      size: [...DESK_FOOTPRINT],
++      rotationY: 0,
++      soft: light.contactSoftEdge,
++      darkness: light.contactDarkness,
++    });
++  }
++  return { pools, contacts };
++}
++
++// ---------------------------------------------------------------------------------------------
++// Color and encoding helpers
++
++const smoothstep = (a: number, b: number, x: number) => {
++  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
++  return t * t * (3 - 2 * t);
++};
++
++const srgbToLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
++const linearToSrgb = (c: number) =>
++  c <= 0.0031308 ? c * 12.92 : 1.055 * Math.max(0, c) ** (1 / 2.4) - 0.055;
++
++/** `#RRGGBB` to linear RGB in [0, 1]. */
++export function hexToLinear(hex: string): [number, number, number] {
++  const n = Number.parseInt(hex.replace('#', ''), 16);
++  return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => srgbToLinear(v / 255)) as [
++    number,
++    number,
++    number,
++  ];
++}
++
++/** Linear [0, 1] to an sRGB byte, with a seeded dither of up to half a step against banding. */
++function encode(value: number, dither: number): number {
++  const v = linearToSrgb(Math.min(1, Math.max(0, value))) * 255 + dither;
++  return Math.min(255, Math.max(0, Math.round(v)));
++}
++
++// ---------------------------------------------------------------------------------------------
++// Floor zones
++
++export interface ZoneRaster {
++  room: Room['id'];
++  width: number;
++  height: number;
++  /** Meters per pixel along x and z. */
++  scale: [number, number];
++  /** RGBA, row 0 at the room's min z (the far end), column 0 at its min x. */
++  data: Uint8ClampedArray<ArrayBuffer>;
++}
++
++/** Pixel size of a zone's lightmap. */
++export function zoneSize(room: Room, pxPerM = POOL_PX_PER_M): { width: number; height: number } {
++  const w = room.max[0] - room.min[0];
++  const d = room.max[1] - room.min[1];
++  const density = Math.min(pxPerM, MAX_LIGHTMAP_SIZE / Math.max(w, d));
++  return {
++    width: Math.max(1, Math.round(w * density)),
++    height: Math.max(1, Math.round(d * density)),
++  };
++}
++
++/** World [x, z] of a pixel center (see ZoneRaster for the orientation). */
++export function zonePixelToWorld(
++  room: Room,
++  size: { width: number; height: number },
++  col: number,
++  row: number,
++): [number, number] {
++  const w = room.max[0] - room.min[0];
++  const d = room.max[1] - room.min[1];
++  return [
++    room.min[0] + ((col + 0.5) * w) / size.width,
++    room.min[1] + ((row + 0.5) * d) / size.height,
++  ];
++}
++
++/** Signed distance outside a rotated rectangle (0 inside). */
++function outsideRect(spec: ContactSpec, x: number, z: number): number {
++  const dx = x - spec.center[0];
++  const dz = z - spec.center[1];
++  // Into the footprint's local frame (rotation about +Y by rotationY).
++  const c = Math.cos(spec.rotationY);
++  const s = Math.sin(spec.rotationY);
++  const lx = c * dx - s * dz;
++  const lz = s * dx + c * dz;
++  const ox = Math.max(0, Math.abs(lx) - spec.size[0] / 2);
++  const oz = Math.max(0, Math.abs(lz) - spec.size[1] / 2);
++  return Math.hypot(ox, oz);
++}
++
++/** Paints one floor zone. Pure and deterministic (the dither is seeded by `seed`). */
++export function paintZone(
++  room: Room,
++  paint: FloorPaint,
++  seed = 1,
++  pxPerM = POOL_PX_PER_M,
++): ZoneRaster {
++  const size = zoneSize(room, pxPerM);
++  const { width, height } = size;
++  const sx = (room.max[0] - room.min[0]) / width;
++  const sz = (room.max[1] - room.min[1]) / height;
++  const rgb = new Float32Array(width * height * 3);
++  const base = hexToLinear(rampColor(0)).map((v) => v * FLOOR_BASE);
++  for (let i = 0; i < width * height; i++) rgb.set(base, i * 3);
++
++  const colOf = (x: number) => (x - room.min[0]) / sx - 0.5;
++  const rowOf = (z: number) => (z - room.min[1]) / sz - 0.5;
++  const span = (cx: number, cz: number, r: number) => ({
++    c0: Math.max(0, Math.floor(colOf(cx - r))),
++    c1: Math.min(width - 1, Math.ceil(colOf(cx + r))),
++    r0: Math.max(0, Math.floor(rowOf(cz - r))),
++    r1: Math.min(height - 1, Math.ceil(rowOf(cz + r))),
++  });
++
++  for (const pool of paint.pools) {
++    const color = hexToLinear(pool.color);
++    const { c0, c1, r0, r1 } = span(pool.center[0], pool.center[1], pool.radius);
++    for (let row = r0; row <= r1; row++) {
++      for (let col = c0; col <= c1; col++) {
++        const [x, z] = zonePixelToWorld(room, size, col, row);
++        const r = Math.hypot(x - pool.center[0], z - pool.center[1]);
++        if (r >= pool.radius) continue;
++        const a = pool.alpha * (1 - smoothstep(0, pool.radius, r));
++        const i = (row * width + col) * 3;
++        for (let k = 0; k < 3; k++) rgb[i + k] = rgb[i + k]! * (1 - a) + color[k]! * a;
++      }
++    }
++  }
++
++  for (const contact of paint.contacts) {
++    const reach = Math.hypot(contact.size[0], contact.size[1]) / 2 + contact.soft;
++    const { c0, c1, r0, r1 } = span(contact.center[0], contact.center[1], reach);
++    for (let row = r0; row <= r1; row++) {
++      for (let col = c0; col <= c1; col++) {
++        const [x, z] = zonePixelToWorld(room, size, col, row);
++        const d = outsideRect(contact, x, z);
++        if (d >= contact.soft) continue;
++        const k = 1 - contact.darkness * (1 - smoothstep(0, contact.soft, d));
++        const i = (row * width + col) * 3;
++        rgb[i] = rgb[i]! * k;
++        rgb[i + 1] = rgb[i + 1]! * k;
++        rgb[i + 2] = rgb[i + 2]! * k;
++      }
++    }
++  }
++
++  const random = rng(seed);
++  const data = new Uint8ClampedArray(width * height * 4);
++  for (let i = 0; i < width * height; i++) {
++    const dither = random() - 0.5;
++    data[i * 4] = encode(rgb[i * 3]!, dither);
++    data[i * 4 + 1] = encode(rgb[i * 3 + 1]!, dither);
++    data[i * 4 + 2] = encode(rgb[i * 3 + 2]!, dither);
++    data[i * 4 + 3] = 255;
++  }
++  return { room: room.id, width, height, scale: [sx, sz], data };
++}
++
++/** Every floor zone of the layout, painted (seed = 1 + the room's index). */
++export function paintFloorZones(layout: Layout, pxPerM = POOL_PX_PER_M): ZoneRaster[] {
++  const paint = floorPaint(layout);
++  return layout.rooms.map((room, i) => paintZone(room, paint, 1 + i, pxPerM));
++}
++
++// ---------------------------------------------------------------------------------------------
++// Wall wash
++
++/** Tile geometry: the tile spans one 2 m panel and, nominally, a 5 m wall. */
++const TILE_W = 2;
++const TILE_H = 5;
++const SCALLOP_TOP = 0.45; // m below the ceiling at the tile center
++const SCALLOP_CURVE = 1.1; // edge drop per m^2 off center
++const SCALLOP_FALLOFF = 2.4; // m, exponential falloff toward the floor
++const SEAM_HALF_PX = 1.25;
++const SEAM_DARKEN = 0.55;
++
++/** Wash level at tile coordinates (u across, v up), linear, before seams and base. */
++export function scallop(u: number, v: number): number {
++  const x = (u - 0.5) * TILE_W;
++  const down = (1 - v) * TILE_H;
++  const edge = SCALLOP_TOP + SCALLOP_CURVE * x * x;
++  const lit = smoothstep(0, 0.35, down - edge);
++  const fall = Math.exp(-Math.max(0, down - SCALLOP_TOP) / SCALLOP_FALLOFF);
++  const sides = 1 - smoothstep(0.55, 0.98, Math.abs(x));
++  // Nothing reaches the bottom rows: the shell samples them for base and seams only.
++  const floor = smoothstep(0.08, 0.22, v);
++  return lit * fall * sides * floor;
++}
++
++/** RGBA pixels of the shared wall-wash tile (greyscale, sRGB-encoded, row 0 at the top). */
++export function wallWashPixels(size = WALL_WASH_SIZE, seed = 7): Uint8ClampedArray<ArrayBuffer> {
++  const data = new Uint8ClampedArray(size * size * 4);
++  const random = rng(seed);
++  for (let row = 0; row < size; row++) {
++    const v = 1 - (row + 0.5) / size;
++    for (let col = 0; col < size; col++) {
++      const u = (col + 0.5) / size;
++      const edgePx = Math.min(col + 0.5, size - col - 0.5);
++      const seam = 1 - SEAM_DARKEN * (1 - smoothstep(0, SEAM_HALF_PX, edgePx));
++      const value = (WALL_WASH_BASE + (1 - WALL_WASH_BASE) * scallop(u, v)) * seam;
++      const byte = encode(value, random() - 0.5);
++      const i = (row * size + col) * 4;
++      data[i] = byte;
++      data[i + 1] = byte;
++      data[i + 2] = byte;
++      data[i + 3] = 255;
++    }
++  }
++  return data;
++}
++
++/** A wash bay stands this far in front of its wall face (wall titles are at 0.01 m). */
++export const WASH_BAY_GAP = 0.005;
++
++export interface WashPlacement {
++  for: TargetId;
++  bay: WashBay;
++  color: string;
++}
++
++export interface WashLayout {
++  bays: WashPlacement[];
++  /** One per wall line that carries a bay: the shell's seams on it follow the bays' grid. */
++  seams: SeamLine[];
++}
++
++const mod = (a: number, n: number) => ((a % n) + n) % n;
++
++/**
++ * Every target's wall-wash bay. The first bay on a wall line sets that line's seam phase (its
++ * left edge); a later bay on the same line moves to the nearest center on that 2 m grid.
++ */
++export function washLayout(layout: Layout): WashLayout {
++  const seams: SeamLine[] = [];
++  const bays: WashPlacement[] = [];
++  const half = WASH_BAY_WIDTH / 2;
++  for (const target of lightTargets(layout)) {
++    const bay = { ...target.wash, normal: [...target.wash.normal] as [number, number] };
++    const line = seams.find((s) => s.axis === bay.axis && Math.abs(s.at - bay.at) < 1e-6);
++    if (line) {
++      const k = Math.round((bay.center - half - line.phase) / WASH_BAY_WIDTH);
++      bay.center = line.phase + k * WASH_BAY_WIDTH + half;
++    } else {
++      seams.push({ axis: bay.axis, at: bay.at, phase: mod(bay.center - half, WASH_BAY_WIDTH) });
++    }
++    bays.push({ for: target.id, bay, color: target.color });
++  }
++  return { bays, seams };
++}
++
++/** The unit-plane matrix of a bay: WASH_BAY_WIDTH wide, floor to ceiling, facing into the room. */
++export function washMatrix(bay: WashBay): Matrix4 {
++  const across = bay.at;
++  const [nx, nz] = bay.normal;
++  const x = bay.axis === 'z' ? across + nx * WASH_BAY_GAP : bay.center;
++  const z = bay.axis === 'x' ? across + nz * WASH_BAY_GAP : bay.center;
++  return new Matrix4()
++    .makeTranslation(x, bay.height / 2, z)
++    .multiply(new Matrix4().makeRotationY(Math.atan2(nx, nz)))
++    .multiply(new Matrix4().makeScale(WASH_BAY_WIDTH, bay.height, 1));
++}
++
++// ---------------------------------------------------------------------------------------------
++// Browser: CanvasTextures
++
++function canvasFrom(width: number, height: number, data: Uint8ClampedArray<ArrayBuffer>) {
++  const canvas = document.createElement('canvas');
++  canvas.width = width;
++  canvas.height = height;
++  const ctx = canvas.getContext('2d');
++  if (!ctx) throw new Error('No 2D context for a lightmap');
++  ctx.putImageData(new ImageData(data, width, height), 0, 0);
++  return canvas;
++}
++
++function asLightmap(texture: CanvasTexture, name: string): CanvasTexture {
++  texture.name = name;
++  texture.colorSpace = SRGBColorSpace;
++  texture.channel = 0;
++  texture.needsUpdate = true;
++  return texture;
++}
++
++/** One floor lightmap CanvasTexture per room (lightMap.channel 0, the plane's own UVs). */
++export function createFloorLightmaps(layout: Layout): Map<Room['id'], CanvasTexture> {
++  const out = new Map<Room['id'], CanvasTexture>();
++  for (const zone of paintFloorZones(layout)) {
++    const texture = new CanvasTexture(canvasFrom(zone.width, zone.height, zone.data));
++    out.set(zone.room, asLightmap(texture, `floorPools-${zone.room}`));
++  }
++  return out;
++}
++
++/** The shared wall-wash tile (repeat-wrapped along the wall). */
++export function createWallWash(): CanvasTexture {
++  const size = WALL_WASH_SIZE;
++  const texture = new CanvasTexture(canvasFrom(size, size, wallWashPixels(size)));
++  texture.wrapS = RepeatWrapping;
++  texture.wrapT = ClampToEdgeWrapping;
++  return asLightmap(texture, 'wallWash');
++}
+diff --git a/src/museum/environment/lighting.test.ts b/src/museum/environment/lighting.test.ts
+deleted file mode 100644
+index 9e4a9f7..0000000
+--- a/src/museum/environment/lighting.test.ts
++++ /dev/null
+@@ -1,34 +0,0 @@
+-import { describe, expect, it } from 'vitest';
+-import type { StopId } from '../../content/ids';
+-import { content } from '../../content/index';
+-import { computeLayout, type Vec3 } from '../rail/layout';
+-import { litStop, spotPlan } from './lighting';
+-
+-const layout = computeLayout(content, new Date('2026-10-15T00:00:00Z'));
+-
+-describe('greybox spotlight', () => {
+-  it('lights the current stop, or the next target ahead for the lobby and doors', () => {
+-    expect(litStop(layout, 'lobby')).toBe('verafin');
+-    expect(litStop(layout, 'verafin')).toBe('verafin');
+-    expect(litStop(layout, 'projects-door')).toBe('mysa');
+-    expect(litStop(layout, 'volunteer-door')).toBe('wailo');
+-    expect(litStop(layout, 'klarup')).toBe('klarup');
+-    expect(litStop(layout, 'desk')).toBe('desk');
+-  });
+-
+-  it('mounts like EXPERIENCE §5.5 and aims at the slot center', () => {
+-    const expected: [StopId, Vec3, Vec3][] = [
+-      ['verafin', [2.4, 4.6, -9.4], [2.4, 1.35, -10]],
+-      ['klarup', [-8.4, 3.7, -13.8], [-9, 1.35, -13.8]],
+-      ['sdsj', [8.4, 3.7, -30.2], [9, 1.35, -30.2]],
+-      ['mun', [-2.5, 4.6, -56.4], [-2.5, 1.25, -57]],
+-      ['certifications', [4.4, 4.6, -57], [5.85, 1.6, -57]],
+-      ['desk', [0, 3.7, -66.9], [0, 1.1, -67.5]],
+-    ];
+-    for (const [id, position, target] of expected) {
+-      const plan = spotPlan(layout, id);
+-      position.forEach((v, i) => expect(plan.position[i], `${id} position ${i}`).toBeCloseTo(v, 6));
+-      target.forEach((v, i) => expect(plan.target[i], `${id} target ${i}`).toBeCloseTo(v, 6));
+-    }
+-  });
+-});
+diff --git a/src/museum/environment/lighting.ts b/src/museum/environment/lighting.ts
+deleted file mode 100644
+index b297d3f..0000000
+--- a/src/museum/environment/lighting.ts
++++ /dev/null
+@@ -1,77 +0,0 @@
+-// Greybox lighting plan (WP-08 only; WP-11 replaces it with the full EXPERIENCE §6.8 plan). One
+-// spotlight follows the visitor: it lights the current stop's target, or the next target ahead
+-// when the stop has none (the lobby and door stops). Targets are the slots and the desk. The
+-// mount follows EXPERIENCE §5.5: 0.6 m from the target toward its stop camera along the room's
+-// main axis (1.6 m out from the wall for the wall vitrine), just under the ceiling.
+-import type { StopId } from '../../content/ids';
+-import type { Layout, Room, StopPose, Vec3 } from '../rail/layout';
+-
+-/** Horizontal distance from a plinth target to its spotlight mount. */
+-export const SPOT_OFFSET = 0.6;
+-/** Distance from the wall to the wall vitrine's spotlight mount. */
+-export const WALL_SPOT_OFFSET = 1.6;
+-/** Mount height: 0.3 m under the ceiling, never above 4.6 m (EXPERIENCE §5.5). */
+-export const SPOT_CEILING_GAP = 0.3;
+-export const SPOT_MAX_Y = 4.6;
+-/**
+- * Greybox hemisphere light: light-0 from above, ink from below. EXPERIENCE §7.5 asks for 0.15
+- * (sky #1A1C22) because the finished hall is lit by baked pools, wall washes and the Lightformer
+- * environment; the greybox has none of them yet, so this fill keeps it readable until WP-11
+- * replaces the lighting.
+- */
+-export const GREYBOX_HEMI_INTENSITY = 8;
+-
+-export interface SpotPlan {
+-  /** The stop whose target is lit. */
+-  for: StopId;
+-  position: Vec3;
+-  target: Vec3;
+-}
+-
+-const inside = (room: Room, x: number, z: number) =>
+-  x >= room.min[0] - 1e-6 &&
+-  x <= room.max[0] + 1e-6 &&
+-  z >= room.min[1] - 1e-6 &&
+-  z <= room.max[1] + 1e-6;
+-
+-function hasTarget(layout: Layout, id: StopId): boolean {
+-  return id === 'desk' || layout.slots.some((s) => s.id === id);
+-}
+-
+-function poseOf(layout: Layout, id: StopId): StopPose {
+-  for (const track of Object.values(layout.tracks)) {
+-    const pose = track.stops.find((s) => s.id === id);
+-    if (pose) return pose;
+-  }
+-  throw new Error(`No pose for stop '${id}'`);
+-}
+-
+-/** The stop whose target the greybox spotlight lights while the visitor is at `here`. */
+-export function litStop(layout: Layout, here: StopId): StopId {
+-  if (hasTarget(layout, here)) return here;
+-  const main = layout.tracks.main.stops.map((s) => s.id);
+-  const start = main.indexOf(here);
+-  const ahead = main.slice(Math.max(0, start + 1)).find((id) => hasTarget(layout, id));
+-  return ahead ?? main.find((id) => hasTarget(layout, id)) ?? here;
+-}
+-
+-export function spotPlan(layout: Layout, here: StopId): SpotPlan {
+-  const id = litStop(layout, here);
+-  const pose = poseOf(layout, id);
+-  const slot = layout.slots.find((s) => s.id === id);
+-  const target = pose.look;
+-  const room = layout.rooms.find((r) => inside(r, target[0], target[2]));
+-  const y = room ? Math.min(room.ceiling - SPOT_CEILING_GAP, SPOT_MAX_Y) : SPOT_MAX_Y;
+-  const dx = pose.camera[0] - target[0];
+-  const dz = pose.camera[2] - target[2];
+-  let x = target[0];
+-  let z = target[2];
+-  if (slot?.mount === 'wall') {
+-    x = slot.position[0] + Math.sign(dx) * WALL_SPOT_OFFSET;
+-  } else if (Math.abs(dz) >= Math.abs(dx)) {
+-    z += Math.sign(dz) * SPOT_OFFSET;
+-  } else {
+-    x += Math.sign(dx) * SPOT_OFFSET;
+-  }
+-  return { for: id, position: [x, y, z], target: [...target] };
+-}
+diff --git a/src/museum/environment/shell.test.ts b/src/museum/environment/shell.test.ts
+index 184ebbb..82a524c 100644
+--- a/src/museum/environment/shell.test.ts
++++ b/src/museum/environment/shell.test.ts
+@@ -8,6 +8,7 @@ import {
+   ARCH_HEIGHT,
+   FOUNDATIONS_BEAM_BOTTOM,
+   FOUNDATIONS_BEAM_DEPTH,
++  FLOOR_ROTATION_X,
+   floorGeometry,
+   openings,
+   shellBoxes,
+@@ -62,7 +63,7 @@ describe('greybox shell (EXPERIENCE §2.2, §2.3)', () => {
+     const ceilings = boxes.filter((b) => b.kind === 'ceiling');
+     expect(ceilings).toHaveLength(layout.rooms.length);
+     for (const room of layout.rooms) {
+-      const floor = floorGeometry(room);
++      const floor = floorGeometry(room).rotateX(FLOOR_ROTATION_X);
+       floor.computeBoundingBox();
+       const bb = floor.boundingBox!;
+       expect([bb.min.x, bb.max.x, bb.min.z, bb.max.z], room.id).toEqual([
+diff --git a/src/museum/environment/shell.ts b/src/museum/environment/shell.ts
+index 74264b7..2d83446 100644
+--- a/src/museum/environment/shell.ts
++++ b/src/museum/environment/shell.ts
+@@ -241,11 +241,60 @@ export function shellGeometry(layout: Layout): BufferGeometry {
+   return merged;
+ }
+ 
+-/** The floor of one room: a plane at y 0 covering the room's footprint. */
++/**
++ * Floor meshes lie in their local XY plane and are turned flat by the mesh rotation, so every
++ * floor shares one world matrix (local +Z is world up). drei's reflector takes its mirror plane
++ * from the mesh matrix, and one reflection pass then serves every floor zone (Floor.tsx).
++ */
++export const FLOOR_ROTATION_X = -Math.PI / 2;
++
++/**
++ * The floor of one room in the floor frame (see FLOOR_ROTATION_X): world (x, 0, z) is local
++ * (x, -z, 0). Its UVs span the room, v = 1 at the far end (min z), like the zone lightmap.
++ */
+ export function floorGeometry(room: Room): BufferGeometry {
+   const width = room.max[0] - room.min[0];
+   const depth = room.max[1] - room.min[1];
+-  return new PlaneGeometry(width, depth)
+-    .rotateX(-Math.PI / 2)
+-    .translate(midX(room), 0, (room.min[1] + room.max[1]) / 2);
++  return new PlaneGeometry(width, depth).translate(midX(room), -(room.min[1] + room.max[1]) / 2, 0);
++}
++
++/** A wall line with a wash bay: seams fall at `phase + 2k` along it (the bay's edges). */
++export interface SeamLine {
++  axis: 'x' | 'z';
++  at: number;
++  phase: number;
++}
++
++/**
++ * Wall-wash UVs for the merged shell (lightMap channel 0). Vertical faces get u = (along - phase)
++ * / 2 m, so the tile's seams repeat every 2 m and meet the wash bays' edges; every face samples v
++ * = `plainV`, the tile's rows with no scallop. Horizontal faces sample the tile center. A face
++ * takes the phase of a seam line within one wall thickness of it, otherwise 0.
++ */
++export function applyWashUVs(
++  geometry: BufferGeometry,
++  lines: readonly SeamLine[],
++  plainV: number,
++  panel = 2,
++): BufferGeometry {
++  const position = geometry.getAttribute('position');
++  const normal = geometry.getAttribute('normal');
++  const uv = geometry.getAttribute('uv');
++  if (!position || !normal || !uv) throw new Error('The shell needs positions, normals and UVs');
++  const phaseOf = (axis: 'x' | 'z', at: number) =>
++    lines.find((l) => l.axis === axis && Math.abs(l.at - at) <= WALL_THICKNESS + EPS)?.phase ?? 0;
++  for (let i = 0; i < position.count; i++) {
++    const nx = normal.getX(i);
++    const nz = normal.getZ(i);
++    let u = 0.5;
++    if (Math.abs(nx) > 0.5) {
++      // A face of a wall running along z.
++      u = (position.getZ(i) - phaseOf('z', position.getX(i))) / panel;
++    } else if (Math.abs(nz) > 0.5) {
++      u = (position.getX(i) - phaseOf('x', position.getZ(i))) / panel;
++    }
++    uv.setXY(i, u, plainV);
++  }
++  uv.needsUpdate = true;
++  return geometry;
+ }
+-- 
+2.43.0
+

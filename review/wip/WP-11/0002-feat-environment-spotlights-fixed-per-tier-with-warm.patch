@@ -1,0 +1,425 @@
+From 8032a225f395e5b1e516fbd3df107be9b7b25878 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 16 Oct 2026 02:40:18 +0000
+Subject: [PATCH 2/5] feat(environment): spotlights fixed per tier with warmth
+ by age
+
+Hemisphere light, the tier's spotlights (3 high, 1 medium and low) fixed at
+boot and reassigned on each settled arrival: a light that moves jumps to its
+new mount at intensity 0, takes the target temperature and fades up over 1 s.
+Hover lifts the visitor's own light to 1.35x over 250 ms; an open story dims
+the other spots to 30% over 0.4 s; both instant under reduced motion and
+?test=1. The Lightformer environment renders once into a 256 px cube through
+a small LightformerEnvironment (drei's Environment module also bundles the
+HDR loaders and preset CDN URLs: 17 KB gzip). Beam cones are one instanced
+additive mesh, off on low. The greybox lighting is removed.
+
+WP: WP-11
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_016CcKJFMWCyXKspJx4YvMS7
+---
+ src/museum/environment/Beams.tsx              |  68 ++++++
+ src/museum/environment/GreyboxLighting.tsx    |  31 ---
+ .../environment/LightformerEnvironment.tsx    |  66 ++++++
+ src/museum/environment/Lighting.tsx           | 203 ++++++++++++++++++
+ 4 files changed, 337 insertions(+), 31 deletions(-)
+ create mode 100644 src/museum/environment/Beams.tsx
+ delete mode 100644 src/museum/environment/GreyboxLighting.tsx
+ create mode 100644 src/museum/environment/LightformerEnvironment.tsx
+ create mode 100644 src/museum/environment/Lighting.tsx
+
+diff --git a/src/museum/environment/Beams.tsx b/src/museum/environment/Beams.tsx
+new file mode 100644
+index 0000000..407665b
+--- /dev/null
++++ b/src/museum/environment/Beams.tsx
+@@ -0,0 +1,68 @@
++// Beam cones (EXPERIENCE §5.5, ARCHITECTURE §8.2): one faint additive cone from every light target's
++// mount to its aim point, high and medium tiers only, all in one instanced mesh. Each cone takes
++// its target's temperature through instanceColor; the material is a clone of the kit `beam`
++// material with its color set to white, because three multiplies instanceColor by the material
++// color (R0 ruling, docs/RULINGS.md "Rendering and budgets").
++import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
++import { Color, ConeGeometry, Matrix4, Quaternion, Vector3, type InstancedMesh } from 'three';
++import { useMaterialLibrary } from '../materials';
++import type { Layout } from '../rail/layout';
++import { beamSpecs, type BeamSpec } from './lightPlan';
++
++export const BEAM_SEGMENTS = 24;
++
++/** A unit open cone with its apex at the origin and its base (radius 1) at y = -1. */
++export function unitBeamGeometry(): ConeGeometry {
++  const cone = new ConeGeometry(1, 1, BEAM_SEGMENTS, 1, true);
++  cone.translate(0, -0.5, 0);
++  return cone;
++}
++
++const DOWN = new Vector3(0, -1, 0);
++
++/** The instance matrix that stretches the unit cone from `apex` to `base` with `radius`. */
++export function beamMatrix(beam: Pick<BeamSpec, 'apex' | 'base' | 'radius'>): Matrix4 {
++  const apex = new Vector3(...beam.apex);
++  const axis = new Vector3(...beam.base).sub(apex);
++  const length = axis.length();
++  const rotation = new Quaternion().setFromUnitVectors(DOWN, axis.normalize());
++  return new Matrix4().compose(apex, rotation, new Vector3(beam.radius, length, beam.radius));
++}
++
++export function Beams({ layout }: { layout: Layout }) {
++  const library = useMaterialLibrary();
++  const beams = useMemo(() => beamSpecs(layout), [layout]);
++  const geometry = useMemo(() => unitBeamGeometry(), []);
++  const material = useMemo(() => {
++    const m = library.beam.clone();
++    m.name = 'beamInstanced';
++    m.color.set('#ffffff');
++    return m;
++  }, [library]);
++  useEffect(() => () => geometry.dispose(), [geometry]);
++  useEffect(() => () => material.dispose(), [material]);
++  const ref = useRef<InstancedMesh>(null);
++  useLayoutEffect(() => {
++    const mesh = ref.current;
++    if (!mesh) return;
++    const color = new Color();
++    beams.forEach((beam, i) => {
++      mesh.setMatrixAt(i, beamMatrix(beam));
++      mesh.setColorAt(i, color.set(beam.color));
++    });
++    mesh.instanceMatrix.needsUpdate = true;
++    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
++    mesh.computeBoundingBox();
++    mesh.computeBoundingSphere();
++  }, [beams]);
++  if (beams.length === 0) return null;
++  return (
++    <instancedMesh
++      key={beams.length}
++      ref={ref}
++      name="beams"
++      args={[geometry, material, beams.length]}
++      renderOrder={2}
++    />
++  );
++}
+diff --git a/src/museum/environment/GreyboxLighting.tsx b/src/museum/environment/GreyboxLighting.tsx
+deleted file mode 100644
+index da333b3..0000000
+--- a/src/museum/environment/GreyboxLighting.tsx
++++ /dev/null
+@@ -1,31 +0,0 @@
+-// Interim greybox lighting (WP-08; WP-11 replaces it): a hemisphere fill (GREYBOX_HEMI_INTENSITY)
+-// and one spotlight on the visitor's stop, so the greybox reads. Moving the light changes
+-// only its position and target, never the light count, so no shader recompiles.
+-import { useMemo, useState } from 'react';
+-import { Object3D } from 'three';
+-import type { StopId } from '../../content/ids';
+-import { tokens } from '../../design/tokens';
+-import type { Layout } from '../rail/layout';
+-import { GREYBOX_HEMI_INTENSITY, spotPlan } from './lighting';
+-
+-const light = tokens.light;
+-
+-export function GreyboxLighting({ layout, here }: { layout: Layout; here: StopId }) {
+-  const plan = useMemo(() => spotPlan(layout, here), [layout, here]);
+-  const [target] = useState(() => new Object3D());
+-  return (
+-    <group name="greybox-lighting">
+-      <hemisphereLight args={[light.ramp[0], light.hemiGround, GREYBOX_HEMI_INTENSITY]} />
+-      <primitive object={target} position={plan.target} />
+-      <spotLight
+-        position={plan.position}
+-        target={target}
+-        color={light.ramp[0]}
+-        intensity={light.spotIntensity}
+-        angle={light.spotAngle}
+-        penumbra={light.spotPenumbra}
+-        decay={light.spotDecay}
+-      />
+-    </group>
+-  );
+-}
+diff --git a/src/museum/environment/LightformerEnvironment.tsx b/src/museum/environment/LightformerEnvironment.tsx
+new file mode 100644
+index 0000000..46c1c4e
+--- /dev/null
++++ b/src/museum/environment/LightformerEnvironment.tsx
+@@ -0,0 +1,66 @@
++// The Lightformer environment (EXPERIENCE §7.5, ARCHITECTURE §8.1): what drei's
++// `<Environment frames={1} resolution={256}>` does with children, without the rest of drei's
++// Environment module. That module also bundles the RGBE, EXR and gain-map loaders and the preset
++// CDN URLs, none of which this site may use (no HDR files, no CDN). The children (drei
++// Lightformers) live in a portal scene; a cube camera at the origin renders them once into a
++// 256 px half-float cube target, which becomes `scene.environment` for every env-mapped material.
++// A context loss remounts the canvas (WP-16), so the one render simply happens again.
++import { createPortal, useThree } from '@react-three/fiber';
++import { useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
++import {
++  CubeCamera,
++  HalfFloatType,
++  Scene,
++  WebGLCubeRenderTarget,
++  type Texture,
++  type WebGLRenderer,
++} from 'three';
++
++export const ENVIRONMENT_RESOLUTION = 256;
++const NEAR = 0.1;
++const FAR = 1000;
++
++/** Renders `virtual` into `camera`'s cube target once and returns a cleanup for scene.environment. */
++function renderOnce(
++  gl: WebGLRenderer,
++  camera: CubeCamera,
++  virtual: Scene,
++  scene: { environment: Texture | null },
++  texture: Texture,
++): () => void {
++  const autoClear = gl.autoClear;
++  gl.autoClear = true;
++  camera.update(gl, virtual);
++  gl.autoClear = autoClear;
++  const previous = scene.environment;
++  scene.environment = texture;
++  return () => {
++    if (scene.environment === texture) scene.environment = previous;
++  };
++}
++
++export function LightformerEnvironment({
++  resolution = ENVIRONMENT_RESOLUTION,
++  children,
++}: {
++  resolution?: number;
++  children: ReactNode;
++}) {
++  const gl = useThree((s) => s.gl);
++  const scene = useThree((s) => s.scene);
++  const [virtual] = useState(() => new Scene());
++  const target = useMemo(() => {
++    const fbo = new WebGLCubeRenderTarget(resolution);
++    fbo.texture.type = HalfFloatType;
++    fbo.texture.name = 'lightformerEnvironment';
++    return fbo;
++  }, [resolution]);
++  const camera = useMemo(() => new CubeCamera(NEAR, FAR, target), [target]);
++  useEffect(() => () => target.dispose(), [target]);
++  // The portal's children commit (and their layout effects run) before this one.
++  useLayoutEffect(
++    () => renderOnce(gl, camera, virtual, scene, target.texture),
++    [gl, camera, virtual, scene, target],
++  );
++  return <>{createPortal(children, virtual)}</>;
++}
+diff --git a/src/museum/environment/Lighting.tsx b/src/museum/environment/Lighting.tsx
+new file mode 100644
+index 0000000..5ac62cf
+--- /dev/null
++++ b/src/museum/environment/Lighting.tsx
+@@ -0,0 +1,203 @@
++// The lighting (EXPERIENCE §5.5, §6.8, §7.5; ARCHITECTURE §8.1; ART_DIRECTION §4), fixed per tier at
++// boot so no shader ever recompiles:
++// - a dim hemisphere light;
++// - the tier's real spotlights (3 high, 1 medium and low), no shadow maps. On every settled
++//   arrival assignLights picks their targets and matchLights keeps a light that already holds one
++//   of them; a light that moves jumps there at intensity 0, takes the target's temperature and
++//   fades up over 1 s. Hover lifts the visitor's own light to 1.35x over 250 ms; an open story
++//   dims the other spots to 30% over 0.4 s. Instant under reduced motion and ?test=1;
++// - the Lightformer environment, rendered once into a 256 px cube (no HDR files);
++// - the beam cones (Beams.tsx), off on low.
++import { Lightformer } from '@react-three/drei';
++import { useFrame, useThree } from '@react-three/fiber';
++import { useEffect, useMemo, useRef, useState } from 'react';
++import { Object3D, type SpotLight } from 'three';
++import { useMuseum, type MuseumState } from '../../app/store';
++import { testParams } from '../../app/testHooks';
++import { tokens } from '../../design/tokens';
++import type { Layout } from '../rail/layout';
++import { Beams } from './Beams';
++import { ENVIRONMENT_RESOLUTION, LightformerEnvironment } from './LightformerEnvironment';
++import {
++  approach,
++  assignLights,
++  DIALOG_DIM,
++  DIALOG_DIM_S,
++  lightPlan,
++  lightTargets,
++  matchLights,
++  spotIntensity,
++  spotScaleGoal,
++  targetOfStop,
++  type SpotState,
++  type TargetId,
++} from './lightPlan';
++
++const light = tokens.light;
++const motion = tokens.motion;
++
++/** Environment Lightformers (ART_DIRECTION §4), relative to the cube camera at the origin. */
++export const LIGHTFORMERS = {
++  /** The ceiling strip: light-0, intensity 2, 0.3 x 60 m along the centerline at y 4.9. */
++  ceiling: { color: light.ramp[0], intensity: 2, scale: [0.3, 60], position: [0, 4.9, 0] },
++  /** Two side panels along the aisle walls: light-1, intensity 0.6. */
++  sides: { color: light.ramp[1], intensity: 0.6, scale: [20, 6], x: 10, y: 5 },
++  /** One lobby panel behind the visitor (the lobby front), light-0. */
++  lobby: { color: light.ramp[0], intensity: 1, scale: [6, 2.5], position: [0, 2.5, 6] },
++} as const;
++
++function GalleryEnvironment() {
++  const { ceiling, sides, lobby } = LIGHTFORMERS;
++  return (
++    <LightformerEnvironment resolution={ENVIRONMENT_RESOLUTION}>
++      <Lightformer
++        form="rect"
++        color={ceiling.color}
++        intensity={ceiling.intensity}
++        scale={[...ceiling.scale]}
++        position={[...ceiling.position]}
++        rotation={[Math.PI / 2, 0, 0]}
++      />
++      {[-1, 1].map((s) => (
++        <Lightformer
++          key={s}
++          form="rect"
++          color={sides.color}
++          intensity={sides.intensity}
++          scale={[...sides.scale]}
++          position={[s * sides.x, sides.y, 0]}
++          rotation={[0, -s * (Math.PI / 2), 0]}
++        />
++      ))}
++      <Lightformer
++        form="rect"
++        color={lobby.color}
++        intensity={lobby.intensity}
++        scale={[...lobby.scale]}
++        position={[...lobby.position]}
++        rotation={[0, Math.PI, 0]}
++      />
++    </LightformerEnvironment>
++  );
++}
++
++/** The stops of the visitor's track and their index on it (main when the stop is not on it). */
++function trackPosition(layout: Layout, state: Pick<MuseumState, 'track' | 'stop'>) {
++  let ids = layout.tracks[state.track].stops.map((s) => s.id);
++  let index = ids.indexOf(state.stop);
++  if (index < 0) {
++    ids = layout.tracks.main.stops.map((s) => s.id);
++    index = Math.max(0, ids.indexOf(state.stop));
++  }
++  return { ids, index };
++}
++
++function Spotlights({ layout }: { layout: Layout }) {
++  // The tier is fixed at boot (quality/tiers.ts), so the light count never changes.
++  const [plan] = useState(() => lightPlan(useMuseum.getState().tier));
++  const targets = useMemo(() => new Map(lightTargets(layout).map((t) => [t.id, t])), [layout]);
++  const [aims] = useState(() => plan.spots.map(() => new Object3D()));
++  const spots = useRef<(SpotLight | null)[]>([]);
++  const states = useRef<SpotState[]>(plan.spots.map(() => ({ target: null, level: 0, scale: 1 })));
++  const [test] = useState(() => testParams(window.location.search).test);
++  const invalidate = useThree((s) => s.invalidate);
++
++  useEffect(() => {
++    const place = (i: number, target: TargetId | null) => {
++      const spot = spots.current[i];
++      const spec = target ? targets.get(target) : undefined;
++      if (!spot || !spec) return;
++      spot.position.set(...spec.mount);
++      spot.color.set(spec.color);
++      aims[i]!.position.set(...spec.aim);
++      aims[i]!.updateMatrixWorld();
++    };
++    const assign = (state: MuseumState, boot: boolean) => {
++      const { ids, index } = trackPosition(layout, state);
++      const wanted = assignLights(ids, index, plan.tier);
++      const next = matchLights(
++        states.current.map((s) => s.target),
++        wanted,
++      );
++      next.forEach((target, i) => {
++        const s = states.current[i]!;
++        if (s.target === target) return;
++        s.target = target;
++        s.level = boot || test || state.reducedMotion ? 1 : 0;
++        place(i, target);
++      });
++      invalidate();
++    };
++    assign(useMuseum.getState(), true);
++    return useMuseum.subscribe((state, previous) => {
++      if (!state.settled) return;
++      if (previous.settled && previous.stop === state.stop && previous.track === state.track) {
++        return;
++      }
++      assign(state, false);
++    });
++  }, [layout, plan, targets, aims, test, invalidate]);
++
++  useFrame((_, delta) => {
++    const { settled, stop, hovered, openId, reducedMotion } = useMuseum.getState();
++    const instant = test || reducedMotion;
++    const view = {
++      current: settled ? targetOfStop(stop) : null,
++      hovered: hovered === null ? null : (hovered as TargetId),
++      openId: openId === null ? null : (openId as TargetId),
++    };
++    let moving = false;
++    states.current.forEach((s, i) => {
++      const spot = spots.current[i];
++      if (!spot) return;
++      s.level = approach(s.level, 1, delta, instant ? 0 : motion.lightReassignS, 1);
++      const goal = spotScaleGoal(s.target, view);
++      const dimming = goal < 1 || s.scale < 1;
++      const duration = instant ? 0 : dimming ? DIALOG_DIM_S : motion.hoverLiftMs / 1000;
++      const span = dimming ? 1 - DIALOG_DIM : motion.hoverLift - 1;
++      s.scale = approach(s.scale, goal, delta, duration, span);
++      const intensity = spotIntensity(plan.spots[i]!, s);
++      if (spot.intensity !== intensity) {
++        spot.intensity = intensity;
++        moving = true;
++      }
++    });
++    if (moving) invalidate();
++  });
++
++  return (
++    <>
++      {aims.map((aim, i) => (
++        <primitive key={`aim-${i}`} object={aim} />
++      ))}
++      {plan.spots.map((spec, i) => (
++        <spotLight
++          key={`spot-${i}`}
++          ref={(el: SpotLight | null) => {
++            spots.current[i] = el;
++          }}
++          name={`spot-${i}`}
++          target={aims[i]}
++          intensity={0}
++          angle={spec.angle}
++          penumbra={spec.penumbra}
++          decay={spec.decay}
++        />
++      ))}
++    </>
++  );
++}
++
++export function Lighting({ layout }: { layout: Layout }) {
++  const tier = useMuseum((s) => s.tier);
++  const plan = useMemo(() => lightPlan(tier), [tier]);
++  const { hemisphere } = plan;
++  return (
++    <group name="lighting">
++      <hemisphereLight args={[hemisphere.sky, hemisphere.ground, hemisphere.intensity]} />
++      <Spotlights layout={layout} />
++      <GalleryEnvironment />
++      {plan.beams && <Beams layout={layout} />}
++    </group>
++  );
++}
+-- 
+2.43.0
+

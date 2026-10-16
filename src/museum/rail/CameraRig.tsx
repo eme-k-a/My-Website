@@ -1,21 +1,22 @@
-// The rail camera (ARCHITECTURE §6.3, §6.7; EXPERIENCE §6.2, §6.4). Every frame it damps
+// The rail camera (ARCHITECTURE §6.3 to §6.5, §6.7; EXPERIENCE §6.2 to §6.6). Every frame it damps
 // `progress.current` toward the scroll target with maath (`tokens.motion.railSmoothTime`), or plays
 // a scripted wing glide, or jumps (instant travel, before `ready`), then places the camera on the
-// track's rail with `poseAt` and looks at the blended stop look-at (the full gaze, framing and
-// parallax are WP-15). Under reduced motion it holds the last stop's pose and cuts to the next one
-// once the scroll arrives (WP-15 adds the fade). It writes `settled` and `stop` to the store, only
-// on change, and registers the test hook's nav provider: goTo travels through navigation.ts (the
-// same path as the UI) and resolves when settled at the stop; screenPos projects a hit-box center.
+// track's rail with `poseAt` and turns it toward the gaze point of gaze.ts with `easing.dampLookAt`
+// (`tokens.motion.gazeSmoothTime`). Under reduced motion it holds the last stop's pose and cuts to
+// the next one once the scroll arrives. It writes `settled` and `stop` to the store, only on change,
+// and registers the test hook's nav provider: goTo travels through navigation.ts (the same path as
+// the UI) and resolves when settled at the stop; screenPos projects a hit-box center.
 import { useFrame, useThree } from '@react-three/fiber';
 import { easing } from 'maath';
 import { useEffect } from 'react';
-import { Box3, Vector3, type Object3D } from 'three';
+import { Box3, Camera, Vector3, type Object3D } from 'three';
 import { useMuseum } from '../../app/store';
 import { registerNavProvider } from '../../app/testHooks';
 import type { ExhibitId, StopId } from '../../content/ids';
 import { tokens } from '../../design/tokens';
 import { LAYOUT } from '../../overlay/model';
 import { reportCameraTarget } from '../quality/StatsProbe';
+import { gazeAt } from './gaze';
 import { travelTo } from './navigation';
 import { easeInOutCubic, finishGlide, progress, rig, setWaker } from './progress';
 import { buildRails, poseAt } from './rail';
@@ -30,10 +31,20 @@ const position = new Vector3();
 const look = new Vector3();
 const box = new Box3();
 const projected = new Vector3();
+/** The damped gaze orientation (a Camera, so `lookAt` points its -Z at the target). */
+const aim = new Camera();
+const forward = new Vector3();
+const lastForward = new Vector3();
 
 /** Forgets the damping velocity (after a jump or a glide, the walk starts from rest). */
 function resetVelocity(): void {
   (progress as { __damp?: unknown }).__damp = undefined;
+}
+
+/** Turns the gaze straight to `target` and forgets its damping velocity. */
+function snapGaze(target: Vector3): void {
+  aim.lookAt(target);
+  (aim.quaternion as { __damp?: unknown }).__damp = undefined;
 }
 
 /** Waits until the store reports `settled` at `id`. */
@@ -123,6 +134,9 @@ export function CameraRig() {
   useFrame(({ camera }, delta) => {
     const state = useMuseum.getState();
     const glide = rig.glide;
+    const dt = Math.min(delta, MAX_DELTA);
+    // Jumps and reduced motion turn the gaze at once; walking and glides damp it.
+    let jump = state.reducedMotion;
     if (glide) {
       const now = performance.now();
       glide.start ??= now;
@@ -136,6 +150,7 @@ export function CameraRig() {
       progress.current = progress.target;
       rig.teleport = false;
       resetVelocity();
+      jump = true;
     } else if (state.reducedMotion) {
       // No in-between poses: hold until the scroll target is (almost) a whole stop, then cut.
       if (Math.abs(progress.target - Math.round(progress.target)) < SETTLE.whole) {
@@ -143,22 +158,24 @@ export function CameraRig() {
       }
       resetVelocity();
     } else {
-      easing.damp(
-        progress,
-        'current',
-        progress.target,
-        tokens.motion.railSmoothTime,
-        Math.min(delta, MAX_DELTA),
-      );
+      easing.damp(progress, 'current', progress.target, tokens.motion.railSmoothTime, dt);
     }
 
     const rail = rails[progress.track];
     const p = state.reducedMotion && !glide ? Math.round(progress.current) : progress.current;
     poseAt(rail, p, position, look);
-    const moved = camera.position.distanceTo(position);
+    gazeAt(rail, p, look);
+    const movedM = camera.position.distanceTo(position);
     camera.position.copy(position);
-    camera.lookAt(look);
+    aim.position.copy(position);
+    if (jump) snapGaze(look);
+    else easing.dampLookAt(aim, look, tokens.motion.gazeSmoothTime, dt);
+    camera.quaternion.copy(aim.quaternion);
     reportCameraTarget([look.x, look.y, look.z]);
+    // "Moved" covers the turn too: the gaze direction's change, in meters at 1 m.
+    forward.set(0, 0, -1).applyQuaternion(aim.quaternion);
+    const moved = Math.max(movedM, forward.distanceTo(lastForward));
+    lastForward.copy(forward);
 
     const index = settledStop({
       current: progress.current,

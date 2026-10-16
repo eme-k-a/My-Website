@@ -2,8 +2,9 @@
 // through its stop cameras, its via points (a wing's threshold T, which is not a stop) and a short
 // lead-in and lead-out, so the end stops have a natural tangent. Each stop has an arc-length
 // parameter u_i; progress p maps piecewise linearly onto u, so the camera moves at constant speed
-// within each segment. Gaze is a simple blend between the two stops' look-at points here; the full
-// EXPERIENCE §6.3 gaze, framing and parallax are WP-15. Museum chunk only (imports three.js).
+// within each segment. `poseAt`'s look-at is a simple blend between the two stops' look-at points;
+// the camera's real gaze is gaze.ts (EXPERIENCE §6.3), framing and parallax are framing.ts and
+// parallax.ts. Museum chunk only (imports three.js).
 import { CatmullRomCurve3, Vector3 } from 'three';
 import type { TrackId } from '../../content/ids';
 import type { Layout, StopPose, Track, Vec3 } from './layout';
@@ -75,6 +76,22 @@ export function buildRails(layout: Layout): Record<TrackId, Rail> {
 
 const smoothstep = (x: number) => x * x * (3 - 2 * x);
 
+/** The segment of progress `p` (clamped to the track): stop `i` to stop `i + 1` at fraction `f`. */
+export function segmentAt(rail: Rail, p: number): { i: number; f: number } {
+  const n = rail.stops.length;
+  if (n < 2) return { i: 0, f: 0 };
+  const clamped = Math.min(n - 1, Math.max(0, Number.isFinite(p) ? p : 0));
+  const i = Math.min(n - 2, Math.floor(clamped));
+  return { i, f: clamped - i };
+}
+
+/** The arc-length fraction of progress `p` on the rail's curve (0 without a curve). */
+export function uAt(rail: Rail, p: number): number {
+  if (!rail.curve) return 0;
+  const { i, f } = segmentAt(rail, p);
+  return rail.u[i]! + (rail.u[i + 1]! - rail.u[i]!) * f;
+}
+
 /**
  * The camera position and look-at point at progress `p` (stop units, clamped to the track). At a
  * whole stop it is exactly that stop's layout pose. Writes into `position` and `look`.
@@ -86,18 +103,16 @@ export function poseAt(rail: Rail, p: number, position: Vector3, look: Vector3):
     look.set(0, 0, -1);
     return;
   }
-  const clamped = Math.min(n - 1, Math.max(0, Number.isFinite(p) ? p : 0));
-  const i = Math.min(n - 2, Math.floor(clamped));
-  const f = clamped - Math.max(0, i);
+  const { i, f } = segmentAt(rail, p);
   if (!rail.curve || n === 1 || f === 0 || f === 1) {
-    const stop = rail.stops[n === 1 ? 0 : f === 1 ? i + 1 : Math.max(0, i)]!;
+    const stop = rail.stops[n === 1 ? 0 : f === 1 ? i + 1 : i]!;
     position.set(...stop.camera);
     look.set(...stop.look);
     return;
   }
   const a = rail.stops[i]!;
   const b = rail.stops[i + 1]!;
-  rail.curve.getPointAt(rail.u[i]! + (rail.u[i + 1]! - rail.u[i]!) * f, position);
+  rail.curve.getPointAt(uAt(rail, p), position);
   const w = smoothstep(f);
   look.set(
     a.look[0] + (b.look[0] - a.look[0]) * w,

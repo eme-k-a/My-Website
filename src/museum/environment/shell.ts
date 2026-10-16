@@ -241,11 +241,60 @@ export function shellGeometry(layout: Layout): BufferGeometry {
   return merged;
 }
 
-/** The floor of one room: a plane at y 0 covering the room's footprint. */
+/**
+ * Floor meshes lie in their local XY plane and are turned flat by the mesh rotation, so every
+ * floor shares one world matrix (local +Z is world up). drei's reflector takes its mirror plane
+ * from the mesh matrix, and one reflection pass then serves every floor zone (Floor.tsx).
+ */
+export const FLOOR_ROTATION_X = -Math.PI / 2;
+
+/**
+ * The floor of one room in the floor frame (see FLOOR_ROTATION_X): world (x, 0, z) is local
+ * (x, -z, 0). Its UVs span the room, v = 1 at the far end (min z), like the zone lightmap.
+ */
 export function floorGeometry(room: Room): BufferGeometry {
   const width = room.max[0] - room.min[0];
   const depth = room.max[1] - room.min[1];
-  return new PlaneGeometry(width, depth)
-    .rotateX(-Math.PI / 2)
-    .translate(midX(room), 0, (room.min[1] + room.max[1]) / 2);
+  return new PlaneGeometry(width, depth).translate(midX(room), -(room.min[1] + room.max[1]) / 2, 0);
+}
+
+/** A wall line with a wash bay: seams fall at `phase + 2k` along it (the bay's edges). */
+export interface SeamLine {
+  axis: 'x' | 'z';
+  at: number;
+  phase: number;
+}
+
+/**
+ * Wall-wash UVs for the merged shell (lightMap channel 0). Vertical faces get u = (along - phase)
+ * / 2 m, so the tile's seams repeat every 2 m and meet the wash bays' edges; every face samples v
+ * = `plainV`, the tile's rows with no scallop. Horizontal faces sample the tile center. A face
+ * takes the phase of a seam line within one wall thickness of it, otherwise 0.
+ */
+export function applyWashUVs(
+  geometry: BufferGeometry,
+  lines: readonly SeamLine[],
+  plainV: number,
+  panel = 2,
+): BufferGeometry {
+  const position = geometry.getAttribute('position');
+  const normal = geometry.getAttribute('normal');
+  const uv = geometry.getAttribute('uv');
+  if (!position || !normal || !uv) throw new Error('The shell needs positions, normals and UVs');
+  const phaseOf = (axis: 'x' | 'z', at: number) =>
+    lines.find((l) => l.axis === axis && Math.abs(l.at - at) <= WALL_THICKNESS + EPS)?.phase ?? 0;
+  for (let i = 0; i < position.count; i++) {
+    const nx = normal.getX(i);
+    const nz = normal.getZ(i);
+    let u = 0.5;
+    if (Math.abs(nx) > 0.5) {
+      // A face of a wall running along z.
+      u = (position.getZ(i) - phaseOf('z', position.getX(i))) / panel;
+    } else if (Math.abs(nz) > 0.5) {
+      u = (position.getX(i) - phaseOf('x', position.getZ(i))) / panel;
+    }
+    uv.setXY(i, u, plainV);
+  }
+  uv.needsUpdate = true;
+  return geometry;
 }

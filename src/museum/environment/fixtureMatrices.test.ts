@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { content } from '../../content/index';
 import { EDGES_PER_CASE, slotOrigin } from '../exhibits/_kit/anatomy';
 import { computeLayout } from '../rail/layout';
-import { fixtureInstances, openBottomBox } from './fixtures';
+import { fixtureInstances, openBottomBox } from './fixtureMatrices';
 
 const layout = computeLayout(content, new Date('2026-10-15T00:00:00Z'));
 const inst = fixtureInstances(layout);
@@ -18,7 +18,6 @@ describe('fixture instancing (EXPERIENCE §5.2, §5.3)', () => {
     expect(inst.cases).toHaveLength(layout.slots.length);
     expect(inst.edges).toHaveLength(layout.slots.length * EDGES_PER_CASE);
     expect(inst.wallPanels).toHaveLength(2 * count('none'));
-    expect(inst.desk).not.toBeNull();
   });
 
   it('stands every plinth on the floor under its slot, top at the slot origin', () => {
@@ -47,13 +46,6 @@ describe('fixture instancing (EXPERIENCE §5.2, §5.3)', () => {
         expect(bottom.y, slot.id).toBeCloseTo(origin[1], 6);
       }
     });
-  });
-
-  it('puts the desk block at the desk stop target', () => {
-    const desk = layout.tracks.main.stops.find((s) => s.id === 'desk')!;
-    const center = new Vector3().applyMatrix4(inst.desk!);
-    expect(center.x).toBeCloseTo(desk.look[0], 6);
-    expect(center.z).toBeCloseTo(desk.look[2], 6);
   });
 
   it('leaves the bottom face off the glass case geometry', () => {

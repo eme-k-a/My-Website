@@ -1,0 +1,412 @@
+// Baked light (EXPERIENCE §7.5, ART_DIRECTION §4, ARCHITECTURE §8.1): no shadow maps and only one
+// to three real lights, so the gallery's warmth is painted once at boot.
+// - Floor pools: one lightmap per floor zone (room). Per light target a warm radial pool (radius
+//   1.6 m, 0.3 m from the plinth toward the aisle center, peak alpha 0.85, smoothstep falloff,
+//   color by age); per door a threshold pool on the aisle floor (1.2 m, alpha 0.35, light-0); under
+//   every plinth and the desk a soft contact patch (footprint plus a 0.25 m edge, darkness 0.55).
+// - Wall wash: one shared 256 px "scallop" (a wall-washer arc fading toward the floor) with a
+//   panel seam at each side, so seams repeat every 2 m. The bottom rows carry only the base level
+//   and the seams: the hall shell samples them, the wash bays behind each target the whole tile.
+//   Each bay is tinted by its target's temperature (instance color) and snapped to its wall's
+//   seam grid, so the bay edges and the shell's seams line up.
+// Everything is a pure function of the layout plus a fixed seed (the dither), so the textures are
+// identical on every run and can be rebuilt after a context restore. Values are linear light,
+// stored sRGB-encoded in 8 bits (colorSpace SRGB) so the dark end keeps its precision.
+import { CanvasTexture, ClampToEdgeWrapping, Matrix4, RepeatWrapping, SRGBColorSpace } from 'three';
+import { tokens } from '../../design/tokens';
+import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
+import { rng } from '../exhibits/_kit/noise';
+import { AISLE_HALF, type Layout, type Room } from '../rail/layout';
+import { lightTargets, rampColor, WASH_BAY_WIDTH, type TargetId, type WashBay } from './lightPlan';
+import type { SeamLine } from './shell';
+
+const light = tokens.light;
+
+/** Floor lightmap resolution, capped so a long aisle stays within MAX_LIGHTMAP_SIZE. */
+export const POOL_PX_PER_M = 32;
+export const MAX_LIGHTMAP_SIZE = 2048;
+/** Floor lightmap level outside the pools (linear, light-0 tinted). */
+export const FLOOR_BASE = 0.05;
+/** The door pool's center sits this far into the aisle from the door line. */
+export const DOOR_POOL_INSET = 0.6;
+/** Desk footprint for its contact patch (Desk.tsx). */
+export const DESK_FOOTPRINT = [1.8, 0.7] as const;
+/**
+ * lightMapIntensity of the floor per floor type. The floor is near black (`#0E0E11`), so its
+ * pools need a strong lightmap; the reflector floor (metalness 0.5) has half the diffuse albedo
+ * and gets twice the intensity to read the same.
+ */
+export const FLOOR_LIGHTMAP_INTENSITY = { standard: 32, reflector: 64 } as const;
+
+/** Wall wash tile: side in px, base level, and the lightMapIntensity of the `wall` material. */
+export const WALL_WASH_SIZE = 256;
+export const WALL_WASH_BASE = 0.04;
+export const WALL_WASH_INTENSITY = 40;
+/** Shell faces sample the wash at this v: base level and seams only, no scallop. */
+export const WALL_WASH_PLAIN_V = 0.03;
+
+export interface PoolSpec {
+  kind: 'pool' | 'door';
+  /** The target or door it belongs to. */
+  for: string;
+  center: [number, number];
+  radius: number;
+  alpha: number;
+  color: string;
+}
+
+export interface ContactSpec {
+  for: string;
+  center: [number, number];
+  /** Footprint [x, z] before rotation. */
+  size: [number, number];
+  rotationY: number;
+  soft: number;
+  darkness: number;
+}
+
+export interface FloorPaint {
+  pools: PoolSpec[];
+  contacts: ContactSpec[];
+}
+
+/** Everything painted into the floor lightmaps, in world [x, z]. */
+export function floorPaint(layout: Layout): FloorPaint {
+  const pools: PoolSpec[] = lightTargets(layout).map((t) => ({
+    kind: 'pool',
+    for: t.id,
+    center: [...t.pool],
+    radius: light.poolRadius,
+    alpha: light.poolAlpha,
+    color: t.color,
+  }));
+  for (const door of layout.doors) {
+    const s = door.side === 'left' ? -1 : 1;
+    pools.push({
+      kind: 'door',
+      for: `${door.wing}-door`,
+      center: [s * (AISLE_HALF - DOOR_POOL_INSET), door.z],
+      radius: light.doorPoolRadius,
+      alpha: light.doorPoolAlpha,
+      color: rampColor(0),
+    });
+  }
+  const contacts: ContactSpec[] = [];
+  for (const slot of layout.slots) {
+    if (slot.plinth === 'none') continue;
+    const [w, , d] = PLINTH_SIZE[slot.plinth];
+    contacts.push({
+      for: slot.id,
+      center: [slot.position[0], slot.position[2]],
+      size: [w, d],
+      rotationY: slot.rotationY,
+      soft: light.contactSoftEdge,
+      darkness: light.contactDarkness,
+    });
+  }
+  const desk = layout.tracks.main.stops.find((s) => s.id === 'desk');
+  if (desk) {
+    contacts.push({
+      for: 'desk',
+      center: [desk.look[0], desk.look[2]],
+      size: [...DESK_FOOTPRINT],
+      rotationY: 0,
+      soft: light.contactSoftEdge,
+      darkness: light.contactDarkness,
+    });
+  }
+  return { pools, contacts };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Color and encoding helpers
+
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+const srgbToLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const linearToSrgb = (c: number) =>
+  c <= 0.0031308 ? c * 12.92 : 1.055 * Math.max(0, c) ** (1 / 2.4) - 0.055;
+
+/** `#RRGGBB` to linear RGB in [0, 1]. */
+export function hexToLinear(hex: string): [number, number, number] {
+  const n = Number.parseInt(hex.replace('#', ''), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => srgbToLinear(v / 255)) as [
+    number,
+    number,
+    number,
+  ];
+}
+
+/** Linear [0, 1] to an sRGB byte, with a seeded dither of up to half a step against banding. */
+function encode(value: number, dither: number): number {
+  const v = linearToSrgb(Math.min(1, Math.max(0, value))) * 255 + dither;
+  return Math.min(255, Math.max(0, Math.round(v)));
+}
+
+// ---------------------------------------------------------------------------------------------
+// Floor zones
+
+export interface ZoneRaster {
+  room: Room['id'];
+  width: number;
+  height: number;
+  /** Meters per pixel along x and z. */
+  scale: [number, number];
+  /** RGBA, row 0 at the room's min z (the far end), column 0 at its min x. */
+  data: Uint8ClampedArray<ArrayBuffer>;
+}
+
+/** Pixel size of a zone's lightmap. */
+export function zoneSize(room: Room, pxPerM = POOL_PX_PER_M): { width: number; height: number } {
+  const w = room.max[0] - room.min[0];
+  const d = room.max[1] - room.min[1];
+  const density = Math.min(pxPerM, MAX_LIGHTMAP_SIZE / Math.max(w, d));
+  return {
+    width: Math.max(1, Math.round(w * density)),
+    height: Math.max(1, Math.round(d * density)),
+  };
+}
+
+/** World [x, z] of a pixel center (see ZoneRaster for the orientation). */
+export function zonePixelToWorld(
+  room: Room,
+  size: { width: number; height: number },
+  col: number,
+  row: number,
+): [number, number] {
+  const w = room.max[0] - room.min[0];
+  const d = room.max[1] - room.min[1];
+  return [
+    room.min[0] + ((col + 0.5) * w) / size.width,
+    room.min[1] + ((row + 0.5) * d) / size.height,
+  ];
+}
+
+/** Signed distance outside a rotated rectangle (0 inside). */
+function outsideRect(spec: ContactSpec, x: number, z: number): number {
+  const dx = x - spec.center[0];
+  const dz = z - spec.center[1];
+  // Into the footprint's local frame (rotation about +Y by rotationY).
+  const c = Math.cos(spec.rotationY);
+  const s = Math.sin(spec.rotationY);
+  const lx = c * dx - s * dz;
+  const lz = s * dx + c * dz;
+  const ox = Math.max(0, Math.abs(lx) - spec.size[0] / 2);
+  const oz = Math.max(0, Math.abs(lz) - spec.size[1] / 2);
+  return Math.hypot(ox, oz);
+}
+
+/** Paints one floor zone. Pure and deterministic (the dither is seeded by `seed`). */
+export function paintZone(
+  room: Room,
+  paint: FloorPaint,
+  seed = 1,
+  pxPerM = POOL_PX_PER_M,
+): ZoneRaster {
+  const size = zoneSize(room, pxPerM);
+  const { width, height } = size;
+  const sx = (room.max[0] - room.min[0]) / width;
+  const sz = (room.max[1] - room.min[1]) / height;
+  const rgb = new Float32Array(width * height * 3);
+  const base = hexToLinear(rampColor(0)).map((v) => v * FLOOR_BASE);
+  for (let i = 0; i < width * height; i++) rgb.set(base, i * 3);
+
+  const colOf = (x: number) => (x - room.min[0]) / sx - 0.5;
+  const rowOf = (z: number) => (z - room.min[1]) / sz - 0.5;
+  const span = (cx: number, cz: number, r: number) => ({
+    c0: Math.max(0, Math.floor(colOf(cx - r))),
+    c1: Math.min(width - 1, Math.ceil(colOf(cx + r))),
+    r0: Math.max(0, Math.floor(rowOf(cz - r))),
+    r1: Math.min(height - 1, Math.ceil(rowOf(cz + r))),
+  });
+
+  for (const pool of paint.pools) {
+    const color = hexToLinear(pool.color);
+    const { c0, c1, r0, r1 } = span(pool.center[0], pool.center[1], pool.radius);
+    for (let row = r0; row <= r1; row++) {
+      for (let col = c0; col <= c1; col++) {
+        const [x, z] = zonePixelToWorld(room, size, col, row);
+        const r = Math.hypot(x - pool.center[0], z - pool.center[1]);
+        if (r >= pool.radius) continue;
+        const a = pool.alpha * (1 - smoothstep(0, pool.radius, r));
+        const i = (row * width + col) * 3;
+        for (let k = 0; k < 3; k++) rgb[i + k] = rgb[i + k]! * (1 - a) + color[k]! * a;
+      }
+    }
+  }
+
+  for (const contact of paint.contacts) {
+    const reach = Math.hypot(contact.size[0], contact.size[1]) / 2 + contact.soft;
+    const { c0, c1, r0, r1 } = span(contact.center[0], contact.center[1], reach);
+    for (let row = r0; row <= r1; row++) {
+      for (let col = c0; col <= c1; col++) {
+        const [x, z] = zonePixelToWorld(room, size, col, row);
+        const d = outsideRect(contact, x, z);
+        if (d >= contact.soft) continue;
+        const k = 1 - contact.darkness * (1 - smoothstep(0, contact.soft, d));
+        const i = (row * width + col) * 3;
+        rgb[i] = rgb[i]! * k;
+        rgb[i + 1] = rgb[i + 1]! * k;
+        rgb[i + 2] = rgb[i + 2]! * k;
+      }
+    }
+  }
+
+  const random = rng(seed);
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let i = 0; i < width * height; i++) {
+    const dither = random() - 0.5;
+    data[i * 4] = encode(rgb[i * 3]!, dither);
+    data[i * 4 + 1] = encode(rgb[i * 3 + 1]!, dither);
+    data[i * 4 + 2] = encode(rgb[i * 3 + 2]!, dither);
+    data[i * 4 + 3] = 255;
+  }
+  return { room: room.id, width, height, scale: [sx, sz], data };
+}
+
+/** Every floor zone of the layout, painted (seed = 1 + the room's index). */
+export function paintFloorZones(layout: Layout, pxPerM = POOL_PX_PER_M): ZoneRaster[] {
+  const paint = floorPaint(layout);
+  return layout.rooms.map((room, i) => paintZone(room, paint, 1 + i, pxPerM));
+}
+
+// ---------------------------------------------------------------------------------------------
+// Wall wash
+
+/** Tile geometry: the tile spans one 2 m panel and, nominally, a 5 m wall. */
+const TILE_W = 2;
+const TILE_H = 5;
+const SCALLOP_TOP = 0.45; // m below the ceiling at the tile center
+const SCALLOP_CURVE = 1.1; // edge drop per m^2 off center
+const SCALLOP_FALLOFF = 2.4; // m, exponential falloff toward the floor
+const SEAM_HALF_PX = 1.25;
+const SEAM_DARKEN = 0.55;
+
+/** Wash level at tile coordinates (u across, v up), linear, before seams and base. */
+export function scallop(u: number, v: number): number {
+  const x = (u - 0.5) * TILE_W;
+  const down = (1 - v) * TILE_H;
+  const edge = SCALLOP_TOP + SCALLOP_CURVE * x * x;
+  const lit = smoothstep(0, 0.35, down - edge);
+  const fall = Math.exp(-Math.max(0, down - SCALLOP_TOP) / SCALLOP_FALLOFF);
+  const sides = 1 - smoothstep(0.55, 0.98, Math.abs(x));
+  // Nothing reaches the bottom rows: the shell samples them for base and seams only.
+  const floor = smoothstep(0.08, 0.22, v);
+  return lit * fall * sides * floor;
+}
+
+/** RGBA pixels of the shared wall-wash tile (greyscale, sRGB-encoded, row 0 at the top). */
+export function wallWashPixels(size = WALL_WASH_SIZE, seed = 7): Uint8ClampedArray<ArrayBuffer> {
+  const data = new Uint8ClampedArray(size * size * 4);
+  const random = rng(seed);
+  for (let row = 0; row < size; row++) {
+    const v = 1 - (row + 0.5) / size;
+    for (let col = 0; col < size; col++) {
+      const u = (col + 0.5) / size;
+      const edgePx = Math.min(col + 0.5, size - col - 0.5);
+      const seam = 1 - SEAM_DARKEN * (1 - smoothstep(0, SEAM_HALF_PX, edgePx));
+      const value = (WALL_WASH_BASE + (1 - WALL_WASH_BASE) * scallop(u, v)) * seam;
+      const byte = encode(value, random() - 0.5);
+      const i = (row * size + col) * 4;
+      data[i] = byte;
+      data[i + 1] = byte;
+      data[i + 2] = byte;
+      data[i + 3] = 255;
+    }
+  }
+  return data;
+}
+
+/** A wash bay stands this far in front of its wall face (wall titles are at 0.01 m). */
+export const WASH_BAY_GAP = 0.005;
+
+export interface WashPlacement {
+  for: TargetId;
+  bay: WashBay;
+  color: string;
+}
+
+export interface WashLayout {
+  bays: WashPlacement[];
+  /** One per wall line that carries a bay: the shell's seams on it follow the bays' grid. */
+  seams: SeamLine[];
+}
+
+const mod = (a: number, n: number) => ((a % n) + n) % n;
+
+/**
+ * Every target's wall-wash bay. The first bay on a wall line sets that line's seam phase (its
+ * left edge); a later bay on the same line moves to the nearest center on that 2 m grid.
+ */
+export function washLayout(layout: Layout): WashLayout {
+  const seams: SeamLine[] = [];
+  const bays: WashPlacement[] = [];
+  const half = WASH_BAY_WIDTH / 2;
+  for (const target of lightTargets(layout)) {
+    const bay = { ...target.wash, normal: [...target.wash.normal] as [number, number] };
+    const line = seams.find((s) => s.axis === bay.axis && Math.abs(s.at - bay.at) < 1e-6);
+    if (line) {
+      const k = Math.round((bay.center - half - line.phase) / WASH_BAY_WIDTH);
+      bay.center = line.phase + k * WASH_BAY_WIDTH + half;
+    } else {
+      seams.push({ axis: bay.axis, at: bay.at, phase: mod(bay.center - half, WASH_BAY_WIDTH) });
+    }
+    bays.push({ for: target.id, bay, color: target.color });
+  }
+  return { bays, seams };
+}
+
+/** The unit-plane matrix of a bay: WASH_BAY_WIDTH wide, floor to ceiling, facing into the room. */
+export function washMatrix(bay: WashBay): Matrix4 {
+  const across = bay.at;
+  const [nx, nz] = bay.normal;
+  const x = bay.axis === 'z' ? across + nx * WASH_BAY_GAP : bay.center;
+  const z = bay.axis === 'x' ? across + nz * WASH_BAY_GAP : bay.center;
+  return new Matrix4()
+    .makeTranslation(x, bay.height / 2, z)
+    .multiply(new Matrix4().makeRotationY(Math.atan2(nx, nz)))
+    .multiply(new Matrix4().makeScale(WASH_BAY_WIDTH, bay.height, 1));
+}
+
+// ---------------------------------------------------------------------------------------------
+// Browser: CanvasTextures
+
+function canvasFrom(width: number, height: number, data: Uint8ClampedArray<ArrayBuffer>) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('No 2D context for a lightmap');
+  ctx.putImageData(new ImageData(data, width, height), 0, 0);
+  return canvas;
+}
+
+function asLightmap(texture: CanvasTexture, name: string): CanvasTexture {
+  texture.name = name;
+  texture.colorSpace = SRGBColorSpace;
+  texture.channel = 0;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+/** One floor lightmap CanvasTexture per room (lightMap.channel 0, the plane's own UVs). */
+export function createFloorLightmaps(layout: Layout): Map<Room['id'], CanvasTexture> {
+  const out = new Map<Room['id'], CanvasTexture>();
+  for (const zone of paintFloorZones(layout)) {
+    const texture = new CanvasTexture(canvasFrom(zone.width, zone.height, zone.data));
+    out.set(zone.room, asLightmap(texture, `floorPools-${zone.room}`));
+  }
+  return out;
+}
+
+/** The shared wall-wash tile (repeat-wrapped along the wall). */
+export function createWallWash(): CanvasTexture {
+  const size = WALL_WASH_SIZE;
+  const texture = new CanvasTexture(canvasFrom(size, size, wallWashPixels(size)));
+  texture.wrapS = RepeatWrapping;
+  texture.wrapT = ClampToEdgeWrapping;
+  return asLightmap(texture, 'wallWash');
+}

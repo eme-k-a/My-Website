@@ -8,6 +8,7 @@ import {
   ARCH_HEIGHT,
   FOUNDATIONS_BEAM_BOTTOM,
   FOUNDATIONS_BEAM_DEPTH,
+  FLOOR_ROTATION_X,
   floorGeometry,
   openings,
   shellBoxes,
@@ -62,7 +63,7 @@ describe('greybox shell (EXPERIENCE §2.2, §2.3)', () => {
     const ceilings = boxes.filter((b) => b.kind === 'ceiling');
     expect(ceilings).toHaveLength(layout.rooms.length);
     for (const room of layout.rooms) {
-      const floor = floorGeometry(room);
+      const floor = floorGeometry(room).rotateX(FLOOR_ROTATION_X);
       floor.computeBoundingBox();
       const bb = floor.boundingBox!;
       expect([bb.min.x, bb.max.x, bb.min.z, bb.max.z], room.id).toEqual([

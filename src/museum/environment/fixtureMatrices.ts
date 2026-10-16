@@ -1,8 +1,8 @@
 // Instance matrices for the gallery fixtures (EXPERIENCE §5.2, §5.3): plinths, base strips, glass
 // cases, brass case edges and the certifications wall panels, each drawn as one instanced unit
 // box per kind, so the fixture count never adds draw calls. Every matrix starts from a layout slot
-// (anatomy.ts gives the kit-local offsets); the desk block stands at the desk stop's look target.
-import { BoxGeometry, Matrix4, type BufferGeometry } from 'three';
+// (anatomy.ts gives the kit-local offsets). The front desk is its own module (deskParts.ts, Desk.tsx).
+import { BoxGeometry, type BufferGeometry, type Matrix4 } from 'three';
 import type { Layout } from '../rail/layout';
 import {
   baseStripBox,
@@ -14,9 +14,6 @@ import {
   slotVariant,
   wallPanelBoxes,
 } from '../exhibits/_kit/anatomy';
-
-/** The greybox desk block (WP-11 replaces it with the walnut and brass desk). */
-export const DESK_BLOCK_SIZE = [1.8, 1.0, 0.7] as const;
 
 export interface FixtureInstances {
   /** One per standard slot (plinth material). */
@@ -31,8 +28,6 @@ export interface FixtureInstances {
   edges: Matrix4[];
   /** Walnut backing panel and vitrine back per wall slot. */
   wallPanels: Matrix4[];
-  /** The desk block, or null when the layout has no desk stop. */
-  desk: Matrix4 | null;
 }
 
 export function fixtureInstances(layout: Layout): FixtureInstances {
@@ -43,7 +38,6 @@ export function fixtureInstances(layout: Layout): FixtureInstances {
     cases: [],
     edges: [],
     wallPanels: [],
-    desk: null,
   };
   for (const slot of layout.slots) {
     const frame = slotMatrix(slot);
@@ -59,13 +53,6 @@ export function fixtureInstances(layout: Layout): FixtureInstances {
     const glass = caseBox(variant);
     out.cases.push(boxMatrix(frame, glass));
     for (const edge of edgeBoxes(glass)) out.edges.push(boxMatrix(frame, edge));
-  }
-  const desk = layout.tracks.main.stops.find((s) => s.id === 'desk');
-  if (desk) {
-    const [w, h, d] = DESK_BLOCK_SIZE;
-    out.desk = new Matrix4()
-      .makeTranslation(desk.look[0], h / 2, desk.look[2])
-      .multiply(new Matrix4().makeScale(w, h, d));
   }
   return out;
 }

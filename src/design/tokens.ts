@@ -45,7 +45,7 @@ export const tokens = {
     spotAngle: 0.38,
     spotPenumbra: 0.6,
     spotDecay: 2,
-    spotIntensity: 40, // candela, tuned in WP-11
+    spotIntensity: 40, // candela, frozen by R2 in WP-11
     fogDensity: 0.045,
     poolRadius: 1.6,
     poolAlpha: 0.85,

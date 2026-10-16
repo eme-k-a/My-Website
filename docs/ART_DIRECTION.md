@@ -344,20 +344,20 @@ One file per exhibit id in `review/concepts/<id>.md` (`verafin`, `mysa`, `wailo`
 
 ## 9. Tone-mapping decision
 
-Filled by R2 in WP-11. Until then: ACES Filmic, exposure 1.0.
+Filled by R2 in WP-11.
 
 | Field | Value |
 |---|---|
-| Date | |
-| Build (commit) | |
+| Date | 2026-10-16 |
+| Build (commit) | WP-11 working tree on `3a2c574`, with the WP-12 Verafin exhibit applied locally (uncommitted) so a real exhibit sits under the light |
 | Stops compared | lobby, verafin, cfia |
-| Tier and viewport | `tier=high`, desktop |
+| Tier and viewport | `tier=high`, desktop (1440 x 900, DPR 1, `?test=1`) |
 | ACES Filmic screenshots | `out/wp11/tonemap/lobby-aces.png`, `verafin-aces.png`, `cfia-aces.png` |
 | AgX screenshots | `out/wp11/tonemap/lobby-agx.png`, `verafin-agx.png`, `cfia-agx.png` |
-| Choice (`render.toneMapping`) | |
-| Exposure (`render.exposure`) | |
-| Spotlight intensity frozen (`light.spotIntensity`) | |
-| Reason (one paragraph) | |
+| Choice (`render.toneMapping`) | `aces` (ACES Filmic) |
+| Exposure (`render.exposure`) | 1.0 |
+| Spotlight intensity frozen (`light.spotIntensity`) | 40 cd |
+| Reason (one paragraph) | ACES keeps the gallery dark: the ink between pools stays on the page background, so the baked pools, wall washes and spotlit objects carry the image, which is the whole lighting idea (§1, §4). AgX lifts every dark tone toward a flat grey haze: over the 3D area the mean 8-bit luma rises from 12 to 17 (lobby), 19 to 29 (verafin) and 12 to 19 (cfia), and the share of near-black pixels falls from 83% to 63% at the lobby, which reads as a lit room rather than a dark gallery with lit exhibits. AgX's gentler highlight roll-off was not needed: at 40 cd no spotlit surface clips under ACES, and the brass labels keep their warm hue. Exposure stays 1.0; the pool and wash levels are tuned in the lightmaps instead (`lightPools.ts`). |
 
 ---
 

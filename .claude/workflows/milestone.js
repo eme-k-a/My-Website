@@ -1,7 +1,7 @@
 export const meta = {
   name: 'milestone',
   description: 'Run one milestone of the Commit History build: parallel WP builders in worktrees, then merge in order with a cheap independent verifier and one fix round',
-  whenToUse: 'Any milestone or batch of work packages (WP-xx) for the Commit History site. Pass args: { label, wps: [{ id, role, model?, effort?, fromBranch?, report? }], mergeOrder?, notes? }. fromBranch: the builder restores that branch tip (a WIP commit) and continues. report: the WP is already built on wp/<id>; skip the build and use this text as its report.',
+  whenToUse: 'Any milestone or batch of work packages (WP-xx) for the Commit History site. Pass args: { label, wps: [{ id, role, model?, effort?, fromBranch?, report? }], mergeOrder?, notes?, portBase? }. mergeOrder: [] builds without integrating. portBase offsets builder ports from 4174. fromBranch: the builder restores that branch tip (a WIP commit) and continues. report: the WP is already built on wp/<id>; skip the build and use this text as its report.',
   phases: [
     { title: 'Build', detail: 'one builder per WP in an isolated worktree' },
     { title: 'Integrate', detail: 'cherry-pick in merge order; Sonnet verifier; one fix round' },
@@ -76,7 +76,7 @@ phase('Build')
 const reports = {}
 for (const w of WPS) if (w.report) { reports[w.id] = w.report; log(`${w.id}: already built on wp/${w.id}; skipping the build`) }
 await parallel(WPS.filter((w) => !w.report).map((w, i) => () =>
-  agent(buildPrompt(w, 4174 + i), { label: `build:${w.id}`, phase: 'Build', isolation: 'worktree', model: w.model, effort: w.effort || 'high' })
+  agent(buildPrompt(w, 4174 + (A.portBase || 0) + i), { label: `build:${w.id}`, phase: 'Build', isolation: 'worktree', model: w.model, effort: w.effort || 'high' })
     .then((r) => { reports[w.id] = r })))
 
 phase('Integrate')

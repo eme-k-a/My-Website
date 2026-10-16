@@ -80,6 +80,9 @@ export function FrameDriver() {
       paused = next;
       if (paused) {
         setFrameloop('never');
+        // R3F's loop still renders the frames already requested under "never" (an invalidate()
+        // inside useFrame books two), so a dolly frame could land under the sheet: drop them.
+        get().internal.frames = 0;
       } else {
         setFrameloop('demand');
         invalidate();

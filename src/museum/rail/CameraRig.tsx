@@ -8,8 +8,8 @@
 // reduced motion there is no damping and no in-between pose: the camera holds the last stop and,
 // once the scroll arrives at another, cuts to it behind ScrollTrack's ink fade (fade.ts). It
 // writes `settled` and `stop` to the store, only on change, asks the demand loop for frames only
-// while the camera still moves (settle.ts `railNeedsFrame`, also at rest between stops), and
-// registers the test hook's nav
+// while the camera still moves (settle.ts `railNeedsFrame`, also at rest between stops), damps
+// with the real frame time while it moves (`rigStep`), and registers the test hook's nav
 // provider: goTo travels through navigation.ts (the same path as the UI) and resolves when settled
 // at the stop; screenPos projects a hit-box center.
 import { useFrame, useThree } from '@react-three/fiber';
@@ -44,12 +44,16 @@ import {
 import { travelTo } from './navigation';
 import { easeInOutCubic, finishGlide, progress, rig, setWaker, wake } from './progress';
 import { buildRails, poseAt } from './rail';
-import { railNeedsFrame, SETTLE, settledStop } from './settle';
+import { railNeedsFrame, rigStep, SETTLE, settledStop } from './settle';
 
 const rails = buildRails(LAYOUT);
 
-/** Largest frame step fed to the damping, in seconds. */
-const MAX_DELTA = 0.1;
+/**
+ * Whether the rig asked for the frame being rendered (it was still moving in the previous one).
+ * Such a frame damps with its real duration; the first frame after a rest damps over the time
+ * since the wake-up that started it (rigStep).
+ */
+let requested = false;
 
 const position = new Vector3();
 const look = new Vector3();
@@ -209,6 +213,8 @@ export function CameraRig() {
     rig.attached = true;
     rig.teleport = true;
     shift.framed = false;
+    requested = false;
+    rig.wokeAt = null;
     const offWaker = setWaker(invalidate);
     const offParallax = installParallax(invalidate);
     // A story opening or closing starts the dolly and the framing change: ask for frames. A
@@ -257,8 +263,9 @@ export function CameraRig() {
   useFrame(({ camera, size }, delta) => {
     const state = useMuseum.getState();
     const glide = rig.glide;
-    const dt = Math.min(delta, MAX_DELTA);
     const now = performance.now();
+    const dt = rigStep(delta, requested, rig.wokeAt === null ? null : (now - rig.wokeAt) / 1000);
+    rig.wokeAt = null;
     const reduced = state.reducedMotion;
     // Jumps and reduced motion turn the gaze at once; walking and glides damp it.
     let jump = reduced;
@@ -395,7 +402,7 @@ export function CameraRig() {
     }
     // Frames only while something still moves (F-012): at rest, on a stop or between two, the
     // demand loop stops; the gaze, framing, dolly, parallax and fade keep asking until they settle.
-    const needsFrame =
+    requested =
       animating ||
       railNeedsFrame({
         current: held ? held.index : progress.current,
@@ -403,7 +410,7 @@ export function CameraRig() {
         moved,
         gliding,
       });
-    if (needsFrame) invalidate();
+    if (requested) invalidate();
   });
 
   return null;

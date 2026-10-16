@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { railNeedsFrame, settledStop, type SettleInput } from './settle';
+import { MAX_STEP_S, railNeedsFrame, rigStep, settledStop, type SettleInput } from './settle';
 
 const still: SettleInput = { current: 3, target: 3, moved: 0, compilePending: 0, gliding: false };
 
@@ -55,5 +55,33 @@ describe('railNeedsFrame (F-012)', () => {
   it('turns false at rest while an exhibit still compiles (the store change asks for the frame)', () => {
     expect(settledStop({ ...still, compilePending: 2 })).toBeNull();
     expect(railNeedsFrame(rest)).toBe(false);
+  });
+});
+
+describe('rigStep (F-014)', () => {
+  it('passes normal frame times through', () => {
+    expect(rigStep(1 / 60, true, null)).toBeCloseTo(1 / 60);
+    expect(rigStep(1 / 60, false, 0.01)).toBeCloseTo(0.01);
+  });
+
+  it('damps the first frame after a rest over the time since the wake, not the idle gap', () => {
+    // 20 s at rest, then a scroll woke the rig 0.3 s before the frame.
+    expect(rigStep(20, false, 0.3)).toBeCloseTo(0.3);
+    expect(rigStep(20, false, 5)).toBe(MAX_STEP_S.moving);
+  });
+
+  it('caps an unexplained idle gap', () => {
+    expect(rigStep(20, false, null)).toBe(MAX_STEP_S.idle);
+  });
+
+  it('keeps real time on slow frames the rig asked for, up to the stall cap', () => {
+    expect(rigStep(0.6, true, null)).toBeCloseTo(0.6);
+    expect(rigStep(30, true, 0.2)).toBe(MAX_STEP_S.moving);
+  });
+
+  it('never steps backward or by NaN', () => {
+    expect(rigStep(-1, true, null)).toBe(0);
+    expect(rigStep(Number.NaN, false, 1)).toBe(0);
+    expect(rigStep(0.5, false, -2)).toBe(0);
   });
 });

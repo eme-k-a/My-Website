@@ -31,6 +31,11 @@ export const rig = {
   glide: null as Glide | null,
   /** The next frame sets `current = target` without damping (instant travel, cold load). */
   teleport: false,
+  /**
+   * performance.now() of the first wake() since the rig's last frame, or null. The first frame
+   * after a rest damps over the time since this wake, not over the idle gap before it.
+   */
+  wokeAt: null as number | null,
 };
 
 let waker: (() => void) | null = null;
@@ -45,6 +50,7 @@ export function setWaker(fn: () => void): () => void {
 
 /** Asks for a frame (frameloop="demand"); a no-op until the canvas is mounted. */
 export function wake(): void {
+  rig.wokeAt ??= performance.now();
   waker?.();
 }
 

@@ -1,6 +1,6 @@
 // The definition of "settled" (ARCHITECTURE §6.3, EXPERIENCE §6.4), pure so it can be pinned by
 // unit tests. CameraRig evaluates it every frame and writes `settled` and `stop` on change. Also
-// when the rig still needs frames under the demand loop.
+// when the rig still needs frames under the demand loop, and the frame step it damps with.
 
 /** ARCHITECTURE §6.3 thresholds. */
 export const SETTLE = {
@@ -37,7 +37,7 @@ export function settledStop(input: SettleInput): number | null {
 }
 
 // ---------------------------------------------------------------------------------------------
-// When the rig needs frames (F-012)
+// When the rig needs frames, and how long a frame step is (F-012, F-014)
 
 export interface FrameNeedInput {
   /** Where the rail is: progress.current, or the held stop under reduced motion. */
@@ -60,4 +60,32 @@ export interface FrameNeedInput {
 export function railNeedsFrame(input: FrameNeedInput): boolean {
   const { current, goal, moved, gliding } = input;
   return gliding || !(Math.abs(current - goal) < SETTLE.progress) || !(moved < SETTLE.moved);
+}
+
+/** Longest frame step fed to the damping, in seconds. */
+export const MAX_STEP_S = {
+  /**
+   * A frame the rig did not ask for and no wake() explains: its delta spans the idle gap of the
+   * demand loop, so at most this much of it counts.
+   */
+  idle: 0.1,
+  /**
+   * Any other step: the real time since the previous frame (or, for the first frame after a
+   * rest, since the input that woke the rig), so a slow renderer (SwiftShader in CI at 1 to 2 s
+   * per frame, a weak phone) still arrives in about railSmoothTime of wall time instead of in
+   * slow motion. Capped against stalls (a hidden tab, the paused sheet).
+   */
+  moving: 1,
+} as const;
+
+/**
+ * The damping step for a frame whose R3F delta is `delta` seconds (see MAX_STEP_S). `requested`:
+ * the rig asked for this frame (it was moving). `sinceWakeS`: seconds since the first wake()
+ * after the rig's previous frame, or null when nothing woke it.
+ */
+export function rigStep(delta: number, requested: boolean, sinceWakeS: number | null): number {
+  if (!(delta > 0)) return 0;
+  if (requested) return Math.min(delta, MAX_STEP_S.moving);
+  if (sinceWakeS === null) return Math.min(delta, MAX_STEP_S.idle);
+  return Math.min(delta, Math.max(0, sinceWakeS), MAX_STEP_S.moving);
 }

@@ -117,8 +117,26 @@ async function recordAnnouncements(page: Page): Promise<() => Promise<string[]>>
   return () => page.evaluate(() => window.__ANNOUNCED__ ?? []);
 }
 
+interface RestOptions {
+  /**
+   * The scroll position before the input: first wait up to 4 s for the page to leave it. On CI,
+   * SwiftShader takes about 1 s per frame and a wheel scroll can start after the quiet window
+   * (run 27: the walk measured its rest before the gesture moved the page, wheeled again and
+   * stacked two gestures to scrollY 4078, between two stops).
+   */
+  from?: number;
+  quietMs?: number;
+  timeoutMs?: number;
+}
+
 /** Waits until the page is settled and its scroll position and stop held still for `quietMs`. */
-async function waitForRest(page: Page, quietMs = 700, timeoutMs = 30_000): Promise<StopId> {
+async function waitForRest(page: Page, opts: RestOptions = {}): Promise<StopId> {
+  const { from, quietMs = 700, timeoutMs = 30_000 } = opts;
+  if (from !== undefined) {
+    await page
+      .waitForFunction((y) => Math.abs(window.scrollY - y) > 1, from, { timeout: 4_000 })
+      .catch(() => {});
+  }
   const deadline = Date.now() + timeoutMs;
   let last = '';
   let since = Date.now();
@@ -254,11 +272,12 @@ test.describe('camera feel', () => {
     // Proximity snapping needs more than half a viewport per wheel gesture to leave a stop.
     const goal = MAIN.indexOf('wailo');
     const path: string[] = [];
+    let from: number | undefined;
     for (let i = 0; i < 20; i++) {
-      const index = MAIN.indexOf(await waitForRest(page));
+      const index = MAIN.indexOf(await waitForRest(page, { from }));
       if (index === goal) break;
+      from = await page.evaluate(() => window.scrollY);
       await page.mouse.wheel(0, index < goal ? 600 : -600);
-      await page.waitForTimeout(300);
       path.push(MAIN[index]!);
     }
     expect(await waitForRest(page)).toBe('wailo');

@@ -115,6 +115,9 @@ test.describe('greybox', () => {
   });
 
   test('every stop renders within the draw-call budget', async ({ page }) => {
+    // Every main and wing stop in turn, each waiting for its compiles under SwiftShader: CI run
+    // 27 took 59.1 s of the 60 s default, a local two-worker run (as in CI) 45 s.
+    test.setTimeout(120_000);
     await page.goto(museumUrl('/'));
     await waitForMuseum(page);
     for (const stop of ALL_STOPS) {

@@ -58,6 +58,9 @@ async function settleDialog(page: Page) {
 }
 
 test.describe('story dialog and history', () => {
+  // The camera follows Newer and Older behind the dialog under SwiftShader: CI run 27 took up to
+  // 47 s of the 60 s default ((d) on desktop; (b) 40 s), a local two-worker run 43 s.
+  test.describe.configure({ timeout: 120_000 });
   test.beforeEach(() => onlyMuseumProjects());
 
   test('(a) a cold deep link opens the story and closes to / on the same origin', async ({

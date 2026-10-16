@@ -129,16 +129,38 @@ async function openGallery(page: Page): Promise<Rest> {
   return rest;
 }
 
+/** Milliseconds from each press to its rest in the running test (logged to size the timeout). */
+const arrivals: number[] = [];
+
 /** Presses `key` and returns where the page comes to rest. */
 async function press(page: Page, key: string): Promise<Rest> {
   const from = await page.evaluate(() => window.scrollY);
+  const start = Date.now();
   await page.keyboard.press(key);
-  return waitForRest(page, { from });
+  const rest = await waitForRest(page, { from });
+  arrivals.push(Date.now() - start);
+  return rest;
+}
+
+/** Logs the arrival times of a walk: the CI log is where the walk timeout below is measured. */
+function logArrivals(label: string): void {
+  const total = arrivals.reduce((sum, ms) => sum + ms, 0);
+  console.log(
+    `${label}: ${arrivals.length} arrivals, ${Math.round(total / 1000)} s, ` +
+      `mean ${Math.round(total / Math.max(1, arrivals.length))} ms, max ${Math.max(0, ...arrivals)} ms`,
+  );
 }
 
 test.describe('rail input', () => {
   // SwiftShader draws the gallery at a few frames per second, and every walk waits for settling.
-  test.describe.configure({ timeout: 180_000 });
+  // The 18-arrival walks (e) and (f) set the limit. Measured with two workers on four cores, as
+  // in CI (F-M2): a keyboard arrival takes 4 to 6 s next to another walk and 8 to 11 s next to a
+  // context-loss test, so (e) took 150 s and each (f) 108 s; before F-014 every arrival took
+  // about 19 frames and (e) and (f) ran past 180 s. 300 s leaves room for a slower runner.
+  test.describe.configure({ timeout: 300_000 });
+  test.beforeEach(() => {
+    arrivals.length = 0;
+  });
 
   test('(a) a decaying wheel stream settles on a whole stop without skipping', async ({ page }) => {
     only('desktop');
@@ -253,6 +275,7 @@ test.describe('rail input', () => {
         id,
       );
     }
+    logArrivals('rail-input (e) ArrowDown walk');
     expect(await writes()).toEqual({ push: 0, replace: 0, calls: [] });
     expect(await page.evaluate(() => history.length)).toBe(length);
     expect(new URL(page.url()).pathname).toBe('/');
@@ -273,6 +296,7 @@ test.describe('rail input', () => {
       const up = key === 'ArrowDown' ? 'ArrowUp' : 'PageUp';
       const back: StopId[] = [];
       for (let i = MAIN.length - 2; i >= 0; i--) back.push((await press(page, up)).stop);
+      logArrivals(`rail-input (f) ${key} and back`);
       expect(back).toEqual([...MAIN].reverse().slice(1));
     });
   }

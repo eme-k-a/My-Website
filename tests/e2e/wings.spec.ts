@@ -157,6 +157,10 @@ test.describe('wings', () => {
   });
 
   test('scrolling through all 10 main stops never changes history', async ({ page }) => {
+    // Nine smooth arrivals in a row under SwiftShader. CI run 27 timed out at 120 s on desktop
+    // (pixel7 took 90 s); with F-014 a local two-worker run (as in CI) took 102 s on desktop and
+    // 44 s on pixel7. 240 s keeps a slower runner clear of the limit.
+    test.setTimeout(240_000);
     const writes = await countHistoryWrites(page);
     await page.goto(museumUrl('/'));
     await waitForMuseum(page);

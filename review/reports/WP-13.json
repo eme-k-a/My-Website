@@ -5,7 +5,8 @@
   "branch": "wp/WP-13",
   "commits": [
     "eb6d407 feat(exhibit-safe-sip): tamper evident",
-    "91fc657 docs(concepts): safe-sip checklist verdict"
+    "91fc657 docs(concepts): safe-sip checklist verdict",
+    "963cde9 fix(wp-13): make the safe-sip slot-fit test cheap"
   ],
   "changedFiles": [
     "src/museum/exhibits/safe-sip/index.ts",
@@ -44,14 +45,14 @@
       "criterion": "Lint and types",
       "command": "npm run verify",
       "result": "pass",
-      "evidence": "eslint (exhibit rules of ARCHITECTURE §7.5) and prettier clean, typecheck clean, 43 files / 559 unit tests pass"
+      "evidence": "Fix round: npm run verify passes (lint, typecheck, 63 files / 719 unit tests); 3 further full unit runs 719/719. The slot-fit test now takes about 15 to 30 ms instead of about 4.8 to 5.1 s."
     },
     {
       "id": "A2",
       "criterion": "Registry",
       "command": "npx vitest run --project unit src/museum/exhibits",
       "result": "pass",
-      "evidence": "11 files / 69 tests pass, including registry.test.ts and the 18 tamper.test.ts tests"
+      "evidence": "Fix round: npx vitest run --project unit src/museum/exhibits/safe-sip passes 18/18 in 4 consecutive runs; slot-fit test about 15 to 30 ms, gap test about 0.9 to 1.1 s."
     },
     {
       "id": "A3",
@@ -93,7 +94,12 @@
     "npx playwright test --grep @smoke --workers=1 (PORT=4176): 80 passed, 4 skipped",
     "npm run check:copy: ok (315 files); no U+2014 in any WP-13 file",
     "Captures: desktop medium and CAPTURE_TIER=high are byte-identical (expected before WP-16)",
-    "Unit tests prove every rocking vertex (cup, lid, tamper ring) stays inside the standard slot and at least 5 mm from the gizmo arcs, arrowheads and gimbal ring over the full 9 s cycle and the still pose"
+    "Unit tests prove every rocking vertex (cup, lid, tamper ring) stays inside the standard slot and at least 5 mm from the gizmo arcs, arrowheads and gimbal ring over the full 9 s cycle and the still pose",
+    {
+      "check": "Verifier issue: safe-sip slot-fit unit test near the 5000 ms timeout",
+      "result": "fixed",
+      "evidence": "963cde9: rocking geometry is built once and the test accumulates min/max bounds over all poses, then asserts once per axis. Same coverage (every vertex of every pose), no timeout change."
+    }
   ],
   "deviations": [
     "Euler gizmo radius 0.20 instead of 0.16: from the gizmo center (0, 0.24, 0) the rocking lid edge sweeps 0.15 to 0.18 m and the gimbal ring is at 0.153 m, so 0.16 m arcs would pass through the lid. Center, tube, quarter arcs, one per axis and arrowheads are as specified.",

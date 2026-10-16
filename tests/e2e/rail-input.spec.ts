@@ -3,8 +3,9 @@
 // (a) a 40-event decaying wheel stream and (b) three 100 px notches settle on a whole stop with no
 // skipped index; (c) one Pixel 7 flick moves exactly one stop, and the tall lobby (F-008) scrolls
 // through its intro before the next swipe lands exactly on the next stop; (d) no non-passive
-// wheel or touch listener; (e) walking every main stop writes no history; (f) ArrowDown and
-// PageDown each visit every main stop in order.
+// wheel or touch listener; (e) walking every main stop writes no history: the HUD dots here, the
+// keys in (f); (f) ArrowDown and PageDown each visit every main stop in order and back, writing no
+// history.
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
 import type { StopId } from '../../src/content/ids';
@@ -132,12 +133,16 @@ async function openGallery(page: Page): Promise<Rest> {
 /** Milliseconds from each press to its rest in the running test (logged to size the timeout). */
 const arrivals: number[] = [];
 
-/** Presses `key` and returns where the page comes to rest. */
+/**
+ * Presses `key` and returns where the page comes to rest. A key always moves the page, so the
+ * start phase may be long: in CI run 31 a press took more than 4 s to move it (frames of about
+ * 2 s with two workers), and (f) measured its rest at the stop it had not left yet.
+ */
 async function press(page: Page, key: string): Promise<Rest> {
   const from = await page.evaluate(() => window.scrollY);
   const start = Date.now();
   await page.keyboard.press(key);
-  const rest = await waitForRest(page, { from });
+  const rest = await waitForRest(page, { from, startMs: 15_000 });
   arrivals.push(Date.now() - start);
   return rest;
 }
@@ -153,10 +158,9 @@ function logArrivals(label: string): void {
 
 test.describe('rail input', () => {
   // SwiftShader draws the gallery at a few frames per second, and every walk waits for settling.
-  // The 18-arrival walks (e) and (f) set the limit. Measured with two workers on four cores, as
-  // in CI (F-M2): a keyboard arrival takes 4 to 6 s next to another walk and 8 to 11 s next to a
-  // context-loss test, so (e) took 150 s and each (f) 108 s; before F-014 every arrival took
-  // about 19 frames and (e) and (f) ran past 180 s. 300 s leaves room for a slower runner.
+  // The 18-arrival walks of (f) set the limit. CI run 31 (F-014 rig, two workers): a keyboard
+  // arrival took 10.9 s on average and 12.8 s at most, so (f) needs about 220 s with its load;
+  // before F-014 an arrival took about 19 frames and these walks ran past 180 s. 300 s.
   test.describe.configure({ timeout: 300_000 });
   test.beforeEach(() => {
     arrivals.length = 0;
@@ -264,18 +268,20 @@ test.describe('rail input', () => {
     const writes = await countHistoryWrites(page);
     await openGallery(page);
     const length = await page.evaluate(() => history.length);
-    const visited: StopId[] = ['lobby'];
-    for (let i = 1; i < MAIN.length; i++) visited.push((await press(page, 'ArrowDown')).stop);
-    expect(visited).toEqual(MAIN);
-    // The progress rail's dots (HUD travel) too, back to the lobby.
+    // The keyboard walks of (f) check the same history rules on every step, down and back, so
+    // this walk starts at the desk and comes back with the progress rail's dots (HUD travel).
+    // (F-M2: walking down with ArrowDown here too doubled (f) and cost 98 s in CI run 31.)
+    await goToStop(page, 'desk');
     for (const id of [...MAIN].reverse().slice(1)) {
+      const start = Date.now();
       await page.getByTestId(TEST_IDS.hudStop(id)).click();
       await page.waitForFunction(
         (stop) => window.__MUSEUM__?.settled === true && window.__MUSEUM__.stop === stop,
         id,
       );
+      arrivals.push(Date.now() - start);
     }
-    logArrivals('rail-input (e) ArrowDown walk');
+    logArrivals('rail-input (e) HUD walk');
     expect(await writes()).toEqual({ push: 0, replace: 0, calls: [] });
     expect(await page.evaluate(() => history.length)).toBe(length);
     expect(new URL(page.url()).pathname).toBe('/');
@@ -284,7 +290,9 @@ test.describe('rail input', () => {
   for (const key of ['ArrowDown', 'PageDown'] as const) {
     test(`(f) ${key} visits every main stop in order`, async ({ page }) => {
       only('desktop');
+      const writes = await countHistoryWrites(page);
       await openGallery(page);
+      const length = await page.evaluate(() => history.length);
       const visited: StopId[] = ['lobby'];
       for (let i = 1; i < MAIN.length; i++) {
         const rest = await press(page, key);
@@ -298,6 +306,10 @@ test.describe('rail input', () => {
       for (let i = MAIN.length - 2; i >= 0; i--) back.push((await press(page, up)).stop);
       logArrivals(`rail-input (f) ${key} and back`);
       expect(back).toEqual([...MAIN].reverse().slice(1));
+      // (e): stop arrivals never write history.
+      expect(await writes()).toEqual({ push: 0, replace: 0, calls: [] });
+      expect(await page.evaluate(() => history.length)).toBe(length);
+      expect(new URL(page.url()).pathname).toBe('/');
     });
   }
 

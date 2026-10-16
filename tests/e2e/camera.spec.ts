@@ -119,10 +119,11 @@ async function recordAnnouncements(page: Page): Promise<() => Promise<string[]>>
 
 interface RestOptions {
   /**
-   * The scroll position before the input: first wait up to 4 s for the page to leave it. On CI,
-   * SwiftShader takes about 1 s per frame and a wheel scroll can start after the quiet window
-   * (run 27: the walk measured its rest before the gesture moved the page, wheeled again and
-   * stacked two gestures to scrollY 4078, between two stops).
+   * The scroll position before the input: first wait up to 15 s for the page to leave it. On CI,
+   * SwiftShader takes 1 to 2 s per frame and a scroll can start after the quiet window (run 27:
+   * the walk measured its rest before the gesture moved the page, wheeled again and stacked two
+   * gestures to scrollY 4078, between two stops; run 31: a key press took more than 4 s to move
+   * the page).
    */
   from?: number;
   quietMs?: number;
@@ -134,7 +135,7 @@ async function waitForRest(page: Page, opts: RestOptions = {}): Promise<StopId> 
   const { from, quietMs = 700, timeoutMs = 30_000 } = opts;
   if (from !== undefined) {
     await page
-      .waitForFunction((y) => Math.abs(window.scrollY - y) > 1, from, { timeout: 4_000 })
+      .waitForFunction((y) => Math.abs(window.scrollY - y) > 1, from, { timeout: 15_000 })
       .catch(() => {});
   }
   const deadline = Date.now() + timeoutMs;

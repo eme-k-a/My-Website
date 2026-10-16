@@ -1,10 +1,22 @@
 // Recruiter fast path (EXPERIENCE §8.1, §8.6; ARCHITECTURE §5.2, §9; WP-10 A5). At 360 x 640 and
 // 390 x 844 the h1, the role line, the education line and the three hero links sit fully inside the
 // first viewport, with JavaScript off and with JavaScript on before the museum is ready (its chunk
-// is blocked, so `ready` never comes). The largest-contentful-paint element is the h1.
+// is blocked, so `ready` never comes). The largest-contentful-paint element is the h1. CLS from
+// navigation to `ready` stays within perf/budgets.json web.cls on desktop and Pixel 7 (WP-17).
+// @dom: the phone-size checks are DOM-only (WP-32 runs them in Firefox and WebKit).
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
 import { expect, test, type Guards } from './fixtures';
+import { museumUrl, observeLayoutShift, waitForMuseum } from './helpers';
+
+/** perf/budgets.json web.cls (ARCHITECTURE §9): the e2e gate, from navigation to `ready`. */
+const CLS_BUDGET = (
+  JSON.parse(
+    readFileSync(fileURLToPath(new URL('../../perf/budgets.json', import.meta.url)), 'utf8'),
+  ) as { web: { cls: number } }
+).web.cls;
 
 const PHONES = [
   { width: 360, height: 640 },
@@ -66,7 +78,7 @@ async function lcpElement(page: Page): Promise<string> {
   });
 }
 
-test.describe('recruiter fast path', () => {
+test.describe('recruiter fast path', { tag: '@dom' }, () => {
   test.beforeEach(() => {
     test.skip(
       test.info().project.name !== 'pixel7',
@@ -115,5 +127,18 @@ test.describe('LCP on desktop', () => {
     test.skip(test.info().project.name !== 'desktop', 'Desktop only');
     await page.goto(MUSEUM_URL);
     expect(await lcpElement(page)).toMatch(/^h1:/);
+  });
+});
+
+test.describe('layout shift', () => {
+  test('CLS from navigation to ready is within the budget', async ({ page }) => {
+    const project = test.info().project.name;
+    test.skip(!['desktop', 'pixel7'].includes(project), 'desktop and pixel7');
+    const cls = await observeLayoutShift(page);
+    await page.goto(museumUrl('/'));
+    await waitForMuseum(page);
+    const measured = await cls();
+    test.info().annotations.push({ type: 'cls', description: JSON.stringify(measured) });
+    expect(measured.value, `CLS to ready on ${project}`).toBeLessThanOrEqual(CLS_BUDGET);
   });
 });

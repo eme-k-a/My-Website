@@ -2,6 +2,8 @@
 // `window.__MUSEUM__` (enabled by ?test=1); input helpers produce the wheel, touch and listener
 // evidence that EXPERIENCE §3.6, §6.11 and §9.5 ask for. Never replace `waitForMuseum` with a
 // fixed sleep: `ready` already waits for Suspense, troika, compileAsync and two frames.
+import { fileURLToPath } from 'node:url';
+import AxeBuilder from '@axe-core/playwright';
 import type { Locator, Page, PageAssertionsToHaveScreenshotOptions } from '@playwright/test';
 import type { MuseumStats } from '../../src/app/testHooks';
 import { TEST_IDS } from '../../src/app/testIds';
@@ -73,11 +75,21 @@ export const museumCanvas = (page: Page): Locator => page.locator('canvas').firs
 // Visual baselines (ARCHITECTURE §13.6)
 
 export interface ShotOptions extends Omit<PageAssertionsToHaveScreenshotOptions, 'mask'> {
-  /** Extra regions to mask. `dialog-duration` is always masked. */
+  /** Extra regions to mask. `dialog-duration` is always masked (and hidden, see below). */
   mask?: Locator[];
   /** A DOM-only shot (dialogs, `/resume/`, 404): the canvas is masked too. */
   domOnly?: boolean;
+  /** `expect.soft`: a walk of several stops compares (or writes) every shot before failing. */
+  soft?: boolean;
 }
+
+/**
+ * CSS applied while a baseline is captured: it hides `dialog-duration` and the cards'
+ * "Dimensions: <duration>" (ongoing roles change monthly). A mask is no use for either: inside
+ * the modal <dialog> (the top layer) masks never show, and a card mask's box would still change
+ * width with the text.
+ */
+const SCREENSHOT_CSS = fileURLToPath(new URL('./screenshot.css', import.meta.url));
 
 /** True where screenshots are compared: CI, or locally with VISUAL_LOCAL=1 (advisory). */
 export const compareScreenshots = (): boolean =>
@@ -92,11 +104,13 @@ export async function shot(page: Page, name: string, opts: ShotOptions = {}): Pr
     !compareScreenshots(),
     'Screenshots are compared in CI only (ARCHITECTURE §13.6); set VISUAL_LOCAL=1 for an advisory local run',
   );
-  const { mask = [], domOnly = false, ...rest } = opts;
-  await expect(page).toHaveScreenshot(name.endsWith('.png') ? name : `${name}.png`, {
+  const { mask = [], domOnly = false, soft = false, ...rest } = opts;
+  const assert = soft ? expect.soft(page) : expect(page);
+  await assert.toHaveScreenshot(name.endsWith('.png') ? name : `${name}.png`, {
     maxDiffPixelRatio: 0.02,
     animations: 'disabled',
     caret: 'hide',
+    stylePath: SCREENSHOT_CSS,
     ...rest,
     mask: [
       page.getByTestId(TEST_IDS.dialogDuration),
@@ -361,4 +375,67 @@ export async function canvasLuminance(page: Page, canvas = museumCanvas(page)): 
     sum += 0.2126 * (data[i] ?? 0) + 0.7152 * (data[i + 1] ?? 0) + 0.0722 * (data[i + 2] ?? 0);
   }
   return sum / (info.width * info.height) / 255;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Web vitals, transfer and axe (ARCHITECTURE §9, §13.7)
+
+declare global {
+  interface Window {
+    __CLS__?: { value: number; entries: number };
+  }
+}
+
+/**
+ * Starts a `layout-shift` observer in every document the page loads from now on (call it before
+ * `page.goto`). It sums the shifts without recent input from navigation on, as the CLS budget of
+ * ARCHITECTURE §9 counts them. Returns a reader for the current document's sum.
+ */
+export async function observeLayoutShift(
+  page: Page,
+): Promise<() => Promise<{ value: number; entries: number }>> {
+  await page.addInitScript(() => {
+    const cls = { value: 0, entries: 0 };
+    window.__CLS__ = cls;
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries() as (PerformanceEntry & {
+        value: number;
+        hadRecentInput: boolean;
+      })[]) {
+        if (entry.hadRecentInput) continue;
+        cls.value += entry.value;
+        cls.entries++;
+      }
+    }).observe({ type: 'layout-shift', buffered: true });
+  });
+  return () => page.evaluate(() => window.__CLS__ ?? { value: 0, entries: 0 });
+}
+
+/** Lets the resource timing buffer hold a full walk (the default is 250 entries). */
+export async function keepResourceTimings(page: Page): Promise<void> {
+  await page.addInitScript(() => performance.setResourceTimingBufferSize(5_000));
+}
+
+/**
+ * Bytes over the wire since navigation: `transferSize` of the navigation entry plus every
+ * resource entry (serve-dist gzips text, an upper bound on Netlify's brotli; ARCHITECTURE §9).
+ */
+export async function transferBytes(page: Page): Promise<number> {
+  return page.evaluate(() =>
+    [
+      ...performance.getEntriesByType('navigation'),
+      ...performance.getEntriesByType('resource'),
+    ].reduce((sum, entry) => sum + ((entry as PerformanceResourceTiming).transferSize || 0), 0),
+  );
+}
+
+/** axe with the tags of ARCHITECTURE §13.7; fails with one line per violation. */
+export async function expectNoAxeViolations(page: Page, label: string): Promise<void> {
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+    .analyze();
+  const summary = results.violations.map(
+    (v) => `${v.id} (${v.impact}): ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+  );
+  expect(summary, `axe violations on ${label}`).toEqual([]);
 }

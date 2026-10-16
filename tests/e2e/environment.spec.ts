@@ -4,6 +4,9 @@
 // stay within perf/budgets.json (ARCHITECTURE §9). Each stop is also captured to
 // out/wp11/<stop>-<project>[-high].png as a review artifact (not a baseline). The walk visits the
 // stops in order on one page, so exhibits kept mounted by the stop-graph hysteresis count too.
+// The same walk checks the transfer budgets (WP-17): bytes over the wire by the time it reaches
+// wailo (the first three exhibits; an upper bound on a direct goTo('wailo'), since the walk has
+// also loaded what it passed) and after every stop of every track.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { StopId } from '../../src/content/ids';
@@ -12,7 +15,14 @@ import { buildDateFromEnv } from '../../src/content/temporal';
 import type { QualityTier } from '../../src/museum/exhibits/_kit/types';
 import { computeLayout } from '../../src/museum/rail/layout';
 import { expect, test } from './fixtures';
-import { goToStop, museumUrl, stats, waitForMuseum } from './helpers';
+import {
+  goToStop,
+  keepResourceTimings,
+  museumUrl,
+  stats,
+  transferBytes,
+  waitForMuseum,
+} from './helpers';
 
 interface RenderBudgets {
   drawCalls: Record<QualityTier, number>;
@@ -20,11 +30,12 @@ interface RenderBudgets {
   textureMB: { desktop: number; mobile: number };
 }
 
-const BUDGETS = (
-  JSON.parse(
-    readFileSync(fileURLToPath(new URL('../../perf/budgets.json', import.meta.url)), 'utf8'),
-  ) as { render: RenderBudgets }
-).render;
+const BUDGET_FILE = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../perf/budgets.json', import.meta.url)), 'utf8'),
+) as { render: RenderBudgets; transfer: { firstThreeExhibitsMB: number; fullWalkMB: number } };
+const BUDGETS = BUDGET_FILE.render;
+const TRANSFER = BUDGET_FILE.transfer;
+const MB = 1024 * 1024;
 
 const OUT_DIR = fileURLToPath(new URL('../../out/wp11/', import.meta.url));
 
@@ -82,13 +93,16 @@ for (const tier of ['high', 'medium'] as const) {
       mkdirSync(OUT_DIR, { recursive: true });
       const suffix = project === 'desktop' && tier === 'high' ? '-high' : '';
 
+      await keepResourceTimings(page);
       await page.goto(museumUrl('/', { tier }));
       await waitForMuseum(page);
 
       const rows: StopRow[] = [];
+      let atWailoMB = Number.NaN;
       for (const stop of ALL_STOPS) {
         await goToStop(page, stop);
         await nextFrames(page);
+        if (stop === 'wailo') atWailoMB = (await transferBytes(page)) / MB;
         const s = await stats(page);
         expect(s.tier, 'the tier is fixed at boot').toBe(tier);
         rows.push({
@@ -106,7 +120,17 @@ for (const tier of ['high', 'medium'] as const) {
         await page.screenshot({ path: `${OUT_DIR}${stop}-${project}${suffix}.png` });
       }
 
-      const table = { project, tier, limits, rows };
+      const transfer = {
+        atWailoMB: Number(atWailoMB.toFixed(3)),
+        fullWalkMB: Number(((await transferBytes(page)) / MB).toFixed(3)),
+      };
+      expect
+        .soft(transfer.atWailoMB, 'transfer to wailo (first three exhibits)')
+        .toBeLessThanOrEqual(TRANSFER.firstThreeExhibitsMB);
+      expect
+        .soft(transfer.fullWalkMB, 'transfer after the full walk')
+        .toBeLessThanOrEqual(TRANSFER.fullWalkMB);
+      const table = { project, tier, limits, rows, transfer };
       test.info().annotations.push({ type: 'render budgets', description: JSON.stringify(table) });
       writeFileSync(
         `${OUT_DIR}budgets-${project}-${tier}.json`,

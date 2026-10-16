@@ -6,7 +6,11 @@
 // change history.length; (e) JS off: /exhibit/mysa/ shows every Mysa bullet; (f) every prerendered
 // exhibit page has a unique og:title; (g) @a11y: axe finds 0 violations with the dialog open and
 // on /exhibit/verafin/ with JS off. Plus the panel and sheet layouts, Esc, the backdrop, Copy link
-// and the rendering-pause flag.
+// and the rendering-pause flag. WP-17 (the WP-14 report's open items): (i) a cold wing deep link
+// enters the wing without a history entry and closes to / with focus on its Read the story; (j) a
+// door card's story link is the opener focus returns to; (k) reduced motion opens the dialog
+// without its slide; (l) the landscape phone gets the compact panel (and axe passes on it); (m)
+// @dom: ?mode=classic on an exhibit page is the static story with no hydration.
 import { existsSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -17,7 +21,7 @@ import { content } from '../../src/content/index';
 import { entryById } from '../../src/content/selectors';
 import { SITE_URL } from '../../src/content/site';
 import { expect, test } from './fixtures';
-import { goToStop, museumUrl, waitForMuseum } from './helpers';
+import { countHistoryWrites, goToStop, museumUrl, waitForMuseum } from './helpers';
 
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'];
 const MUSEUM_PROJECTS = ['desktop', 'pixel7', 'pixel7-landscape'];
@@ -26,6 +30,10 @@ const DIST = join(process.cwd(), 'dist');
 const project = () => test.info().project.name;
 const onlyMuseumProjects = () =>
   test.skip(!MUSEUM_PROJECTS.includes(project()), 'Needs WebGL2 (the museum path)');
+const onlyOn = (...projects: string[]) =>
+  test.skip(!projects.includes(project()), projects.join(' and '));
+const trackOf = (page: Page) =>
+  page.evaluate(() => document.getElementById('track')?.dataset.track);
 
 async function expectNoAxeViolations(page: Page, label: string) {
   const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
@@ -196,7 +204,99 @@ test.describe('story dialog and history', () => {
   });
 });
 
-test.describe('prerendered exhibit pages', () => {
+test.describe('story dialog: openers, wings and motion', () => {
+  // Same allowance as above: a cold load plus one camera move under SwiftShader.
+  test.describe.configure({ timeout: 120_000 });
+
+  test('(i) a cold wing deep link enters the wing without a history entry', async ({ page }) => {
+    onlyOn('desktop', 'pixel7');
+    const writes = await countHistoryWrites(page);
+    await page.goto(museumUrl('/exhibit/klarup/'));
+    const dialog = dialogOf(page);
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { level: 2, name: 'The Climb' })).toBeVisible();
+    await waitForMuseum(page);
+    expect(await trackOf(page)).toBe('projects');
+    expect((await writes()).push, 'no pushState on a cold wing deep link').toBe(0);
+    const length = await historyLength(page);
+    await page.getByTestId(TEST_IDS.dialogClose).click();
+    await expect(dialog).toBeHidden();
+    expect(pathOf(page)).toBe('/');
+    expect(await historyLength(page)).toBe(length);
+    expect(await trackOf(page)).toBe('projects');
+    await expect(page.getByTestId(TEST_IDS.open('klarup'))).toBeFocused();
+  });
+
+  test('(j) a door card story link opens the story and gets focus back', async ({ page }) => {
+    onlyOn('desktop');
+    await page.goto(museumUrl('/'));
+    await waitForMuseum(page);
+    await goToStop(page, 'projects-door');
+    const link = page
+      .getByTestId(TEST_IDS.card('projects-door'))
+      .locator('a[href="/exhibit/klarup/"]');
+    await link.click();
+    await expect(dialogOf(page)).toBeVisible();
+    expect(pathOf(page)).toBe('/exhibit/klarup/');
+    // klarup is not on the active track: the camera stays at the door.
+    expect(await trackOf(page)).toBe('main');
+    await page.keyboard.press('Escape');
+    await expect(dialogOf(page)).toBeHidden();
+    expect(pathOf(page)).toBe('/');
+    await expect(link).toBeFocused();
+  });
+
+  test.describe('reduced motion', () => {
+    test('(k) the dialog opens without its slide animation', async ({ page }) => {
+      onlyOn('desktop', 'pixel7');
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto(museumUrl('/'));
+      await waitForMuseum(page);
+      await goToStop(page, 'verafin');
+      await page.getByTestId(TEST_IDS.open('verafin')).click();
+      await expect(dialogOf(page)).toBeVisible();
+      const animations = await dialogOf(page).evaluate((el) =>
+        el.getAnimations().map((a) => (a as CSSAnimation).animationName ?? a.id),
+      );
+      expect(animations).toEqual([]);
+    });
+  });
+
+  test('(l) the landscape phone gets the compact right-hand panel, not the sheet', async ({
+    page,
+  }) => {
+    onlyOn('pixel7-landscape');
+    await openVerafinInApp(page);
+    const box = await dialogOf(page).boundingBox();
+    const viewport = page.viewportSize();
+    if (!box || !viewport) throw new Error('no dialog box');
+    expect(Math.round(box.x + box.width)).toBe(viewport.width);
+    expect(box.width).toBeLessThan(viewport.width);
+    expect(Math.round(box.height)).toBe(viewport.height);
+    await expect(page.locator('html')).not.toHaveAttribute('data-sheet', 'open');
+    await expect(page.getByTestId(TEST_IDS.dialogClose)).toHaveAccessibleName('Close story');
+  });
+});
+
+test.describe('classic mode on an exhibit page', { tag: '@dom' }, () => {
+  test('(m) ?mode=classic shows the static story and never hydrates', async ({ page }) => {
+    const requested: string[] = [];
+    page.on('request', (request) => requested.push(new URL(request.url()).pathname));
+    await page.goto('/exhibit/verafin/?test=1&mode=classic');
+    await expect(page.locator('html')).toHaveAttribute('data-mode', 'classic');
+    const article = page.getByTestId(TEST_IDS.storyStatic);
+    await expect(article).toBeVisible();
+    await expect(article.getByRole('heading', { level: 1 })).toHaveText('The Reporting Engine');
+    await expect(page.locator('#app')).toBeHidden();
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await page.waitForLoadState('networkidle');
+    // main.tsx returns before installing the test hook or hydrating anything in classic mode.
+    expect(await page.evaluate(() => window.__MUSEUM__ === undefined)).toBe(true);
+    expect(requested.filter((path) => /MuseumCanvas/.test(path))).toEqual([]);
+  });
+});
+
+test.describe('prerendered exhibit pages', { tag: '@dom' }, () => {
   test.describe('with JavaScript off', () => {
     test.use({ javaScriptEnabled: false });
 
@@ -238,6 +338,12 @@ test.describe('accessibility', { tag: '@a11y' }, () => {
     test.skip(!['desktop', 'pixel7'].includes(project()), 'desktop and pixel7');
     await openVerafinInApp(page);
     await expectNoAxeViolations(page, `the open dialog (${project()})`);
+  });
+
+  test('(l) the compact landscape panel has no axe violations', async ({ page }) => {
+    test.skip(project() !== 'pixel7-landscape', 'pixel7-landscape');
+    await openVerafinInApp(page);
+    await expectNoAxeViolations(page, 'the open dialog (pixel7-landscape)');
   });
 
   // axe cannot run in a page with JavaScript disabled (Playwright refuses to evaluate there), so

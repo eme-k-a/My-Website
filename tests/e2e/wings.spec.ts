@@ -2,7 +2,8 @@
 // merge. At a door, Enter (desktop) or tapping "Step inside" (pixel7) lands on the wing's first
 // exhibit with the URL still `/` and one history entry; Esc, browser Back and "Return to the
 // aisle" each return to the door with `scrollY === mainScrollY` and focus on "Step inside";
-// `goTo` crosses tracks through the same path; scrolling the main aisle never adds history.
+// `goTo` crosses tracks through the same path; inside a wing only the entry writes history (one
+// pushState), arrivals and exits write none (WP-17; the main aisle's walk is in rail-input).
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
 import { doorId, type StopId, type WingId } from '../../src/content/ids';
@@ -156,23 +157,54 @@ test.describe('wings', () => {
     expect(now.pathname).toBe('/');
   });
 
-  test('scrolling through all 10 main stops never changes history', async ({ page }) => {
-    // Nine smooth arrivals in a row under SwiftShader. CI run 27 timed out at 120 s on desktop
-    // (pixel7 took 90 s); with F-014 a local two-worker run (as in CI) took 102 s on desktop and
-    // 44 s on pixel7. 240 s keeps a slower runner clear of the limit.
-    test.setTimeout(240_000);
+  test('each wing entry pushes one history entry; wing arrivals and exits write none', async ({
+    page,
+    hasTouch,
+  }) => {
+    // The main walk's zero-write rule is rail-input (e) and (f), with every key and HUD arrival
+    // (WP-17 moved it there: this test walked the main aisle with goTo a third time, 132 s of
+    // CI run 35). Here, per wing: an instant move to the door, Step inside, one smooth goTo
+    // arrival inside the wing, and Esc. CI run 35 timed single wing round trips at 32 to 46 s on
+    // desktop; two of them plus the boot fit 180 s.
+    test.setTimeout(180_000);
     const writes = await countHistoryWrites(page);
     await page.goto(museumUrl('/'));
     await waitForMuseum(page);
-    const before = await where(page);
-    for (const id of MAIN.slice(1)) {
-      await page.evaluate((stop) => window.__MUSEUM__!.goTo(stop), id);
-      await settledAt(page, id);
+    const start = await where(page);
+    let pushes = 0;
+    for (const { wing, door, first } of WINGS) {
+      await goToStop(page, door);
+      expect(await writes(), `arriving at ${door}`).toMatchObject({ push: pushes, replace: 0 });
+      const before = await where(page);
+      // Esc left focus on the previous wing's "Step inside"; Enter must reach the page's own
+      // handler for this door, not activate that button.
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await stepInside(page, wing, hasTouch);
+      await settledAt(page, first as StopId);
+      const inside = await where(page);
+      expect(inside.pathname).toBe('/');
+      expect(inside.track).toBe(wing);
+      expect(inside.state).toEqual({ inApp: true, track: wing, mainScrollY: before.scrollY });
+      pushes++;
+      const entered = await writes();
+      expect(entered, `entering ${wing}`).toMatchObject({ push: pushes, replace: 0 });
+      expect(entered.calls.at(-1), 'the wing entry keeps the path and the query').toBe(
+        `push ${new URL(page.url()).pathname}${new URL(page.url()).search}`,
+      );
+      // An arrival at the wing's next stop writes nothing.
+      const last = wingTrack(content, wing).at(-1)!;
+      await page.evaluate((stop) => window.__MUSEUM__!.goTo(stop), last);
+      await settledAt(page, last);
+      expect(await writes(), `arriving at ${last}`).toMatchObject({ push: pushes, replace: 0 });
+      // Esc leaves through history.back(): no write either.
+      await page.keyboard.press('Escape');
+      await settledAt(page, door);
+      expect(await writes(), `leaving ${wing}`).toMatchObject({ push: pushes, replace: 0 });
     }
-    const after = await where(page);
-    expect(MAIN).toHaveLength(10);
-    expect(after.length).toBe(before.length);
-    expect(after.pathname).toBe('/');
-    expect(await writes()).toEqual({ push: 0, replace: 0, calls: [] });
+    const end = await where(page);
+    expect(end.pathname).toBe('/');
+    expect(end.track).toBe('main');
+    // Each wing entry stays as one forward-history entry only: length grew by one at most.
+    expect(end.length).toBe(start.length + 1);
   });
 });

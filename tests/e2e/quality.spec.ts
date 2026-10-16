@@ -3,7 +3,11 @@
 // last input and pauses under the phone sheet, a lost WebGL context remounts the canvas (and the
 // second loss falls back to the classic resume, or on an exhibit page to classic mode without a
 // canvas), a back/forward-cache return renders, and phones get the medium tier at DPR 1 under
-// ?test=1. Desktop unless noted.
+// ?test=1. Desktop unless noted. WP-17 (the WP-16 report's open items): (g) runs through WP-14's
+// real sheet; (i) a loss that is never restored falls back after 5 s of visible time; (j) a
+// hidden tab renders nothing and frames come back on return. The ?debug item is not here: the
+// debug panel trips the CSP (a data: font fetch blocked by connect-src), filed in the WP-17
+// report for R7 instead of acknowledged.
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
 import { content } from '../../src/content/index';
@@ -35,13 +39,12 @@ const IDLE_STOP_MS = tokens.motion.idleStopMs;
 /** How long after the idle stop the last frames may still land under SwiftShader (test (b)). */
 const LATE_FRAMES_MS = 5_000;
 /**
- * Context-loss recovery under SwiftShader (any ?test=1 run, CI included). The WP-16 ruling allows
- * 10 s because shader linking alone takes about 4.8 s there; real GPUs: 5 s, checked by hand at
- * G5. Since WP-11 the remount links 21 programs, and a profile of one recovery shows the main
- * thread waiting 4.4 s of 6.2 s in getProgramInfoLog (SwiftShader has no parallel compile). With
- * two workers on four cores, as in CI, the other worker's frames double that: F-M2 measured
- * 10.5 s and 11.8 s locally, and CI run 27 timed out (d) at 10 s. 20 s until R0 rules on the
- * CI figure the F-M2 report records.
+ * Context-loss recovery under SwiftShader (any ?test=1 run, CI included): 20 s, the F-M2 ruling
+ * (2026-10-16), from CI measurements of 10.6 to 14.2 s with two workers; real GPUs: 5 s, checked
+ * by hand at G5. Since WP-11 the remount links about 20 programs (two fewer since F-016), and a
+ * profile of one recovery shows the main thread waiting 4.4 s of 6.2 s in getProgramInfoLog
+ * (SwiftShader has no parallel compile); with two workers on four cores the other worker's
+ * frames double that.
  */
 const SWIFTSHADER_RECOVERY_MS = 20_000;
 const MAIN_STOPS = layout.tracks.main.stops.map((s) => s.id);
@@ -282,13 +285,11 @@ test.describe('quality', () => {
     await page.waitForTimeout(1_000);
     expect(await frames(page)).toBeGreaterThan(running);
 
-    // Open the story. On phones WP-14's sheet sets html[data-sheet="open"] while it is open
-    // (ARCHITECTURE §8.5); before WP-14 the spec sets the flag itself.
+    // Open the story: on phones WP-14's sheet sets html[data-sheet="open"] while it is open
+    // (ARCHITECTURE §8.5), and FrameDriver pauses on that flag plus the store's openId.
     await page.getByTestId(TEST_IDS.open('verafin')).click();
     await expect(page.getByTestId(TEST_IDS.dialog)).toBeVisible();
-    await page.evaluate(() => {
-      document.documentElement.dataset.sheet = 'open';
-    });
+    await expect(page.locator('html')).toHaveAttribute('data-sheet', 'open');
     await page.waitForTimeout(300); // a frame already requested may still land
     const open = await frames(page);
     for (let i = 0; i < 4; i++) {
@@ -304,6 +305,88 @@ test.describe('quality', () => {
     });
     await page.mouse.move(200, 400);
     await expect.poll(() => frames(page)).toBeGreaterThan(stillOpen);
+  });
+});
+
+/**
+ * Waits until no frame has rendered for `quietMs` (at most `timeoutMs`), and returns the count.
+ * Under SwiftShader a frame booked before a pause can land seconds later (CI frames take 2 to
+ * 3 s with two workers, F-M2), so a fixed short wait would measure that frame, not the pause.
+ */
+async function framesAtRest(page: Page, quietMs = 1_500, timeoutMs = 15_000): Promise<number> {
+  const deadline = Date.now() + timeoutMs;
+  let last = await frames(page);
+  let since = Date.now();
+  for (;;) {
+    await page.waitForTimeout(250);
+    const now = await frames(page);
+    if (now !== last) {
+      last = now;
+      since = Date.now();
+    } else if (Date.now() - since >= quietMs) {
+      return now;
+    }
+    if (Date.now() > deadline) throw new Error(`frames never came to rest: ${now}`);
+  }
+}
+
+/** Makes the page report a hidden (or visible again) tab and fires visibilitychange. */
+async function setHidden(page: Page, hidden: boolean): Promise<void> {
+  await page.evaluate((hide) => {
+    if (hide) {
+      Object.defineProperty(document, 'visibilityState', {
+        configurable: true,
+        get: () => 'hidden',
+      });
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    } else {
+      // The own properties shadowed Document.prototype's getters; removing them restores those.
+      delete (document as { visibilityState?: unknown }).visibilityState;
+      delete (document as { hidden?: unknown }).hidden;
+    }
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+}
+
+test.describe('quality: WP-16 follow-ups', () => {
+  test.describe.configure({ timeout: 120_000 });
+
+  test('(i) a loss that is never restored falls back after 5 s of visible time', async ({
+    page,
+  }) => {
+    onlyOn('pixel7');
+    await page.goto(museumUrl('/'));
+    await waitForMuseum(page);
+    await loseContext(page);
+    const lostAt = Date.now();
+    await expect(page.getByTestId(TEST_IDS.contextVeil)).toBeVisible();
+    // No restoreContext(): RESTORE_TIMEOUT_MS (5 s) later / leaves for the classic resume.
+    await page.waitForURL((url) => url.pathname === '/resume/', { timeout: 20_000 });
+    const waitedMs = Date.now() - lostAt;
+    console.log(`quality (i) fallback after ${waitedMs} ms`);
+    expect(waitedMs, 'not before the 5 s restore window ends').toBeGreaterThanOrEqual(4_500);
+    expect(new URL(page.url()).hash).toBe('#why-context-loss');
+    await expect(page.locator('#why-context-loss')).toBeVisible();
+  });
+
+  test('(j) a hidden tab renders no frames; returning renders again', async ({ page }) => {
+    onlyOn('pixel7');
+    // Idle motion on, so the canvas keeps rendering while the tab is visible. Playwright cannot
+    // hide a headless tab, so the page is told it is hidden the way FrameDriver and the kit
+    // runtime read it: document.visibilityState plus a visibilitychange event.
+    await page.goto(museumUrl('/', { idle: true }));
+    await waitForMuseum(page);
+    await goToStop(page, 'verafin');
+    const visible = await frames(page);
+    await expect.poll(() => frames(page), { timeout: 20_000 }).toBeGreaterThan(visible);
+
+    await setHidden(page, true);
+    const hidden = await framesAtRest(page);
+    await page.waitForTimeout(4_000);
+    expect(await frames(page), 'frames while hidden').toBe(hidden);
+
+    await setHidden(page, false);
+    await expect.poll(() => frames(page), { timeout: 20_000 }).toBeGreaterThan(hidden);
   });
 });
 

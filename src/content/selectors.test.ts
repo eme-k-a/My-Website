@@ -440,7 +440,7 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
     expect(model.keywords).toEqual(content.skills.flatMap((s) => s.items));
   });
 
-  it('has a public header of email, LinkedIn and location while SITE_URL is a placeholder', () => {
+  it('has a public header of email, LinkedIn, the site host and location', () => {
     expect(model.name).toBe('Chukwuemeka Nduka-Nwagbo');
     expect(model.contact).toEqual([
       { kind: 'email', text: 'cndukanwagbo@mun.ca', href: 'mailto:cndukanwagbo@mun.ca' },
@@ -449,10 +449,24 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
         text: 'linkedin.com/in/emekanduka',
         href: 'https://linkedin.com/in/emekanduka',
       },
+      {
+        kind: 'site',
+        text: 'emeka-nduka-nwagbo.netlify.app',
+        href: 'https://emeka-nduka-nwagbo.netlify.app',
+      },
       { kind: 'location', text: "St. John's, NL" },
     ]);
-    expect(content.meta.siteUrl).toContain('[placeholder');
     expect(JSON.stringify(model)).not.toContain('[placeholder');
+  });
+
+  it('leaves the site host out while SITE_URL is a placeholder', () => {
+    const c = clone();
+    c.meta.siteUrl = 'https://[placeholder: netlify-subdomain].netlify.app';
+    expect(printModel(c, { now: OCT_2026 }).contact.map((i) => i.kind)).toEqual([
+      'email',
+      'linkedin',
+      'location',
+    ]);
   });
 
   it('adds the site host before the location once SITE_URL is real', () => {

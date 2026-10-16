@@ -50,6 +50,7 @@ const ICONS = {
       <path d="m6 6 12 12" />
     </>
   ),
+  check: <path d="M20 6 9 17l-5-5" />,
   'chevron-left': <path d="m15 18-6-6 6-6" />,
   'chevron-right': <path d="m9 18 6-6-6-6" />,
   link: (

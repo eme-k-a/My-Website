@@ -86,7 +86,7 @@ const hold = {
   cutting: false,
   swap: false,
 };
-const sameStop = (a: Held, b: Held) => a.track === b.track && a.index === b.index;
+const heldId = (h: Held) => rails[h.track].stops[h.index]?.id;
 
 /** The open story panel's left edge as a fraction of the stage width, measured once per open. */
 const panel = { openId: null as ExhibitId | null, width: 0, left: null as number | null };
@@ -181,7 +181,10 @@ function holdStop(): Held {
   if (hold.swap) {
     hold.swap = false;
     if (hold.next) hold.at = hold.next;
-  } else if (!hold.cutting && hold.next && !sameStop(hold.next, hold.at)) {
+  } else if (!hold.cutting && hold.next && heldId(hold.next) === heldId(hold.at)) {
+    // The same stop on another track (a wing door): the pose is identical, nothing to cut.
+    hold.at = hold.next;
+  } else if (!hold.cutting && hold.next) {
     hold.cutting = true;
     void fadeCut(() => {
       hold.swap = true;

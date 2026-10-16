@@ -7,7 +7,9 @@
 // damped over 0.4 s). An open story dollies the camera 0.6 m toward the case (dolly.ts). Under
 // reduced motion there is no damping and no in-between pose: the camera holds the last stop and,
 // once the scroll arrives at another, cuts to it behind ScrollTrack's ink fade (fade.ts). It
-// writes `settled` and `stop` to the store, only on change, and registers the test hook's nav
+// writes `settled` and `stop` to the store, only on change, asks the demand loop for frames only
+// while the camera still moves (settle.ts `railNeedsFrame`, also at rest between stops), and
+// registers the test hook's nav
 // provider: goTo travels through navigation.ts (the same path as the UI) and resolves when settled
 // at the stop; screenPos projects a hit-box center.
 import { useFrame, useThree } from '@react-three/fiber';
@@ -42,7 +44,7 @@ import {
 import { travelTo } from './navigation';
 import { easeInOutCubic, finishGlide, progress, rig, setWaker, wake } from './progress';
 import { buildRails, poseAt } from './rail';
-import { SETTLE, settledStop } from './settle';
+import { railNeedsFrame, SETTLE, settledStop } from './settle';
 
 const rails = buildRails(LAYOUT);
 
@@ -209,9 +211,16 @@ export function CameraRig() {
     shift.framed = false;
     const offWaker = setWaker(invalidate);
     const offParallax = installParallax(invalidate);
-    // A story opening or closing starts the dolly and the framing change: ask for frames.
+    // A story opening or closing starts the dolly and the framing change: ask for frames. A
+    // compile that ends or `ready` turning true may complete a settle while the camera is
+    // already at rest (railNeedsFrame is false then): one frame writes it.
     const offStore = useMuseum.subscribe((next, previous) => {
-      if (next.openId !== previous.openId || next.reducedMotion !== previous.reducedMotion) {
+      if (
+        next.openId !== previous.openId ||
+        next.reducedMotion !== previous.reducedMotion ||
+        next.compilePending !== previous.compilePending ||
+        next.ready !== previous.ready
+      ) {
         invalidate();
       }
     });
@@ -366,13 +375,14 @@ export function CameraRig() {
     const animating =
       framing || dollying || sway.yaw !== swayGoal.yaw || sway.pitch !== swayGoal.pitch;
 
+    const gliding = rig.glide !== null || (held !== null && hold.cutting);
     const index = settledStop({
       // Under reduced motion the rail is where the held pose is, and a cut is a move.
       current: held ? (held.track === progress.track ? held.index : Number.NaN) : progress.current,
       target: progress.target,
       moved,
       compilePending: state.compilePending,
-      gliding: rig.glide !== null || (held !== null && hold.cutting),
+      gliding,
     });
     if (index !== null) {
       const stop = rails[progress.track].stops[index]?.id;
@@ -380,11 +390,20 @@ export function CameraRig() {
       if (!state.settled) patch.settled = true;
       if (stop && stop !== state.stop) patch.stop = stop;
       if (patch.settled !== undefined || patch.stop !== undefined) useMuseum.setState(patch);
-    } else {
-      if (state.settled) useMuseum.setState({ settled: false });
-      invalidate();
+    } else if (state.settled) {
+      useMuseum.setState({ settled: false });
     }
-    if (animating) invalidate();
+    // Frames only while something still moves (F-012): at rest, on a stop or between two, the
+    // demand loop stops; the gaze, framing, dolly, parallax and fade keep asking until they settle.
+    const needsFrame =
+      animating ||
+      railNeedsFrame({
+        current: held ? held.index : progress.current,
+        goal: held ? held.index : progress.target,
+        moved,
+        gliding,
+      });
+    if (needsFrame) invalidate();
   });
 
   return null;

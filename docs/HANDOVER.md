@@ -41,9 +41,12 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | WP-05 | Art direction + tokens | Done (f9b8ae5 to 2383647) |
 | Gate G0 | Emeka approves the resume before/after, Verafin bullets, title style | Approved 2026-10-15 (7658245): hybrid, manager cleared, (Co-op) style, no GitHub on PDF yet |
 | WP-06, WP-07, WP-10 | CI, test harness, app shell | Done (merged at ced456a; first CI run: verify, build, e2e green; latex fixed in 1431a5c) |
-| F-M1 | Fix-ups from M1a verification | Committed (a9f0d49..9937041); independent verification running in M1b-2 |
-| WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Building in M1b-2 (WP-08 resumes from WIP commit 5ae2007 on wp/WP-08) |
-| WP-11 onward | M2 to M7 | Not started |
+| F-M1 | Fix-ups from M1a verification | Done and verified (a9f0d49..9937041) |
+| WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Done and verified (WP-08 3df75cb..705ed8e, WP-09 to bcc065a); CI run 11 green |
+| Context packs | docs/RULINGS.md + docs/wp/packs/ (cost rules) | Done (33b5492) |
+| Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Smoke tests pass (WP-09 verifier, 139 e2e); waiting on the CI run for this commit; then M2 on Emeka's "go" |
+| WP-11 to WP-19 | M2 vertical slice | Not started. Run with the saved milestone workflow; WP-11, WP-12, WP-15, WP-16 at xhigh |
+| WP-20 onward | M3 to M7 | Not started |
 
 How to tell what's done:
 - `git log --oneline` shows commits carrying a `WP: WP-xx` trailer.

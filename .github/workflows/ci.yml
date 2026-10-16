@@ -209,3 +209,16 @@ jobs:
           name: resume-tex-pdf
           path: resume/resume.pdf
           if-no-files-found: error
+
+  # WP-18 (R0 ruling, M2a): the deploy runs as the last job of this workflow, after every other
+  # job passed, on same-repo pushes only. deploy.yml's workflow_run trigger fires only once that
+  # file is on main, and then it deploys pull request runs only, so no commit deploys twice.
+  deploy:
+    needs: [verify, build, e2e, lighthouse, latex]
+    if: ${{ github.event_name == 'push' && !github.event.repository.fork }}
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit

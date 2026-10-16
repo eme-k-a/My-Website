@@ -9,16 +9,19 @@
 // as a very low frame rate, and coarse-pointer idle motion is paced at 30 fps on purpose, so it is
 // judged against 30 fps bounds.
 //
-// It also mounts PrecompileMaterials (boot-time shader compile).
+// It also mounts PrecompileMaterials (boot-time shader compile) and, under ?debug only, the lazy
+// debug panel, which is its own chunk (src/museum/debug/Debug.tsx).
 import { PerformanceMonitor } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useMuseum } from '../../app/store';
 import { testParams } from '../../app/testHooks';
 import { adaptDpr, initialDprState, monitorBounds, type DprState } from './dpr';
 import { frameState, subscribeFrameState } from './frameDemand';
 import { PrecompileMaterials } from './PrecompileMaterials';
 import { startDpr } from './tiers';
+
+const LazyDebug = lazy(() => import('../debug/Debug'));
 
 function useFrameState() {
   return useSyncExternalStore(subscribeFrameState, frameState, frameState);
@@ -51,11 +54,19 @@ function DprMonitor() {
 }
 
 export function QualityController() {
-  const [params] = useState(() => ({ test: testParams(window.location.search).test }));
+  const [params] = useState(() => {
+    const search = window.location.search;
+    return { test: testParams(search).test, debug: new URLSearchParams(search).has('debug') };
+  });
   return (
     <>
       {!params.test && <DprMonitor />}
       <PrecompileMaterials />
+      {params.debug && (
+        <Suspense fallback={null}>
+          <LazyDebug />
+        </Suspense>
+      )}
     </>
   );
 }

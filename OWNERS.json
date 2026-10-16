@@ -546,9 +546,12 @@
         ".github/workflows/deploy.yml",
         "README.md",
         "src/content/site.ts",
-        "review/reports/WP-18.json"
+        "review/reports/WP-18.json",
+        ".github/workflows/ci.yml",
+        "src/content/selectors.test.ts",
+        "resume/resume.tex"
       ],
-      "note": "src/content/site.ts: SITE_URL value only. R0 creates the Netlify site and NETLIFY_SITE_ID secret first."
+      "note": "src/content/site.ts: SITE_URL value only. R0 creates the Netlify site and NETLIFY_SITE_ID secret first. R0 grants (2026-10-16): the final deploy job in ci.yml only; selectors.test.ts and resume.tex only for the SITE_URL follow-up."
     },
     "WP-19": {
       "role": "R11",

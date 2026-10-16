@@ -23,8 +23,13 @@ const onlyMuseumProjects = () =>
 const onlyNoWebgl = () => test.skip(project() !== 'no-webgl', 'The no-webgl project only');
 
 /** The browser logs the 404 document response itself as a console error; nothing else may. */
+/**
+ * Chromium logs the deliberate 404 navigation to /nope/ as a console error. The reason phrase
+ * depends on the server: "(Not Found)" from serve-dist over HTTP/1.1, "()" from Netlify over
+ * HTTP/2 (the deploy smoke test of CI run 32). Only that URL is acknowledged.
+ */
 function acknowledgeNotFound(guards: Guards) {
-  guards.acknowledge('console', /status of 404 \(Not Found\)/);
+  guards.acknowledge('console', /status of 404 \((Not Found)?\) \(\S+\/nope\/:\d+\)$/);
 }
 
 async function expectNoAxeViolations(page: Page, label: string) {

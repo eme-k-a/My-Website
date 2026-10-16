@@ -125,18 +125,43 @@ export interface WheelStreamOptions {
   intervalMs?: number;
 }
 
-/** A decaying trackpad-like wheel stream from the viewport center. Returns the total deltaY. */
+/**
+ * A decaying trackpad-like wheel stream from the viewport center, one event every `intervalMs`
+ * whatever the page's frame rate, as a real trackpad sends them. Returns the total deltaY.
+ *
+ * Each event goes out through CDP `Input.dispatchMouseEvent` (the call `page.mouse.wheel`
+ * makes) without waiting for the renderer's ack before the next one; the acks are awaited at
+ * the end. Awaiting each ack paced the stream at one event per rendered frame: under SwiftShader
+ * in CI (frames of 2 to 3 s) the 40 events took 2 to 3 minutes and rendered 40 frames instead of
+ * arriving within a second (F-M2, CI runs 31 and 32).
+ */
 export async function wheelStream(
   page: Page,
   { events = 40, start = 120, decay = 0.85, intervalMs = 16 }: WheelStreamOptions = {},
 ): Promise<number> {
-  await pointerToCenter(page);
+  const { width, height } = await pointerToCenter(page);
+  const cdp = await page.context().newCDPSession(page);
+  const acks: Promise<unknown>[] = [];
   let total = 0;
-  for (let i = 0; i < events; i++) {
-    const delta = start * decay ** i;
-    await page.mouse.wheel(0, delta);
-    total += delta;
-    await page.waitForTimeout(intervalMs);
+  try {
+    for (let i = 0; i < events; i++) {
+      const delta = start * decay ** i;
+      acks.push(
+        cdp.send('Input.dispatchMouseEvent', {
+          type: 'mouseWheel',
+          x: width / 2,
+          y: height / 2,
+          deltaX: 0,
+          deltaY: delta,
+          pointerType: 'mouse',
+        }),
+      );
+      total += delta;
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+    await Promise.all(acks);
+  } finally {
+    await cdp.detach();
   }
   return total;
 }

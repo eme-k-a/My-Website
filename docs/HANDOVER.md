@@ -45,7 +45,8 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Done and verified (WP-08 3df75cb..705ed8e, WP-09 to bcc065a); CI run 11 green |
 | Context packs | docs/RULINGS.md + docs/wp/packs/ (cost rules) | Done (33b5492) |
 | Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Passed 2026-10-16: CI run 13 green on c10c67f; smoke tests pass on desktop and Pixel 7 (139 e2e). Next: M2 on Emeka's "go" |
-| WP-11 to WP-19 | M2 vertical slice | Not started. Run with the saved milestone workflow; WP-11, WP-12, WP-15, WP-16 at xhigh |
+| WP-11 to WP-16 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers | Running since 2026-10-16 as workflow wf_d85f0435-5ee (saved `milestone` workflow; WP-11, WP-12, WP-15, WP-16 at xhigh). Merge order WP-16, WP-11, WP-15, WP-14, WP-12, WP-13. If it stops, resume with `resumeFromRunId` |
+| WP-17 to WP-19 | M2b: slice tests, preview deploy, slice review | Not started. WP-17 after M2a merges; WP-18 after both Netlify secrets exist; WP-19 last, then Gate G2 |
 | WP-20 onward | M3 to M7 | Not started |
 
 How to tell what's done:
@@ -78,7 +79,7 @@ How to tell what's done:
 - **SwiftShader flags** (`--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`) still work locally for deterministic screenshots. Visual baselines are compared in CI only.
 - **Original resume PDF** (the "before" image in WP-04). The cloud copy was at `/root/.claude/uploads/.../d186f081-Emeka_Resume_One_Page.pdf`. Locally, point WP-04 at your own copy, kept outside the repo, because it contains your phone number. For example, set `RESUME_BEFORE_PDF=/path/to/Emeka_Resume_One_Page.pdf` and tell the agent to use it.
 - **Private PDF:** put `RESUME_PHONE=...` in `.env.local` (gitignored) before running `npm run resume:private`.
-- **Netlify:** WP-18 needs a `NETLIFY_AUTH_TOKEN` GitHub repo secret. The site ID can come from the Netlify dashboard or the claude.ai Netlify connector.
+- **Netlify:** the site `emeka-nduka-nwagbo` (https://emeka-nduka-nwagbo.netlify.app, team `eme-k-a`) was created through the connector on 2026-10-16, with no Git link, so Netlify Git builds are off. WP-18 needs two GitHub repo secrets that Emeka adds: `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID`. The site ID is under Site configuration, General, in the Netlify dashboard, or the connector's get-projects call returns it. Never commit it.
 - **Orchestration tools.** The cloud session used a Workflow tool to fan out agents. A local session can do the same work with the Agent tool (subagents, with worktree isolation for parallel exhibit builders) or one work package at a time. Quality comes from the briefs and their acceptance checks, not the tool.
 
 ## 6. Continuation prompt (paste into the new session)

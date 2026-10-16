@@ -12,7 +12,7 @@ import { buildDateFromEnv } from '../../src/content/temporal';
 import { stopDistance } from '../../src/museum/exhibits/_kit/stopDistance';
 import { computeLayout } from '../../src/museum/rail/layout';
 import { expect, test } from './fixtures';
-import { canvasLuminance, goToStop, museumUrl, stats, waitForMuseum } from './helpers';
+import { goToStop, screenPosOf, museumUrl, stats, waitForMuseum } from './helpers';
 
 const GREYBOX_PROJECTS = new Set(['desktop', 'pixel7']);
 /** perf/budgets.json render.drawCalls.medium (?test=1 fixes the tier at medium). */
@@ -51,7 +51,31 @@ test.describe('greybox', () => {
     await expect(stage.locator('canvas')).toHaveCount(1);
 
     const s = await stats(page);
-    const luminance = await canvasLuminance(page);
+    // Sample at the framed case point (the lobby case sits off-center under the WP-15 projection shift).
+    const lobbyNear = EXHIBIT_IDS.filter((id) => stopDistance(layout, 'lobby', id) <= 2);
+    let spot: { x: number; y: number } | null = null;
+    for (const id of lobbyNear) {
+      spot = await screenPosOf(page, id);
+      if (spot) break;
+    }
+    const vp = page.viewportSize() ?? { width: 1280, height: 720 };
+    const cx = Math.min(Math.max(spot?.x ?? vp.width / 2, 32), vp.width - 32);
+    const cy = Math.min(Math.max(spot?.y ?? vp.height / 2, 32), vp.height - 32);
+    const png = await page.screenshot({
+      clip: { x: cx - 32, y: cy - 32, width: 64, height: 64 },
+      scale: 'css',
+      animations: 'disabled',
+    });
+    const { default: sharp } = await import('sharp');
+    const raw = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    let lum = 0;
+    for (let i = 0; i + 2 < raw.data.length; i += raw.info.channels) {
+      lum +=
+        0.2126 * (raw.data[i] ?? 0) +
+        0.7152 * (raw.data[i + 1] ?? 0) +
+        0.0722 * (raw.data[i + 2] ?? 0);
+    }
+    const luminance = lum / (raw.info.width * raw.info.height) / 255;
     test.info().annotations.push({
       type: 'stats at the lobby',
       description: JSON.stringify({

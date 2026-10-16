@@ -8,7 +8,10 @@
 //   is in a form field or the dialog is open, with Ctrl, Alt or Meta held, and inside a section
 //   taller than the viewport until its end is in view (those presses stay native, so its content
 //   can be read). The scroll itself stays the browser's.
-// Plus one passive `keydown` listener that records `inputSource: 'keyboard'`.
+// Plus one passive `keydown` listener that records `inputSource: 'keyboard'` and the time of the
+// press (`lastKeyAt`, read by announce.ts: a move started within 1 s of a key press is a keyboard
+// move, EXPERIENCE §10.3). A stepping key also records when it started its scroll (`lastStepAt`):
+// that scroll is a keyboard move however late the browser starts it.
 import { useMuseum } from '../../app/store';
 import { EXHIBIT_IDS, WING_IDS, type ExhibitId, type StopId, type WingId } from '../../content/ids';
 import { openStory } from '../../overlay/story';
@@ -104,6 +107,10 @@ function currentStop(): StopId | undefined {
 }
 
 let pending: { index: number; at: number } | null = null;
+let stepAt = Number.NEGATIVE_INFINITY;
+
+/** performance.now() of the last stepping key that started a scroll, or -Infinity. */
+export const lastStepAt = (): number => stepAt;
 /** A key step still heading to its stop after this long is forgotten. */
 const PENDING_MS = 1200;
 
@@ -150,6 +157,7 @@ function onStep(event: KeyboardEvent, key: StepKey): void {
   if (!section) return;
   event.preventDefault();
   pending = { index: target, at: now };
+  stepAt = now;
   const behavior = useMuseum.getState().reducedMotion ? 'instant' : 'smooth';
   section.scrollIntoView({ behavior, block: 'start' });
 }
@@ -173,7 +181,13 @@ function onKeyDown(event: KeyboardEvent): void {
   if (key && !event.shiftKey) onStep(event, key);
 }
 
+let keyAt = Number.NEGATIVE_INFINITY;
+
+/** performance.now() of the last key press, or -Infinity before any. */
+export const lastKeyAt = (): number => keyAt;
+
 function onAnyKey(): void {
+  keyAt = performance.now();
   if (useMuseum.getState().inputSource !== 'keyboard')
     useMuseum.setState({ inputSource: 'keyboard' });
 }

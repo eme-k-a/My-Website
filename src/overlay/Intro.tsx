@@ -3,16 +3,18 @@
 // (Resume PDF, Email, Classic view), all inside the first phone viewport with or without JS. Then
 // the reserved 20 px loading row, "Begin the walk" (an in-page anchor), the lobby headline as a lead
 // sentence, the intro paragraph (below the fold on phones), the static hint, and the onboarding
-// hint element (static copy here; WP-15 adds its timing).
+// hint element, shown and hidden by the rail's useHint() (EXPERIENCE §8.3, WP-15).
 import type { MouseEvent } from 'react';
 import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
 import type { LobbyCard } from '../content/selectors';
+import { hintStyle, useHint } from '../museum/rail/hint';
 import { travelTo } from '../museum/rail/navigation';
 import { Icon } from './icons';
 import { LoadingRow } from './LoadingRow';
 import { CLASSIC_PATH, EMAIL_HREF, FIRST_EXHIBIT, PDF_PATH } from './model';
 import styles from './Intro.module.css';
+import overlay from './overlay.module.css';
 import ui from './ui.module.css';
 
 const plainClick = (e: MouseEvent) =>
@@ -40,6 +42,7 @@ function Name({ name }: { name: string }) {
 
 export function Intro({ card }: { card: LobbyCard }) {
   const ready = useMuseum((s) => s.ready);
+  const hint = useHint();
   const beginWalk = (e: MouseEvent<HTMLAnchorElement>) => {
     if (!plainClick(e)) return;
     // With JS the walk starts through the rail, so no fragment is written to the URL.
@@ -93,10 +96,22 @@ export function Intro({ card }: { card: LobbyCard }) {
         <p className={styles.intro}>{card.intro.text}</p>
         <p className={styles.hint}>{card.hint}</p>
       </div>
-      <p className={styles.onboarding} data-testid={TEST_IDS.onboardingHint}>
-        <span className={styles.fine}>Scroll to walk through my work</span>
-        <span className={styles.coarse}>Swipe up to walk</span>
+      <p
+        className={styles.onboarding}
+        data-testid={TEST_IDS.onboardingHint}
+        data-variant={hint.variant}
+        style={hintStyle(hint)}
+      >
+        {hint.variant === 'keys' ? (
+          <span>Scroll, or press</span>
+        ) : (
+          <>
+            <span className={styles.fine}>Scroll to walk through my work</span>
+            <span className={styles.coarse}>Swipe up to walk</span>
+          </>
+        )}
         <Icon name="arrow-down" className={styles.arrow} />
+        {hint.variant === 'keys' && <span className={overlay.visuallyHidden}>down arrow</span>}
       </p>
     </div>
   );

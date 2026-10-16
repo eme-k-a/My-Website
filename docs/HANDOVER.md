@@ -45,8 +45,8 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Done and verified (WP-08 3df75cb..705ed8e, WP-09 to bcc065a); CI run 11 green |
 | Context packs | docs/RULINGS.md + docs/wp/packs/ (cost rules) | Done (33b5492) |
 | Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Passed 2026-10-16: CI run 13 green on c10c67f; smoke tests pass on desktop and Pixel 7 (139 e2e). Next: M2 on Emeka's "go" |
-| WP-11 to WP-16 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers | Paused 2026-10-16 by the weekly usage limit (resets 2026-10-20 02:00 UTC). Run wf_d85f0435-5ee: **WP-12 built** (3 commits, report in its review/reports/WP-12.json; needs integrate + verify only). **WP-11 partial** (one WIP commit: light pools, trim, 3D labels, shell and lighting edits; unverified; the builder continues from it). **WP-13, WP-14, WP-15, WP-16 not started** (no saved work). Local branches `wp/WP-11` and `wp/WP-12` hold the work; the same commits are saved as patches in `review/wip/` in case the container was reclaimed (see section 8) |
-| WP-17 to WP-19 | M2b: slice tests, preview deploy, slice review | Not started. WP-17 after M2a merges; WP-18 after both Netlify secrets exist; WP-19 last, then Gate G2 |
+| WP-11 to WP-16, WP-18 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers, preview deploy | Resumed 2026-10-16 as workflow wf_ae671726-74d (WP-12 build skipped, WP-11 continues from `wp/WP-11`; Netlify secrets added by Emeka). Merge order WP-16, WP-11, WP-15, WP-14, WP-12, WP-13, WP-18. If it stops, resume with `resumeFromRunId`; section 8 covers restoring the saved work |
+| WP-17, WP-19 | M2b: slice tests, slice review | Not started. WP-17 after M2a merges; WP-19 last, then Gate G2 |
 | WP-20 onward | M3 to M7 | Not started |
 
 How to tell what's done:

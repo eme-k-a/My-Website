@@ -70,7 +70,15 @@ The root `tsconfig.json` references both projects for editors. It also extends `
 
 ## Deploy
 
-Deploy: GitHub Actions to Netlify (WP-18).
+GitHub Actions deploys to Netlify. Netlify never builds anything: Git builds stay off for the site, and every deploy uploads the `dist/` that CI built and tested with `netlify deploy --no-build` (`.github/workflows/deploy.yml`).
+
+- **When:** only after a green `ci` run in this repository, never from a fork. A push to `main` or a `claude/**` branch deploys from the last job of that `ci` run. Once `deploy.yml` is on `main`, pull requests also get a preview through its `workflow_run` trigger (GitHub fires that trigger only for workflow files on the default branch). Each green run deploys once.
+- **Previews** (every branch except `main`): the alias is `pr-<number>` for a pull request, otherwise the branch name in lowercase with every character outside `a-z0-9` turned into `-`, at most 37 characters. The URL is `https://<alias>--<site>.netlify.app`, for example `https://claude-intelligent-sagan-poq45q--emeka-nduka-nwagbo.netlify.app`. Previews carry `X-Robots-Tag: noindex`.
+- **Production:** `main` deploys with `--prod` in the GitHub `production` environment. The address is `SITE_URL` in `src/content/site.ts`, the one place the domain lives (a custom domain later is a one-line change there).
+- **Where the URL appears:** the deploy job's summary in the Actions run, the run's environment link, and a comment on the pull request for `pr-<number>` previews.
+- **Smoke test:** after every deploy, the `@smoke` specs run against the deployed URL (`BASE_URL=<url> npx playwright test --grep @smoke --project=desktop`): museum mode with `?test=1`, the CSP header, no CSP violations and `/resume.pdf`.
+- **Secrets:** `NETLIFY_AUTH_TOKEN` (a Netlify personal access token) and `NETLIFY_SITE_ID` are GitHub repository secrets. If either is missing, the deploy job fails with a message that names it. Never commit or print them.
+- **No deploy available:** review the tested build locally with `npm run build && npm run preview`, which serves `dist/` with the production headers.
 
 ## License
 

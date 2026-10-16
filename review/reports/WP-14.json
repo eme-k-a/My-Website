@@ -1,0 +1,138 @@
+{
+  "wp": "WP-14",
+  "role": "R6 (UI & Classic Engineer) with R9 (Accessibility & SEO)",
+  "status": "done",
+  "branch": "wp/WP-14",
+  "commits": [
+    "9710a66 feat(routes): story history rules and cold deep links",
+    "d1325bc feat(dialog): story panel and phone sheet with newer and older",
+    "ec35e58 feat(seo): per-exhibit prerendered pages and head tags",
+    "test(e2e): dialog and history specs (this commit, carries this report)"
+  ],
+  "changedFiles": [
+    "src/overlay/story.ts",
+    "src/overlay/story.test.ts",
+    "src/overlay/ExhibitDialog.tsx",
+    "src/overlay/ExhibitDialog.module.css",
+    "src/overlay/StoryBody.tsx",
+    "src/overlay/StoryBody.test.ts",
+    "src/overlay/icons.tsx",
+    "src/seo/meta.ts",
+    "src/seo/meta.test.ts",
+    "src/entry-server.tsx",
+    "scripts/prerender.ts",
+    "tests/e2e/dialog.spec.ts",
+    "review/reports/WP-14.json"
+  ],
+  "sizes": {
+    "entryJsGzipKB": 93.31,
+    "entryJsLimitGzipKB": 110,
+    "museumChunkGzipKB": 298.14,
+    "exhibitPages": 10,
+    "inlineScriptsPerExhibitPage": 1
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Cold deep link closes to / on the same origin",
+      "command": "npx playwright test tests/e2e/dialog.spec.ts --project=desktop --project=pixel7 --workers=1",
+      "result": "pass",
+      "evidence": "(a) passes on desktop and pixel7: pathname /, origin unchanged, ?test=1 kept, history.length unchanged, focus on open-verafin"
+    },
+    {
+      "id": "A2",
+      "criterion": "Open, Older x3, one Back closes the dialog",
+      "command": "same as A1",
+      "result": "pass",
+      "evidence": "(b): klarup, finance-tracker, mysa, then page.goBack(): dialog hidden, pathname /"
+    },
+    {
+      "id": "A3",
+      "criterion": "Back closes an in-app dialog and focus returns",
+      "command": "same as A1",
+      "result": "pass",
+      "evidence": "(c): dialog hidden, open-verafin focused on desktop and pixel7"
+    },
+    {
+      "id": "A4",
+      "criterion": "Newer and Older use replaceState only",
+      "command": "same as A1",
+      "result": "pass",
+      "evidence": "(d): history.length unchanged after Older, Older, Newer; state { inApp: true, id: 'klarup', track: 'main' }; src/overlay/story.test.ts proves the same with a fake history"
+    },
+    {
+      "id": "A5",
+      "criterion": "Ten prerendered exhibit pages with unique OG titles",
+      "command": "npm run build && ls dist/exhibit/*/index.html | wc -l; grep -ho '<meta property=\"og:title\" content=\"[^\"]*\"' dist/exhibit/*/index.html | sort | uniq -d",
+      "result": "pass",
+      "evidence": "10; uniq -d prints nothing; spec (f) also reads the files and checks canonical and data-page"
+    },
+    {
+      "id": "A6",
+      "criterion": "Story readable with JS off",
+      "command": "dialog.spec.ts (e)",
+      "result": "pass",
+      "evidence": "javaScriptEnabled false: story-static visible with h1 'Warm Start' and all four Mysa bullets, Newer link to /exhibit/finance-tracker/"
+    },
+    {
+      "id": "A7",
+      "criterion": "0 axe violations in all three states",
+      "command": "npm run a11y -- tests/e2e/dialog.spec.ts --project=desktop --project=pixel7 --workers=1",
+      "result": "pass",
+      "evidence": "4 passed: open dialog on desktop and pixel7, /exhibit/verafin/ as rendered with JS off on desktop and pixel7 (see deviations for how the JS-off state is served)"
+    },
+    {
+      "id": "A8",
+      "criterion": "Unit tests and build; exactly one sha256 source; no CSP violations",
+      "command": "npx vitest run --project unit src/seo src/overlay src/app && npm run build",
+      "result": "pass",
+      "evidence": "7 files, 71 tests pass (npm run verify: 45 files, 570 tests); build ok, _headers reports the boot script on 11 of 13 pages with one sha256 source; the global CSP guard is clean in every dialog spec; @smoke 42 passed on desktop and pixel7"
+    }
+  ],
+  "deviations": [
+    "stepStory keeps inApp: false on a cold-loaded deep link entry. The frozen transitions.stepStory always writes inApp: true, so after Newer or Older on a cold deep link the close would call history.back() and leave the site, which the brief forbids. story.ts overrides only that field of the op it applies; routes.ts is untouched. Proven by story.test.ts 'closing replaces the deep link with / on the same entry, never going back'.",
+    "The 404 page gets title, description and robots noindex only: no canonical, og:url or og:image (it is noindex, never shared, and /404.html has no trailing-slash form).",
+    "/resume/ uses og:type website (the brief names profile for / and article for exhibit pages only).",
+    "A7 JS-off state: Playwright refuses page.evaluate in a context with javaScriptEnabled false, so axe cannot run there. The spec serves /exhibit/verafin/ through page.route with every <script> removed and the <noscript> wrapper unwrapped (the JS-off rendering, with the production CSS and headers), asserts no data-mode, #app hidden and story-static visible, then runs axe. Spec (e) runs with JavaScript really disabled.",
+    "openStory sets history.scrollRestoration to 'manual' for the gallery entry while pushing (the pattern navigation.ts uses for wings), so Back does not restore a stale scroll after the close has scrolled to the exhibit's section.",
+    "The story scroller is a focusable region (tabindex 0, labelled by the title) for axe scrollable-region-focusable when a story has no links.",
+    "ui.module.css is emitted after ExhibitDialog.module.css in the bundle, so overrides of composed control rules carry a .dialog prefix.",
+    "The desktop panel uses right: calc(100% - 100vw) so it is flush with the window edge despite the root's stable scrollbar gutter.",
+    "Added a Lucide 'check' icon to src/overlay/icons.tsx for 'Link copied'."
+  ],
+  "openQuestions": [
+    {
+      "question": "Should transitions.stepStory in src/app/routes.ts preserve the current entry's inApp instead of always writing true? Until then story.ts patches the op (see deviations).",
+      "owner": "R0 / R4"
+    },
+    {
+      "question": "SITE_URL is still the placeholder, so canonical, og:url, og:image and Copy link carry https://[placeholder: netlify-subdomain].netlify.app until WP-18 sets src/content/site.ts. Nothing in WP-14 changes when it does.",
+      "owner": "WP-18 / R1"
+    },
+    {
+      "question": "/og/<id>.png, /og/home.png and /og/resume.png do not exist yet (WP-31 generates them); og:image already points at them.",
+      "owner": "WP-31"
+    },
+    {
+      "question": "WP-16: the FrameDriver should stop invalidating while html[data-sheet='open'] (set only while the portrait phone sheet is open); the desktop dolly and spotlight dim key off the store's openId. Neither is wired here.",
+      "owner": "WP-16"
+    },
+    {
+      "question": "Museum-mode cold load: ARCHITECTURE 5.2 hides #story-static in museum mode, so the story text appears when the dialog opens at hydration, not at first paint as EXPERIENCE 3.5 says. Accept, or keep #story-static visible until hydration?",
+      "owner": "R0"
+    }
+  ],
+  "depsRequest": [],
+  "integration": {
+    "dependsOn": "Built against the frozen contracts only. After the merge, re-run dialog.spec.ts with WP-16 (FrameDriver data-sheet pause, dolly) and WP-15 (fade-cuts) to confirm focus return and the cold-load travel still settle.",
+    "missingSliceSpecsForWP17": [
+      "Wing exhibit cold deep link (/exhibit/klarup/): enters the projects wing without a history entry, closes to / and focus lands on open-klarup",
+      "Door-card link opener: open a wing exhibit from the main-track door card, close, focus returns to the door link",
+      "Reduced motion: the dialog opens with no slide animation",
+      "pixel7-landscape compact panel layout and axe",
+      "Keyboard-only spec: every story in catalogue order with Tab and Enter, focus returned after each close",
+      "Classic mode on /exhibit/<id>/?mode=classic: no hydration, story-static is the page"
+    ]
+  },
+  "notes": "Playwright ran with --workers=1 on PORT=4176. Local runs: dialog.spec.ts 20 passed and 4 project-specific skips on desktop and pixel7; npm run a11y 4 passed; @smoke 42 passed; exhibit-contract, wings, shell and fast-path 41 passed, 13 skipped; rail-input 10 passed, 8 skipped. Screenshots of the panel, the phone sheet, the landscape panel and the JS-off page were checked by eye (not committed)."
+}

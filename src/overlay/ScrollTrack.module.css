@@ -1,0 +1,61 @@
+/*
+ * The scroll track (ARCHITECTURE §6.1, EXPERIENCE §3.3). Snapping is CSS only: mandatory on coarse
+ * pointers, proximity on fine ones, and every section stops a fling (scroll-snap-stop: always).
+ * No touch-action and no scroll hijacking anywhere. A section taller than the viewport (the lobby
+ * on phones) still scrolls through its own content under mandatory snapping: the browser treats
+ * any position where it covers the viewport as valid (CSS Scroll Snap 1, "snap area larger than
+ * the snapport").
+ */
+:global(html) {
+  scrollbar-gutter: stable;
+}
+
+@media (pointer: coarse) {
+  :global(html) {
+    scroll-snap-type: y mandatory;
+  }
+}
+
+@media (pointer: fine) {
+  :global(html) {
+    scroll-snap-type: y proximity;
+  }
+}
+
+.section {
+  min-height: 100svh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  pointer-events: none;
+}
+
+/* The last stop stays reachable when the URL bar collapses; inside a wing, its last item. */
+.section:last-child,
+.section[data-wing-last] {
+  min-height: 100lvh;
+}
+
+/* Sections let empty-area pointer events fall through to #app (R3F raycasts them); cards opt in. */
+:global([data-card]),
+:global([data-card] a),
+:global([data-card] button) {
+  pointer-events: auto;
+}
+
+/* Page scroll is locked while the story dialog is open (also in global.css, R6). */
+:global(html:has(dialog[open])) {
+  overflow: hidden;
+}
+
+/*
+ * Museum mode: only the active track takes part in layout. On the main track every wing exhibit
+ * is hidden; inside a wing, everything except that wing's door and items. The door section
+ * belongs to both its tracks. Without JS (no data-mode) every section shows.
+ */
+:global(html[data-mode='museum'] #track[data-track='main']) .section[data-wing],
+:global(html[data-mode='museum'] #track[data-track='projects'])
+  .section:not([data-wing='projects']):not([data-door='projects']),
+:global(html[data-mode='museum'] #track[data-track='volunteer'])
+  .section:not([data-wing='volunteer']):not([data-door='volunteer']) {
+  display: none;
+}

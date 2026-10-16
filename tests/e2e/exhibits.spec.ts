@@ -18,12 +18,25 @@ const BUILT: ExhibitId[] = ['verafin', 'safe-sip'];
 /** EXPERIENCE §10.4: reduced motion holds every exhibit still; checked over this window. */
 const STILL_MS = 10_000;
 /**
- * How long idle motion may take to show a changed canvas. verafin's grid refreshes every 8 s
- * (WP-12), and a CI frame takes 2 to 3 s with two workers (F-M2): 8 s plus a few frames.
+ * Rendered frames within which idle motion must show. The exhibit clock advances by the frame
+ * delta capped at 0.1 s (MAX_CLOCK_STEP_S), so under SwiftShader it runs slower than real time:
+ * verafin's first report refresh at 8 s of exhibit time needs about 80 frames (24 s in a local
+ * two-worker run). 120 frames leave room for the time spent before the stop is settled.
  */
-const MOTION_WITHIN_MS = 25_000;
+const MOTION_WITHIN_FRAMES = 120;
+/** CI frames take up to 3 s on desktop (F-M2); a Pixel 7 frame is cheaper. 120 at 1.5 s. */
+const MOTION_TIMEOUT_MS = 180_000;
 
 const canvasShot = (page: Page) => museumCanvas(page).screenshot();
+
+/**
+ * A small pointer move away from the exhibit: input that keeps FrameDriver's 15 s idle stop
+ * (EXPERIENCE §6.7) from freezing the motion mid-test (?test=1 turns parallax off, so the camera
+ * ignores it). Without it a slow arrival left verafin's 8 s refresh after the idle stop (local
+ * two-worker run).
+ */
+let nudges = 0;
+const nudge = (page: Page) => page.mouse.move(20 + (nudges++ % 2) * 4, 20);
 
 test.describe('exhibits', { tag: '@exhibit' }, () => {
   test.describe.configure({ timeout: 120_000 });
@@ -76,14 +89,23 @@ test.describe('exhibits', { tag: '@exhibit' }, () => {
       await page.goto(museumUrl('/', { idle: true }));
       await waitForMuseum(page);
       await goToStop(page, id);
+      test.setTimeout(MOTION_TIMEOUT_MS + 60_000);
       const first = await canvasShot(page);
-      await expect
-        .poll(async () => (await canvasShot(page)).equals(first), {
-          message: `${id} moves under &idle=1`,
-          timeout: MOTION_WITHIN_MS,
-          intervals: [1_000],
-        })
-        .toBe(false);
+      const from = (await stats(page)).frames;
+      const start = Date.now();
+      let rendered = 0;
+      let moved = false;
+      while (!moved && rendered < MOTION_WITHIN_FRAMES) {
+        if (Date.now() - start > MOTION_TIMEOUT_MS) break;
+        await nudge(page);
+        await page.waitForTimeout(1_000);
+        rendered = (await stats(page)).frames - from;
+        moved = !(await canvasShot(page)).equals(first);
+      }
+      console.log(
+        `exhibits: ${id} moved=${moved} after ${rendered} frames, ${Date.now() - start} ms`,
+      );
+      expect(moved, `${id} moves under &idle=1 within ${MOTION_WITHIN_FRAMES} frames`).toBe(true);
     });
 
     test(`${id}: reduced motion holds the canvas still`, async ({ page }) => {
@@ -92,7 +114,11 @@ test.describe('exhibits', { tag: '@exhibit' }, () => {
       await waitForMuseum(page);
       await goToStop(page, id);
       const first = await canvasShot(page);
-      await page.waitForTimeout(STILL_MS);
+      // Input every second keeps frames coming, so stillness is reduced motion, not the idle stop.
+      for (let waited = 0; waited < STILL_MS; waited += 1_000) {
+        await nudge(page);
+        await page.waitForTimeout(1_000);
+      }
       const second = await canvasShot(page);
       expect(second.equals(first), `${id} is still under reduced motion`).toBe(true);
     });

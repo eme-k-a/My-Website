@@ -71,8 +71,17 @@ test.describe('keyboard-only reading', { tag: '@a11y' }, () => {
       ).toBeVisible();
       expect(new URL(page.url()).pathname).toBe(`/exhibit/${now.story}/`);
 
+      // The <dialog> 'close' event is a queued task, and ExhibitDialog's onClose closes whatever
+      // story is open when it runs: an Enter that reopens a story before it lands gets that story
+      // closed (filed for R6 in the WP-17 report). Wait for the event, as a person's pace would.
+      await dialog.evaluate((el) => {
+        (el as HTMLElement & { closed?: Promise<void> }).closed = new Promise<void>((resolve) =>
+          el.addEventListener('close', () => resolve(), { once: true }),
+        );
+      });
       await page.keyboard.press('Escape');
       await expect(dialog).toBeHidden();
+      await dialog.evaluate((el) => (el as HTMLElement & { closed?: Promise<void> }).closed);
       expect(new URL(page.url()).pathname).toBe('/');
       // Focus goes to the story's "Read the story" when the exhibit is on the active track (main
       // here), else back to the opener: a door card's link to a wing story (story.ts

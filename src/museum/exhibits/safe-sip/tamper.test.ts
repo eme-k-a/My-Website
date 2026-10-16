@@ -82,16 +82,23 @@ function rockerMatrix(roll: number, pitch: number, offsetY: number): Matrix4 {
     .multiply(new Matrix4().makeTranslation(0, offsetY, 0));
 }
 
+/** Rocking parts (cup, lid, tamper ring), built once, each with its local offset above the pivot. */
+const ROCKING_PARTS: { geometry: BufferGeometry; offsetY: number }[] = [
+  { geometry: cupGeometry(), offsetY: CUP.bottomY - PIVOT[1] },
+  { geometry: lidGeometry(), offsetY: LID_Y - PIVOT[1] },
+  {
+    geometry: new TorusGeometry(TAMPER_RING.radius, TAMPER_RING.tube, 6, 36, COVER_PHI.length)
+      .rotateX(Math.PI / 2)
+      .rotateY(tamperRingTurn()),
+    offsetY: LID_Y - PIVOT[1] + TAMPER_RING.y,
+  },
+];
+
 /** Every vertex that rocks (cup, lid, tamper ring) at a pose. */
 function rockingVertices(roll: number, pitch: number): Vector3[] {
-  const ring = new TorusGeometry(TAMPER_RING.radius, TAMPER_RING.tube, 6, 36, COVER_PHI.length)
-    .rotateX(Math.PI / 2)
-    .rotateY(tamperRingTurn());
-  return [
-    ...vertices(cupGeometry(), rockerMatrix(roll, pitch, CUP.bottomY - PIVOT[1])),
-    ...vertices(lidGeometry(), rockerMatrix(roll, pitch, LID_Y - PIVOT[1])),
-    ...vertices(ring, rockerMatrix(roll, pitch, LID_Y - PIVOT[1] + TAMPER_RING.y)),
-  ];
+  return ROCKING_PARTS.flatMap(({ geometry, offsetY }) =>
+    vertices(geometry, rockerMatrix(roll, pitch, offsetY)),
+  );
 }
 
 const POSES = [
@@ -288,17 +295,24 @@ describe('safe-sip geometry', () => {
     ];
     const tol = 1e-6;
     const turn = new Matrix4().makeRotationY(OBJECT_YAW);
+    // Accumulate plain-number bounds over every pose, then assert once per axis.
+    const lo = new Vector3(Infinity, Infinity, Infinity);
+    const hi = new Vector3(-Infinity, -Infinity, -Infinity);
+    const grow = (v: Vector3) => {
+      v.applyMatrix4(turn);
+      lo.min(v);
+      hi.max(v);
+    };
+    for (const point of fixed) grow(point.clone());
     for (const { roll, pitch } of POSES) {
-      for (const point of [...fixed, ...rockingVertices(roll, pitch)]) {
-        const v = point.clone().applyMatrix4(turn);
-        expect(v.x).toBeGreaterThanOrEqual(SLOT.min[0] - tol);
-        expect(v.x).toBeLessThanOrEqual(SLOT.max[0] + tol);
-        expect(v.y).toBeGreaterThanOrEqual(SLOT.min[1] - tol);
-        expect(v.y).toBeLessThanOrEqual(SLOT.max[1] + tol);
-        expect(v.z).toBeGreaterThanOrEqual(SLOT.min[2] - tol);
-        expect(v.z).toBeLessThanOrEqual(SLOT.max[2] + tol);
-      }
+      for (const v of rockingVertices(roll, pitch)) grow(v);
     }
+    expect(lo.x).toBeGreaterThanOrEqual(SLOT.min[0] - tol);
+    expect(hi.x).toBeLessThanOrEqual(SLOT.max[0] + tol);
+    expect(lo.y).toBeGreaterThanOrEqual(SLOT.min[1] - tol);
+    expect(hi.y).toBeLessThanOrEqual(SLOT.max[1] + tol);
+    expect(lo.z).toBeGreaterThanOrEqual(SLOT.min[2] - tol);
+    expect(hi.z).toBeLessThanOrEqual(SLOT.max[2] + tol);
   });
 
   it('the rocking cup and lid never touch the gizmo, the gimbal ring or the base', () => {

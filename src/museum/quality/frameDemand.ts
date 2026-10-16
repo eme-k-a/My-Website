@@ -27,6 +27,7 @@ export const INPUT_WRITE_INTERVAL_MS = 100;
 
 export interface FrameDemandInput {
   hidden: boolean;
+  /** The phone sheet covers the canvas: html[data-sheet="open"] and a story open (openId). */
   sheetOpen: boolean;
   contextLost: boolean;
   moving: boolean;

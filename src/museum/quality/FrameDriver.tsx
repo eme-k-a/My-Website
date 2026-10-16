@@ -4,10 +4,15 @@
 // - while only idle motion runs: every frame on fine pointers, 30 fps on coarse pointers;
 // - idle motion stops tokens.motion.idleStopMs (15 s) after the last input, so a settled, idle
 //   scene renders zero frames until the next input;
-// - nothing while the tab is hidden, the phone sheet is open (html[data-sheet="open"], WP-14) or
-//   the context is lost. A pause switches R3F to frameloop "never", so no other component's
-//   invalidate() can render under the sheet either; on return it switches back to "demand" and
-//   renders one frame.
+// - nothing while the tab is hidden, the phone sheet covers the canvas or the context is lost.
+//   The sheet counts while html[data-sheet="open"] (set by WP-14's dialog on phones) and the
+//   store's `openId` agree, so a stale flag never freezes the gallery; the desktop panel leaves
+//   the canvas visible and keeps rendering (the dolly). A pause switches R3F to frameloop
+//   "never", so no other component's invalidate() can render under the sheet either; on return
+//   it switches back to "demand" and renders one frame.
+// Every other component's invalidate() (the rig's gaze, framing, dolly, parallax and fade frames,
+// a reveal) renders as usual: the idle stop only ends this driver's own requests, so it never
+// cuts a fade or a dolly short.
 // Input is noted by passive `scroll`, `pointermove`, `pointerdown` and `keydown` listeners, which
 // write the store's `lastInputAt` (at most every 100 ms); the kit derives `runtime.motion` from
 // the same field, and the published frame state carries `motionActive`.
@@ -53,7 +58,7 @@ export function FrameDriver() {
       const s = useMuseum.getState();
       return {
         hidden: document.visibilityState === 'hidden',
-        sheetOpen: root.dataset.sheet === 'open',
+        sheetOpen: root.dataset.sheet === 'open' && s.openId !== null,
         contextLost: s.contextLost,
         moving: cameraMoving(progress.current, progress.target, rig.glide !== null),
         compiling: s.compilePending + s.textPending > 0,

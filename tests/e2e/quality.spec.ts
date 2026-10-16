@@ -188,16 +188,20 @@ test.describe('quality', () => {
 
   test('(g) no frame renders while the phone sheet is open', async ({ page }) => {
     onlyOn('pixel7');
-    test.setTimeout(90_000);
+    test.setTimeout(120_000);
     // Idle motion on, so the canvas would keep rendering without the sheet.
     await page.goto(museumUrl('/', { idle: true }));
     await waitForMuseum(page);
+    await goToStop(page, 'verafin');
     await page.mouse.move(100, 300);
     const running = await frames(page);
     await page.waitForTimeout(1_000);
     expect(await frames(page)).toBeGreaterThan(running);
 
-    // The flag WP-14's phone sheet sets while it is open (ARCHITECTURE §8.5).
+    // Open the story. On phones WP-14's sheet sets html[data-sheet="open"] while it is open
+    // (ARCHITECTURE §8.5); before WP-14 the spec sets the flag itself.
+    await page.getByTestId(TEST_IDS.open('verafin')).click();
+    await expect(page.getByTestId(TEST_IDS.dialog)).toBeVisible();
     await page.evaluate(() => {
       document.documentElement.dataset.sheet = 'open';
     });
@@ -210,6 +214,7 @@ test.describe('quality', () => {
     const stillOpen = await frames(page);
     expect(stillOpen, 'frames while the sheet is open').toBe(open);
 
+    // The flag alone (a story closed, a stale attribute) never pauses: frames come back.
     await page.evaluate(() => {
       delete document.documentElement.dataset.sheet;
     });

@@ -96,3 +96,8 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - F-011 (R3): move `QualityController` inside `MaterialsProvider`.
   - F-012 (R4): CameraRig stops requesting frames once the camera reaches the pose for the current scroll progress, so a scroll resting between stops lets frames stop.
   - F-013 (R6): MuseumGate unmounts the canvas when the store's mode is `classic`.
+- **F-M2 rulings (2026-10-16):**
+  - CI was green twice (runs 34 and 35), and the first preview deployed to https://claude-intelligent-sagan-poq45q--emeka-nduka-nwagbo.netlify.app.
+  - The context-loss recovery allowance under SwiftShader is 20 s (measured 10.6 to 14.2 s on CI with two workers). It replaces the 10 s in the WP-16 rulings; the 5 s target on real GPUs stands.
+  - The e2e job `timeout-minutes` goes from 30 to 45, because runs 34 and 35 took 29.4 and 29.2 minutes. WP-17 may split the job instead.
+  - Open for WP-17 and R7: F-015 evaluates dropping the render-every-frame-while-compiling rule (ARCHITECTURE section 8.5). It is the largest CI-time saving found; keep it only if screenshots show no pop on a real device. F-016 removes the unused `beam` and `shadowDecal` programs from the precompile set.

@@ -46,7 +46,7 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | Context packs | docs/RULINGS.md + docs/wp/packs/ (cost rules) | Done (33b5492) |
 | Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Passed 2026-10-16: CI run 13 green on c10c67f; smoke tests pass on desktop and Pixel 7 (139 e2e). Next: M2 on Emeka's "go" |
 | WP-11 to WP-16, WP-18 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers, preview deploy | Done 2026-10-16: all merged and verified (WP-16, WP-11, WP-15, WP-14 one by one; WP-12, WP-13, WP-18 as one batch), tip d0c2d50. CI run 27 failed 11 e2e tests on GitHub runners, so the deploy job has not run yet |
-| F-M2 | Green CI after M2a (F-011 to F-014), first Netlify preview | Running 2026-10-16: one background fixer with a push grant, brief `docs/wp/F-M2.md` |
+| F-M2 | Green CI after M2a (F-011 to F-014), first Netlify preview | Done 2026-10-16: CI runs 34 and 35 green; preview live at https://claude-intelligent-sagan-poq45q--emeka-nduka-nwagbo.netlify.app (report `review/reports/F-M2.json`). Next: WP-17 (slice tests, plus F-015 and F-016), then WP-19, then Gate G2 |
 | WP-17, WP-19 | M2b: slice tests, slice review | Not started. WP-17 after M2a merges; WP-19 last, then Gate G2 |
 | WP-20 onward | M3 to M7 | Not started |
 

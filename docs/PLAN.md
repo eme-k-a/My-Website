@@ -369,6 +369,8 @@ Size: S is under half a day of agent work, M is 1 to 2, L is 3 or more. Every WP
 - **M2 effort.** WP-11 (environment v1), WP-12 (Verafin exhibit), WP-15 (camera feel) and WP-16 (quality tiers) set the look and feel, so they start at `xhigh`. Every other M2 work package starts at `high`.
 - **Saved workflow.** Milestones run through `.claude/workflows/milestone.js` (Workflow tool, `name: "milestone"`) with args `{ label, wps: [{ id, role, model?, effort? }], mergeOrder?, notes? }`.
 - **Stop at milestone boundaries.** After each milestone is pushed and its gate is reported, R0 stops. Emeka runs `/compact` (or starts a fresh session from `docs/HANDOVER.md`) and says "go" before the next milestone. This is also where he decides whether to spend more of his usage limit now.
+- **Batch merges (2026-10-16).** WPs that do not share files merge as one batch: one integrator, one full e2e run and one verifier (`batch: true` in the milestone workflow). Per-WP merging costs about 40 minutes of local e2e each. GitHub CI is the authority for the full suite.
+- **Fan-out in separate cloud sessions (approved by Emeka on 2026-10-16).** For M3 (WP-20 to WP-25) and later fan-outs, each builder runs in its own cloud session, with its own machine and its own branch. Start them a few at a time. Sessions share the account's usage limits, so parallel sessions buy speed, not extra allowance. R0 merges their branches with the batch integrator.
 - **Keep the main session lean.** Summarize workflow results with scripts rather than dumping them. Keep the session plan file a short pointer.
 
 ## 8. What I need from Emeka (none of it blocks M0 to M1)

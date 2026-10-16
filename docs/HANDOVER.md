@@ -44,7 +44,7 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | F-M1 | Fix-ups from M1a verification | Done and verified (a9f0d49..9937041) |
 | WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Done and verified (WP-08 3df75cb..705ed8e, WP-09 to bcc065a); CI run 11 green |
 | Context packs | docs/RULINGS.md + docs/wp/packs/ (cost rules) | Done (33b5492) |
-| Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Smoke tests pass (WP-09 verifier, 139 e2e); waiting on the CI run for this commit; then M2 on Emeka's "go" |
+| Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Passed 2026-10-16: CI run 13 green on c10c67f; smoke tests pass on desktop and Pixel 7 (139 e2e). Next: M2 on Emeka's "go" |
 | WP-11 to WP-19 | M2 vertical slice | Not started. Run with the saved milestone workflow; WP-11, WP-12, WP-15, WP-16 at xhigh |
 | WP-20 onward | M3 to M7 | Not started |
 

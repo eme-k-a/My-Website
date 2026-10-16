@@ -1,7 +1,7 @@
 export const meta = {
   name: 'milestone',
   description: 'Run one milestone of the Commit History build: parallel WP builders in worktrees, then merge in order with a cheap independent verifier and one fix round',
-  whenToUse: 'Any milestone or batch of work packages (WP-xx) for the Commit History site. Pass args: { label, wps: [{ id, role, model?, effort? }], mergeOrder?, notes? }',
+  whenToUse: 'Any milestone or batch of work packages (WP-xx) for the Commit History site. Pass args: { label, wps: [{ id, role, model?, effort?, fromBranch?, report? }], mergeOrder?, notes? }. fromBranch: the builder restores that branch tip (a WIP commit) and continues. report: the WP is already built on wp/<id>; skip the build and use this text as its report.',
   phases: [
     { title: 'Build', detail: 'one builder per WP in an isolated worktree' },
     { title: 'Integrate', detail: 'cherry-pick in merge order; Sonnet verifier; one fix round' },
@@ -38,9 +38,12 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_016CcKJFMWCyXKspJx4YvMS7${NOTES}`
 
 function buildPrompt(w, port) {
+  const resume = w.fromBranch
+    ? `\nRESUME: an earlier builder for ${w.id} was cut off by a usage limit. Its unfinished, unverified work is the tip commit of ${w.fromBranch}. After the base check below, run "git cherry-pick --no-commit ${w.fromBranch}" to restore it as uncommitted changes, review it critically against the brief, then finish the WP. Do not keep a "wip" commit in your history.`
+    : ''
   return `You are ${w.role}. Execute work package ${w.id} exactly as written in docs/wp/${w.id}.md (its context pack is docs/wp/packs/${w.id}.md).
 ${COMMON}
-ISOLATED WORKTREE: you run in a fresh git worktree (your current directory) created from the integration branch. Work and commit ONLY there; never touch ${REPO} directly. Run "npm ci" first. Use PORT=${port} for servers and Playwright. Other WPs of this milestone (${WPS.map((x) => x.id).join(', ')}) are built in parallel and merge in the order ${ORDER.join(', ')}: build against the frozen contracts and note acceptance items that can only be proven after integration.
+ISOLATED WORKTREE: you run in a fresh git worktree (your current directory). Work and commit ONLY there; never touch ${REPO} directly. BASE CHECK FIRST: if "git merge-base --is-ancestor claude/intelligent-sagan-poq45q HEAD" fails or HEAD is not the integration tip, run "git reset --hard claude/intelligent-sagan-poq45q" (worktrees have started from main before).${resume} Run "npm ci" first. Use PORT=${port} for servers and Playwright. Other WPs of this milestone (${WPS.map((x) => x.id).join(', ')}) are built in parallel and merge in the order ${ORDER.join(', ')}: build against the frozen contracts and note acceptance items that can only be proven after integration.
 Do every Todo, make every acceptance criterion you can pass, write review/reports/${w.id}.json, commit as the brief's Output says, then run: git branch -f wp/${w.id} HEAD
 Final reply (keep it under 400 words): commit list, acceptance results (pass/fail/deferred with one-line evidence), deviations, open questions.`
 }
@@ -71,7 +74,8 @@ Fix every failing acceptance criterion and every blocking or major issue; explai
 
 phase('Build')
 const reports = {}
-await parallel(WPS.map((w, i) => () =>
+for (const w of WPS) if (w.report) { reports[w.id] = w.report; log(`${w.id}: already built on wp/${w.id}; skipping the build`) }
+await parallel(WPS.filter((w) => !w.report).map((w, i) => () =>
   agent(buildPrompt(w, 4174 + i), { label: `build:${w.id}`, phase: 'Build', isolation: 'worktree', model: w.model, effort: w.effort || 'high' })
     .then((r) => { reports[w.id] = r })))
 

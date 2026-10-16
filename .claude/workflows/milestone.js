@@ -1,7 +1,7 @@
 export const meta = {
   name: 'milestone',
   description: 'Run one milestone of the Commit History build: parallel WP builders in worktrees, then merge in order with a cheap independent verifier and one fix round',
-  whenToUse: 'Any milestone or batch of work packages (WP-xx) for the Commit History site. Pass args: { label, wps: [{ id, role, model?, effort?, fromBranch?, report? }], mergeOrder?, notes?, portBase? }. mergeOrder: [] builds without integrating. portBase offsets builder ports from 4174. fromBranch: the builder restores that branch tip (a WIP commit) and continues. report: the WP is already built on wp/<id>; skip the build and use this text as its report.',
+  whenToUse: 'Any milestone or batch of work packages (WP-xx) for the Commit History site. Pass args: { label, wps: [{ id, role, model?, effort?, fromBranch?, report? }], mergeOrder?, notes?, portBase?, batch? }. mergeOrder: [] builds without integrating. batch: true merges every WP in one pass (one full e2e run, one verifier) for WPs that do not share files. portBase offsets builder ports from 4174. fromBranch: the builder restores that branch tip (a WIP commit) and continues. report: the WP is already built on wp/<id>; skip the build and use this text as its report.',
   phases: [
     { title: 'Build', detail: 'one builder per WP in an isolated worktree' },
     { title: 'Integrate', detail: 'cherry-pick in merge order; Sonnet verifier; one fix round' },
@@ -69,7 +69,23 @@ function fixPrompt(w, verdict) {
 ${COMMON}
 Verifier findings (JSON):
 ${JSON.stringify(verdict)}
-Fix every failing acceptance criterion and every blocking or major issue; explain with evidence any finding you believe is wrong. Stay inside the brief's globs. Commit "fix(${w.id.toLowerCase()}): ...", update review/reports/${w.id}.json, and reply in under 300 words with the changes and fresh evidence.`
+Fix every failing acceptance criterion and every blocking or major issue; explain with evidence any finding you believe is wrong. Stay inside the brief's globs. ${w.ids ? `For each WP you change, commit "fix(<its id lowercase>): ..." with that WP's trailer and update review/reports/<its id>.json` : `Commit "fix(${w.id.toLowerCase()}): ...", update review/reports/${w.id}.json`}, and reply in under 300 words with the changes and fresh evidence.`
+}
+
+function batchIntegratePrompt(ids) {
+  return `You are R0's integration assistant. Merge ${ids.join(', ')} onto the integration branch in one batch.
+${COMMON}
+Builder reports:
+${ids.map((id) => `## ${id}\n${reports[id]}`).join('\n\n')}
+In ${REPO} on claude/intelligent-sagan-poq45q (never switch branches there), for each id in order ${ids.join(', ')}: cherry-pick git log --reverse claude/intelligent-sagan-poq45q..wp/<id>, then run npm run verify. On conflicts keep the integration-branch version for files that WP does not own, and keep both sides' keys in package.json scripts. Run npm ci if dependencies changed. After all are in: npm run build, then each WP's own acceptance specs with --workers=1, then ONE full PORT=4173 npm run e2e. Failures the R0 notes list as known and pre-existing are not yours to chase; report any new failure with the WP that caused it (re-run a failing spec once before blaming a WP). Fix failures caused by a batch WP inside that WP's globs (commit "fix(<id lowercase>): ..."). Do not push. Reply in under 300 words: integrated hashes per WP, results, anything open.`
+}
+
+function batchVerifyPrompt(ids, report) {
+  return `You are an independent, skeptical verifier for ${ids.join(', ')}, merged as one batch. You did not write them.
+${COMMON}
+In ${REPO} (integration branch, all merged): re-run every acceptance proof in docs/wp/<id>.md for each of ${ids.join(', ')} (PORT=4173) and review each WP's diff for contract violations, edits outside owned globs, em dashes, phone numbers, invented facts, budget or CSP regressions, and anything that breaks npm run verify or npm run build. Rely on the integrator's full e2e run unless a result looks wrong; failures the R0 notes list as known are not findings. Do not edit tracked files or commit; scratch files only under /tmp. Put the WP id at the start of every acceptance id and issue description.
+Report from the builders and integrator:
+${report}`
 }
 
 phase('Build')
@@ -81,6 +97,31 @@ await parallel(WPS.filter((w) => !w.report).map((w, i) => () =>
 
 phase('Integrate')
 const results = []
+if (A.batch && ORDER.length) {
+  const ids = ORDER.filter((id) => reports[id])
+  const missing = ORDER.filter((id) => !reports[id])
+  if (missing.length) log(`no builder report for ${missing.join(', ')}; batching the rest`)
+  const tag = ids.join('+')
+  const integrated = await agent(batchIntegratePrompt(ids), { label: `integrate:${tag}`, phase: 'Integrate', model: 'sonnet', effort: 'low' })
+  let report = `${ids.map((id) => `## ${id}\n${reports[id]}`).join('\n\n')}\n\nIntegration:\n${integrated}`
+  let verdict = await agent(batchVerifyPrompt(ids, report), { label: `verify:${tag}`, phase: 'Integrate', model: 'sonnet', effort: 'medium', schema: VERDICT })
+  const fixer = { id: tag, ids, role: `R0's fixer for ${ids.join(', ')} (stay inside the failing WP's globs)` }
+  if (verdict && !verdict.pass) {
+    log(`${tag}: verification failed (${verdict.issues.length} issues); one fix round`)
+    const fixed = await agent(fixPrompt(fixer, verdict), { label: `fix:${tag}`, phase: 'Integrate', effort: 'high' })
+    report = `${report}\n\nFix round:\n${fixed}`
+    verdict = await agent(batchVerifyPrompt(ids, report), { label: `reverify:${tag}`, phase: 'Integrate', model: 'sonnet', effort: 'medium', schema: VERDICT })
+  }
+  if (verdict && !verdict.pass && A.escalate !== false) {
+    log(`${tag}: still failing after the fix round; one max-effort escalation`)
+    const escalated = await agent(fixPrompt(fixer, verdict), { label: `escalate:${tag}`, phase: 'Integrate', effort: 'max' })
+    report = `${report}\n\nMax-effort escalation:\n${escalated}`
+    verdict = await agent(batchVerifyPrompt(ids, report), { label: `reverify2:${tag}`, phase: 'Integrate', model: 'sonnet', effort: 'medium', schema: VERDICT })
+  }
+  const ok = !!(verdict && verdict.pass)
+  log(`${tag}: ${ok ? 'PASS' : 'FAIL'}`)
+  return { label: A.label, results: [{ id: tag, ok, summary: verdict && verdict.summary, issues: verdict && verdict.issues }] }
+}
 for (const id of ORDER) {
   const w = WPS.find((x) => x.id === id)
   if (!w || !reports[id]) { results.push({ id, ok: false, note: 'no builder report' }); log(`${id}: no builder report; stopping`); break }

@@ -6,10 +6,11 @@
 //   scene renders zero frames until the next input;
 // - nothing while the tab is hidden, the phone sheet covers the canvas or the context is lost.
 //   The sheet counts while html[data-sheet="open"] (set by WP-14's dialog on phones) and the
-//   store's `openId` agree, so a stale flag never freezes the gallery; the desktop panel leaves
-//   the canvas visible and keeps rendering (the dolly). A pause switches R3F to frameloop
-//   "never", so no other component's invalidate() can render under the sheet either; on return
-//   it switches back to "demand" and renders one frame.
+//   store's `openId` agree, so a stale flag never freezes the gallery, and only once `ready`, so
+//   a cold deep link still loads behind its sheet; the desktop panel leaves the canvas visible
+//   and keeps rendering (the dolly). A pause switches R3F to frameloop "never", so no other
+//   component's invalidate() can render under the sheet either; on return it switches back to
+//   "demand" and renders one frame.
 // Every other component's invalidate() (the rig's gaze, framing, dolly, parallax and fade frames,
 // a reveal) renders as usual: the idle stop only ends this driver's own requests, so it never
 // cuts a fade or a dolly short.
@@ -59,6 +60,7 @@ export function FrameDriver() {
       return {
         hidden: document.visibilityState === 'hidden',
         sheetOpen: root.dataset.sheet === 'open' && s.openId !== null,
+        ready: s.ready,
         contextLost: s.contextLost,
         moving: cameraMoving(progress.current, progress.target, rig.glide !== null),
         compiling: s.compilePending + s.textPending > 0,

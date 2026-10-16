@@ -3,7 +3,8 @@
 // wake-up (input, store change, visibility, the sheet flag), and publishes the result here, so
 // QualityController and the kit can follow it without a store change.
 //
-//   paused   the tab is hidden, the phone sheet is open or the context is lost: no frames at all
+//   paused   the tab is hidden, the phone sheet is open (once the gallery is ready) or the
+//            context is lost: no frames at all
 //   full     the camera moves, a scripted glide runs, or a mount is compiling: every frame
 //   idle     only idle motion runs: every frame on fine pointers, 30 fps on coarse pointers
 //   stopped  settled and idle for idleStopMs (15 s), or idle motion is off: zero frames
@@ -29,6 +30,11 @@ export interface FrameDemandInput {
   hidden: boolean;
   /** The phone sheet covers the canvas: html[data-sheet="open"] and a story open (openId). */
   sheetOpen: boolean;
+  /**
+   * The store's `ready`. The sheet pauses only a ready gallery: a cold deep link opens the sheet
+   * at hydration, and loading behind it (precompile, the two ready frames) must still finish.
+   */
+  ready: boolean;
   contextLost: boolean;
   moving: boolean;
   compiling: boolean;
@@ -40,7 +46,7 @@ export interface FrameDemandInput {
 }
 
 export function frameDemand(input: FrameDemandInput): FrameDemand {
-  if (input.hidden || input.sheetOpen || input.contextLost) return 'paused';
+  if (input.hidden || input.contextLost || (input.sheetOpen && input.ready)) return 'paused';
   if (input.moving || input.compiling) return 'full';
   if (idleMotionActive(input)) return 'idle';
   return 'stopped';

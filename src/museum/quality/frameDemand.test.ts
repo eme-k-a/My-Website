@@ -17,6 +17,7 @@ const IDLE_STOP = 15_000;
 const settledIdle = (patch: Partial<FrameDemandInput> = {}): FrameDemandInput => ({
   hidden: false,
   sheetOpen: false,
+  ready: true,
   contextLost: false,
   moving: false,
   compiling: false,
@@ -48,6 +49,15 @@ describe('frameDemand', () => {
     expect(frameDemand(settledIdle({ hidden: true, moving: true }))).toBe('paused');
     expect(frameDemand(settledIdle({ sheetOpen: true, compiling: true }))).toBe('paused');
     expect(frameDemand(settledIdle({ contextLost: true }))).toBe('paused');
+  });
+
+  it('lets a gallery that is still loading finish behind a sheet opened at hydration', () => {
+    expect(frameDemand(settledIdle({ sheetOpen: true, ready: false, compiling: true }))).toBe(
+      'full',
+    );
+    expect(frameDemand(settledIdle({ hidden: true, ready: false, compiling: true }))).toBe(
+      'paused',
+    );
   });
 });
 

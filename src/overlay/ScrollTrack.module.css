@@ -10,14 +10,19 @@
   scrollbar-gutter: stable;
 }
 
+/*
+ * Snapping is keyed on museum mode: without JS the gallery is a plain document whose header and
+ * notice sit above the lobby, and mandatory snapping would pull the first paint down to the lobby
+ * section instead of the top of the page (the recruiter fast path needs scrollY 0).
+ */
 @media (pointer: coarse) {
-  :global(html) {
+  :global(html[data-mode='museum']) {
     scroll-snap-type: y mandatory;
   }
 }
 
 @media (pointer: fine) {
-  :global(html) {
+  :global(html[data-mode='museum']) {
     scroll-snap-type: y proximity;
   }
 }

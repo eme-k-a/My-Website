@@ -91,10 +91,21 @@ jobs:
           path: out/resume-preview*.png
           if-no-files-found: error
 
+  # Sharded (WP-17, R0 grant): six jobs, each running the e2e, a11y and visual steps for the
+  # slice of the suite that E2E_SHARD names in playwright.config.ts. One unsharded job took 29.4
+  # minutes in CI run 34 (every SwiftShader frame costs 2 to 3 s there); the slices are sized from
+  # run 35's per-test durations to finish in about 10 minutes each. deploy needs every shard.
   e2e:
     needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [desktop-input, desktop-walks, desktop-dialog, desktop-rest, pixel7, phones-rest]
+    name: e2e (${{ matrix.shard }})
+    env:
+      E2E_SHARD: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -116,7 +127,7 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - run: npm run e2e
+      - run: npm run e2e -- --pass-with-no-tests
       - run: npm run a11y
       - if: ${{ !inputs.update-baselines }}
         run: npm run visual
@@ -126,19 +137,19 @@ jobs:
       - if: ${{ inputs.update-baselines }}
         uses: actions/upload-artifact@v4
         with:
-          name: visual-baselines
+          name: visual-baselines-${{ matrix.shard }}
           path: tests/e2e/__screenshots__/
-          if-no-files-found: error
+          if-no-files-found: ignore
       - if: ${{ failure() }}
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           if-no-files-found: ignore
       - if: ${{ failure() }}
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-${{ matrix.shard }}
           path: test-results/
           if-no-files-found: ignore
 

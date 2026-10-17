@@ -12,6 +12,7 @@ import {
   paintFloorZones,
   paintZone,
   WALL_WASH_BASE,
+  WALL_WASH_PLAIN_V,
   WALL_WASH_SIZE,
   wallWashPixels,
   WASH_PEAK,
@@ -129,6 +130,17 @@ describe('wall wash (EXPERIENCE §7.5)', () => {
     expect(peak).toBeLessThanOrEqual(expected * 1.03);
     expect(peak).toBeGreaterThan(expected * 0.85);
     expect(WASH_PEAK).toBeLessThan(0.5);
+  });
+
+  it('leaves the plain rows the shell samples undithered: no per-column noise (F-026)', () => {
+    const row = Math.round(WALL_WASH_SIZE * (1 - WALL_WASH_PLAIN_V));
+    const values = new Set<number>();
+    // Away from the seams every column of a plain row has the same byte.
+    for (let col = 8; col < WALL_WASH_SIZE - 8; col++) values.add(at(col, row));
+    expect(values.size).toBe(1);
+    // The bay tile's plain rows match it.
+    const bay = wallWashPixels(WALL_WASH_SIZE, 7, { seams: false });
+    expect(bay[(row * WALL_WASH_SIZE + mid) * 4]).toBe(at(mid, row));
   });
 
   it('bakes a darker panel seam at both tile edges (every 2 m on the wall)', () => {

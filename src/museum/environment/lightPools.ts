@@ -323,8 +323,13 @@ export function wallWashPixels(
       const u = (col + 0.5) / size;
       const edgePx = Math.min(col + 0.5, size - col - 0.5);
       const seam = seams ? 1 - SEAM_DARKEN * (1 - smoothstep(0, SEAM_HALF_PX, edgePx)) : 1;
-      const value = (WALL_WASH_BASE + (1 - WALL_WASH_BASE) * WASH_PEAK * scallop(u, v)) * seam;
-      const byte = encode(value, random() - 0.5);
+      const lit = scallop(u, v);
+      const value = (WALL_WASH_BASE + (1 - WALL_WASH_BASE) * WASH_PEAK * lit) * seam;
+      // Dither only the scallop's gradient. The shell samples one plain row at a fixed v, so a
+      // dithered plain row became per-column noise stretched floor to ceiling: fine vertical
+      // streaks at grazing angles once the 8-bit output rounds it (F-026).
+      const dither = random() - 0.5;
+      const byte = encode(value, lit > 0 ? dither : 0);
       const i = (row * size + col) * 4;
       data[i] = byte;
       data[i + 1] = byte;

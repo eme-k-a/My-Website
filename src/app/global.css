@@ -16,7 +16,12 @@
 html {
   background: var(--ink);
   color: var(--text);
+  /*
+   * Always dark (EXPERIENCE §7.10, F-030): native scrollbars and form controls render dark, and
+   * the root scrollbar (ScrollTrack reserves its gutter) is a brass thumb on ink where supported.
+   */
   color-scheme: dark;
+  scrollbar-color: var(--border-secondary) var(--ink);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }

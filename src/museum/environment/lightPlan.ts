@@ -11,6 +11,7 @@
 import { doorId, WING_IDS, type ExhibitId, type StopId } from '../../content/ids';
 import { tokens } from '../../design/tokens';
 import { slotOrigin, slotVariant } from '../exhibits/_kit/anatomy';
+import { slotPlacard } from '../exhibits/_kit/placard';
 import type { QualityTier } from '../exhibits/_kit/types';
 import {
   ARCH_Z,
@@ -118,8 +119,10 @@ export const SPOT_CEILING_GAP = 0.3;
 export const SPOT_MAX_Y = 4.6;
 /** The baked floor pool sits this far from the plinth toward the aisle center (EXPERIENCE §7.5). */
 export const POOL_SHIFT = 0.3;
-/** Width of the wall-wash bay behind each target (one 2 m wall panel). */
+/** Narrowest wall-wash bay behind a target (one 2 m wall panel). */
 export const WASH_BAY_WIDTH = 2;
+/** A title's bay is this much wider than the title, so the lit core covers the whole title. */
+export const WASH_TITLE_PAD = 1;
 
 const EPS = 1e-6;
 const inside = (room: Room, x: number, z: number) =>
@@ -140,6 +143,8 @@ export interface WashBay {
   at: number;
   /** Bay center along the wall. */
   center: number;
+  /** Bay width along the wall (at least WASH_BAY_WIDTH). */
+  width: number;
   /** Unit normal of the wall face, pointing into the room, in the horizontal plane. */
   normal: [number, number];
   /** Room ceiling: the bay runs from the floor to it. */
@@ -196,12 +201,33 @@ function washBehind(room: Room, x: number, z: number, away: [number, number]): W
       axis: 'z',
       at,
       center: z,
+      width: WASH_BAY_WIDTH,
       normal: [ax > 0 ? -1 : 1, 0],
       height: room.ceiling,
     };
   }
   const at = az > 0 ? room.max[1] : room.min[1];
-  return { axis: 'x', at, center: x, normal: [0, az > 0 ? -1 : 1], height: room.ceiling };
+  return {
+    axis: 'x',
+    at,
+    center: x,
+    width: WASH_BAY_WIDTH,
+    normal: [0, az > 0 ? -1 : 1],
+    height: room.ceiling,
+  };
+}
+
+/**
+ * A plinth's bay follows its wall title (F-027): centered on the title and WASH_TITLE_PAD wider
+ * than it, trimmed so it never runs past the ends of its wall.
+ */
+function titleWash(layout: Layout, slot: Slot, room: Room, wash: WashBay): WashBay {
+  if (slotVariant(slot) === 'wall' || wash.axis !== 'z') return wash;
+  const title = slotPlacard(layout, slot);
+  const center = title.position[2];
+  const fits = Math.min(center - room.min[1], room.max[1] - center) * 2;
+  const width = Math.min(Math.max(WASH_BAY_WIDTH, title.width + WASH_TITLE_PAD), fits);
+  return { ...wash, center, width };
 }
 
 /**
@@ -251,7 +277,12 @@ export function lightTargets(layout: Layout): LightTarget[] {
       aim,
       color: targetColor(layout, slot.id),
       pool: poolCenter(slot, room, facing),
-      wash: washBehind(room, slot.position[0], slot.position[2], away),
+      wash: titleWash(
+        layout,
+        slot,
+        room,
+        washBehind(room, slot.position[0], slot.position[2], away),
+      ),
     });
   }
   const desk = layout.tracks.main.stops.find((s) => s.id === 'desk');

@@ -1,8 +1,9 @@
 // The hall (EXPERIENCE §2.3, §7.5; ARCHITECTURE §8.1): the whole shell (walls with their openings,
 // lintels, the Foundations header beam and the ceilings) as one merged mesh of the `wall`
-// material, whose lightMap is the shared wall-wash tile (plain rows and 2 m seams on the shell);
-// one instanced mesh of wash bays (the full scallop, tinted per target) behind every light
-// target; and the dim ceiling light slot down the aisle. The floors are Floor.tsx.
+// material, whose lightMap is the shell's wall-wash tile (plain rows and 2 m seams); one instanced
+// mesh of wash bays (the seamless scallop tile, tinted per target, centered on each wall title)
+// behind every light target; and the dim ceiling light slot down the aisle. The floors are
+// Floor.tsx.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Color,
@@ -14,6 +15,7 @@ import {
 import { useMaterialLibrary } from '../materials';
 import type { Layout } from '../rail/layout';
 import {
+  createBayWash,
   createWallWash,
   WALL_WASH_INTENSITY,
   WALL_WASH_PLAIN_V,
@@ -60,11 +62,13 @@ function bayMaterial(wall: MeshStandardMaterial, wash: Texture): MeshStandardMat
   return m;
 }
 
-function WashBays({ layout, wash }: { layout: Layout; wash: Texture }) {
+function WashBays({ layout }: { layout: Layout }) {
   const library = useMaterialLibrary();
   const { bays } = useMemo(() => washLayout(layout), [layout]);
   const plane = useMemo(() => new PlaneGeometry(1, 1), []);
-  // The wall material plus instance colors: the same wash tile, tinted per bay.
+  const [wash] = useState(createBayWash);
+  useEffect(() => () => wash.dispose(), [wash]);
+  // The wall material plus instance colors: the bay tile, tinted per bay.
   const material = useMemo(() => bayMaterial(library.wall, wash), [library, wash]);
   useEffect(() => () => plane.dispose(), [plane]);
   useEffect(() => () => material.dispose(), [material]);
@@ -116,7 +120,7 @@ export function Hall({ layout }: { layout: Layout }) {
   return (
     <group name="hall">
       <mesh name="shell" geometry={shell} material={library.wall} />
-      <WashBays layout={layout} wash={wash} />
+      <WashBays layout={layout} />
       <CeilingSlot layout={layout} />
     </group>
   );

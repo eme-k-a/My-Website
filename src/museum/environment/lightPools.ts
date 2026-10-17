@@ -4,11 +4,12 @@
 //   1.6 m, 0.3 m from the plinth toward the aisle center, peak alpha 0.85, smoothstep falloff,
 //   color by age); per door a threshold pool on the aisle floor (1.2 m, alpha 0.35, light-0); under
 //   every plinth and the desk a soft contact patch (footprint plus a 0.25 m edge, darkness 0.55).
-// - Wall wash: one shared 256 px "scallop" (a wall-washer arc fading toward the floor) with a
-//   panel seam at each side, so seams repeat every 2 m. The bottom rows carry only the base level
-//   and the seams: the hall shell samples them, the wash bays behind each target the whole tile.
-//   Each bay is tinted by its target's temperature (instance color) and snapped to its wall's
-//   seam grid, so the bay edges and the shell's seams line up.
+// - Wall wash: two 256 px tiles. The shell's tile carries the base level and a panel seam at each
+//   side (seams every 2 m); the shell samples only its plain bottom rows. The bay tile is the
+//   "scallop" (a wall-washer arc fading toward the floor) over the same base, without seams, so a
+//   bay can sit anywhere: each one is centered on its target's wall title and sized to it (F-027),
+//   and tinted by the target's temperature (instance color). Its edges fade to the base level, so
+//   it meets the shell without a visible edge.
 // Everything is a pure function of the layout plus a fixed seed (the dither), so the textures are
 // identical on every run and can be rebuilt after a context restore. Values are linear light,
 // stored sRGB-encoded in 8 bits (colorSpace SRGB) so the dark end keeps its precision.
@@ -280,7 +281,8 @@ export function paintFloorZones(layout: Layout, pxPerM = POOL_PX_PER_M): ZoneRas
 const TILE_W = 2;
 const TILE_H = 5;
 const SCALLOP_TOP = 0.45; // m below the ceiling at the tile center
-const SCALLOP_CURVE = 1.1; // edge drop per m^2 off center
+const SCALLOP_CURVE = 0.7; // edge drop per m^2 off center (flatter since F-027: a wider arch)
+const SCALLOP_SIDE = 0.72; // the lit core spans this share of the bay (F-027: covers the title)
 const SCALLOP_FALLOFF = 2.4; // m, exponential falloff toward the floor
 const SEAM_HALF_PX = 1.25;
 const SEAM_DARKEN = 0.55;
@@ -292,14 +294,21 @@ export function scallop(u: number, v: number): number {
   const edge = SCALLOP_TOP + SCALLOP_CURVE * x * x;
   const lit = smoothstep(0, 0.35, down - edge);
   const fall = Math.exp(-Math.max(0, down - SCALLOP_TOP) / SCALLOP_FALLOFF);
-  const sides = 1 - smoothstep(0.55, 0.98, Math.abs(x));
+  const sides = 1 - smoothstep(SCALLOP_SIDE, 0.99, Math.abs(x));
   // Nothing reaches the bottom rows: the shell samples them for base and seams only.
   const floor = smoothstep(0.08, 0.22, v);
   return lit * fall * sides * floor;
 }
 
-/** RGBA pixels of the shared wall-wash tile (greyscale, sRGB-encoded, row 0 at the top). */
-export function wallWashPixels(size = WALL_WASH_SIZE, seed = 7): Uint8ClampedArray<ArrayBuffer> {
+/**
+ * RGBA pixels of a wall-wash tile (greyscale, sRGB-encoded, row 0 at the top): the shell's tile
+ * (`seams`, the default) or the bays' seamless scallop tile.
+ */
+export function wallWashPixels(
+  size = WALL_WASH_SIZE,
+  seed = 7,
+  { seams = true }: { seams?: boolean } = {},
+): Uint8ClampedArray<ArrayBuffer> {
   const data = new Uint8ClampedArray(size * size * 4);
   const random = rng(seed);
   for (let row = 0; row < size; row++) {
@@ -307,7 +316,7 @@ export function wallWashPixels(size = WALL_WASH_SIZE, seed = 7): Uint8ClampedArr
     for (let col = 0; col < size; col++) {
       const u = (col + 0.5) / size;
       const edgePx = Math.min(col + 0.5, size - col - 0.5);
-      const seam = 1 - SEAM_DARKEN * (1 - smoothstep(0, SEAM_HALF_PX, edgePx));
+      const seam = seams ? 1 - SEAM_DARKEN * (1 - smoothstep(0, SEAM_HALF_PX, edgePx)) : 1;
       const value = (WALL_WASH_BASE + (1 - WALL_WASH_BASE) * scallop(u, v)) * seam;
       const byte = encode(value, random() - 0.5);
       const i = (row * size + col) * 4;
@@ -338,28 +347,25 @@ export interface WashLayout {
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 
 /**
- * Every target's wall-wash bay. The first bay on a wall line sets that line's seam phase (its
- * left edge); a later bay on the same line moves to the nearest center on that 2 m grid.
+ * Every target's wall-wash bay, where its target puts it (centered on the wall title). The bays
+ * are seamless, so they need no grid; the first bay on a wall line still sets that line's seam
+ * phase, so the seams of a wall keep their 2 m rhythm around its first bay.
  */
 export function washLayout(layout: Layout): WashLayout {
   const seams: SeamLine[] = [];
   const bays: WashPlacement[] = [];
-  const half = WASH_BAY_WIDTH / 2;
   for (const target of lightTargets(layout)) {
     const bay = { ...target.wash, normal: [...target.wash.normal] as [number, number] };
-    const line = seams.find((s) => s.axis === bay.axis && Math.abs(s.at - bay.at) < 1e-6);
-    if (line) {
-      const k = Math.round((bay.center - half - line.phase) / WASH_BAY_WIDTH);
-      bay.center = line.phase + k * WASH_BAY_WIDTH + half;
-    } else {
-      seams.push({ axis: bay.axis, at: bay.at, phase: mod(bay.center - half, WASH_BAY_WIDTH) });
+    if (!seams.some((s) => s.axis === bay.axis && Math.abs(s.at - bay.at) < 1e-6)) {
+      const phase = mod(bay.center - WASH_BAY_WIDTH / 2, WASH_BAY_WIDTH);
+      seams.push({ axis: bay.axis, at: bay.at, phase });
     }
     bays.push({ for: target.id, bay, color: target.color });
   }
   return { bays, seams };
 }
 
-/** The unit-plane matrix of a bay: WASH_BAY_WIDTH wide, floor to ceiling, facing into the room. */
+/** The unit-plane matrix of a bay: `bay.width` wide, floor to ceiling, facing into the room. */
 export function washMatrix(bay: WashBay): Matrix4 {
   const across = bay.at;
   const [nx, nz] = bay.normal;
@@ -368,7 +374,7 @@ export function washMatrix(bay: WashBay): Matrix4 {
   return new Matrix4()
     .makeTranslation(x, bay.height / 2, z)
     .multiply(new Matrix4().makeRotationY(Math.atan2(nx, nz)))
-    .multiply(new Matrix4().makeScale(WASH_BAY_WIDTH, bay.height, 1));
+    .multiply(new Matrix4().makeScale(bay.width, bay.height, 1));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -402,11 +408,21 @@ export function createFloorLightmaps(layout: Layout): Map<Room['id'], CanvasText
   return out;
 }
 
-/** The shared wall-wash tile (repeat-wrapped along the wall). */
+/** The shell's wall-wash tile (base and seams, repeat-wrapped along the wall). */
 export function createWallWash(): CanvasTexture {
   const size = WALL_WASH_SIZE;
   const texture = new CanvasTexture(canvasFrom(size, size, wallWashPixels(size)));
   texture.wrapS = RepeatWrapping;
   texture.wrapT = ClampToEdgeWrapping;
   return asLightmap(texture, 'wallWash');
+}
+
+/** The bays' seamless scallop tile (one per bay, clamped). */
+export function createBayWash(): CanvasTexture {
+  const size = WALL_WASH_SIZE;
+  const pixels = wallWashPixels(size, 7, { seams: false });
+  const texture = new CanvasTexture(canvasFrom(size, size, pixels));
+  texture.wrapS = ClampToEdgeWrapping;
+  texture.wrapT = ClampToEdgeWrapping;
+  return asLightmap(texture, 'wallWashBay');
 }

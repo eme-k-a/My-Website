@@ -3,8 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { content } from '../../content/index';
 import { tokens } from '../../design/tokens';
 import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
+import { slotPlacard } from '../exhibits/_kit/placard';
 import { computeLayout, type Room } from '../rail/layout';
-import { lightTargets, rampColor } from './lightPlan';
+import { lightTargets, rampColor, WASH_BAY_WIDTH, WASH_TITLE_PAD } from './lightPlan';
 import {
   floorPaint,
   MAX_LIGHTMAP_SIZE,
@@ -120,15 +121,52 @@ describe('wall wash (EXPERIENCE §7.5)', () => {
     expect(at(WALL_WASH_SIZE - 1, row)).toBeLessThan(at(mid, row));
   });
 
-  it('hangs one bay per target on its wall, edges on the wall line seam grid', () => {
+  it('hangs one bay per target on its wall, the first bay of a wall setting its seam grid', () => {
     const { bays, seams } = washLayout(layout);
     expect(bays.map((b) => b.for)).toEqual(lightTargets(layout).map((t) => t.id));
-    for (const { bay } of bays) {
-      const line = seams.find((s) => s.axis === bay.axis && Math.abs(s.at - bay.at) < 1e-6)!;
-      const edge = (((bay.center - 1 - line.phase) % 2) + 2) % 2;
-      expect(Math.min(edge, 2 - edge), `${bay.axis} ${bay.at}`).toBeLessThan(1e-9);
+    for (const line of seams) {
+      const first = bays.find(
+        (b) => b.bay.axis === line.axis && Math.abs(b.bay.at - line.at) < 1e-6,
+      )!;
+      const edge = (((first.bay.center - 1 - line.phase) % 2) + 2) % 2;
+      expect(Math.min(edge, 2 - edge), `${line.axis} ${line.at}`).toBeLessThan(1e-9);
     }
-    expect(bays.find((b) => b.for === 'verafin')!.bay.center).toBeCloseTo(-10, 9);
+  });
+
+  it('centers each plinth bay on its wall title and sizes it to cover the title (F-027)', () => {
+    const { bays } = washLayout(layout);
+    for (const slot of layout.slots.filter((s) => s.mount === 'plinth')) {
+      const { bay } = bays.find((b) => b.for === slot.id)!;
+      const title = slotPlacard(layout, slot);
+      expect(bay.center, slot.id).toBeCloseTo(title.position[2], 9);
+      expect(bay.width, slot.id).toBeGreaterThanOrEqual(WASH_BAY_WIDTH);
+      const room = layout.rooms.find(
+        (r) =>
+          slot.position[0] >= r.min[0] &&
+          slot.position[0] <= r.max[0] &&
+          slot.position[2] >= r.min[1] &&
+          slot.position[2] <= r.max[1],
+      )!;
+      // Inside its wall; as wide as the title plus the pad unless the wall ends trim it.
+      expect(bay.center - bay.width / 2, slot.id).toBeGreaterThanOrEqual(room.min[1] - 1e-9);
+      expect(bay.center + bay.width / 2, slot.id).toBeLessThanOrEqual(room.max[1] + 1e-9);
+      const fits = Math.min(bay.center - room.min[1], room.max[1] - bay.center) * 2;
+      const wanted = Math.max(WASH_BAY_WIDTH, title.width + WASH_TITLE_PAD);
+      expect(bay.width, slot.id).toBeCloseTo(Math.min(wanted, fits), 9);
+    }
+    expect(bays.find((b) => b.for === 'verafin')!.bay.center).toBeCloseTo(-11.6956, 3);
+    // The portrait and the desk keep one 2 m panel.
+    expect(bays.find((b) => b.for === 'portrait')!.bay.width).toBe(WASH_BAY_WIDTH);
+    expect(bays.find((b) => b.for === 'desk')!.bay.width).toBe(WASH_BAY_WIDTH);
+  });
+
+  it('gives the bays a seamless tile with the same base level as the shell', () => {
+    const bay = wallWashPixels(WALL_WASH_SIZE, 7, { seams: false });
+    const row = WALL_WASH_SIZE - 2;
+    const px = (col: number) => bay[(row * WALL_WASH_SIZE + col) * 4]!;
+    expect(Math.abs(px(0) - px(mid))).toBeLessThanOrEqual(1);
+    expect(Math.abs(px(WALL_WASH_SIZE - 1) - px(mid))).toBeLessThanOrEqual(1);
+    expect(Math.abs(px(mid) - at(mid, row))).toBeLessThanOrEqual(1);
   });
 
   it('turns each bay plane to face into its room, just off the wall', () => {

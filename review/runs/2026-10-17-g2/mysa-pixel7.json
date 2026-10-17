@@ -1,0 +1,56 @@
+{
+  "stop": "mysa",
+  "project": "pixel7",
+  "url": "/?test=1&mode=museum",
+  "viewport": {
+    "width": 412,
+    "height": 839
+  },
+  "stats": {
+    "calls": 14,
+    "triangles": 2842,
+    "geometries": 84,
+    "textures": 25,
+    "programs": 19,
+    "textureMB": 11.8333371480306,
+    "frames": 21,
+    "dpr": 1,
+    "tier": "medium",
+    "track": "main",
+    "mounted": [
+      "verafin",
+      "mysa",
+      "wailo",
+      "klarup",
+      "safe-sip"
+    ],
+    "exhibits": {
+      "verafin": {
+        "triangles": 2732,
+        "drawCalls": 9,
+        "inBounds": true
+      },
+      "safe-sip": {
+        "triangles": 5620,
+        "drawCalls": 12,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        -0.6000047703036397,
+        1.6,
+        -19.20028136866732
+      ],
+      "target": [
+        -2.399999922302655,
+        1.3500000084931831,
+        -22.000000107923853
+      ]
+    },
+    "progress": {
+      "target": 3.000037246722288,
+      "current": 3.000037246722288
+    }
+  }
+}

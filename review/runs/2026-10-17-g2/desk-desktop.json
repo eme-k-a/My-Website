@@ -1,0 +1,42 @@
+{
+  "stop": "desk",
+  "project": "desktop",
+  "url": "/?test=1&mode=museum&tier=high",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "stats": {
+    "calls": 28,
+    "triangles": 3879,
+    "geometries": 64,
+    "textures": 24,
+    "programs": 35,
+    "textureMB": 10.8333371480306,
+    "frames": 18,
+    "dpr": 1,
+    "tier": "high",
+    "track": "main",
+    "mounted": [
+      "mun",
+      "certifications"
+    ],
+    "exhibits": {},
+    "camera": {
+      "position": [
+        0,
+        1.6,
+        -64
+      ],
+      "target": [
+        0,
+        1.1,
+        -67.5
+      ]
+    },
+    "progress": {
+      "target": 9,
+      "current": 9
+    }
+  }
+}

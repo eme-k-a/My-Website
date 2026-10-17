@@ -1,0 +1,56 @@
+{
+  "stop": "safe-sip",
+  "project": "pixel7",
+  "url": "/?test=1&mode=museum",
+  "viewport": {
+    "width": 412,
+    "height": 839
+  },
+  "stats": {
+    "calls": 25,
+    "triangles": 8354,
+    "geometries": 88,
+    "textures": 25,
+    "programs": 19,
+    "textureMB": 11.8333371480306,
+    "frames": 15,
+    "dpr": 1,
+    "tier": "medium",
+    "track": "volunteer",
+    "mounted": [
+      "verafin",
+      "mysa",
+      "wailo",
+      "safe-sip",
+      "sdsj"
+    ],
+    "exhibits": {
+      "verafin": {
+        "triangles": 2732,
+        "drawCalls": 9,
+        "inBounds": true
+      },
+      "safe-sip": {
+        "triangles": 5620,
+        "drawCalls": 12,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        5.6,
+        1.6,
+        -26.6
+      ],
+      "target": [
+        9.000000000000002,
+        1.35,
+        -25.799999999999997
+      ]
+    },
+    "progress": {
+      "target": 1,
+      "current": 1
+    }
+  }
+}

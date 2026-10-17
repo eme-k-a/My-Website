@@ -1,0 +1,60 @@
+{
+  "wp": "WP-19",
+  "role": "R11 Experience Reviewer",
+  "status": "done",
+  "branch": "wp/WP-19",
+  "commits": [
+    "d7c15e0 docs(review): slice review round 1 scorecard and findings",
+    "<this commit> docs(review): add the WP-19 report"
+  ],
+  "changedFiles": [
+    "review/rubric.md",
+    "review/findings.json",
+    "review/runs/2026-10-17-g2/scorecard.md",
+    "review/runs/2026-10-17-g2/scores.json",
+    "review/runs/2026-10-17-g2/<stop>-<desktop|pixel7>.json (14 capture stats records)",
+    "review/reports/WP-19.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Complete scorecard: every slice stop x D1 to D6 x desktop and Pixel 7, each with a screenshot path; averages computed",
+      "command": "CAPTURE_DIR=review/runs/2026-10-17-g2 CAPTURE_DIALOGS=1 [CAPTURE_TIER=high] CAPTURE_STOPS=lobby,verafin,projects-door,mysa,volunteer-door,safe-sip,desk npx playwright test --grep @capture --project=desktop|pixel7",
+      "result": "pass",
+      "evidence": "Capture 7 passed (desktop, 2.0 min) and 7 passed (pixel7, 54 s). 72 of 72 cells scored in review/runs/2026-10-17-g2/scorecard.md and scores.json, each with a reason and a path; per-stop, per-dimension, per-viewport and overall averages computed. 320 px grayscale thumbnails made for verafin and safe-sip (plus the other desktop stops)."
+    },
+    {
+      "id": "A2",
+      "criterion": "Valid findings, P0 and P1 counts stated in the scorecard",
+      "command": "node -e \"JSON.parse(require('fs').readFileSync('review/findings.json','utf8')).forEach(...)\"",
+      "result": "pass",
+      "evidence": "findings ok. 15 findings F-020 to F-034: P0 0, P1 4, P2 9, P3 2; counts in the scorecard's gate table and findings summary."
+    },
+    {
+      "id": "A3",
+      "criterion": "G2 inputs ready: overall average against 3.5, open P0/P1 list, proposed reference stills",
+      "command": "review/runs/2026-10-17-g2/scorecard.md sections 'Result against gate G2' and 'Proposed G2 reference stills'",
+      "result": "pass",
+      "evidence": "Overall 3.33 (desktop 3.60, Pixel 7 3.07) vs 3.5: G2 not met in round 1. Open P1: F-020, F-021, F-022, F-023. Six named stills proposed, each with one line and its committed CI counterpart."
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "Finding ids continue the project-wide sequence at F-020, because F-001 to F-019 were already filed by R0 (RULINGS, F-M1, F-M2). The brief's example starts at F-001. Keep F-020 onward?",
+      "for": "R0",
+      "default": "F-020 to F-034 in review/findings.json"
+    },
+    {
+      "question": "F-021 (HUD and rail text drawn crisp through the desktop dialog panel): a probe page in the same Chromium shows the 14 px backdrop blur working on a plain fixed element, so the cause is in the app, but it is worth a look on a real GPU at the preview before the fix brief is scoped.",
+      "for": "R0",
+      "default": "Filed as P1 against src/overlay/ExhibitDialog.module.css"
+    },
+    {
+      "question": "Approve the six proposed G2 reference stills (scorecard section 'Proposed G2 reference stills') and check the preview by hand; G2 also needs the four P1s fixed and a round 2 average of at least 3.5.",
+      "for": "Emeka",
+      "default": "ART_DIRECTION section 10 stays empty until approval"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Round 1 of 3 for M2. Overall average 3.33 (bar 3.5; desktop 3.60, Pixel 7 3.07). P0 0, P1 4 (F-020 phone desk hidden by the card; F-021 HUD and rail show through the desktop dialog; F-022 3D titles clipped and covered by the HUD; F-023 tier medium wing floors wash out), P2 9, P3 2. G2 is not met: R0 should scope F-020 to F-023 as fix briefs (owners R4, R6, R3, R3 with R2) and run round 2. mysa was captured for context only and not scored. Run PNGs are gitignored; regenerate with the brief's commands on a8df9c7. No code, test or spec outside review/ was edited; no copy invents facts and the Verafin copy guard holds."
+}

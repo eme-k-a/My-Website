@@ -6,7 +6,7 @@
 import { doorId, type StopId } from '../../content/ids';
 import { content } from '../../content/index';
 import type { ThreeDFont } from '../../content/selectors';
-import { ARCH_Z, type Layout, type Vec3 } from '../rail/layout';
+import { ARCH_Z, DOOR_H, type Layout, type Vec3 } from '../rail/layout';
 
 export interface EnvironmentLabel {
   kind: 'sign' | 'room' | 'year';
@@ -14,7 +14,7 @@ export interface EnvironmentLabel {
   font: ThreeDFont;
   /** The fixture or door it belongs to. */
   for: string;
-  /** Cap height in meters (EXPERIENCE §5.4: R3 may raise these, never lower them). */
+  /** Cap height in meters (EXPERIENCE §5.4; the room names are smaller since F-022). */
   capHeight: number;
   /** Baseline above the floor (signs) in meters; 0 for the flat year numerals. */
   baselineY: number;
@@ -33,14 +33,27 @@ export const COMMIT_HISTORY: EnvironmentLabel = {
   tracking: 0,
 };
 
-/** Room names above each door, aisle side: Plex Sans 500, cap 0.14 m, baseline 3.05, 0.12em. */
+/**
+ * The solid transom at the top of each wing door (the shell's door opening stops this far below
+ * DOOR_H). It carries the room name: from the door stop a name above the 2.8 m door ran off the
+ * top of the frame and under the HUD on desktop and phones (F-022).
+ */
+export const DOOR_TRANSOM = 0.3;
+/** Room-name cap height: one line of the longest name fits the 2.4 m door width. */
+export const ROOM_NAME_CAP = 0.1;
+
+/**
+ * Room names on each door's transom, aisle side, centered on the door: Plex Sans 500, cap 0.10 m,
+ * 0.12em, one line centered in the transom band (EXPERIENCE §5.4 had 0.14 m at baseline 3.05,
+ * above the door; F-022 moved them down onto the transom).
+ */
 export const ROOM_NAMES: readonly EnvironmentLabel[] = content.wings.map((wing) => ({
   kind: 'room',
   text: wing.title.toUpperCase(),
   font: 'sans',
   for: doorId(wing.id),
-  capHeight: 0.14,
-  baselineY: 3.05,
+  capHeight: ROOM_NAME_CAP,
+  baselineY: DOOR_H - DOOR_TRANSOM / 2 - ROOM_NAME_CAP / 2,
   tracking: 0.12,
 }));
 

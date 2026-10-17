@@ -7,12 +7,10 @@ import { Suspense, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import type { Material } from 'three';
 import { configureTextBuilder } from 'troika-three-text';
 import { useMuseum } from '../../../app/store';
-import { content } from '../../../content/index';
-import { entryById, exhibitNumber, wallLabelOf } from '../../../content/selectors';
 import { useMaterialLibrary } from '../../materials';
 import type { Layout, Slot } from '../../rail/layout';
 import { KIT_FONTS, TEXT_BUILDER_CONFIG } from './fonts';
-import { placardSpec, type PlacardLabel } from './placard';
+import { slotPlacard, type PlacardLabel } from './placard';
 
 // Once, at module load, before any font is processed (see TEXT_BUILDER_CONFIG).
 configureTextBuilder(TEXT_BUILDER_CONFIG);
@@ -45,6 +43,7 @@ export function WallText({ label, material }: { label: PlacardLabel; material: M
         fontSize={label.fontSize}
         letterSpacing={label.letterSpacing}
         maxWidth={label.maxWidth}
+        lineHeight={label.lineHeight}
         anchorX="center"
         anchorY="top-baseline"
         textAlign="center"
@@ -61,14 +60,7 @@ export function WallText({ label, material }: { label: PlacardLabel; material: M
 
 export function Placard({ layout, slot }: { layout: Layout; slot: Slot }) {
   const library = useMaterialLibrary();
-  const spec = useMemo(
-    () =>
-      placardSpec(layout, slot, {
-        number: exhibitNumber(content, slot.id),
-        organization: wallLabelOf(entryById(content, slot.id)).toUpperCase(),
-      }),
-    [layout, slot],
-  );
+  const spec = useMemo(() => slotPlacard(layout, slot), [layout, slot]);
   return (
     <group name={`placard-${slot.id}`} position={spec.position} rotation-y={spec.rotationY}>
       <WallText label={spec.number} material={library.brass} />

@@ -5,17 +5,19 @@
 import { describe, expect, it } from 'vitest';
 import type { StopId } from '../../content/ids';
 import { content } from '../../content/index';
-import { entryById, exhibitNumber, threeDStrings, wallLabelOf } from '../../content/selectors';
+import { threeDStrings } from '../../content/selectors';
 import { tokens } from '../../design/tokens';
-import { placardSpec } from '../exhibits/_kit/placard';
-import { computeLayout, type Layout, type StopPose, type Vec3 } from '../rail/layout';
+import { slotPlacard } from '../exhibits/_kit/placard';
+import { computeLayout, DOOR_H, type Layout, type StopPose, type Vec3 } from '../rail/layout';
 import {
   COMMIT_HISTORY,
+  DOOR_TRANSOM,
   END_WALL,
   FOUNDATIONS_SIGN,
   labelPlacements,
   MIN_CAP_PX,
   projectedCapPx,
+  ROOM_NAME_CAP,
   ROOM_NAMES,
   YEAR_DIGITS,
   type Viewport,
@@ -66,10 +68,7 @@ function environmentChecks(l: Layout): Check[] {
 
 function placardChecks(l: Layout): Check[] {
   return l.slots.flatMap((slot) => {
-    const spec = placardSpec(l, slot, {
-      number: exhibitNumber(content, slot.id),
-      organization: wallLabelOf(entryById(content, slot.id)).toUpperCase(),
-    });
+    const spec = slotPlacard(l, slot);
     return [spec.number, spec.organization].map((label) => ({
       name: `${label.text} (${slot.id})`,
       stop: slot.id,
@@ -140,7 +139,13 @@ describe('labels3d.ts strings (EXPERIENCE §5.4, glyph check input)', () => {
     expect(FOUNDATIONS_SIGN).toMatchObject({ font: 'sans', capHeight: 0.22, baselineY: 4.3 });
     expect(END_WALL).toMatchObject({ font: 'serif', capHeight: 0.2, baselineY: 2.6 });
     expect(ROOM_NAMES.map((r) => r.text)).toEqual(['PROJECTS', 'VOLUNTEER & LEADERSHIP']);
-    for (const r of ROOM_NAMES) expect(r).toMatchObject({ font: 'sans', capHeight: 0.14 });
+    // F-022: the room names sit on the door transom, one line centered in its band.
+    for (const r of ROOM_NAMES) {
+      expect(r).toMatchObject({ font: 'sans', capHeight: ROOM_NAME_CAP, tracking: 0.12 });
+      expect(r.baselineY).toBeGreaterThan(DOOR_H - DOOR_TRANSOM);
+      expect(r.baselineY + r.capHeight).toBeLessThan(DOOR_H);
+      expect(r.baselineY - (DOOR_H - DOOR_TRANSOM)).toBeCloseTo(DOOR_H - r.baselineY - r.capHeight);
+    }
     expect(YEAR_DIGITS.font).toBe('sans');
   });
 

@@ -6,11 +6,14 @@
 //   into the aisle, the aisle walls into the wings). So wall titles and signs on the earlier
 //   room's side sit on a face exactly at the layout coordinate.
 // - Openings are cut from those walls: the lobby arch (x -2 to 2, 3.6 m tall), each wing door
-//   (2.4 x 2.8 m), the full-width Foundations opening under its 0.4 m deep header beam, and the
-//   desk opening (x -2.5 to 2.5, 3.2 m tall). A lintel closes the wall above each opening.
+//   (2.4 m wide; of its 2.8 m the top DOOR_TRANSOM is a solid transom carrying the room name, so
+//   the clear opening is 2.5 m, F-022), the full-width Foundations opening under its 0.4 m deep
+//   header beam, and the desk opening (x -2.5 to 2.5, 3.2 m tall). A lintel closes the wall above
+//   each opening.
 import { BoxGeometry, PlaneGeometry, type BufferGeometry } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { DOOR_H, type Layout, type Room, type Vec3 } from '../rail/layout';
+import { DOOR_TRANSOM } from './labels3d';
 
 export const WALL_THICKNESS = 0.2;
 export const CEILING_THICKNESS = 0.2;
@@ -145,7 +148,7 @@ export function openings(layout: Layout): Opening[] {
       at: door.side === 'left' ? aisle.min[0] : aisle.max[0],
       from: door.z - door.width / 2,
       to: door.z + door.width / 2,
-      top: DOOR_H,
+      top: DOOR_H - DOOR_TRANSOM,
     })),
     {
       name: 'foundations',

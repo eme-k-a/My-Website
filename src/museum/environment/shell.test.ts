@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { content } from '../../content/index';
-import { entryById, exhibitNumber, wallLabelOf } from '../../content/selectors';
 import { BACKING_PANEL_SIZE } from '../exhibits/_kit/anatomy';
-import { placardSpec } from '../exhibits/_kit/placard';
-import { computeLayout, type Layout, type Vec3 } from '../rail/layout';
+import { slotPlacard } from '../exhibits/_kit/placard';
+import { computeLayout, DOOR_H, type Layout, type Vec3 } from '../rail/layout';
+import { DOOR_TRANSOM } from './labels3d';
 import {
   ARCH_HEIGHT,
   FOUNDATIONS_BEAM_BOTTOM,
@@ -81,6 +81,11 @@ describe('greybox shell (EXPERIENCE §2.2, §2.3)', () => {
     expect(names).toEqual(['arch', 'projects-door', 'volunteer-door', 'foundations', 'desk']);
     const arch = openings(layout)[0]!;
     expect([arch.at, arch.from, arch.to, arch.top]).toEqual([-4, -2, 2, ARCH_HEIGHT]);
+    // F-022: the top of each 2.8 m door is a solid transom that carries the room name.
+    for (const door of openings(layout).filter((o) => o.name.endsWith('-door'))) {
+      expect(door.top, door.name).toBeCloseTo(DOOR_H - DOOR_TRANSOM, 9);
+      expect(door.to - door.from, door.name).toBeCloseTo(2.4, 9);
+    }
     for (const hole of openings(layout)) {
       // A thin probe in the opening plane, from the floor to just under the opening top.
       const probe: AxisBox =
@@ -148,10 +153,7 @@ describe('greybox shell (EXPERIENCE §2.2, §2.3)', () => {
 
   it('puts a wall face right behind every wall title', () => {
     for (const slot of layout.slots) {
-      const spec = placardSpec(layout, slot, {
-        number: exhibitNumber(content, slot.id),
-        organization: wallLabelOf(entryById(content, slot.id)).toUpperCase(),
-      });
+      const spec = slotPlacard(layout, slot);
       const at: Vec3 = [spec.position[0], spec.number.baselineY, spec.position[2]];
       expect(
         boxes.some((b) => distanceToBox(at, b) === 0),

@@ -47,7 +47,9 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Passed 2026-10-16: CI run 13 green on c10c67f; smoke tests pass on desktop and Pixel 7 (139 e2e). Next: M2 on Emeka's "go" |
 | WP-11 to WP-16, WP-18 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers, preview deploy | Done 2026-10-16: all merged and verified (WP-16, WP-11, WP-15, WP-14 one by one; WP-12, WP-13, WP-18 as one batch), tip d0c2d50. CI run 27 failed 11 e2e tests on GitHub runners, so the deploy job has not run yet |
 | F-M2 | Green CI after M2a (F-011 to F-014), first Netlify preview | Done 2026-10-16: CI runs 34 and 35 green; preview live at https://claude-intelligent-sagan-poq45q--emeka-nduka-nwagbo.netlify.app (report `review/reports/F-M2.json`). Next: WP-17 (slice tests, plus F-015 and F-016), then WP-19, then Gate G2 |
-| WP-17, WP-19 | M2b: slice tests, slice review | Not started. WP-17 after M2a merges; WP-19 last, then Gate G2 |
+| WP-17 | M2b: slice tests | Done 2026-10-17: merged and verified; six e2e shards; 19 CI baselines (`e4b5a40`, committed by the CI bot); A4 passed with CI runs 41, 43 and 45 green in a row (about 13.5 min each) |
+| WP-19 | M2b: slice review | Round 1 done 2026-10-17: 3.33 average (desktop 3.60, Pixel 7 3.07), 4 open P1s (F-020 to F-023), so G2 is not met yet. `review/runs/2026-10-17-g2/` |
+| F-G2 | Round 1 review fixes (F-020 to F-034) | Running 2026-10-17 as workflow wf_3d31bb3b-5a5: F-G2a (environment, xhigh), F-G2b (camera and overlay), F-G2c (Safe Sip), batch merge. Then CI baselines (dispatch with `update-baselines`, `wp: F-G2`), then WP-19 round 2, then the G2 package for Emeka |
 | WP-20 onward | M3 to M7 | Not started |
 
 How to tell what's done:

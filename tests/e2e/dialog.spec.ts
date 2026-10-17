@@ -246,6 +246,56 @@ test.describe('story dialog: openers, wings and motion', () => {
     await expect(link).toBeFocused();
   });
 
+  test('(n) F-021: the HUD controls, rail, wing head and stop card step aside under the panel', async ({
+    page,
+  }) => {
+    onlyOn('desktop');
+    await page.goto(museumUrl('/'));
+    await waitForMuseum(page);
+    await goToStop(page, 'safe-sip');
+    expect(await trackOf(page)).toBe('volunteer');
+    const aside = [
+      page.getByTestId(TEST_IDS.hudProgress),
+      page.getByTestId(TEST_IDS.exitWing),
+      page.getByTestId(TEST_IDS.hudPdf),
+      page.getByTestId(TEST_IDS.hudClassic),
+      page.getByTestId(TEST_IDS.card('safe-sip')),
+    ];
+    for (const control of aside) await expect(control).toBeVisible();
+    const opener = page.getByTestId(TEST_IDS.open('safe-sip'));
+    await opener.click();
+    await expect(dialogOf(page)).toBeVisible();
+    await settleDialog(page);
+    for (const control of aside) await expect(control).toBeHidden();
+    // No page text is drawn under the panel: every visible text node outside the dialog that
+    // lands in the viewport sits left of it.
+    const panelLeft = (await dialogOf(page).boundingBox())!.x;
+    const under = await page.evaluate((left) => {
+      const out: string[] = [];
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      const range = document.createRange();
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const parent = node.parentElement;
+        if (!parent || parent.closest('dialog') || !node.textContent?.trim()) continue;
+        if (getComputedStyle(parent).visibility !== 'visible') continue;
+        range.selectNodeContents(node);
+        for (const r of range.getClientRects()) {
+          const onScreen = r.bottom > 0 && r.top < innerHeight && r.left < innerWidth;
+          if (onScreen && r.width > 1 && r.height > 1 && r.right > left) {
+            out.push(node.textContent.trim().slice(0, 40));
+            break;
+          }
+        }
+      }
+      return out;
+    }, panelLeft);
+    expect(under, 'page text drawn under the story panel').toEqual([]);
+    await page.keyboard.press('Escape');
+    await expect(dialogOf(page)).toBeHidden();
+    for (const control of aside) await expect(control).toBeVisible();
+    await expect(opener).toBeFocused();
+  });
+
   test.describe('reduced motion', () => {
     test('(k) the dialog opens without its slide animation', async ({ page }) => {
       onlyOn('desktop', 'pixel7');

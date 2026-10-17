@@ -25,6 +25,15 @@
   pointer-events: auto;
 }
 
+/*
+ * The story dialog is open (F-021): the rail, its tooltips and the wing head ("... wing, 1 of 2",
+ * "Return to the aisle") sit under the desktop panel and would read through it, so the whole rail
+ * steps aside. The dialog is modal, so its buttons are inert while it is open.
+ */
+:global(html:has(dialog[open])) .rail {
+  visibility: hidden;
+}
+
 .end {
   composes: label from './ui.module.css';
   padding-left: 4px;

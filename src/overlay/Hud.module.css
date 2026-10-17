@@ -60,6 +60,16 @@
   display: none;
 }
 
+/*
+ * The story dialog is open (F-021): the right-hand controls step aside. The desktop panel is
+ * translucent and they sit under it, where they read through the blur and collide with the story
+ * text; on phones the solid sheet covers them anyway. The wordmark and the phone progress stay.
+ * The dialog is modal, so these links are inert while it is open.
+ */
+:global(html:has(dialog[open])) .actions {
+  visibility: hidden;
+}
+
 /* Phone progress (EXPERIENCE §6.10): display only, museum mode only. */
 .phoneProgress {
   display: none;

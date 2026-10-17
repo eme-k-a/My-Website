@@ -1,0 +1,483 @@
+{
+  "wp": "WP-17",
+  "role": "R8 QA and Test Automation",
+  "status": "partial",
+  "branch": "wp/WP-17",
+  "base": "13e6772 (integration tip)",
+  "commits": [
+    "8f6fd93 fix(F-016): leave the unused beam and shadowDecal programs out of the precompile",
+    "13b4607 ci(e2e): shard the e2e job into six slices and run tests fully parallel",
+    "c4cba06 test(e2e): close slice coverage gaps",
+    "31c68cb test(visual): slice visual specs",
+    "1a102df test(e2e): make the keyboard and idle-motion specs deterministic",
+    "9eed127 ci(e2e): run the Pixel 7 exhibit specs in the phones-rest shard"
+  ],
+  "changedFiles": [
+    ".github/workflows/ci.yml",
+    "playwright.config.ts",
+    "src/museum/quality/PrecompileMaterials.tsx",
+    "src/museum/quality/precompile.test.ts",
+    "tests/e2e/dialog.spec.ts",
+    "tests/e2e/environment.spec.ts",
+    "tests/e2e/exhibits.spec.ts",
+    "tests/e2e/fast-path.spec.ts",
+    "tests/e2e/helpers.ts",
+    "tests/e2e/keyboard.spec.ts",
+    "tests/e2e/quality.spec.ts",
+    "tests/e2e/screenshot.css",
+    "tests/e2e/shell.spec.ts",
+    "tests/e2e/visual.spec.ts",
+    "tests/e2e/wings.spec.ts",
+    "review/reports/WP-17.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "npm run e2e && npm run a11y exit 0 with retries 0, twice in a row",
+      "command": "npm run e2e -- --workers=2 && npm run a11y -- --workers=2 (two workers as in CI)",
+      "result": "pass",
+      "evidence": "Runs 2 and 3 in a row after the last test change: run 2 e2e 214 passed (16.7m), a11y 28 passed (1.3m); run 3 e2e 214 passed (16.8m), a11y 28 passed (1.2m). Run 1 (before 1a102df) found two flaky new specs, fixed in 1a102df (keyboard close-event race, idle motion by frames)."
+    },
+    {
+      "id": "A2",
+      "criterion": "every ARCHITECTURE 13.9 item that applies to M2 has a named test",
+      "command": "npx playwright test --list",
+      "result": "pass",
+      "evidence": "508 tests in 17 files; mapping in specToRequirement below (22 M2 items mapped; 20 loops is WP-32, HUD/card intersection is WP-27)."
+    },
+    {
+      "id": "A3",
+      "criterion": "baselines committed from CI: test(visual): baseline slice stops for WP-17, 12 canvas plus the DOM baselines",
+      "command": "gh workflow run ci.yml --ref <branch> -f update-baselines=true; download visual-baselines-desktop-rest and visual-baselines-phones-rest",
+      "result": "skipped",
+      "evidence": "Deferred to R0 after push: needs a remote workflow_dispatch (the gh token here is invalid and pushes go through R0). visual.spec produces 19 baselines: 12 canvas (6 stops x desktop, pixel7) and 7 DOM (2 dialogs x 2 projects, /resume/ light and dark, 404). A local VISUAL_LOCAL=1 run wrote all 19 and a second run matched them; none are committed."
+    },
+    {
+      "id": "A4",
+      "criterion": "three consecutive green CI runs with retries 0, including npm run visual",
+      "command": "gh run list --workflow ci.yml --branch claude/intelligent-sagan-poq45q --limit 3",
+      "result": "skipped",
+      "evidence": "Deferred to R0 after push and merge. ciRunUrls is empty until then."
+    },
+    {
+      "id": "A5",
+      "criterion": "CI e2e job under 10 minutes",
+      "command": "CI e2e job durations",
+      "result": "skipped",
+      "evidence": "Deferred to R0 after push. Estimate from CI run 35 per-test times (CI is about 1.7x the local two-worker times): the heaviest shards are pixel7 (about 775 s of test time) and desktop-input (827 s), so about 6.5 to 7 min of tests on two workers plus about 1.5 min of setup per job. The unsharded job took 29.4 min in run 34."
+    },
+    {
+      "id": "R0-ruling",
+      "criterion": "WebGL wing and rail specs run in CI on desktop and pixel7, proven by a CI log",
+      "command": "mcp github get_job_logs, run 35 job 117214121918",
+      "result": "pass",
+      "evidence": "CI run 35 e2e log (before this WP): desktop wings.spec 7 passed (361.6 s), rail-input 7 passed (826.9 s); pixel7 wings 7 passed, rail-input 3 passed. The [no-webgl] lines are the same tests skipped on the no-webgl project by design. After the push each shard log shows them again (desktop-input, desktop-walks, pixel7)."
+    },
+    {
+      "id": "F-016",
+      "criterion": "remove the unused beam and shadowDecal programs from the precompile set and update its test",
+      "command": "npx vitest run --project unit src/museum/quality/precompile.test.ts",
+      "result": "pass",
+      "evidence": "3 tests passed; PRECOMPILE_SKIP = beam, shadowDecal; quality (a) to (h) green in both local runs."
+    }
+  ],
+  "specToRequirement": [
+    {
+      "item": "boot without errors or CSP violations (@smoke)",
+      "tests": [
+        "smoke.spec: / loads with a visible h1 and no guard trips",
+        "shell.spec: the museum boots with the HUD and no CSP violation",
+        "guards.spec (every guard proven)",
+        "fixtures.ts global guards on every test"
+      ]
+    },
+    {
+      "item": "recruiter fast path at 360x640 and 390x844, JS on and off",
+      "tests": [
+        "fast-path.spec: recruiter fast path (@dom), 4 tests on pixel7"
+      ]
+    },
+    {
+      "item": "LCP element is the h1",
+      "tests": [
+        "fast-path.spec: the LCP element is the h1 (phones)",
+        "fast-path.spec: the LCP element is the h1 at 1440 x 900"
+      ]
+    },
+    {
+      "item": "CLS <= 0.02 (navigation to ready, desktop and Pixel 7)",
+      "tests": [
+        "fast-path.spec: layout shift > CLS from navigation to ready is within the budget (new)"
+      ]
+    },
+    {
+      "item": "stop order by native keys",
+      "tests": [
+        "rail-input.spec (f) ArrowDown / PageDown visits every main stop in order",
+        "rail-input.spec (f) ArrowDown twice lands on projects-door, three times on mysa"
+      ]
+    },
+    {
+      "item": "wheel stream and notches",
+      "tests": [
+        "rail-input.spec (a)",
+        "rail-input.spec (b)"
+      ]
+    },
+    {
+      "item": "Pixel 7 flick",
+      "tests": [
+        "rail-input.spec (c) one flick moves exactly one stop",
+        "rail-input.spec (c) the tall lobby"
+      ]
+    },
+    {
+      "item": "no non-passive wheel or touchmove listeners",
+      "tests": [
+        "rail-input.spec (d)"
+      ]
+    },
+    {
+      "item": "zero URL writes on stop arrivals (main walk; wing entry is the only push)",
+      "tests": [
+        "rail-input.spec (e) HUD walk and (f) key walks (countHistoryWrites)",
+        "wings.spec: each wing entry pushes one history entry; wing arrivals and exits write none (new)"
+      ]
+    },
+    {
+      "item": "click at screenPos('verafin') opens the dialog, Esc closes, focus returns",
+      "tests": [
+        "exhibit-contract.spec: verafin meets the exhibit contract (@exhibit)"
+      ]
+    },
+    {
+      "item": "open verafin, Older x3, Back closes",
+      "tests": [
+        "dialog.spec (b)"
+      ]
+    },
+    {
+      "item": "cold /exhibit/verafin/ then close lands on / on the same origin",
+      "tests": [
+        "dialog.spec (a)",
+        "dialog.spec (i) cold wing deep link (new)"
+      ]
+    },
+    {
+      "item": "wing enter, Esc and Back return to the door",
+      "tests": [
+        "wings.spec: step inside ... Esc returns",
+        "wings.spec: step inside, then browser Back",
+        "wings.spec: Return to the aisle"
+      ]
+    },
+    {
+      "item": "reduced motion has no in-between poses",
+      "tests": [
+        "camera.spec (a)"
+      ]
+    },
+    {
+      "item": "no-WebGL lands on /resume/#why-no-webgl2 with banner and classic content",
+      "tests": [
+        "shell.spec: no-WebGL fallback (@dom)"
+      ]
+    },
+    {
+      "item": "two forced context losses on / land on /resume/#why-context-loss",
+      "tests": [
+        "quality.spec (d)",
+        "quality.spec (i) a loss never restored falls back after 5 s (new)"
+      ]
+    },
+    {
+      "item": "forced context loss recovers (luminance floor, textures > 0)",
+      "tests": [
+        "quality.spec (c)",
+        "quality.spec (h) exhibit page falls back to classic"
+      ]
+    },
+    {
+      "item": "bfcache goBack renders",
+      "tests": [
+        "quality.spec (e)"
+      ]
+    },
+    {
+      "item": "frames stop advancing 16 s after the last input",
+      "tests": [
+        "quality.spec (b)",
+        "quality.spec (g) sheet pause through the real dialog (changed)",
+        "quality.spec (j) hidden tab (new)"
+      ]
+    },
+    {
+      "item": "shader program count stable 0.5 s to 3 s after arrival",
+      "tests": [
+        "quality.spec (a)"
+      ]
+    },
+    {
+      "item": "budgets at every stop",
+      "tests": [
+        "environment.spec: every stop within budget at tier high / medium (draw calls, triangles, texture MB) plus transfer to wailo and full walk (new)",
+        "greybox.spec: every stop within the draw-call budget",
+        "exhibit-contract.spec: per-exhibit triangles and bounds",
+        "check-budgets at build (bundles)"
+      ]
+    },
+    {
+      "item": "no request leaves the origin during a full walk",
+      "tests": [
+        "fixtures.ts crossOrigin guard over rail-input (e)/(f), environment.spec (every stop of every track) and keyboard.spec walks"
+      ]
+    },
+    {
+      "item": "3D label projected cap height >= 14 CSS px (unit, WP-11)",
+      "tests": [
+        "src/museum/environment/labels.test.ts"
+      ]
+    },
+    {
+      "item": "20 loops through all stops (WP-32)",
+      "tests": [],
+      "status": "not M2"
+    },
+    {
+      "item": "HUD and cards never intersect on Pixel 7 (WP-27)",
+      "tests": [],
+      "status": "not M2"
+    },
+    {
+      "item": "a11y (ARCHITECTURE 13.7): / lobby and door stop, open dialog, cold /exhibit/verafin/, /resume/ light and dark, 404, no-webgl, keyboard-only spec",
+      "tests": [
+        "shell.spec accessibility (lobby, door stop (new), /resume/ x3, 404, no-WebGL)",
+        "dialog.spec (g) open dialog desktop and pixel7, (l) landscape panel (new), (g) /exhibit/verafin/ JS off",
+        "keyboard.spec: Tab and Enter reach every story in catalogue order (new)"
+      ]
+    },
+    {
+      "item": "EXPERIENCE 5.11: blocked exhibit chunk shows the crate and Installation in progress",
+      "tests": [
+        "exhibits.spec: a blocked exhibit chunk shows the crate (new)",
+        "exhibits.spec: a revealed exhibit card does not say Installation in progress (new)"
+      ]
+    },
+    {
+      "item": "desk card hrefs (mailto, LinkedIn, /resume.pdf, GitHub)",
+      "tests": [
+        "shell.spec: front desk card > its links (@dom, new)"
+      ]
+    },
+    {
+      "item": "visual baselines (13.6)",
+      "tests": [
+        "visual.spec: slice stops (canvas), story dialogs (DOM), /resume/ light and dark (DOM), 404.html (DOM) (new)"
+      ]
+    }
+  ],
+  "builderSpecRequests": [
+    {
+      "from": "WP-12",
+      "item": "verafin motion under &idle=1",
+      "status": "covered in part",
+      "tests": [
+        "exhibits.spec: verafin: idle motion moves the canvas"
+      ],
+      "deferred": "the 'only inside the grid's screen box, column never changes' region check"
+    },
+    {
+      "from": "WP-12/WP-13",
+      "item": "reduced-motion stillness for every built exhibit",
+      "status": "covered",
+      "tests": [
+        "exhibits.spec: verafin / safe-sip: reduced motion holds the canvas still"
+      ]
+    },
+    {
+      "from": "WP-12/WP-13",
+      "item": "exhibit-contract focus step after WP-14",
+      "status": "covered",
+      "tests": [
+        "exhibit-contract.spec (runs on desktop and pixel7 in CI)"
+      ]
+    },
+    {
+      "from": "WP-12/WP-13",
+      "item": "visual baselines for verafin, safe-sip and their dialogs",
+      "status": "spec written; baselines deferred to the CI update-baselines dispatch",
+      "tests": [
+        "visual.spec"
+      ]
+    },
+    {
+      "from": "WP-13",
+      "item": "safe-sip motion under &idle=1",
+      "status": "covered",
+      "tests": [
+        "exhibits.spec: safe-sip: idle motion moves the canvas"
+      ]
+    },
+    {
+      "from": "WP-13",
+      "item": "safe-sip settles to the still pose within 1 s of the idle stop",
+      "status": "deferred",
+      "tests": [
+        "quality.spec (b) proves frames stop after the idle stop; the still pose itself is not asserted"
+      ]
+    },
+    {
+      "from": "WP-14",
+      "item": "wing exhibit cold deep link",
+      "status": "covered",
+      "tests": [
+        "dialog.spec (i)"
+      ]
+    },
+    {
+      "from": "WP-14",
+      "item": "door-card link opener gets focus back",
+      "status": "covered",
+      "tests": [
+        "dialog.spec (j)"
+      ]
+    },
+    {
+      "from": "WP-14",
+      "item": "reduced motion: no dialog slide",
+      "status": "covered",
+      "tests": [
+        "dialog.spec (k)"
+      ]
+    },
+    {
+      "from": "WP-14",
+      "item": "pixel7-landscape compact panel and axe",
+      "status": "covered",
+      "tests": [
+        "dialog.spec (l) layout and (l) axe"
+      ]
+    },
+    {
+      "from": "WP-14",
+      "item": "keyboard-only spec",
+      "status": "covered",
+      "tests": [
+        "keyboard.spec"
+      ]
+    },
+    {
+      "from": "WP-14",
+      "item": "?mode=classic on /exhibit/<id>/: no hydration",
+      "status": "covered",
+      "tests": [
+        "dialog.spec (m) (@dom)"
+      ]
+    },
+    {
+      "from": "WP-15",
+      "item": "greybox pixel7 smoke sampling point",
+      "status": "already fixed under the WP-15 integrator grant",
+      "tests": [
+        "greybox.spec"
+      ]
+    },
+    {
+      "from": "WP-16",
+      "item": "sheet pause through WP-14's real dialog",
+      "status": "covered",
+      "tests": [
+        "quality.spec (g) asserts the dialog sets html[data-sheet]"
+      ]
+    },
+    {
+      "from": "WP-16",
+      "item": "cold deep link on pixel7 reaches ready behind the sheet",
+      "status": "covered",
+      "tests": [
+        "dialog.spec (a) on pixel7"
+      ]
+    },
+    {
+      "from": "WP-16",
+      "item": "context loss on an exhibit page falls back to classic with story-static",
+      "status": "covered",
+      "tests": [
+        "quality.spec (h)"
+      ]
+    },
+    {
+      "from": "WP-16",
+      "item": "a loss never restored falls back after 5 s",
+      "status": "covered",
+      "tests": [
+        "quality.spec (i)"
+      ]
+    },
+    {
+      "from": "WP-16",
+      "item": "hidden tab: no frames, frames on return",
+      "status": "covered",
+      "tests": [
+        "quality.spec (j) (visibilityState emulated: Playwright cannot hide a headless tab)"
+      ]
+    },
+    {
+      "from": "WP-16",
+      "item": "?debug loads the debug chunk, F toggles the free camera without a console error",
+      "status": "blocked by a product defect (see openQuestions); no spec committed",
+      "tests": []
+    },
+    {
+      "from": "WP-16",
+      "item": "quality (a) to (e) and (g) run in CI on desktop and pixel7",
+      "status": "covered",
+      "tests": [
+        "CI run 35 e2e log: desktop quality 6 passed, pixel7 quality 2 passed"
+      ]
+    },
+    {
+      "from": "WP-18",
+      "item": "@smoke X-Robots-Tag noindex on previews only",
+      "status": "covered",
+      "tests": [
+        "shell.spec: only a deploy preview sends X-Robots-Tag: noindex (@smoke, runs in the deploy smoke step)"
+      ]
+    }
+  ],
+  "ciRunUrls": [],
+  "measurements": {
+    "localFullRunTwoWorkers": "e2e 16.7 to 17.5 min plus a11y 1.3 min (brief target 8 min not reachable under SwiftShader since WP-11 made each desktop frame about 600 ms locally; local runs with one worker take longer)",
+    "transferBudgets": "desktop and pixel7 at tier medium: 0.569 MB by wailo and 0.569 MB after the full walk (limits 1.2 and 4 MB)",
+    "verafinIdleMotion": "first canvas change after 88 to 90 rendered frames (exhibit clock capped at 0.1 s per frame), 23 to 24 s locally"
+  },
+  "openQuestions": [
+    {
+      "question": "?debug trips the CSP: r3f-perf's embedded Roboto (data:font/woff) is loaded through troika's font loader (a fetch), which connect-src 'self' blocks, so the console logs 'Refused to connect to data:font/woff...' and 'Failure loading font'. The WP-16 report's ?debug spec cannot pass without acknowledging a real CSP violation, so it is not committed. Fix in the debug chunk (for example pass r3f-perf a self-hosted font or turn its text off), then WP-17 adds the spec.",
+      "for": "R7",
+      "default": "No ?debug spec; the item is open."
+    },
+    {
+      "question": "ExhibitDialog's onClose handler closes whatever story is open when the queued 'close' event of the previous dialog close runs. On a busy main thread (SwiftShader, a slow phone) an Esc then Tab and Enter can reopen a story before that event lands, and it closes again at once (seen in the local keyboard walk, trace: /exhibit/finance-tracker/ then back to /). Guard onClose to the id it closed, or ignore a close event while the dialog is open.",
+      "for": "R6",
+      "default": "keyboard.spec waits for the close event before the next Tab."
+    },
+    {
+      "question": "A failed exhibit chunk import also surfaces as an unhandled promise rejection ('Failed to fetch dynamically imported module'), besides the logged 'Exhibit verafin failed; showing the placeholder'. The crate and the card are right. Catch the lazy import's rejection in the kit?",
+      "for": "R3",
+      "default": "exhibits.spec acknowledges exactly that page error."
+    },
+    {
+      "question": "The brief's 8-minute local run target is out of reach since WP-11 (two-worker local run 16.7 min, mostly desktop rail-input walks at about 10 s an arrival). Keep it as a CI-only target (A5) or drop it?",
+      "for": "R0",
+      "default": "Reported as measured; CI is sharded instead."
+    },
+    {
+      "question": "A3 needs an update-baselines dispatch on a pushed ref. With the sharded e2e job the dispatch uploads two artifacts, visual-baselines-desktop-rest and visual-baselines-phones-rest; both go into tests/e2e/__screenshots__/visual.spec.ts/ in the commit 'test(visual): baseline slice stops for WP-17'. Until then npm run visual in CI fails on missing baselines for the new visual.spec, so the dispatch must come before the first normal push run is expected green.",
+      "for": "R0",
+      "default": "Not dispatched (no GitHub token in this session)."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "CI e2e is now a matrix of six shards selected by E2E_SHARD in playwright.config.ts (every project/spec pair lands in exactly one shard; unnamed specs fall into their project's rest shard); deploy needs every shard. fullyParallel is on. The wings main-aisle goTo walk was removed as a third copy of the zero-write walk (rail-input (e) and (f) keep it) and replaced by the wing history test. Visual screenshots hide the durations with tests/e2e/screenshot.css because Playwright masks never cover the modal dialog's top layer. Deferred items: verafin grid-region motion check, safe-sip still pose after the idle stop, ?debug spec (blocked), A3 to A5 (CI)."
+}

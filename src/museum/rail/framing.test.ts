@@ -1,7 +1,15 @@
 import { PerspectiveCamera, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { tokens } from '../../design/tokens';
-import { applyFraming, fovFor, framingFor, MIN_LEFT_AREA, viewOffsetFor } from './framing';
+import {
+  applyFraming,
+  DESK_PORTRAIT_Y,
+  deskWeightAt,
+  fovFor,
+  framingFor,
+  MIN_LEFT_AREA,
+  viewOffsetFor,
+} from './framing';
 
 /** Where a world point lands on screen (fractions from the top left) through `camera`. */
 function screenOf(camera: PerspectiveCamera, point: Vector3): { x: number; y: number } {
@@ -55,6 +63,39 @@ describe('framingFor', () => {
     expect(framingFor(1.6, MIN_LEFT_AREA - 0.01)).toEqual({ x: 0.62, y: 0.5 });
     // Portrait has no side panel: the sheet covers the stage.
     expect(framingFor(0.5, 0.56)).toEqual({ x: 0.5, y: 0.36 });
+  });
+
+  it('raises the portrait framing point at the front desk only (F-020)', () => {
+    expect(DESK_PORTRAIT_Y).toBeLessThan(tokens.camera.framingPortraitY);
+    expect(framingFor(412 / 839, null, 1)).toEqual({ x: 0.5, y: DESK_PORTRAIT_Y });
+    expect(framingFor(412 / 839, null, 0)).toEqual({ x: 0.5, y: 0.36 });
+    const half = framingFor(412 / 839, null, 0.5).y;
+    expect(half).toBeCloseTo((0.36 + DESK_PORTRAIT_Y) / 2, 12);
+    // Desktop frames the desk like every other stop.
+    expect(framingFor(1440 / 900, null, 1)).toEqual({ x: 0.62, y: 0.5 });
+  });
+});
+
+describe('deskWeightAt', () => {
+  const ids = ['lobby', 'verafin', 'education', 'desk'];
+
+  it('is 1 at the desk, 0 a half stop or more away, and smooth in between', () => {
+    expect(deskWeightAt(ids, 3)).toBe(1);
+    expect(deskWeightAt(ids, 2.5)).toBe(0);
+    expect(deskWeightAt(ids, 2)).toBe(0);
+    expect(deskWeightAt(ids, 0)).toBe(0);
+    expect(deskWeightAt(ids, 2.75)).toBeCloseTo(0.5, 12);
+    let last = 0;
+    for (let p = 2.5; p <= 3; p += 0.05) {
+      const w = deskWeightAt(ids, p);
+      expect(w).toBeGreaterThanOrEqual(last);
+      last = w;
+    }
+  });
+
+  it('is 0 on a track without the desk', () => {
+    expect(deskWeightAt(['projects-door', 'safe-sip'], 1)).toBe(0);
+    expect(deskWeightAt(ids, Number.NaN)).toBe(0);
   });
 });
 

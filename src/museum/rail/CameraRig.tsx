@@ -32,7 +32,7 @@ import { LAYOUT } from '../../overlay/model';
 import { reportCameraTarget } from '../quality/StatsProbe';
 import { aimDolly, createDolly, stepDolly } from './dolly';
 import { fadeCut } from './fade';
-import { applyFraming, fovFor, framingFor, viewOffsetFor } from './framing';
+import { applyFraming, deskWeightAt, fovFor, framingFor, viewOffsetFor } from './framing';
 import { gazeAt } from './gaze';
 import {
   installParallax,
@@ -93,6 +93,10 @@ const hold = {
   swap: false,
 };
 const heldId = (h: Held) => rails[h.track].stops[h.index]?.id;
+/** Each track's stop ids, for the desk framing (framing.ts `deskWeightAt`). */
+const railIds = new Map<string, readonly string[]>(
+  Object.entries(rails).map(([track, rail]) => [track, rail.stops.map((s) => s.id)]),
+);
 
 /** The open story panel's left edge as a fraction of the stage width, measured once per open. */
 const panel = { openId: null as ExhibitId | null, width: 0, left: null as number | null };
@@ -161,8 +165,27 @@ function listedAsMounted(id: ExhibitId): boolean {
   }
 }
 
+/**
+ * The front desk's point for `screenPos('desk')` (F-020): the center of its four object hit boxes
+ * (Desk.tsx names them `desk-<action>`), so specs can check the desk top against the phone card.
+ * The hook's type stays `ExhibitId` (contracts-v1); a spec passes 'desk' with a cast.
+ */
+const DESK_ACTIONS = ['email', 'linkedin', 'pdf', 'github'] as const;
+function deskCenter(scene: Object3D): Vector3 | null {
+  const desk = scene.getObjectByName('desk');
+  if (!desk) return null;
+  desk.updateWorldMatrix(true, true);
+  box.makeEmpty();
+  for (const action of DESK_ACTIONS) {
+    const hit = desk.getObjectByName(`desk-${action}`);
+    if (hit) box.expandByObject(hit);
+  }
+  return box.isEmpty() ? null : box.getCenter(new Vector3());
+}
+
 /** World center of the exhibit's hit box (ExhibitFrame names it `hit-<id>`), or null. */
 function hitCenter(scene: Object3D, id: ExhibitId): Vector3 | null {
+  if ((id as string) === 'desk') return deskCenter(scene);
   const hit = scene.getObjectByName(`hit-${id}`);
   if (hit) {
     hit.updateWorldMatrix(true, true);
@@ -365,7 +388,8 @@ export function CameraRig() {
     const lens = camera as PerspectiveCamera;
     if (lens.isPerspectiveCamera && size.width > 0 && size.height > 0) {
       const aspect = size.width / size.height;
-      const goal = viewOffsetFor(framingFor(aspect, panelLeft(state.openId, size.width)));
+      const desk = deskWeightAt(railIds.get(held?.track ?? progress.track) ?? [], p);
+      const goal = viewOffsetFor(framingFor(aspect, panelLeft(state.openId, size.width), desk));
       if (!shift.framed || state.reducedMotion) {
         shift.x = goal.x;
         shift.y = goal.y;

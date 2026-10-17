@@ -223,6 +223,17 @@
   line-height: var(--lh-small);
 }
 
+/*
+ * Phone desk card (F-020): in museum mode the closing line is dropped on portrait phones, so the
+ * card stays short enough for the desk top to sit above it (framing.ts DESK_PORTRAIT_Y). Without
+ * JS or in classic mode the card is the page, and the line stays.
+ */
+@media (orientation: portrait) and (max-width: 639px) {
+  :global(html[data-mode='museum']) .desk .footnote {
+    display: none;
+  }
+}
+
 /* Phones: Medium and Caption are hidden below 480 px (EXPERIENCE §5.8, §9.2). */
 @media (max-width: 479px) {
   .medium,

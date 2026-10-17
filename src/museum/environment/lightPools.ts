@@ -280,10 +280,16 @@ export function paintFloorZones(layout: Layout, pxPerM = POOL_PX_PER_M): ZoneRas
 /** Tile geometry: the tile spans one 2 m panel and, nominally, a 5 m wall. */
 const TILE_W = 2;
 const TILE_H = 5;
-const SCALLOP_TOP = 0.45; // m below the ceiling at the tile center
+const SCALLOP_TOP = 0.8; // m below the ceiling at the tile center (0.45 until F-025)
 const SCALLOP_CURVE = 0.7; // edge drop per m^2 off center (flatter since F-027: a wider arch)
 const SCALLOP_SIDE = 0.72; // the lit core spans this share of the bay (F-027: covers the title)
 const SCALLOP_FALLOFF = 2.4; // m, exponential falloff toward the floor
+/**
+ * Peak of the scallop over the base level (F-025). At 1 the wash behind the desk and the lobby
+ * portrait read as opaque grey shafts brighter than the floor pools they belong to; at 0.42 the
+ * brightest wash stays under its floor pool and the brass titles in front of it.
+ */
+export const WASH_PEAK = 0.3;
 const SEAM_HALF_PX = 1.25;
 const SEAM_DARKEN = 0.55;
 
@@ -317,7 +323,7 @@ export function wallWashPixels(
       const u = (col + 0.5) / size;
       const edgePx = Math.min(col + 0.5, size - col - 0.5);
       const seam = seams ? 1 - SEAM_DARKEN * (1 - smoothstep(0, SEAM_HALF_PX, edgePx)) : 1;
-      const value = (WALL_WASH_BASE + (1 - WALL_WASH_BASE) * scallop(u, v)) * seam;
+      const value = (WALL_WASH_BASE + (1 - WALL_WASH_BASE) * WASH_PEAK * scallop(u, v)) * seam;
       const byte = encode(value, random() - 0.5);
       const i = (row * size + col) * 4;
       data[i] = byte;

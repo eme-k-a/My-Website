@@ -11,8 +11,10 @@ import {
   MAX_LIGHTMAP_SIZE,
   paintFloorZones,
   paintZone,
+  WALL_WASH_BASE,
   WALL_WASH_SIZE,
   wallWashPixels,
+  WASH_PEAK,
   washLayout,
   washMatrix,
   zoneSize,
@@ -113,6 +115,20 @@ describe('wall wash (EXPERIENCE §7.5)', () => {
     expect(scallop).toBeGreaterThan(low);
     expect(low).toBeGreaterThan(plain);
     expect(Math.abs(plain - at(mid - 40, WALL_WASH_SIZE - 2))).toBeLessThanOrEqual(2);
+  });
+
+  it('keeps the scallop peak at WASH_PEAK over the base level (F-025)', () => {
+    const toLinear = (byte: number) => {
+      const c = byte / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    };
+    const bay = wallWashPixels(WALL_WASH_SIZE, 7, { seams: false });
+    let peak = 0;
+    for (let i = 0; i < bay.length; i += 4) peak = Math.max(peak, toLinear(bay[i]!));
+    const expected = WALL_WASH_BASE + (1 - WALL_WASH_BASE) * WASH_PEAK;
+    expect(peak).toBeLessThanOrEqual(expected * 1.03);
+    expect(peak).toBeGreaterThan(expected * 0.85);
+    expect(WASH_PEAK).toBeLessThan(0.5);
   });
 
   it('bakes a darker panel seam at both tile edges (every 2 m on the wall)', () => {

@@ -2,7 +2,7 @@
 // build date, so the prerender and the hydrated app compute the same values and nothing shifts at
 // hydration. `layout.ts` is pure math (no three.js), so importing it keeps the entry chunk small.
 import { CLASSIC_PATH, PDF_PATH } from '../app/routes';
-import { doorId, type StopId } from '../content/ids';
+import { doorId, type StopId, type TrackId } from '../content/ids';
 import { content } from '../content/index';
 import { mainTrack, stopCards, wingTrack, type StopCard } from '../content/selectors';
 import { tokens } from '../design/tokens';
@@ -98,4 +98,21 @@ export function yearAt(p: number): number {
   let year = YEAR_TICKS[0]?.year ?? BUILD_DATE.getUTCFullYear();
   for (const tick of YEAR_TICKS) if (tick.progress <= p) year = tick.year;
   return year;
+}
+
+/** The phone year chip at the front desk (F-034): the rail's own end label, never a year. */
+export const DESK_CHIP = 'Front desk';
+
+/**
+ * The phone year chip (EXPERIENCE §6.10) at `current` on `track` (F-034). On the main track it is
+ * `yearAt`, except at the front desk (the nearest stop), which is not a date. Inside a wing it
+ * holds the main aisle's year at the wing's door, so the door and its exhibits agree.
+ */
+export function chipLabel(current: number, track: TrackId): string {
+  if (track !== 'main') {
+    const door = MAIN_STOPS.indexOf(doorId(track));
+    return String(yearAt(door < 0 ? current : door));
+  }
+  if (MAIN_STOPS[Math.round(current)] === 'desk') return DESK_CHIP;
+  return String(yearAt(current));
 }

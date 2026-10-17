@@ -5,8 +5,9 @@
 import { useEffect, useRef } from 'react';
 import { TEST_IDS } from '../app/testIds';
 import { content } from '../content/index';
+import { progress } from '../museum/rail/progress';
 import { Icon } from './icons';
-import { CLASSIC_PATH, MAIN_STOPS, PDF_PATH, YEAR_TICKS, yearAt } from './model';
+import { chipLabel, CLASSIC_PATH, MAIN_STOPS, PDF_PATH, YEAR_TICKS, yearAt } from './model';
 import { watchRailProgress } from './railProgress';
 import { SkipLink } from './SkipLink';
 import styles from './Hud.module.css';
@@ -14,7 +15,10 @@ import styles from './Hud.module.css';
 const LAST = Math.max(1, MAIN_STOPS.length - 1);
 const FIRST_YEAR = YEAR_TICKS[0]?.year ?? yearAt(0);
 
-/** Phone progress: a 3 px bar and the year chip, both written outside React per frame. */
+/**
+ * Phone progress: a 3 px bar and the year chip, both written outside React per frame. The chip
+ * follows the main aisle's year (inside a wing, its door's) and reads "Front desk" at the desk.
+ */
 function PhoneProgress() {
   const bar = useRef<HTMLSpanElement>(null);
   const year = useRef<HTMLSpanElement>(null);
@@ -23,7 +27,7 @@ function PhoneProgress() {
       watchRailProgress((current) => {
         const p = Math.min(1, Math.max(0, current / LAST));
         bar.current?.style.setProperty('--p', String(p));
-        const label = String(yearAt(current));
+        const label = chipLabel(current, progress.track);
         if (year.current && year.current.textContent !== label) year.current.textContent = label;
       }),
     [],

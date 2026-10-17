@@ -234,6 +234,16 @@
   }
 }
 
+/*
+ * The story dialog is open (F-021, F-028): the stop cards step aside, so the framed case is fully
+ * visible in the area left of the desktop panel instead of sitting under the dimmed card. The
+ * dialog is modal, so nothing hidden here could take focus or input anyway; the opener's "Read the
+ * story" comes back before focus returns to it (the dialog closes first).
+ */
+:global(html:has(dialog[open])) .card {
+  visibility: hidden;
+}
+
 /* Phones: Medium and Caption are hidden below 480 px (EXPERIENCE §5.8, §9.2). */
 @media (max-width: 479px) {
   .medium,

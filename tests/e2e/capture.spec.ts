@@ -24,7 +24,7 @@ import { content } from '../../src/content/index';
 import { mainTrack } from '../../src/content/selectors';
 import type { QualityTier } from '../../src/museum/exhibits/_kit/types';
 import { expect, test } from './fixtures';
-import { goToStop, museumUrl, stats, waitForMuseum } from './helpers';
+import { goToStop, museumUrl, screenPosOf, stats, waitForMuseum } from './helpers';
 
 const TIERS: readonly QualityTier[] = ['low', 'medium', 'high'];
 const KNOWN_STOPS = new Set<string>([...EXHIBIT_IDS, ...STOP_ONLY_IDS]);
@@ -107,6 +107,22 @@ test.describe('capture', { tag: '@capture' }, () => {
         const dialog = page.getByTestId(TEST_IDS.dialog);
         await page.getByTestId(TEST_IDS.open(stop)).click();
         await expect(dialog).toBeVisible();
+        // The dialog shot shows the settled frame (F-028): the panel's slide-in, then the camera's
+        // dolly and framing shift (damped, so they outlast `settled`) until screenPos holds still.
+        await dialog.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
+        let last = '';
+        await expect
+          .poll(
+            async () => {
+              const at = await screenPosOf(page, stop);
+              const key = at ? `${at.x.toFixed(1)},${at.y.toFixed(1)}` : 'none';
+              const still = key === last;
+              last = key;
+              return still;
+            },
+            { intervals: [250], timeout: 10_000 },
+          )
+          .toBe(true);
         await page.screenshot({
           path: join(dir, `${stop}-dialog-${project}.png`),
           animations: 'disabled',

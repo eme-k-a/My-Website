@@ -101,3 +101,13 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - The context-loss recovery allowance under SwiftShader is 20 s (measured 10.6 to 14.2 s on CI with two workers). It replaces the 10 s in the WP-16 rulings; the 5 s target on real GPUs stands.
   - The e2e job `timeout-minutes` goes from 30 to 45, because runs 34 and 35 took 29.4 and 29.2 minutes. WP-17 may split the job instead.
   - Open for WP-17 and R7: F-015 evaluates dropping the render-every-frame-while-compiling rule (ARCHITECTURE section 8.5). It is the largest CI-time saving found; keep it only if screenshots show no pop on a real device. F-016 removes the unused `beam` and `shadowDecal` programs from the precompile set.
+- **WP-17 rulings (2026-10-17):**
+  - The e2e job runs as six shards (`E2E_SHARD`, 30 min each). `deploy` needs every shard.
+  - The 8-minute local target is dropped: a local full run takes about 17 minutes. CI shard time is the target.
+  - Visual baselines come only from CI. Dispatch `ci.yml` with `update-baselines: true` and `wp: <id>`, and the `commit-baselines` job commits them to the branch (artifact downloads are blocked from agent containers). A bot push starts no run, so R0 dispatches a normal run or pushes afterwards. The first 19 slice baselines are `e4b5a40`.
+  - The `wings.spec` walk of all 10 main stops is removed, because it duplicated rail-input (e) and (f). A wing-history test replaces it.
+- **Follow-ups for the next fix-up pass (F-M3):**
+  - F-015 (R7): the render-every-frame-while-compiling question (see F-M2).
+  - F-017 (R7): `?debug` breaks the CSP, because r3f-perf fetches a `data:` font that `connect-src 'self'` blocks. Fix it inside the debug chunk; do not loosen the production CSP.
+  - F-018 (R6): ExhibitDialog `onClose` can close a story reopened before the previous close event landed.
+  - F-019 (R3): a failed exhibit chunk import also throws an unhandled rejection.

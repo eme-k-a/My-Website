@@ -5,6 +5,10 @@
 // Lightformers) live in a portal scene; a cube camera at the origin renders them once into a
 // 256 px half-float cube target, which becomes `scene.environment` for every env-mapped material.
 // A context loss remounts the canvas (WP-16), so the one render simply happens again.
+// `useEnvironmentTexture` hands the same cube texture to materials that need it as their own
+// `envMap`: three ignores `envMapIntensity` for a material that reads `scene.environment` (it uses
+// `scene.environmentIntensity` instead), so a material that must damp its reflections (the medium
+// floor, F-023) sets this texture as its envMap and keeps its own intensity.
 import { createPortal, useThree } from '@react-three/fiber';
 import { useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import {
@@ -15,8 +19,14 @@ import {
   type Texture,
   type WebGLRenderer,
 } from 'three';
+import { create } from 'zustand';
 
 export const ENVIRONMENT_RESOLUTION = 256;
+
+/** The rendered environment cube, or null before its one render (and after an unmount). */
+export const useEnvironmentTexture = create<{ texture: Texture | null }>(() => ({
+  texture: null,
+}));
 const NEAR = 0.1;
 const FAR = 1000;
 
@@ -34,8 +44,12 @@ function renderOnce(
   gl.autoClear = autoClear;
   const previous = scene.environment;
   scene.environment = texture;
+  useEnvironmentTexture.setState({ texture });
   return () => {
     if (scene.environment === texture) scene.environment = previous;
+    if (useEnvironmentTexture.getState().texture === texture) {
+      useEnvironmentTexture.setState({ texture: null });
+    }
   };
 }
 

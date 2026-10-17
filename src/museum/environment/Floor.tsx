@@ -8,13 +8,14 @@
 // - medium and low: the library `floor` (env-mapped, roughness 0.22), one clone per zone for its
 //   lightMap; the clones share one program, and there is no second pass.
 import { MeshReflectorMaterial } from '@react-three/drei';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import type { BufferGeometry, MeshStandardMaterial, Texture } from 'three';
 import { useMuseum } from '../../app/store';
 import { floorReflectorParams, useMaterialLibrary } from '../materials';
 import type { Layout, Room } from '../rail/layout';
 import { lightPlan } from './lightPlan';
 import { reflectorFollower } from './floorReflector';
+import { useEnvironmentTexture } from './LightformerEnvironment';
 import { createFloorLightmaps, FLOOR_LIGHTMAP_INTENSITY } from './lightPools';
 import { FLOOR_ROTATION_X, floorGeometry } from './shell';
 
@@ -55,6 +56,22 @@ function ReflectorFloor({ zones }: { zones: Zone[] }) {
   );
 }
 
+/**
+ * Medium and low floor response (F-023). The library `floor` reads `scene.environment`, and three
+ * then applies `scene.environmentIntensity` (1) instead of the material's envMapIntensity, so the
+ * glossy floor mirrored the two side Lightformer panels at full strength: every wing floor and
+ * the aisle edges read as one flat bright plane (mean value about 65 against 6 on the high
+ * reflector floor, same Pixel 7 framing). The clones take the env cube as their own envMap, which
+ * makes their envMapIntensity count, and damp it to 0.07: dark polished stone with its warm pools,
+ * within about 15% of high. An R3 instance override; the library spec stays EXPERIENCE §7.6.
+ */
+export const STANDARD_FLOOR_RESPONSE = { envMapIntensity: 0.07 } as const;
+
+/** Gives each clone the env cube as its own envMap (null until the cube is rendered). */
+function setEnvMap(materials: MeshStandardMaterial[], texture: Texture | null): void {
+  for (const m of materials) m.envMap = texture;
+}
+
 function StandardFloor({ zones }: { zones: Zone[] }) {
   const library = useMaterialLibrary();
   const materials = useMemo(
@@ -64,10 +81,15 @@ function StandardFloor({ zones }: { zones: Zone[] }) {
         m.name = `floor-${zone.id}`;
         m.lightMap = zone.lightMap;
         m.lightMapIntensity = FLOOR_LIGHTMAP_INTENSITY.standard;
+        m.envMapIntensity = STANDARD_FLOOR_RESPONSE.envMapIntensity;
         return m;
       }),
     [library, zones],
   );
+  // The env cube as the clones' own envMap, so their envMapIntensity applies (three uses
+  // scene.environmentIntensity for a material without one). Same program either way.
+  const environment = useEnvironmentTexture((s) => s.texture);
+  useLayoutEffect(() => setEnvMap(materials, environment), [materials, environment]);
   useEffect(() => () => materials.forEach((m) => m.dispose()), [materials]);
   return (
     <>

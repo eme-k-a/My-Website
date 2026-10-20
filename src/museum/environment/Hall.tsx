@@ -2,7 +2,7 @@
 // lintels, the Foundations header beam and the ceilings) as one merged mesh of the `wall`
 // material, whose lightMap is the shell's wall-wash tile (plain rows and 2 m seams); one instanced
 // mesh of wash bays (the seamless scallop tile, tinted per target, centered on each wall title)
-// behind every light target; and the dim ceiling light slot down the aisle. The floors are
+// behind every light target; and the dim ceiling light slots down the aisle and across each wing. The floors are
 // Floor.tsx.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -23,11 +23,7 @@ import {
   washMatrix,
   type WashPlacement,
 } from './lightPools';
-import { applyWashUVs, shellGeometry } from './shell';
-
-/** The ceiling slot (EXPERIENCE §2.3): 0.12 m wide, 1 cm under the aisle ceiling. */
-export const CEILING_SLOT_WIDTH = 0.12;
-export const CEILING_SLOT_DROP = 0.01;
+import { applyWashUVs, ceilingSlotGeometry, shellGeometry } from './shell';
 
 /** Fills the `wall` material's wallWash slot; the returned cleanup empties it again. */
 function fillWallWash(wall: MeshStandardMaterial, wash: Texture): () => void {
@@ -87,21 +83,12 @@ function WashBays({ layout }: { layout: Layout }) {
   );
 }
 
+/** The aisle's ceiling slot and one per wing room, merged (shell.ts `ceilingSlots`). */
 function CeilingSlot({ layout }: { layout: Layout }) {
   const library = useMaterialLibrary();
-  const aisle = layout.rooms.find((r) => r.id === 'aisle');
-  if (!aisle) return null;
-  const length = aisle.max[1] - aisle.min[1];
-  return (
-    <mesh
-      name="ceiling-slot"
-      material={library.ceilingSlot}
-      position={[0, aisle.ceiling - CEILING_SLOT_DROP, (aisle.min[1] + aisle.max[1]) / 2]}
-      rotation-x={Math.PI / 2}
-    >
-      <planeGeometry args={[CEILING_SLOT_WIDTH, length]} />
-    </mesh>
-  );
+  const geometry = useMemo(() => ceilingSlotGeometry(layout), [layout]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return <mesh name="ceiling-slot" geometry={geometry} material={library.ceilingSlot} />;
 }
 
 export function Hall({ layout }: { layout: Layout }) {

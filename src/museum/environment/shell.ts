@@ -244,6 +244,58 @@ export function shellGeometry(layout: Layout): BufferGeometry {
   return merged;
 }
 
+/** EXPERIENCE §2.3: the ceiling light slot is 0.12 m wide and hangs 1 cm under its ceiling. */
+export const CEILING_SLOT_WIDTH = 0.12;
+export const CEILING_SLOT_DROP = 0.01;
+/** A wing's slot stops this far short of the wing's aisle wall and outer wall. */
+export const WING_SLOT_INSET = 0.6;
+
+/** One ceiling slot strip: center, and its extent in x and z. */
+export interface CeilingSlotStrip {
+  name: string;
+  center: Vec3;
+  size: [number, number];
+}
+
+/**
+ * The dim ceiling slots: one down the aisle centerline, and one per wing from the door toward
+ * the outer wall on the door axis, so each wing room reads as a finished room of the same hall
+ * (WP-24). Derived from `layout.rooms` and `layout.doors` only.
+ */
+export function ceilingSlots(layout: Layout): CeilingSlotStrip[] {
+  const aisle = roomById(layout, 'aisle');
+  const y = (room: Room) => room.ceiling - CEILING_SLOT_DROP;
+  const strips: CeilingSlotStrip[] = [
+    {
+      name: 'aisle',
+      center: [midX(aisle), y(aisle), (aisle.min[1] + aisle.max[1]) / 2],
+      size: [CEILING_SLOT_WIDTH, aisle.max[1] - aisle.min[1]],
+    },
+  ];
+  for (const door of layout.doors) {
+    const wing = roomById(layout, door.wing);
+    const length = wing.max[0] - wing.min[0] - 2 * WING_SLOT_INSET;
+    strips.push({
+      name: door.wing,
+      center: [midX(wing), y(wing), door.z],
+      size: [length, CEILING_SLOT_WIDTH],
+    });
+  }
+  return strips;
+}
+
+/** Every ceiling slot as one downward-facing geometry (one draw call with `ceilingSlot`). */
+export function ceilingSlotGeometry(layout: Layout): BufferGeometry {
+  const parts = ceilingSlots(layout).map((strip) =>
+    new PlaneGeometry(strip.size[0], strip.size[1]).rotateX(Math.PI / 2).translate(...strip.center),
+  );
+  const merged = mergeGeometries(parts);
+  parts.forEach((g) => g.dispose());
+  if (!merged) throw new Error('The ceiling slots failed to merge');
+  merged.computeBoundingSphere();
+  return merged;
+}
+
 /**
  * Floor meshes lie in their local XY plane and are turned flat by the mesh rotation, so every
  * floor shares one world matrix (local +Z is world up). drei's reflector takes its mirror plane

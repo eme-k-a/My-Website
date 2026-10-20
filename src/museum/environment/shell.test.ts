@@ -6,6 +6,9 @@ import { computeLayout, DOOR_H, type Layout, type Vec3 } from '../rail/layout';
 import { DOOR_TRANSOM } from './labels3d';
 import {
   ARCH_HEIGHT,
+  CEILING_SLOT_WIDTH,
+  ceilingSlotGeometry,
+  ceilingSlots,
   FOUNDATIONS_BEAM_BOTTOM,
   FOUNDATIONS_BEAM_DEPTH,
   FLOOR_ROTATION_X,
@@ -164,6 +167,24 @@ describe('greybox shell (EXPERIENCE §2.2, §2.3)', () => {
       const panel = slot.mount === 'wall' ? BACKING_PANEL_SIZE[2] : 0;
       expect(behind, slot.id).toBeLessThanOrEqual(0.011 + panel);
     }
+  });
+
+  it('hangs a ceiling slot down the aisle and across each wing, on the door axis', () => {
+    const strips = ceilingSlots(layout);
+    expect(strips.map((s) => s.name)).toEqual(['aisle', 'projects', 'volunteer']);
+    for (const door of layout.doors) {
+      const wing = layout.rooms.find((r) => r.id === door.wing)!;
+      const strip = strips.find((s) => s.name === door.wing)!;
+      expect(strip.center[2]).toBe(door.z);
+      expect(strip.center[1]).toBeCloseTo(wing.ceiling - 0.01, 9);
+      expect(strip.size[1]).toBe(CEILING_SLOT_WIDTH);
+      const [x0, x1] = [strip.center[0] - strip.size[0] / 2, strip.center[0] + strip.size[0] / 2];
+      expect(x0).toBeGreaterThan(wing.min[0]);
+      expect(x1).toBeLessThan(wing.max[0]);
+    }
+    const geometry = ceilingSlotGeometry(layout);
+    geometry.computeVertexNormals();
+    expect(geometry.getAttribute('normal').getY(0)).toBeCloseTo(-1, 9);
   });
 
   it('merges the whole shell into one geometry', () => {

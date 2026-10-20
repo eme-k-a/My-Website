@@ -180,6 +180,21 @@
   clip-path: none;
 }
 
+/*
+ * Inside a wing the current stop's label stays hidden at rest (F-036): a wing's rail is short, so
+ * its first dot sits at the height of the wing's 3D wall titles, and the label ran left over the
+ * title. The wing chip above already names the wing and the place in it, and the stop card names
+ * the exhibit. Hover and keyboard focus still show it (a visitor asked for it), and it stays the
+ * dot's accessible name.
+ */
+.rail:not([data-track='main']) .dot[aria-current='step'] .label {
+  clip-path: inset(50%);
+}
+
+.rail:not([data-track='main']) .dot:is(:hover, :focus-visible) .label {
+  clip-path: none;
+}
+
 .wingHead {
   display: flex;
   flex-direction: column;

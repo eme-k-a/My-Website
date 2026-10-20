@@ -5,12 +5,16 @@
 // through its intro before the next swipe lands exactly on the next stop; (d) no non-passive
 // wheel or touch listener; (e) walking every main stop writes no history: the HUD dots here, the
 // keys in (f); (f) ArrowDown and PageDown each visit every main stop in order and back, writing no
-// history.
+// history; (g) at the wing stops on desktop no rail text (stop label, wing chip, exit control)
+// overlaps the stop's own 3D wall title (F-036).
 import type { Page } from '@playwright/test';
+import { PerspectiveCamera, Vector3 } from 'three';
 import { TEST_IDS } from '../../src/app/testIds';
-import type { StopId } from '../../src/content/ids';
+import type { ExhibitId, StopId } from '../../src/content/ids';
 import { content } from '../../src/content/index';
-import { mainTrack } from '../../src/content/selectors';
+import { entryById, exhibitNumber, mainTrack, wallLabelOf } from '../../src/content/selectors';
+import { applyFraming, fovFor, framingFor, viewOffsetFor } from '../../src/museum/rail/framing';
+import { computeLayout } from '../../src/museum/rail/layout';
 import { expect, test } from './fixtures';
 import {
   cdpFlick,
@@ -18,6 +22,7 @@ import {
   goToStop,
   listenerAudit,
   museumUrl,
+  stats,
   waitForMuseum,
   wheelNotches,
   wheelStream,
@@ -324,5 +329,174 @@ test.describe('rail input', () => {
     expect((await press(page, 'ArrowDown')).stop).toBe('mysa');
     expect((await press(page, 'End')).stop).toBe('desk');
     expect((await press(page, 'Home')).stop).toBe('lobby');
+  });
+});
+
+/** Slot positions and rooms do not depend on the date. */
+const LAYOUT = computeLayout(content, new Date());
+
+/**
+ * The wing wall-title metrics of src/museum/exhibits/_kit/placard.ts (TITLES.wing, the caps of
+ * fonts.ts and the width estimate of `sansLineWidth`). That module imports the .woff files as
+ * Vite `?url` assets, which Node cannot load, so the numbers are repeated here; the boxes carry a
+ * margin for the estimate.
+ */
+const WING_TITLE = { numberCap: 0.3, orgCap: 0.14, orgBottom: 2.14, gap: 0.06, orgWidth: 2.9 };
+const SANS_CAP_RATIO = 0.698;
+const SERIF_CAP_RATIO = 0.72;
+const SANS_EM = 0.62 + 0.12; // mean caps advance plus the 0.12em tracking
+const SERIF_EM = 0.45;
+const LINE_HEIGHT = 1.25;
+const TITLE_END_MARGIN = 0.25;
+const MARGIN_PX = 6;
+
+interface Rect {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/** The wall title's two blocks (number, organization) as world boxes on the wing's outer wall. */
+function wingTitleBoxes(
+  id: ExhibitId,
+): { wallX: number; z: [number, number]; y: [number, number] }[] {
+  const slot = LAYOUT.slots.find((s) => s.id === id)!;
+  const room = LAYOUT.rooms.find(
+    (r) =>
+      slot.position[0] >= r.min[0] &&
+      slot.position[0] <= r.max[0] &&
+      slot.position[2] >= r.min[1] &&
+      slot.position[2] <= r.max[1],
+  )!;
+  const right = slot.side === 'right';
+  const wallX = right ? room.max[0] - 0.01 : room.min[0] + 0.01;
+  const orgSize = WING_TITLE.orgCap / SANS_CAP_RATIO;
+  const lines: string[] = [];
+  let line = '';
+  for (const word of wallLabelOf(entryById(content, id)).toUpperCase().split(/\s+/)) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && next.length * orgSize * SANS_EM > WING_TITLE.orgWidth) {
+      lines.push(line);
+      line = word;
+    } else line = next;
+  }
+  if (line) lines.push(line);
+  const orgHalf = Math.max(...lines.map((l) => l.length * orgSize * SANS_EM)) / 2;
+  const numberSize = WING_TITLE.numberCap / SERIF_CAP_RATIO;
+  const numberHalf = (exhibitNumber(content, id).length * numberSize * SERIF_EM) / 2;
+  const half = Math.max(orgHalf, numberHalf);
+  // Along the wall: the stop camera's sightline through the slot center, clamped to the wall.
+  const camera = LAYOUT.tracks[slot.track]!.stops.find((s) => s.id === id)!.camera;
+  const dx = slot.position[0] - camera[0];
+  const sight = camera[2] + ((slot.position[2] - camera[2]) * (wallX - camera[0])) / dx;
+  const lo = room.min[1] + TITLE_END_MARGIN + half;
+  const hi = room.max[1] - TITLE_END_MARGIN - half;
+  const along = Math.min(hi, Math.max(lo, sight));
+  const orgTop =
+    WING_TITLE.orgBottom + (lines.length - 1) * LINE_HEIGHT * orgSize + WING_TITLE.orgCap;
+  const numberBase = orgTop + WING_TITLE.gap;
+  return [
+    { wallX, z: [along - orgHalf, along + orgHalf], y: [WING_TITLE.orgBottom - 0.05, orgTop] },
+    {
+      wallX,
+      z: [along - numberHalf, along + numberHalf],
+      y: [numberBase, numberBase + WING_TITLE.numberCap],
+    },
+  ];
+}
+
+/** The screen rects (CSS px) of a wing stop's wall title, framed as CameraRig frames the stop. */
+async function wallTitleRects(page: Page, id: ExhibitId): Promise<Rect[]> {
+  const { width, height } = page.viewportSize()!;
+  const aspect = width / height;
+  const { position, target } = (await stats(page)).camera;
+  const camera = new PerspectiveCamera(fovFor(aspect), aspect, 0.1, 90);
+  camera.position.set(...position);
+  camera.lookAt(new Vector3(...target));
+  applyFraming(camera, fovFor(aspect), viewOffsetFor(framingFor(aspect)), width, height);
+  camera.updateMatrixWorld();
+  return wingTitleBoxes(id).map(({ wallX, z, y }) => {
+    const xs: number[] = [];
+    const ys: number[] = [];
+    for (const zz of z)
+      for (const yy of y) {
+        const p = new Vector3(wallX, yy, zz).project(camera);
+        xs.push(((p.x + 1) / 2) * width);
+        ys.push(((1 - p.y) / 2) * height);
+      }
+    return {
+      left: Math.min(...xs) - MARGIN_PX,
+      right: Math.max(...xs) + MARGIN_PX,
+      top: Math.min(...ys) - MARGIN_PX,
+      bottom: Math.max(...ys) + MARGIN_PX,
+    };
+  });
+}
+
+/** Rects of the rail's visible text: stop labels not clipped away, the wing chip, the exit control. */
+async function railTextRects(page: Page): Promise<(Rect & { text: string })[]> {
+  return page.evaluate(
+    (ids) => {
+      const rail = document.querySelector(`[data-testid="${ids.rail}"]`);
+      if (!rail) return [];
+      const els = [
+        ...rail.querySelectorAll<HTMLElement>('[data-testid^="hud-stop-"] > span'),
+        ...rail.querySelectorAll<HTMLElement>('p'),
+        ...rail.querySelectorAll<HTMLElement>(`[data-testid="${ids.exit}"]`),
+      ];
+      return els
+        .filter((el) => {
+          const style = getComputedStyle(el);
+          return (
+            style.visibility !== 'hidden' && style.display !== 'none' && style.clipPath === 'none'
+          );
+        })
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          return {
+            left: r.left,
+            top: r.top,
+            right: r.right,
+            bottom: r.bottom,
+            text: el.textContent ?? '',
+          };
+        })
+        .filter((r) => r.right > r.left && r.bottom > r.top);
+    },
+    { rail: TEST_IDS.hudProgress, exit: TEST_IDS.exitWing },
+  );
+}
+
+const overlaps = (a: Rect, b: Rect) =>
+  a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+test.describe('rail and wall titles (F-036)', () => {
+  test.describe.configure({ timeout: 120_000 });
+
+  test('(g) at each wing stop no rail text overlaps the 3D wall title', async ({ page }) => {
+    only('desktop');
+    await openGallery(page);
+    const wingStops = content.wings.flatMap((w) => w.items as ExhibitId[]);
+    expect(wingStops).toEqual(expect.arrayContaining(['sdsj', 'klarup', 'finance-tracker']));
+    for (const id of wingStops) {
+      await goToStop(page, id);
+      const titles = await wallTitleRects(page, id);
+      // The title is in the frame (F-022) and below the HUD, so the check is not vacuous.
+      for (const t of titles) {
+        expect(t.top, `${id} title top`).toBeGreaterThan(0);
+        expect(t.right, `${id} title right`).toBeLessThan(page.viewportSize()!.width);
+      }
+      const texts = await railTextRects(page);
+      expect(texts.length, `${id}: the wing chip and the exit control show`).toBeGreaterThanOrEqual(
+        2,
+      );
+      for (const text of texts)
+        for (const title of titles)
+          expect(
+            overlaps(text, title),
+            `${id}: rail text '${text.text}' ${JSON.stringify(text)} over the title ${JSON.stringify(title)}`,
+          ).toBe(false);
+    }
   });
 });

@@ -228,6 +228,11 @@
     display: none;
   }
 
+  /* At the door on the wing track the wing head steps aside (F-038), so nothing is left to show. */
+  :global(html[data-mode='museum']) .rail[data-at-door] {
+    display: none;
+  }
+
   .wingHead {
     align-items: flex-start;
   }

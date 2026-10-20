@@ -2,13 +2,14 @@
 // at the top and "Front desk" at the bottom, one dot button per main stop (aria-current="step" on
 // the current one), a side stub at each door, year ticks at the floor strips' progress values, and
 // a bead at the camera's damped progress. Activating a dot travels there. Inside a wing the rail
-// shows that wing's exhibits and "Return to the aisle". It is the last landmark in tab order
-// (EXPERIENCE §10.2); phones get the bar and year chip in the HUD header instead.
+// shows that wing's exhibits and "Return to the aisle", except at the door itself (F-038). It is
+// the last landmark in tab order (EXPERIENCE §10.2); phones get the bar and year chip in the HUD
+// header instead.
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
 import { content } from '../content/index';
-import type { StopId } from '../content/ids';
+import { doorId, type StopId } from '../content/ids';
 import { exitWing, travelTo } from '../museum/rail/navigation';
 import { Icon } from './icons';
 import { cardOf, railLabel, railStops, YEAR_TICKS } from './model';
@@ -53,6 +54,12 @@ export function ProgressRail() {
   };
 
   const wing = track === 'main' ? undefined : content.wings.find((w) => w.id === track);
+  // Scrolling back up from a wing's first exhibit lands on the door section, still on the wing
+  // track (EXPERIENCE §3.4 step 2), with the camera at the door pose. There the wing head (chip
+  // and "Return to the aisle") sat on the door's transom title (F-038), so it steps aside: the
+  // visitor is at the door, Esc still returns to the aisle and the door card offers Step inside.
+  // The control unmounts rather than hiding, so it can never hold focus.
+  const atDoor = wing !== undefined && stop === doorId(wing.id);
 
   return (
     <nav
@@ -60,28 +67,31 @@ export function ProgressRail() {
       aria-label="Exhibits"
       data-testid={TEST_IDS.hudProgress}
       data-track={track}
+      data-at-door={atDoor || undefined}
     >
       {wing ? (
-        <div className={styles.wingHead}>
-          <p className={styles.wingTitle}>
-            {wing.title} wing, {Math.max(1, stops.indexOf(stop) + 1)} of {stops.length}
-          </p>
-          <button
-            type="button"
-            className={ui.secondary}
-            data-testid={TEST_IDS.exitWing}
-            onClick={() => {
-              useMuseum.setState({ inputSource: 'hud' });
-              exitWing().catch(ignore);
-            }}
-          >
-            <Icon name="undo-2" />
-            Return to the aisle
-            <kbd className={ui.kbd} aria-hidden="true">
-              Esc
-            </kbd>
-          </button>
-        </div>
+        !atDoor && (
+          <div className={styles.wingHead}>
+            <p className={styles.wingTitle}>
+              {wing.title} wing, {Math.max(1, stops.indexOf(stop) + 1)} of {stops.length}
+            </p>
+            <button
+              type="button"
+              className={ui.secondary}
+              data-testid={TEST_IDS.exitWing}
+              onClick={() => {
+                useMuseum.setState({ inputSource: 'hud' });
+                exitWing().catch(ignore);
+              }}
+            >
+              <Icon name="undo-2" />
+              Return to the aisle
+              <kbd className={ui.kbd} aria-hidden="true">
+                Esc
+              </kbd>
+            </button>
+          </div>
+        )
       ) : (
         <span className={styles.end} aria-hidden="true">
           Now

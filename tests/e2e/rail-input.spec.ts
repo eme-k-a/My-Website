@@ -6,15 +6,18 @@
 // wheel or touch listener; (e) walking every main stop writes no history: the HUD dots here, the
 // keys in (f); (f) ArrowDown and PageDown each visit every main stop in order and back, writing no
 // history; (g) at the wing stops on desktop no rail text (stop label, wing chip, exit control)
-// overlaps the stop's own 3D wall title (F-036).
+// overlaps the stop's own 3D wall title (F-036); and at each door reached on the wing track (Step
+// inside, then ArrowUp once) no visible rail or HUD rect covers the door's transom title, on
+// desktop and pixel7 (F-038).
 import type { Page } from '@playwright/test';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { TEST_IDS } from '../../src/app/testIds';
-import type { ExhibitId, StopId } from '../../src/content/ids';
+import { doorId, type ExhibitId, type StopId } from '../../src/content/ids';
 import { content } from '../../src/content/index';
 import { entryById, exhibitNumber, mainTrack, wallLabelOf } from '../../src/content/selectors';
 import { applyFraming, fovFor, framingFor, viewOffsetFor } from '../../src/museum/rail/framing';
-import { computeLayout } from '../../src/museum/rail/layout';
+import { DOOR_TRANSOM, labelPlacements } from '../../src/museum/environment/labels3d';
+import { computeLayout, DOOR_H, DOOR_W } from '../../src/museum/rail/layout';
 import { expect, test } from './fixtures';
 import {
   cdpFlick,
@@ -358,9 +361,7 @@ interface Rect {
 }
 
 /** The wall title's two blocks (number, organization) as world boxes on the wing's outer wall. */
-function wingTitleBoxes(
-  id: ExhibitId,
-): { wallX: number; z: [number, number]; y: [number, number] }[] {
+function wingTitleBoxes(id: ExhibitId): WallBox[] {
   const slot = LAYOUT.slots.find((s) => s.id === id)!;
   const room = LAYOUT.rooms.find(
     (r) =>
@@ -406,8 +407,38 @@ function wingTitleBoxes(
   ];
 }
 
+/** A world box on a wall at x = `wallX`, spanning `z` along it and `y` up it. */
+interface WallBox {
+  wallX: number;
+  z: [number, number];
+  y: [number, number];
+}
+
 /** The screen rects (CSS px) of a wing stop's wall title, framed as CameraRig frames the stop. */
 async function wallTitleRects(page: Page, id: ExhibitId): Promise<Rect[]> {
+  return projectWallBoxes(page, wingTitleBoxes(id));
+}
+
+/**
+ * The room name on a door's transom (src/museum/environment/labels3d.ts, F-022): one line centered
+ * on the door, in the band from DOOR_H - DOOR_TRANSOM to DOOR_H, on the aisle wall. Its width is
+ * the caps estimate of the wall titles, never wider than the door.
+ */
+function transomTitleBox(door: StopId): WallBox {
+  const placement = labelPlacements(LAYOUT).find((p) => p.label.kind === 'room' && p.stop === door);
+  if (!placement) throw new Error(`no room name on ${door}`);
+  const { text, capHeight } = placement.label;
+  const half = Math.min(DOOR_W, (text.length * capHeight * SANS_EM) / SANS_CAP_RATIO) / 2;
+  const z = placement.position[2];
+  return {
+    wallX: placement.position[0],
+    z: [z - half, z + half],
+    y: [DOOR_H - DOOR_TRANSOM, DOOR_H],
+  };
+}
+
+/** Projects wall boxes through the live camera, framed as CameraRig frames it, to CSS px rects. */
+async function projectWallBoxes(page: Page, boxes: WallBox[]): Promise<Rect[]> {
   const { width, height } = page.viewportSize()!;
   const aspect = width / height;
   const { position, target } = (await stats(page)).camera;
@@ -416,7 +447,7 @@ async function wallTitleRects(page: Page, id: ExhibitId): Promise<Rect[]> {
   camera.lookAt(new Vector3(...target));
   applyFraming(camera, fovFor(aspect), viewOffsetFor(framingFor(aspect)), width, height);
   camera.updateMatrixWorld();
-  return wingTitleBoxes(id).map(({ wallX, z, y }) => {
+  return boxes.map(({ wallX, z, y }) => {
     const xs: number[] = [];
     const ys: number[] = [];
     for (const zz of z)
@@ -468,6 +499,41 @@ async function railTextRects(page: Page): Promise<(Rect & { text: string })[]> {
   );
 }
 
+/**
+ * Rects of every visible HUD and rail element (F-038): the rail's text and controls (stop labels
+ * not clipped away, the wing chip, the exit control), its hairline, and the header's wordmark,
+ * links and phone year chip.
+ */
+async function hudRects(page: Page): Promise<(Rect & { text: string })[]> {
+  const rail = await railTextRects(page);
+  const rest = await page.evaluate(
+    (ids) => {
+      const els = [
+        ...document.querySelectorAll<HTMLElement>(`[data-testid="${ids.rail}"] > div`),
+        ...document.querySelectorAll<HTMLElement>(`[data-testid="${ids.hud}"] :is(a, p, span)`),
+      ];
+      return els
+        .filter((el) => {
+          const style = getComputedStyle(el);
+          return style.visibility !== 'hidden' && style.display !== 'none';
+        })
+        .map((el) => {
+          const r = el.getBoundingClientRect();
+          return {
+            left: r.left,
+            top: r.top,
+            right: r.right,
+            bottom: r.bottom,
+            text: el.textContent || el.className,
+          };
+        })
+        .filter((r) => r.right > r.left && r.bottom > r.top);
+    },
+    { rail: TEST_IDS.hudProgress, hud: TEST_IDS.hud },
+  );
+  return [...rail, ...rest];
+}
+
 const overlaps = (a: Rect, b: Rect) =>
   a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
@@ -497,6 +563,51 @@ test.describe('rail and wall titles (F-036)', () => {
             overlaps(text, title),
             `${id}: rail text '${text.text}' ${JSON.stringify(text)} over the title ${JSON.stringify(title)}`,
           ).toBe(false);
+    }
+  });
+
+  // F-038: Step inside at a door, then one ArrowUp back: the page rests on the door section of
+  // the wing track (EXPERIENCE §3.4 step 2), the camera at the door pose. The wing HUD must not be
+  // drawn over the transom's room name there.
+  test('(g) at each door reached on the wing track no HUD rect covers the transom title', async ({
+    page,
+    hasTouch,
+  }) => {
+    test.skip(!['desktop', 'pixel7'].includes(project()), 'desktop and pixel7 only');
+    test.setTimeout(240_000);
+    await openGallery(page);
+    for (const wing of content.wings) {
+      const door = doorId(wing.id);
+      await goToStop(page, door);
+      const enter = page.getByTestId(TEST_IDS.enterWing(wing.id));
+      if (hasTouch) await enter.tap();
+      else await enter.click();
+      const first = wing.items[0] as StopId;
+      await page.waitForFunction(
+        (stop) => window.__MUSEUM__?.settled === true && window.__MUSEUM__.stop === stop,
+        first,
+      );
+      await waitForRest(page);
+      const rest = await press(page, 'ArrowUp');
+      expect(rest.stop, `${wing.id}: ArrowUp lands on the door`).toBe(door);
+      expect(await page.evaluate(() => window.__MUSEUM__!.stats().track), `${wing.id}: track`).toBe(
+        wing.id,
+      );
+      const [title] = await projectWallBoxes(page, [transomTitleBox(door)]);
+      // The title is in the frame, so the check is not vacuous.
+      expect(title!.top, `${door} title top`).toBeGreaterThan(0);
+      expect(title!.bottom, `${door} title bottom`).toBeLessThan(page.viewportSize()!.height);
+      for (const rect of await hudRects(page))
+        expect(
+          overlaps(rect, title!),
+          `${door} on the ${wing.id} track: HUD '${rect.text}' ${JSON.stringify(rect)} over the transom title ${JSON.stringify(title)}`,
+        ).toBe(false);
+      // Back to the aisle for the next door: Esc still exits from the door on the wing track.
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(
+        (stop) => window.__MUSEUM__?.settled === true && window.__MUSEUM__.stop === stop,
+        door,
+      );
     }
   });
 });

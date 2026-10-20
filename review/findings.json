@@ -9,12 +9,17 @@
     "evidence": "review/runs/2026-10-17-g2/desk-pixel7.png: the card covers the bottom 59% of the frame and the desk with its postcard, envelope, catalogue and ledger is not visible at all; only the beam and the end-wall line show. The committed CI baseline tests/e2e/__screenshots__/visual.spec.ts/stop-desk-pixel7.png shows the same. Stats: the desk camera is identical on both viewports (position [0, 1.6, -64], target [0, 1.1, -67.5]), so the 36% portrait framing point holds the look-at at 1.1 m, above the desk top, and the desk projects below the card's top edge. D2 anchor 1 (covered by the card).",
     "expected": "On portrait phones the desk top and its four objects sit above the card, near the 36% framing point, like the exhibit cases (EXPERIENCE section 8 gift shop, ART_DIRECTION D2). Options for R4 and R6: a lower look-at for the desk stop on portrait, a desk-specific portrait framing point, or a shorter phone desk card (links in a row, closing line hidden).",
     "check": "Capture desk on pixel7 (CAPTURE_STOPS=desk ... --project=pixel7): every desk object is visible above the card; window.__MUSEUM__.screenPos('desk') y is above the card's getBoundingClientRect().top; rebaseline stop-desk-pixel7.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
     "round2": {
       "status": "open",
       "evidence": "Fixed at 412x839 only. review/runs/2026-10-20-g2r2/desk-pixel7.png: the desk top and its four objects sit above the card; screenPos('desk') y 339 vs card top 377. Not fixed on smaller portrait phones: at 360x640 (EXPERIENCE section 8.1 fast-path size, scratch probe with the Pixel 7 UA, isMobile, DPR 1, ?test=1&mode=museum) the desk card top is 178 px while screenPos('desk') y is 259, so the desk projects 81 px below the card's top edge and is entirely hidden again; the end-wall line 'You've reached the beginning.' starts under the PDF button (button bottom 52 px, the line's cap tops at about 50 px). DESK_PORTRAIT_Y (src/museum/rail/framing.ts) is a constant 0.34 tuned for 412x839, while the card is 446 px tall on both phones. The expected result says 'on portrait phones', so the finding stays open (P1, desk, 360x640). Fix for R4 with R6: derive the desk's portrait framing point from the measured card top (for example aim the desk at the middle of the band between the HUD bottom and the card top) instead of a constant, or make the portrait desk card shorter (links in a 2 x 2 grid, paragraph clamped) so its top sits at or below about 50% of the height at 360x640; also keep the end-wall line clear of the HUD at 360x640.",
       "viewport": "pixel7 (fixed), 360x640 portrait (open)"
+    },
+    "round3": {
+      "status": "fixed",
+      "evidence": "Fixed at both portrait sizes (F-G2r2 dd5d489). review/runs/2026-10-20-g2r3/desk-pixel7.png (412x839): the desk top and all four objects sit above the card, screenPos('desk') y 428 against card top 531, end-wall line high and clear of the HUD. 360x640 scratch probe (Pixel 7 UA, isMobile, DPR 1, ?test=1&mode=museum), review/runs/2026-10-20-g2r3/probe-desk-360x640.png and review/runs/2026-10-20-g2r3/probe-rects.json: card top 311 (round 2: 178), screenPos('desk') y 285 (26 px above the card top), HUD bottom 60, PDF button bottom 52, the end-wall line starts at about y 75 and clears the HUD. The desk front is cut by the card at 360x640, but the desk top and its four objects read whole (D2 of the 5 anchor not claimed).",
+      "viewport": "pixel7 and 360x640 portrait: fixed"
     }
   },
   {
@@ -134,6 +139,10 @@
     "round2": {
       "status": "open",
       "evidence": "Partly fixed. Titles are whole and centered on their wash: review/runs/2026-10-20-g2r2/sdsj-desktop.png and review/runs/2026-10-20-g2r2/projects-door-desktop.png (P2 PERSONAL FINANCE TRACKER on its arch). The expected 'with the beam passing in front of the wall below the text' still fails: in review/runs/2026-10-20-g2r2/sdsj-desktop.png a lighter vertical shaft runs from the frame top through V1 and 'SOFTWARE DEVELOPERS' into the case; in review/runs/2026-10-20-g2r2/projects-door-desktop.png a diagonal beam edge cuts through 'FINANCE'; in review/runs/2026-10-20-g2r2/sdsj-dialog-desktop.png the case top covers 'OF ST. JOHN'S' (dialog framing). P2, stays with R3 (labels3d.ts or Beams.tsx)."
+    },
+    "round3": {
+      "status": "open",
+      "evidence": "Unchanged (not in F-G2r2 scope). review/runs/2026-10-20-g2r3/finance-tracker-desktop.png and review/runs/2026-10-20-g2r3/sdsj-desktop.png: the light shaft still crosses the P2 and V1 wall titles, and the case top frame meets the last title line (TRACKER, OF ST. JOHN'S) with almost no gap. review/runs/2026-10-20-g2r3/projects-door-desktop.png and review/runs/2026-10-20-g2r3/volunteer-door-desktop.png: the inner titles are faint behind the beam. Second round open after round 1; one more reopen makes it a taste call for Emeka (PLAN section 6), and M2 has no further round, so it goes to Emeka's backlog."
     }
   },
   {
@@ -219,6 +228,10 @@
     "round2": {
       "status": "open",
       "evidence": "Partly fixed. review/runs/2026-10-20-g2r2/lobby-pixel7.png: the 3D COMMIT HISTORY label no longer sits inside the h1 box, and a warm pool now lights the floor under the hero (mean 19.6 vs about 1 before, per F-G2a). Still failing the expected result: the arch and the first case sit behind the Email and Classic view buttons rather than below 'Begin the walk', the arch's brass top edge runs behind 'Nduka-Nwagbo', the portrait is cut by the right edge (also at 360x640, scratch probe), and by eye the lower 40% still reads as an empty gradient. F-G2a hands the remaining part to R4 (lobby camera or portrait framing). P2."
+    },
+    "round3": {
+      "status": "open",
+      "evidence": "Unchanged. review/runs/2026-10-20-g2r3/lobby-pixel7.png: the brass arch and first case still sit behind the hero buttons and the lower 40% is empty floor; review/runs/2026-10-20-g2r3/probe-lobby-360x640.png: the portrait is cut by the right viewport edge behind \"expected\". Fast path still passes at both sizes. Leftover for Emeka's backlog (M2 cap reached)."
     }
   },
   {
@@ -236,6 +249,10 @@
     "round2": {
       "status": "open",
       "evidence": "Not attempted (F-G2a skipped it as optional). review/runs/2026-10-20-g2r2/verafin-desktop.png and review/runs/2026-10-20-g2r2/mysa-desktop.png: 01 / NASDAQ VERAFIN and 02 / MYSA now sit inside the lit wash and read as near-black letters on a lighter wall; review/runs/2026-10-20-g2r2/projects-door-desktop.png the P2 title is dim and about 11 CSS px tall from the door. P3, taste call for R2."
+    },
+    "round3": {
+      "status": "open",
+      "evidence": "Not attempted (P3). Brass wing titles in the wash still read as dark letters (sdsj-desktop.png, finance-tracker-desktop.png). Backlog."
     }
   },
   {
@@ -265,8 +282,12 @@
     "evidence": "review/runs/2026-10-20-g2r2/sdsj-desktop.png (1440x900, tier high): the rail's current-stop tooltip 'No. V1, The Round Table' (DOM rect x 958 to 1128, y 209 to 238, scratch probe of the same build) sits on the first line of the wall title, covering 'LOPERS' of 'SOFTWARE DEVELOPERS'; the title line spans about x 650 to 1115 at y 220 to 250. Text is drawn over text (rubric P1). Cause: in a wing the rail shrinks to the wing's items, so the one-item volunteer wing puts the current dot at the top of the rail (y 224), the same height as the wall title, and the tooltip extends left over the canvas. The projects wing's klarup stop does not collide (short title 'P1 KLARUP', tooltip at x 1068 to 1196 clears it), and sdsj is still the placeholder crate, but the title and rail ship as they are when WP-23 lands. Reported by F-035 as 'a few pixels'; it is the whole word.",
     "expected": "At every stop on desktop, no rail text (tooltip, wing chip, exit control) intersects the projected bounds of the stop's own 3D wall title (D2 anchor 5, D3). Fix for R6 (rail) with R3: either hide the current-stop tooltip while inside a wing (the wing chip and the stop card already name the wing and the exhibit), or anchor the tooltip so it cannot extend over the canvas centre (for example right-aligned under the Return to the aisle control), or start a one-item wing's rail lower so its dot sits below the title band; alternatively R3 lowers wing title baselines, though that conflicts with the case clearance from F-027.",
     "check": "Capture sdsj, klarup and finance-tracker on desktop (CAPTURE_STOPS=sdsj,klarup,finance-tracker CAPTURE_TIER=high ... --project=desktop): the wall title reads whole and no rail element's getBoundingClientRect() intersects it; ideally an e2e assertion in the rail spec that the tooltip rect stays right of x = 0.75 x viewport width or is hidden at wing stops.",
-    "status": "open",
-    "round": 2
+    "status": "fixed",
+    "round": 2,
+    "round3": {
+      "status": "fixed",
+      "evidence": "Fixed (F-G2r2 401e010). review/runs/2026-10-20-g2r3/sdsj-desktop.png, review/runs/2026-10-20-g2r3/klarup-desktop.png, review/runs/2026-10-20-g2r3/finance-tracker-desktop.png (1440x900, tier high): every wall title reads whole and no rail text crosses it. DOM rects (review/runs/2026-10-20-g2r3/probe-rects.json): the current-stop label at sdsj (x 958 to 1128, y 209 to 238) is clip-path inset(50%) at rest; the wing chip (x 1132 to 1413, y 136 to 160) and Return to the aisle (x 1200 to 1413, y 168 to 212) sit right of and above the titles (SOFTWARE DEVELOPERS ends near x 1115). tests/e2e/rail-input.spec.ts (g) passes on desktop against this build (1 passed, PORT=4174). On Pixel 7 (review/runs/2026-10-20-g2r3/sdsj-pixel7.png) the V1 numeral still clears the Return to the aisle button by only about 2 CSS px, as in round 2; not a defect at this size but no margin."
+    }
   },
   {
     "id": "F-037",
@@ -278,7 +299,24 @@
     "evidence": "review/runs/2026-10-20-g2r2/volunteer-door-desktop.png: through the doorway the sdsj case is cut by the right jamb (visible x about 1100 to 1175), its wall title reads 'SOFTWAR / OF S', and the rail tooltip 'Volunteer & Leadership wing' sits over the case top; at the left edge, fragments of a neighbouring wall title ('5', '10') are clipped by the viewport. review/runs/2026-10-20-g2r2/volunteer-door-pixel7.png: the case and title are cut by both the jamb and the right frame edge, so the doorway frames an empty black room. Since F-035 the lone wing item is centred on the door axis (plinth and camera at the door z), which from the angled aisle door camera puts it behind the jamb. Round 1 had two items, one visible through the door.",
     "expected": "A door stop shows its wing's contents as an invitation: at least one case whole inside the doorway, or a deliberate empty-room glimpse with its pool fully inside the opening (D2 anchor 5: next pool in the sightline). Options for R4 with R3: offset a lone wing item toward the far end of the room on the door camera's sightline, or aim the door stop camera more squarely through the opening.",
     "check": "Capture volunteer-door on desktop and pixel7: the sdsj case and its pool sit wholly inside the door opening, its wall title reads whole, and no rail tooltip covers it.",
+    "status": "fixed",
+    "round": 2,
+    "round3": {
+      "status": "fixed",
+      "evidence": "Fixed (F-G2r2 f26fae7). review/runs/2026-10-20-g2r3/volunteer-door-desktop.png: the sdsj case, its pool and the V1 title sit wholly inside the door opening, transom VOLUNTEER & LEADERSHIP whole, rail label at y 406 to 435 clear of the case; review/runs/2026-10-20-g2r3/volunteer-door-thumb.png reads as one doorway with a lit case. review/runs/2026-10-20-g2r3/volunteer-door-pixel7.png: the same inside the doorway. Left edge of the desktop frame still crops a neighbouring aisle case and a fragment of its wall text (noted under D1 and D5, not a new finding)."
+    }
+  },
+  {
+    "id": "F-038",
+    "severity": "P1",
+    "title": "Door stop inside a wing track: the wing HUD is drawn over the door transom title",
+    "stop": "projects-door, volunteer-door (reached on the wing track)",
+    "viewport": "pixel7 (P1); desktop (minor)",
+    "path": "src/overlay/ProgressRail.module.css",
+    "evidence": "State not captured in rounds 1 and 2 (captures go to the door on the main track). Path a visitor takes: at a door press Step inside, then scroll or swipe back up once (or ArrowUp): the page lands on the door section, which stays visible on the wing track (EXPERIENCE section 3.4 step 2), with track 'volunteer' or 'projects', the camera at the main door pose and the wing HUD still shown. Pixel 7 412x839: review/runs/2026-10-20-g2r3/probe-volunteer-door-in-wing-pixel7.png, the Return to the aisle button (DOM x 16 to 189, y 96 to 140) is drawn over VOLUNTEER on the transom; review/runs/2026-10-20-g2r3/probe-projects-door-in-wing-pixel7.png, the same button covers PRO of PROJECTS, and the wing chip (y 64 to 88) sits on the title band. Text over text and a 3D label covered by the HUD (rubric P1). Desktop 1440x900 tier high: review/runs/2026-10-20-g2r3/probe-volunteer-door-in-wing-desktop.png, the wing chip (x 1132 to 1413, y 136 to 160) covers the lower half of the last P of LEADERSHIP; projects door clear (review/runs/2026-10-20-g2r3/probe-projects-door-in-wing-desktop.png). Probe: scratch Playwright script on this build (goTo the door, click enter-wing-<id>, ArrowUp, wait for settled plus 1.2 s; state {stop: '<door>', track: '<wing>', scrollY: 0}). Not caused by F-G2r2 as far as the evidence shows: the projects door, which F-G2r2 did not touch, shows it too. Rail-input (g) checks only the wing exhibit stops, not the door on the wing track. Also noted: exiting from that state works (Return to the aisle lands on the door, main track) and the chip reads 'wing, 1 of 1' while the visitor stands at the door.",
+    "expected": "At a door stop on either track, no HUD element (wing chip, Return to the aisle, rail label) intersects the projected bounds of the door transom title, on desktop and Pixel 7. Options for R6 (with R4): hide the wing head (chip and exit control) or move it below the title band while the current stop is the door on the wing track (Esc and the card still exit), or use the main-track HUD at the door section since the door card offers Step inside again; alternatively R4 frames the door lower on portrait when the wing head is shown.",
+    "check": "Scratch or e2e: at each door, enter the wing, ArrowUp once, wait for settled; assert every visible rail and HUD rect avoids the projected transom title (extend tests/e2e/rail-input.spec.ts (g) to the door on the wing track) on desktop and pixel7; capture both doors on pixel7 in that state and read the transom whole.",
     "status": "open",
-    "round": 2
+    "round": 3
   }
 ]

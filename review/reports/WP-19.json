@@ -3,73 +3,74 @@
   "role": "R11 Experience Reviewer",
   "status": "done",
   "branch": "wp/WP-19",
-  "round": 2,
+  "round": 3,
   "commits": [
     "d7c15e0 docs(review): slice review round 1 scorecard and findings (round 1)",
-    "538d6dd docs(review): slice review round 2 scorecard and findings",
-    "<this commit> docs(review): add the WP-19 round 2 report"
+    "538d6dd docs(review): slice review round 2 scorecard and findings (round 2)",
+    "<this commit> docs(review): slice review round 3 scorecard, findings and stills"
   ],
   "changedFiles": [
-    "review/runs/2026-10-20-g2r2/scorecard.md",
-    "review/runs/2026-10-20-g2r2/scores.json",
-    "review/runs/2026-10-20-g2r2/<stop>-<desktop|pixel7>.json (14 capture stats records: lobby, verafin, projects-door, mysa, volunteer-door, sdsj, desk)",
+    "review/runs/2026-10-20-g2r3/scorecard.md",
+    "review/runs/2026-10-20-g2r3/scores.json",
+    "review/runs/2026-10-20-g2r3/probe-rects.json",
+    "review/runs/2026-10-20-g2r3/<stop>-<desktop|pixel7>.json (16 capture stats records: lobby, verafin, projects-door, mysa, volunteer-door, sdsj, desk on both; klarup and finance-tracker on desktop)",
+    "review/runs/2026-10-20-g2r3/stills/*.png (10 proposed reference stills, 1.9 MB, force-added past the review/runs/**/*.png ignore rule as R0 asked)",
     "review/findings.json",
-    "review/rubric.md",
     "review/reports/WP-19.json"
   ],
   "acceptance": [
     {
       "id": "A1",
       "criterion": "Complete scorecard: every slice stop x D1 to D6 x desktop and Pixel 7, each with a screenshot path; averages computed",
-      "command": "PORT=4184 CAPTURE_DIR=review/runs/2026-10-20-g2r2 CAPTURE_DIALOGS=1 [CAPTURE_TIER=high] CAPTURE_STOPS=lobby,verafin,projects-door,mysa,volunteer-door,sdsj,desk npx playwright test --grep @capture --project=desktop|pixel7",
+      "command": "PORT=4174 CAPTURE_DIR=review/runs/2026-10-20-g2r3 CAPTURE_DIALOGS=1 CAPTURE_TIER=high CAPTURE_STOPS=lobby,verafin,projects-door,klarup,finance-tracker,mysa,volunteer-door,sdsj,desk npx playwright test --grep @capture --project=desktop; same without CAPTURE_TIER and with CAPTURE_STOPS=lobby,verafin,projects-door,mysa,volunteer-door,sdsj,desk --project=pixel7",
       "result": "pass",
-      "evidence": "Capture 7 passed (desktop, 1.9 min) and 7 passed (pixel7, 52 s). 60 of 60 cells (5 stops after F-035 removed safe-sip) scored in scores.json and scorecard.md, each with a reason and a path; per-stop, per-dimension, per-viewport and overall averages computed (checked by script), plus round 1 recomputed on the same 5 stops. 320 px grayscale thumbnails made for every desktop stop (verafin-thumb.png is the D6 exhibit reference; there is no safe-sip any more)."
+      "evidence": "Capture 9 passed (desktop, 2.7 min) and 7 passed (pixel7, 57 s) against this build (server on 4174 checked to serve main-CdQY8HBH.js). All 60 cells re-scored from round 3 shots (none carried forward), each with a reason and a path in scores.json and scorecard.md; per-stop, per-dimension, per-viewport and overall averages computed by script and truncated to two decimals. 320 px grayscale thumbnails for every scored desktop stop."
     },
     {
       "id": "A2",
       "criterion": "Valid findings, P0 and P1 counts stated in the scorecard",
       "command": "node -e \"JSON.parse(require('fs').readFileSync('review/findings.json','utf8')).forEach(...)\"",
       "result": "pass",
-      "evidence": "findings ok. 17 findings: round 1 statuses updated in place with a round2 field (fixed 10: F-021 to F-026, F-028, F-030, F-031, F-034; open 4: F-020, F-027, F-032, F-033; withdrawn 1: F-029), new F-036 (P1) and F-037 (P2). Open P0 0, open P1 2, stated in the scorecard's gate table."
+      "evidence": "findings ok. 18 findings. Round 3 field on F-020 (fixed), F-036 (fixed), F-037 (fixed), F-027, F-032, F-033 (open, backlog); new F-038 (P1, open). Open P0 0, open P1 1, open P2 2, open P3 1, stated in the scorecard gate table."
     },
     {
       "id": "A3",
       "criterion": "G2 inputs ready: overall average against 3.5, open P0/P1 list, proposed reference stills",
-      "command": "review/runs/2026-10-20-g2r2/scorecard.md sections 'Result against gate G2' and 'Proposed G2 reference stills'",
+      "command": "review/runs/2026-10-20-g2r3/scorecard.md sections 'Result against gate G2' and 'Proposed G2 reference stills'",
       "result": "pass",
-      "evidence": "Overall 3.65 (desktop 3.80, Pixel 7 3.50; round 1 on the same stops 3.33) clears 3.5, but G2 is not met: open P1 F-020 (desk hidden at 360x640) and F-036 (sdsj rail tooltip over the wall title, desktop), each with stop, viewport and fix. Seven named stills proposed with one line each."
+      "evidence": "Overall 3.74 (224.5/60; desktop 3.83, Pixel 7 3.65; round 2 3.65) clears 3.5. G2 review conditions do not hold: open P1 F-038 (doors reached back from inside a wing: Return to the aisle drawn over the transom title on Pixel 7). Ten named stills committed in stills/ with one line each."
     },
     {
       "id": "R0-checks",
-      "criterion": "R0 notes: 360x640 phone desk framing; sdsj wing title against the rail's No. V1 label on desktop",
-      "command": "scratch Playwright probe on the same build (360x640 Pixel 7 UA, DPR 1; desktop 1440x900 tier high), DOM rects plus screenPos",
+      "criterion": "R0 notes: F-020 at 360x640, F-036 at sdsj/klarup/finance-tracker on desktop, F-037; re-score every cell; stills committed under 4 MB",
+      "command": "scratch Playwright probe on the same build (360x640 and 412x839 Pixel 7 UA, DPR 1; desktop 1440x900 tier high) plus PORT=4174 npx playwright test rail-input --grep '(g)' --project=desktop",
       "result": "pass",
-      "evidence": "360x640 desk: card top 178 px, screenPos('desk') y 259, so the desk is hidden; the end-wall line touches the PDF button (F-020 kept open). sdsj desktop: tooltip x 958 to 1128, y 209 to 238 over the title line x 650 to 1115, y 220 to 250, covering 'LOPERS' (F-036). klarup does not collide."
+      "evidence": "360x640 desk: card top 311, screenPos('desk') y 285, HUD bottom 60, end-wall line from about y 75 (F-020 fixed). Desktop wing stops: current-stop label clipped inset(50%) at rest, chip and exit control above and right of every title; rail-input (g) 1 passed (F-036 fixed). Volunteer door: case, pool and V1 title inside the doorway on both viewports (F-037 fixed). Stills total 1,902,837 bytes."
     }
   ],
   "deviations": [
-    "Served the build on PORT=4184, not 4174: another worktree's serve-dist (wf_9fa377db) already held 4174, so Playwright's reuseExistingServer would have reviewed a different build. The first capture, made against that server, was deleted and redone on 4184.",
-    "Scored 60 cells (5 stops) instead of the brief's 72, because F-035 removed safe-sip; sdsj was captured for context only (placeholder crate until WP-23), like mysa. review/rubric.md notes the new count.",
-    "F-020 is kept open instead of filing a new id: its expected result says 'on portrait phones', and it passes at 412x839 but fails at 360x640. Its viewport field now reads 'pixel7, 360x640 portrait'.",
-    "The round 1 run folder and its report entry were left untouched; round 2 lives in review/runs/2026-10-20-g2r2/ and the round2 field on each finding."
+    "Ten stills (PNGs) are committed in review/runs/2026-10-20-g2r3/stills/ with git add -f, as R0's notes for this round ask; the brief forbids committing PNGs, and .gitignore keeps every other capture and probe PNG out.",
+    "Averages are truncated to two decimals per review/rubric.md ('never rounded up'); round 2's scorecard printed rounded per-stop values (for example 3.92 for 23.5/6), so round 2 values in this scorecard read up to 0.01 lower than in round 2's own tables. Round 2's overall 3.65 is exact and unchanged.",
+    "F-038 was found in a state outside the scored set (a door reached on the wing track). It is filed and gates G2, but it does not change any scored cell, because the protocol scores each stop's main-track shot.",
+    "The probe scripts stayed in the session scratchpad and were not committed, because eslint lints the whole repo; their method is written in the scorecard and in F-038's evidence, and their numbers are in probe-rects.json."
   ],
   "openQuestions": [
     {
-      "question": "Scope fix briefs for the two open P1s before round 3, the last round M2 allows: F-020 (R4 with R6: desk framing point derived from the measured card top, or a shorter portrait desk card) and F-036 (R6: hide or re-anchor the current-stop rail tooltip inside wings).",
+      "question": "G2 review conditions fail only on the new F-038 (P1), and round 3 is M2's last review round. Choose: (a) a scoped F-038 fix brief for R6 (with R4), re-verified by its check alone (pixel7 and desktop door-on-wing-track probe shots plus rail-input (g) extended to the doors), with no new scored round; (b) take G2 to Emeka with F-038 open as a known P1 for his call; or (c) hold G2.",
       "for": "R0",
-      "default": "Round 3 re-captures the five scored stops plus desk at 360x640 and sdsj, klarup and finance-tracker on desktop"
+      "default": "(a): the fix is small and no scored cell depends on it"
     },
     {
-      "question": "Should 360x640 become a standing review viewport? It is the EXPERIENCE section 8.1 fast-path size, but the @capture spec has no project for it, so round 2 used a scratch probe. A pixel-small (360x640) Playwright project or a CAPTURE_VIEWPORT option would need R8.",
-      "for": "R0",
-      "default": "Scratch probe again in round 3"
-    },
-    {
-      "question": "Approve the seven proposed G2 reference stills (scorecard 'Proposed G2 reference stills') and check the preview by hand, including a real trackpad and the scrollbar colour (F-030).",
+      "question": "Approve the ten proposed G2 reference stills (scorecard 'Proposed G2 reference stills', committed in review/runs/2026-10-20-g2r3/stills/) and check the preview by hand: a real trackpad and mouse at the doors and inside a wing, and the scrollbar colour (F-030).",
       "for": "Emeka",
       "default": "ART_DIRECTION section 10 stays empty until approval"
+    },
+    {
+      "question": "Leftovers after the M2 cap go to Emeka's backlog: F-027 (beam across wing titles, P2), F-032 (phone lobby stage behind the hero, P2), F-033 (brass titles read dark, P3).",
+      "for": "R0",
+      "default": "Carried as backlog items into M3 reviews"
     }
   ],
   "depsRequest": [],
-  "notes": "Round 2 of 3 for M2. Overall average 3.65 (bar 3.5; desktop 3.80, Pixel 7 3.50; round 1 on the same 5 stops 3.33). P0 0. Open P1 2: F-020 (desk hidden behind its card at 360x640, fixed at 412x839) and new F-036 (desktop sdsj: rail tooltip drawn over the wall title). Open P2 3 (F-027, F-032, new F-037), open P3 1 (F-033). Fixed: F-021 to F-026, F-028, F-030, F-031, F-034. Withdrawn: F-029 (safe-sip removed). G2 is not met. Run PNGs are gitignored; regenerate them with the brief's commands on aa62a6d using a free PORT. No code, test or spec outside review/ was edited. No copy invents facts, and the Verafin copy guard holds."
+  "notes": "Round 3 of 3 for M2 (last). Overall average 3.74 (bar 3.5; desktop 3.83, Pixel 7 3.65; round 2 3.65). P0 0. Open P1 1: new F-038 (a door reached back from inside its wing keeps the wing HUD, and on Pixel 7 the Return to the aisle button is drawn over the transom title). Fixed this round: F-020 (desk at 360x640 and 412x839), F-036 (sdsj rail label), F-037 (volunteer door). Open P2 2 (F-027, F-032), open P3 1 (F-033), all backlog. G2 review conditions do not hold until F-038 closes; Emeka's approval of the ten stills is still required. Build cd1d563 served on PORT=4174. Run PNGs other than stills/ are gitignored; regenerate with the brief's commands. No code, test or spec outside review/ was edited. No copy invents facts; the Verafin copy guard holds."
 }

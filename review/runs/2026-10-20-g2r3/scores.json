@@ -1,0 +1,342 @@
+{
+  "round": 3,
+  "gate": "G2",
+  "date": "2026-10-20",
+  "build": "cd1d563 (claude/intelligent-sagan-poq45q: round 2 build plus F-G2r2), npm run build, served by scripts/serve-dist.ts on PORT=4174 (checked free and serving this dist: main-CdQY8HBH.js)",
+  "capture": "tests/e2e/capture.spec.ts @capture, ?test=1&mode=museum; desktop 1440x900 at tier=high, pixel7 412x839 at tier medium",
+  "scale": "1 to 5, half points; anchors in docs/ART_DIRECTION.md section 7",
+  "scope": "lobby, verafin, projects-door, volunteer-door, desk; mysa, sdsj, klarup and finance-tracker captured for context, not scored",
+  "previous": "review/runs/2026-10-20-g2r2/scores.json",
+  "scores": {
+    "lobby": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "Unchanged from round 2: deep ink and the first case glowing through the arch, but the top-right beam wedge is still a grey cone behind the portrait and the arch interior is dead.",
+          "review/runs/2026-10-20-g2r3/lobby-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Hero in its scrim at left, arch and Verafin case in the sightline, portrait clear of the rail (F-031 holds).",
+          "review/runs/2026-10-20-g2r3/lobby-desktop.png"
+        ],
+        "D3": [
+          4.5,
+          "Name, role, degree and three links read at a glance; the 3D COMMIT HISTORY title is crisp.",
+          "review/runs/2026-10-20-g2r3/lobby-desktop.png"
+        ],
+        "D4": [
+          4,
+          "Arch, glowing first case and the year strip tell the newest-first walk; nothing overstated.",
+          "review/runs/2026-10-20-g2r3/lobby-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Brass arch, portrait frame and rail share one palette with the exhibit stops.",
+          "review/runs/2026-10-20-g2r3/lobby-desktop.png"
+        ],
+        "D6": [
+          3.5,
+          "In the thumbnail the arch reads as one object, but the case inside it is a small grey patch and the hero dominates.",
+          "review/runs/2026-10-20-g2r3/lobby-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3,
+          "The arch is a faint brass outline behind the hero; the bottom 40% is an empty dark floor (F-032 unchanged).",
+          "review/runs/2026-10-20-g2r3/lobby-pixel7.png"
+        ],
+        "D2": [
+          3,
+          "The arch and first case sit behind the hero buttons, not in clear space; the stage has no focal point of its own.",
+          "review/runs/2026-10-20-g2r3/lobby-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Hero text and buttons read cleanly; no ghost label behind the h1.",
+          "review/runs/2026-10-20-g2r3/lobby-pixel7.png"
+        ],
+        "D4": [
+          3,
+          "The stage adds little to the hero: the arch and case are too faint to say \"a gallery starts here\".",
+          "review/runs/2026-10-20-g2r3/lobby-pixel7.png"
+        ],
+        "D5": [
+          3.5,
+          "Consistent tokens and HUD; the stage is so dim that it looks unfinished beside the exhibit stops.",
+          "review/runs/2026-10-20-g2r3/lobby-pixel7.png"
+        ],
+        "D6": [
+          2.5,
+          "At reduced size there is no object to read, only text over a dark field.",
+          "review/runs/2026-10-20-g2r3/lobby-pixel7.png"
+        ]
+      }
+    },
+    "verafin": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "Warm pool, grounded plinth and the wall title in the wash; the left half is still a featureless void and no next pool reads ahead.",
+          "review/runs/2026-10-20-g2r3/verafin-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Case on the 62% point, title above it, card at left; the large dead area at left keeps it off 5.",
+          "review/runs/2026-10-20-g2r3/verafin-desktop.png"
+        ],
+        "D3": [
+          4,
+          "Card and rail label legible; the NASDAQ VERAFIN wall title is dark brass on the wash and reads at a second look.",
+          "review/runs/2026-10-20-g2r3/verafin-desktop.png"
+        ],
+        "D4": [
+          4,
+          "Column, cartridges and bar grid say reporting engine; no detection imagery; the card copy keeps the copy guard.",
+          "review/runs/2026-10-20-g2r3/verafin-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Same case, plinth and title system as the wing stops.",
+          "review/runs/2026-10-20-g2r3/verafin-desktop.png"
+        ],
+        "D6": [
+          3.5,
+          "The thumbnail reads as a case with a column and bars, but the object is small inside the case.",
+          "review/runs/2026-10-20-g2r3/verafin-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Pool, case and title in a dark room; walls still featureless.",
+          "review/runs/2026-10-20-g2r3/verafin-pixel7.png"
+        ],
+        "D2": [
+          4,
+          "Case at about the 36% point with the title above and a compact card below.",
+          "review/runs/2026-10-20-g2r3/verafin-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Card large and clear; the wall title reads in the wash.",
+          "review/runs/2026-10-20-g2r3/verafin-pixel7.png"
+        ],
+        "D4": [
+          4,
+          "The object reads larger than on desktop; column and bars clear.",
+          "review/runs/2026-10-20-g2r3/verafin-pixel7.png"
+        ],
+        "D5": [
+          4,
+          "Consistent with the desktop stop and the wing stops.",
+          "review/runs/2026-10-20-g2r3/verafin-pixel7.png"
+        ],
+        "D6": [
+          4,
+          "At reduced size the case with its column and stepped bars reads as one object.",
+          "review/runs/2026-10-20-g2r3/verafin-pixel7.png"
+        ]
+      }
+    },
+    "projects-door": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "Dark room beyond the brass door with one pool; the left 40% of the frame is empty black.",
+          "review/runs/2026-10-20-g2r3/projects-door-desktop.png"
+        ],
+        "D2": [
+          3.5,
+          "Door near the 62% point, PROJECTS transom whole; the doorway is angled and the room behind it is small.",
+          "review/runs/2026-10-20-g2r3/projects-door-desktop.png"
+        ],
+        "D3": [
+          3.5,
+          "Transom reads; the P2 wall title inside is faint and the beam still crosses it (F-027).",
+          "review/runs/2026-10-20-g2r3/projects-door-desktop.png"
+        ],
+        "D4": [
+          3.5,
+          "A door with a lit case inside says \"a room you may enter\"; only one of the two cases shows.",
+          "review/runs/2026-10-20-g2r3/projects-door-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Brass door, case and title system match the aisle.",
+          "review/runs/2026-10-20-g2r3/projects-door-desktop.png"
+        ],
+        "D6": [
+          4,
+          "The thumbnail reads as one doorway with a lit case inside.",
+          "review/runs/2026-10-20-g2r3/projects-door-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Dark room, one pool, warm brass jambs (F-023 holds at medium).",
+          "review/runs/2026-10-20-g2r3/projects-door-pixel7.png"
+        ],
+        "D2": [
+          3.5,
+          "Door fills the frame, transom whole above it; the case sits left of centre.",
+          "review/runs/2026-10-20-g2r3/projects-door-pixel7.png"
+        ],
+        "D3": [
+          4,
+          "PROJECTS reads clearly; the card is large and clean.",
+          "review/runs/2026-10-20-g2r3/projects-door-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "Door plus case plus card tell the wing; the P2 title is too faint to add anything.",
+          "review/runs/2026-10-20-g2r3/projects-door-pixel7.png"
+        ],
+        "D5": [
+          3.5,
+          "Consistent; the inner room is murkier than the aisle stops.",
+          "review/runs/2026-10-20-g2r3/projects-door-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reads as a doorway, the case inside is small.",
+          "review/runs/2026-10-20-g2r3/projects-door-pixel7.png"
+        ]
+      }
+    },
+    "volunteer-door": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "F-037 puts the lone case and its pool inside the doorway, so the room now has a lit focus; the cut neighbour case and partial wall text at the far left edge add clutter.",
+          "review/runs/2026-10-20-g2r3/volunteer-door-desktop.png"
+        ],
+        "D2": [
+          3.5,
+          "Door near the 62% point with the case inside the opening and the transom whole (round 2: 3, case behind the jamb); the left edge still crops a neighbouring case.",
+          "review/runs/2026-10-20-g2r3/volunteer-door-desktop.png"
+        ],
+        "D3": [
+          3.5,
+          "VOLUNTEER & LEADERSHIP reads whole; the V1 wall title inside is faint and crossed by the beam (F-027).",
+          "review/runs/2026-10-20-g2r3/volunteer-door-desktop.png"
+        ],
+        "D4": [
+          3.5,
+          "A door with one lit case says \"a room with one exhibit\", matching the card; the case content (placeholder crate) adds nothing yet.",
+          "review/runs/2026-10-20-g2r3/volunteer-door-desktop.png"
+        ],
+        "D5": [
+          3.5,
+          "Now built like the projects door; the cropped neighbour at the left edge is the one inconsistency.",
+          "review/runs/2026-10-20-g2r3/volunteer-door-desktop.png"
+        ],
+        "D6": [
+          4,
+          "The thumbnail reads as one doorway with a lit case inside (round 2: 3.5).",
+          "review/runs/2026-10-20-g2r3/volunteer-door-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Dark room with the lone case in its pool, now inside the doorway (round 2: 3).",
+          "review/runs/2026-10-20-g2r3/volunteer-door-pixel7.png"
+        ],
+        "D2": [
+          3.5,
+          "Door fills the frame with the case near the 36% height and the transom whole (round 2: 3).",
+          "review/runs/2026-10-20-g2r3/volunteer-door-pixel7.png"
+        ],
+        "D3": [
+          3.5,
+          "Transom large and legible; the V1 title inside is faint and beam-crossed.",
+          "review/runs/2026-10-20-g2r3/volunteer-door-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "Door, one case and the card agree: one exhibit inside.",
+          "review/runs/2026-10-20-g2r3/volunteer-door-pixel7.png"
+        ],
+        "D5": [
+          3.5,
+          "Consistent with the projects door on the phone.",
+          "review/runs/2026-10-20-g2r3/volunteer-door-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reads as a doorway; the case is small and dim.",
+          "review/runs/2026-10-20-g2r3/volunteer-door-pixel7.png"
+        ]
+      }
+    },
+    "desk": {
+      "desktop": {
+        "D1": [
+          4.5,
+          "One warm pool on walnut, a faint shaft and the end-wall line: the mood target (unchanged).",
+          "review/runs/2026-10-20-g2r3/desk-desktop.png"
+        ],
+        "D2": [
+          4.5,
+          "Desk on the 62% point, line above, card at left; balanced.",
+          "review/runs/2026-10-20-g2r3/desk-desktop.png"
+        ],
+        "D3": [
+          4.5,
+          "Card links clear; the end-wall line reads as gallery lettering.",
+          "review/runs/2026-10-20-g2r3/desk-desktop.png"
+        ],
+        "D4": [
+          3.5,
+          "Postcard, envelope, catalogue and ledger are small and hard to tell apart without the card.",
+          "review/runs/2026-10-20-g2r3/desk-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Consistent with the aisle; the desk is the only unglazed object, as specified.",
+          "review/runs/2026-10-20-g2r3/desk-desktop.png"
+        ],
+        "D6": [
+          4,
+          "The thumbnail reads as one desk under one light.",
+          "review/runs/2026-10-20-g2r3/desk-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Now matches the desktop mood: the end-wall line high, the shaft falling onto the walnut desk, one warm pool (round 2: 3.5).",
+          "review/runs/2026-10-20-g2r3/desk-pixel7.png"
+        ],
+        "D2": [
+          4,
+          "F-020: the whole desk top and its four objects sit above the card (desk point y 428, card top 531), the line clear of the HUD; the desk front is still cut by the card (round 2: 3).",
+          "review/runs/2026-10-20-g2r3/desk-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Two-column card links and the end-wall line read cleanly.",
+          "review/runs/2026-10-20-g2r3/desk-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "Desk and objects are visible now, but the four objects are too small to name on a phone (round 2: 3).",
+          "review/runs/2026-10-20-g2r3/desk-pixel7.png"
+        ],
+        "D5": [
+          4,
+          "Same light, walnut and lettering as the desktop desk (round 2: 3.5).",
+          "review/runs/2026-10-20-g2r3/desk-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reads as one desk under one light at reduced size; the objects are specks (round 2: 3).",
+          "review/runs/2026-10-20-g2r3/desk-pixel7.png"
+        ]
+      }
+    }
+  }
+}

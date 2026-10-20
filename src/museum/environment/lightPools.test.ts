@@ -4,9 +4,10 @@ import { content } from '../../content/index';
 import { tokens } from '../../design/tokens';
 import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
 import { slotPlacard } from '../exhibits/_kit/placard';
-import { computeLayout, type Room } from '../rail/layout';
+import { ARCH_Z, computeLayout, type Room } from '../rail/layout';
 import { lightTargets, rampColor, WASH_BAY_WIDTH, WASH_TITLE_PAD } from './lightPlan';
 import {
+  ARCH_POOL,
   floorPaint,
   MAX_LIGHTMAP_SIZE,
   paintFloorZones,
@@ -96,6 +97,24 @@ describe('floor lightmaps', () => {
     expect(lit).toBeGreaterThan(200);
     expect(under).toBeLessThan(lit * 0.8);
     expect(between).toBeLessThan(100);
+  });
+});
+
+describe('arch threshold pool (F-032)', () => {
+  it('lights the lobby floor in front of the arch, light-0, painted into the lobby zone', () => {
+    const arch = floorPaint(layout).pools.filter((p) => p.kind === 'arch');
+    expect(arch).toHaveLength(1);
+    expect(arch[0]).toMatchObject({
+      center: [0, ARCH_Z + ARCH_POOL.dz],
+      radius: ARCH_POOL.radius,
+      alpha: ARCH_POOL.alpha,
+      color: rampColor(0),
+    });
+    const lobby = room('lobby');
+    const zone = paintZone(lobby, floorPaint(layout));
+    const center = byteAt(zone, lobby, 0, ARCH_Z + ARCH_POOL.dz);
+    const outside = byteAt(zone, lobby, -5.5, 5.5);
+    expect(center).toBeGreaterThan(outside + 100);
   });
 });
 

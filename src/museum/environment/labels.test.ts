@@ -15,6 +15,7 @@ import {
   END_WALL,
   FOUNDATIONS_SIGN,
   labelPlacements,
+  labelShown,
   MIN_CAP_PX,
   projectedCapPx,
   ROOM_NAME_CAP,
@@ -120,6 +121,13 @@ describe('3D label legibility (EXPERIENCE §5.4)', () => {
     const expected = (0.28 / (2 * 8 * Math.tan((25 * Math.PI) / 180))) * 900;
     expect(projectedCapPx(0.28, 8, VIEWPORTS[0]!)).toBeCloseTo(expected, 9);
     expect(expected).toBeCloseTo(33.77, 1);
+  });
+
+  it('hides only COMMIT HISTORY, and only on portrait screens (F-032)', () => {
+    for (const p of labelPlacements(layout)) {
+      expect(labelShown(p.label, 1440 / 900), p.label.text).toBe(true);
+      expect(labelShown(p.label, 412 / 839), p.label.text).toBe(p.label !== COMMIT_HISTORY);
+    }
   });
 
   it('exempts only the year numerals', () => {

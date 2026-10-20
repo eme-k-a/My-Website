@@ -17,7 +17,7 @@ import { CanvasTexture, ClampToEdgeWrapping, Matrix4, RepeatWrapping, SRGBColorS
 import { tokens } from '../../design/tokens';
 import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
 import { rng } from '../exhibits/_kit/noise';
-import { AISLE_HALF, type Layout, type Room } from '../rail/layout';
+import { AISLE_HALF, ARCH_Z, type Layout, type Room } from '../rail/layout';
 import { lightTargets, rampColor, WASH_BAY_WIDTH, type TargetId, type WashBay } from './lightPlan';
 import type { SeamLine } from './shell';
 
@@ -30,6 +30,12 @@ export const MAX_LIGHTMAP_SIZE = 2048;
 export const FLOOR_BASE = 0.05;
 /** The door pool's center sits this far into the aisle from the door line. */
 export const DOOR_POOL_INSET = 0.6;
+/**
+ * The arch threshold pool on the lobby floor (F-032): centered ARCH_POOL_DZ in front of the arch,
+ * light-0. From the lobby stop on a phone it lands in the lower part of the first viewport, under
+ * the hero, so the stage shows below "Begin the walk" and invites the first swipe.
+ */
+export const ARCH_POOL = { dz: 4, radius: 2.6, alpha: 0.85 } as const;
 /** Desk footprint for its contact patch (Desk.tsx). */
 export const DESK_FOOTPRINT = [1.8, 0.7] as const;
 /**
@@ -47,7 +53,7 @@ export const WALL_WASH_INTENSITY = 40;
 export const WALL_WASH_PLAIN_V = 0.03;
 
 export interface PoolSpec {
-  kind: 'pool' | 'door';
+  kind: 'pool' | 'door' | 'arch';
   /** The target or door it belongs to. */
   for: string;
   center: [number, number];
@@ -92,6 +98,14 @@ export function floorPaint(layout: Layout): FloorPaint {
       color: rampColor(0),
     });
   }
+  pools.push({
+    kind: 'arch',
+    for: 'arch',
+    center: [0, ARCH_Z + ARCH_POOL.dz],
+    radius: ARCH_POOL.radius,
+    alpha: ARCH_POOL.alpha,
+    color: rampColor(0),
+  });
   const contacts: ContactSpec[] = [];
   for (const slot of layout.slots) {
     if (slot.plinth === 'none') continue;

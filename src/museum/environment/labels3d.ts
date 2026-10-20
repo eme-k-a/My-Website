@@ -98,6 +98,15 @@ export function yearLabel(year: number): EnvironmentLabel {
   };
 }
 
+/**
+ * Whether a label shows at this viewport aspect (width / height). On portrait screens the lobby
+ * hero covers the top of the stage, and "COMMIT HISTORY" (which repeats the DOM title) ghosted
+ * through the scrim right behind the h1 (F-032), so it hides there; every other label shows.
+ */
+export function labelShown(label: EnvironmentLabel, aspect: number): boolean {
+  return !(label === COMMIT_HISTORY && aspect < 1);
+}
+
 // ---------------------------------------------------------------------------------------------
 // Placement
 

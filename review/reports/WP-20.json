@@ -1,0 +1,186 @@
+{
+  "wp": "WP-20",
+  "role": "R5 (Builder A), with R2 for the two concept verdicts",
+  "status": "done",
+  "branch": "claude/m3-wp-20",
+  "commits": [
+    "e57fb74 feat(exhibit-mysa): warm start",
+    "d02f968 feat(exhibit-wailo): the deep link",
+    "docs(concepts): mysa and wailo verdicts (this commit, with this report)"
+  ],
+  "changedFiles": [
+    "src/museum/exhibits/mysa/index.ts",
+    "src/museum/exhibits/mysa/WarmStart.tsx",
+    "src/museum/exhibits/mysa/dial.ts",
+    "src/museum/exhibits/mysa/dial.test.ts",
+    "src/museum/exhibits/mysa/README.md",
+    "src/museum/exhibits/wailo/index.ts",
+    "src/museum/exhibits/wailo/DeepLink.tsx",
+    "src/museum/exhibits/wailo/link.ts",
+    "src/museum/exhibits/wailo/link.test.ts",
+    "src/museum/exhibits/wailo/README.md",
+    "review/concepts/mysa.md",
+    "review/concepts/wailo.md",
+    "review/reports/WP-20.json"
+  ],
+  "measurements": {
+    "mysa": {
+      "triangles": 4820,
+      "drawCalls": 12,
+      "inBounds": true,
+      "budgetDeclared": { "triangles": 6000, "drawCalls": 14, "textureMB": 0 },
+      "chunkGzipKB": 2.43
+    },
+    "wailo": {
+      "triangles": 2598,
+      "drawCalls": 13,
+      "drawCallsWithPulse": 14,
+      "inBounds": true,
+      "arcPeakY": 0.62,
+      "arcTopWithTubeY": 0.625,
+      "budgetDeclared": { "triangles": 5000, "drawCalls": 16, "textureMB": 0 },
+      "chunkGzipKB": 3.66
+    },
+    "museumChunkGzipKB": { "before": 319.14, "after": 319.14 },
+    "verafinChunkGzipKB": 2.03,
+    "note": "Triangles and draw calls from stats().exhibits under ?test=1, identical on desktop, pixel7 and desktop at tier high. Chunk sizes from npm run check:budgets on the final build. In the still pose the wailo pulse is hidden, so it is not counted."
+  },
+  "evidencePaths": {
+    "mysa": {
+      "desktop": "out/wp20/mysa-desktop.png",
+      "pixel7": "out/wp20/mysa-pixel7.png",
+      "desktopHigh": "out/wp20/high/mysa-desktop.png",
+      "dialog": "out/wp20/mysa-dialog-desktop.png, out/wp20/mysa-dialog-pixel7.png",
+      "thumbnail": "out/wp20/mysa-thumb.png",
+      "thumbnailHigh": "out/wp20/high/mysa-thumb.png",
+      "stats": "out/wp20/mysa-desktop.json, out/wp20/mysa-pixel7.json, out/wp20/high/mysa-desktop.json",
+      "motion": "out/wp20/motion/mysa-0.png, out/wp20/motion/mysa-moved-*.png"
+    },
+    "wailo": {
+      "desktop": "out/wp20/wailo-desktop.png",
+      "pixel7": "out/wp20/wailo-pixel7.png",
+      "desktopHigh": "out/wp20/high/wailo-desktop.png",
+      "dialog": "out/wp20/wailo-dialog-desktop.png, out/wp20/wailo-dialog-pixel7.png",
+      "thumbnail": "out/wp20/wailo-thumb.png",
+      "thumbnailHigh": "out/wp20/high/wailo-thumb.png",
+      "stats": "out/wp20/wailo-desktop.json, out/wp20/wailo-pixel7.json, out/wp20/high/wailo-desktop.json",
+      "motion": "out/wp20/motion/wailo-0.png, out/wp20/motion/wailo-moved-*.png (pulse on the arc in moved-0 and moved-9, bar flash in moved-2)"
+    },
+    "scratch": "out/ is gitignored; the WP-20 commands regenerate every path"
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "npm run verify and the registry test pass (mysa and wailo)",
+      "command": "npm run verify && npx vitest run --project unit src/museum/exhibits",
+      "result": "pass",
+      "evidence": "verify: lint, prettier and typecheck clean, 68 files / 767 unit tests pass; exhibits project includes registry.test.ts plus 10 dial.test.ts and 11 link.test.ts tests"
+    },
+    {
+      "id": "A2",
+      "criterion": "Exhibit chunk at most 40 KB gzip",
+      "command": "npm run build && npm run check:budgets",
+      "result": "pass",
+      "evidence": "exhibits/mysa 2.43 KB, exhibits/wailo 3.66 KB, verafin 2.03 KB; entry 94.83, museum 319.14; budgets ok; check:glyphs ok (35 labels)"
+    },
+    {
+      "id": "A3",
+      "criterion": "exhibit-contract.spec.ts: inBounds, triangles <= 20000, click at screenPos opens the dialog with the title, Esc returns focus to open-<id>, frames identical 3 s apart; desktop and pixel7",
+      "command": "npx playwright test tests/e2e/exhibit-contract.spec.ts --grep \"mysa|wailo\" --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "4 passed (48.1 s): mysa and wailo on desktop and pixel7, every step including the focus return"
+    },
+    {
+      "id": "A4",
+      "criterion": "R2 checklist: 0 unchecked boxes and Verdict PASS in review/concepts/<id>.md",
+      "command": "grep -c '^- \\[ \\]' review/concepts/mysa.md review/concepts/wailo.md",
+      "result": "pass",
+      "evidence": "grep prints 0 for both; Verdict PASS, 2026-10-20, signed R2 (Art Director), WP-20, one evidence line per box"
+    },
+    {
+      "id": "A5",
+      "criterion": "Wailo arc peak at or below local y 0.675, proven by inBounds",
+      "command": "same spec; npx vitest run src/museum/exhibits/wailo",
+      "result": "pass",
+      "evidence": "Solved curve peak 0.620 (0.625 with the tube); inBounds true on desktop and pixel7; link.test.ts checks peak plus pulse radius <= 0.675"
+    }
+  ],
+  "otherChecks": [
+    "Motion probe (scratch spec, pixel7, &idle=1 with pointer nudges): mysa canvas changed within 76 frames, wailo within 132; captures show the pulse on the arc and the bar flash",
+    "Reduced-motion probe (reducedMotion 'reduce' plus &idle=1): mysa and wailo canvases byte-identical over 12 s",
+    "tests/e2e/greybox.spec.ts on desktop and pixel7: every stop within the draw-call budget (pass)",
+    "tests/e2e/exhibits.spec.ts on pixel7: 'a blocked exhibit chunk shows the crate' now fails, as expected: it asserts that mysa has no exhibit folder and shows the crate (R8 follow-up below); the other exhibits.spec tests pass",
+    "npm run check:copy: ok; no U+2014 in any WP-20 file; no phone number; no 3D text"
+  ],
+  "deviations": [
+    {
+      "item": "Mysa key ring orientation (EXPERIENCE §4.2: ring axis along local X, key along local X)",
+      "change": "The ring, its stand and the key turn together 35 degrees about the stand's vertical axis, the bow toward the camera. Sizes, the ring center and the stand are unchanged; the key still runs along the ring's axis.",
+      "why": "From the stop camera (local +Z) a ring with its axis on X is edge-on: the first capture showed a brass cross, not a key passing through a ring (checklist box 4)."
+    },
+    {
+      "item": "Mysa dial segments as four meshes, not instances",
+      "change": "Four meshes sharing one TorusGeometry shape, each with its own accentGlow clone.",
+      "why": "Each segment animates its own emissiveIntensity; an InstancedMesh shares one material and instanceColor does not reach emissive."
+    },
+    {
+      "item": "Mysa slab, Wailo phone and tag radii",
+      "change": "Built as extruded rounded rectangles (corner radius as specified, small rounded edges) with creased normals, not drei RoundedBox.",
+      "why": "drei RoundedBox needs radius <= depth / 2; the slab (0.03 on 0.05) and the phone (0.025 on 0.022) exceed it."
+    },
+    {
+      "item": "Mysa bezel z",
+      "change": "Same center in the face plane, z -0.051 instead of -0.043, so it sits on the face.",
+      "why": "At the dial's z the 4 mm tube floats 8 mm off the slab."
+    },
+    {
+      "item": "Wailo envelope center y",
+      "change": "0.076 instead of 0.07.",
+      "why": "Tilted 20 degrees, a center at 0.07 sinks its front edge 6 mm into the tray; 0.076 seats it on the tray top."
+    },
+    {
+      "item": "Wailo tag",
+      "change": "The tag leans back 15 degrees on the stand's front edge, its bottom on the tray; the 0.048 chain runs from the phone's right side, 3 cm above the lower right corner, to the tag top.",
+      "why": "The phone's lower right corner is about 2.5 cm above the tray inside the stand, so a 5 cm chain cannot hang a 3.5 cm tag straight down without passing through the stand and tray."
+    },
+    {
+      "item": "Wailo arc glow level",
+      "change": "Steady emissive 0.5 (its own clone).",
+      "why": "EXPERIENCE §4.3 says only \"arc at rest glow\"; 0.5 makes the arc read as glowing (checklist box 1) while the 1.4 pulse and the 1.6 bar flash still stand out. The library rest level 0.15 was not tried."
+    },
+    {
+      "item": "Wailo reset-bar flash",
+      "change": "0.4 to 1.6 to 0.4 over 1.0 s (0.5 s ramps), not 0.8 s.",
+      "why": "R0 ruling 2026-10-15 in the brief Notes and RULINGS."
+    },
+    {
+      "item": "Still pose under ?test=1 and tier low",
+      "change": "Both exhibits show their reduced-motion pose under reduced motion, ?test=1 without &idle=1, and tier low (clockFrozen from ../_kit/clock).",
+      "why": "EXPERIENCE §4 'Deterministic' asks for the reduced-motion pose under ?test=1; unlike Verafin, t = 0 of these loops is not that pose. The idle stop still freezes mid-cycle (WP-16 ruling)."
+    }
+  ],
+  "missingSliceSpecsForWP17": [
+    "R8: tests/e2e/exhibits.spec.ts 'a blocked exhibit chunk shows the crate' asserts that mysa has no exhibit folder; it now fails. Drop the mysa crate step (or point it at an id without a folder, such as cfia until WP-21 lands).",
+    "R8: add mysa and wailo to BUILT in tests/e2e/exhibits.spec.ts, so the idle-motion and reduced-motion tests cover them (the scratch probe above passes both). mysa's first change comes at 0.5 s of exhibit time and wailo's at 0.5 s, well inside MOTION_WITHIN_FRAMES.",
+    "R8 / CI: visual baselines for the mysa and wailo stops and dialogs on desktop and pixel7 (CI only; none committed here)."
+  ],
+  "openQuestions": [
+    {
+      "question": "Accept the 35 degree turn of the Mysa ring-and-key assembly, or keep the spec's axis on local X (edge-on from the camera)?",
+      "for": "R0",
+      "default": "Turned 35 degrees; EXPERIENCE §4.2 may want one line saying so."
+    },
+    {
+      "question": "Wailo arc level: is 0.5 an acceptable reading of \"arc at rest glow\", or should the arc hold the library rest 0.15?",
+      "for": "R0 / R2",
+      "default": "0.5, a one-constant change (GLOW.arc in link.ts)."
+    },
+    {
+      "question": "The R2 checklist passes ran in the builder session, as in WP-12. Should R11 confirm both verdicts at G3?",
+      "for": "R0",
+      "default": "Both verdicts PASS with one evidence line per box and the session noted."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Branch claude/m3-wp-20 starts from the integration tip 8716687. No changes outside the WP-20 globs; no tests/** written (the motion probe ran from a scratch config outside the repo). Patterns copied from Verafin (tray radius and tessellation, manifest shape, pure measurement module plus Node tests); no cross-exhibit imports. The rounded-slab helper and creased normals are copied into both folders because exhibits never import each other; R3 may want a kit helper if WP-21 to WP-24 need the same."
+}

@@ -25,7 +25,7 @@ The rubric itself is `docs/ART_DIRECTION.md` section 7: six dimensions, D1 to D6
 1. Every cell (stop x D1 to D6 x desktop and Pixel 7) gets a score from 1 to 5 in half points, a one-line reason, and the screenshot path it rests on. A score without a path does not count.
 2. Scores are relative to the anchors, never absolute: 3 means the 3 anchor describes the shot; 4 means it is clearly past the 3 anchor but misses at least one clause of the 5 anchor; 5 means every clause of the 5 anchor holds.
 3. Copy that is draft or a `[placeholder: ...]` is not scored as a defect. Copy that invents facts about Emeka or overstates the Verafin work is a P0.
-4. Stops outside the round's scope (for G2: `mysa`, a placeholder) are captured for context and may carry findings, but are not scored and do not enter the averages.
+4. Stops outside the round's scope (for G2: `mysa`, a placeholder; from round 2 also `sdsj`, a placeholder crate until WP-23) are captured for context and may carry findings, but are not scored and do not enter the averages.
 5. Dialogs are reviewed for D2 and D3 and may carry findings. They are not a separate row in the averages; a dialog defect is filed as a finding against its stop.
 6. A round is compared with the previous scorecard and with the approved reference stills in `docs/ART_DIRECTION.md` section 10; the scorecard says what moved and why.
 
@@ -37,7 +37,9 @@ All averages are plain arithmetic means of the half-point scores, reported to tw
 - per stop: the mean of its twelve scores (both viewports);
 - per dimension: the mean over all scored stops, for each viewport and for both together;
 - per viewport: the mean of all its scores;
-- overall: the mean of every scored cell (for G2: 6 stops x 6 dimensions x 2 viewports = 72 cells).
+- overall: the mean of every scored cell (for G2 round 1: 6 stops x 6 dimensions x 2 viewports = 72 cells; from round 2, after F-035 removed safe-sip: 5 stops, 60 cells).
+
+When the scored set changes between rounds, the scorecard also recomputes the previous round on the new set, so the comparison is like for like.
 
 Gate G2 needs an overall average of at least 3.5, no open P0 or P1, and Emeka's approval of the reference stills and the preview. The improvement loop stops after two consecutive rounds with no new P0 or P1, at most two new P2 and averages of at least 4.0 (PLAN section 6).
 

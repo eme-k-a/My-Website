@@ -131,3 +131,12 @@ claude/intelligent-sagan-poq45q. Act as R0, the orchestrator described in docs/P
 3. Delete `review/wip/` in the first commit after WP-11 and WP-12 are integrated.
 4. Netlify: the site exists (section 5). WP-18 waits for Emeka's two GitHub secrets.
 
+
+## 9. Automatic resume after usage limits (2026-10-20)
+
+A scheduled task, "Resume the build after usage-limit resets" (`trig_01CCWXnvLZo9vfUJxDjk4YDi`), fires into this session every hour at minute 16.
+- **Resume:** if a usage limit or a container restart stopped an agent or a workflow, it resumes the work and carries on.
+- **Wait:** if work is still running, or the next step needs Emeka, it does nothing.
+- **Delete:** it deletes itself when the build is finished, or when Emeka says to stop. Emeka can also stop it from the scheduled tasks list in the Claude app.
+
+A new session that replaces this one should delete it, or point it at the new session.

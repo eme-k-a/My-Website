@@ -40,8 +40,8 @@ describe('stopDistance (ARCHITECTURE §8.5)', () => {
     expect(stopDistance(layout, 'projects-door', 'klarup')).toBe(1);
     const p = mainIds.indexOf('projects-door');
     const v = mainIds.indexOf('volunteer-door');
-    expect(stopDistance(layout, 'finance-tracker', 'sdsj')).toBe(2 + Math.abs(p - v) + 2);
-    expect(stopDistance(layout, 'safe-sip', 'wailo')).toBe(1 + mainIds.indexOf('wailo') - v);
+    expect(stopDistance(layout, 'finance-tracker', 'sdsj')).toBe(2 + Math.abs(p - v) + 1);
+    expect(stopDistance(layout, 'sdsj', 'wailo')).toBe(1 + mainIds.indexOf('wailo') - v);
   });
 
   it('is symmetric and zero only on the diagonal', () => {

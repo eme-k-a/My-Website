@@ -50,7 +50,7 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
       ['verafin', 3.49],
       ['mysa', -3.49],
       ['klarup', -11.49],
-      ['safe-sip', 11.49],
+      ['sdsj', 11.49],
       ['mun', -5.99],
       // In front of the 2 cm walnut backing panel on the right wall.
       ['certifications', 5.97],
@@ -119,7 +119,6 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
     // The last line sits at 2.14 m whatever the line count; the first one a line step higher.
     expect(wing.organization.baselineY - step).toBeCloseTo(2.14, 9);
     expect(wing.number.baselineY).toBeCloseTo(wing.organization.baselineY + 0.14 + 0.06, 9);
-    expect(specOf('safe-sip').organization).toMatchObject({ baselineY: 2.14, lines: 1 });
     const mun = specOf('mun');
     expect(mun.organization).toMatchObject({ capHeight: 0.14, text: 'MEMORIAL\nUNIVERSITY' });
     expect(mun.number.baselineY).toBeCloseTo(2.75, 2);

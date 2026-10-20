@@ -75,8 +75,8 @@ describe('ids, order and wings', () => {
     expect(starts).toEqual([...starts].sort().reverse());
   });
 
-  it('volunteer entries are newest first: safe-sip, sdsj', () => {
-    expect(content.volunteer.map((e) => e.id)).toEqual(['safe-sip', 'sdsj']);
+  it('the volunteer wing holds only sdsj', () => {
+    expect(content.volunteer.map((e) => e.id)).toEqual(['sdsj']);
     const starts = content.volunteer.map((e) => e.dates.start);
     expect(starts).toEqual([...starts].sort().reverse());
   });
@@ -246,7 +246,6 @@ describe('exhibits', () => {
       cfia: 'The Ticket Spindle',
       klarup: 'The Climb',
       'finance-tracker': 'The Balance',
-      'safe-sip': 'Tamper Evident',
       sdsj: 'The Round Table',
       mun: 'Work in Progress',
       certifications: 'The Medal Cabinet',

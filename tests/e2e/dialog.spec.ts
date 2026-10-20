@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
+import type { ExhibitId } from '../../src/content/ids';
 import { content } from '../../src/content/index';
 import { entryById } from '../../src/content/selectors';
 import { SITE_URL } from '../../src/content/site';
@@ -246,23 +247,21 @@ test.describe('story dialog: openers, wings and motion', () => {
     await expect(link).toBeFocused();
   });
 
-  test('(n) F-021: the HUD controls, rail, wing head and stop card step aside under the panel', async ({
-    page,
-  }) => {
-    onlyOn('desktop');
+  /** F-021: nothing but the panel draws in the panel's strip while a story is open. */
+  async function expectHudStepsAside(page: Page, id: ExhibitId, wing: boolean): Promise<void> {
     await page.goto(museumUrl('/'));
     await waitForMuseum(page);
-    await goToStop(page, 'safe-sip');
-    expect(await trackOf(page)).toBe('volunteer');
+    await goToStop(page, id);
+    expect(await trackOf(page)).toBe(wing ? 'volunteer' : 'main');
     const aside = [
       page.getByTestId(TEST_IDS.hudProgress),
-      page.getByTestId(TEST_IDS.exitWing),
+      ...(wing ? [page.getByTestId(TEST_IDS.exitWing)] : []),
       page.getByTestId(TEST_IDS.hudPdf),
       page.getByTestId(TEST_IDS.hudClassic),
-      page.getByTestId(TEST_IDS.card('safe-sip')),
+      page.getByTestId(TEST_IDS.card(id)),
     ];
     for (const control of aside) await expect(control).toBeVisible();
-    const opener = page.getByTestId(TEST_IDS.open('safe-sip'));
+    const opener = page.getByTestId(TEST_IDS.open(id));
     await opener.click();
     await expect(dialogOf(page)).toBeVisible();
     await settleDialog(page);
@@ -294,6 +293,20 @@ test.describe('story dialog: openers, wings and motion', () => {
     await expect(dialogOf(page)).toBeHidden();
     for (const control of aside) await expect(control).toBeVisible();
     await expect(opener).toBeFocused();
+  }
+
+  test('(n) F-021: the HUD controls, rail and stop card step aside under the panel', async ({
+    page,
+  }) => {
+    onlyOn('desktop');
+    await expectHudStepsAside(page, 'verafin', false);
+  });
+
+  test('(n2) F-021: in the one-exhibit volunteer wing the wing head steps aside too', async ({
+    page,
+  }) => {
+    onlyOn('desktop');
+    await expectHudStepsAside(page, 'sdsj', true);
   });
 
   test.describe('reduced motion', () => {
@@ -369,7 +382,7 @@ test.describe('prerendered exhibit pages', { tag: '@dom' }, () => {
     test.skip(project() !== 'desktop', 'Reads files once');
     test.skip(!existsSync(join(DIST, 'exhibit')), 'Needs a local build (dist/exhibit)');
     const ids = await readdir(join(DIST, 'exhibit'));
-    expect(ids).toHaveLength(10);
+    expect(ids).toHaveLength(9);
     const titles: string[] = [];
     for (const id of ids) {
       const html = await readFile(join(DIST, 'exhibit', id, 'index.html'), 'utf8');

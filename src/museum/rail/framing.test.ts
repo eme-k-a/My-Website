@@ -94,7 +94,7 @@ describe('deskWeightAt', () => {
   });
 
   it('is 0 on a track without the desk', () => {
-    expect(deskWeightAt(['projects-door', 'safe-sip'], 1)).toBe(0);
+    expect(deskWeightAt(['projects-door', 'sdsj'], 1)).toBe(0);
     expect(deskWeightAt(ids, Number.NaN)).toBe(0);
   });
 });

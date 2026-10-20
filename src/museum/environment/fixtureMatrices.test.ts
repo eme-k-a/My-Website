@@ -11,7 +11,7 @@ const count = (plinth: string) => layout.slots.filter((s) => s.plinth === plinth
 
 describe('fixture instancing (EXPERIENCE §5.2, §5.3)', () => {
   it('has one instance per slot of each variant', () => {
-    expect(count('standard')).toBe(8);
+    expect(count('standard')).toBe(7);
     expect(inst.standardPlinths).toHaveLength(count('standard'));
     expect(inst.baseStrips).toHaveLength(count('standard'));
     expect(inst.widePlinths).toHaveLength(count('wide'));

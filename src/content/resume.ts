@@ -339,51 +339,6 @@ export const resume = {
   ],
   volunteer: [
     {
-      id: 'safe-sip',
-      kind: 'volunteer',
-      // "Right-To-Rise" capitalization is kept as on the resume until Emeka confirms (§7 item 11).
-      role: 'Member (Right-To-Rise: Safe Sip)',
-      org: 'Enactus Memorial',
-      location: { city: "St. John's", region: 'NL' },
-      dates: { start: '2025-09', end: 'present' },
-      tense: 'present',
-      bullets: [
-        {
-          text: 'Engineer a tamper-detecting smart lid MVP: a 3D-printed enclosure with a Raspberry Pi Pico W and I2C orientation sensor, using Euclidean distance and Euler angles to detect tampering in real time.',
-          print: true,
-          priority: 2,
-        },
-      ],
-      exhibit: {
-        title: 'Tamper Evident',
-        caption:
-          'A tamper-detecting smart lid MVP: a Raspberry Pi Pico W, an orientation sensor, and embedded spatial logic.',
-        story: [
-          {
-            type: 'p',
-            text: 'With Enactus Memorial, on Right-To-Rise: Safe Sip, I am engineering the hardware MVP for a smart lid that detects tampering. I am prototyping a 3D-printed enclosure around a Raspberry Pi Pico W and an I2C orientation sensor, and writing embedded spatial logic that uses Euclidean distance and Euler angles to recognize, in real time, when the lid has been disturbed.',
-            draft: true,
-          },
-          {
-            type: 'p',
-            text: 'It is the exhibit where my software meets the physical world: every line of code has to make sense to a sensor, a microcontroller, and a printed shell.',
-            draft: true,
-          },
-        ],
-        object: {
-          text: 'A cup rocks gently inside a brass gimbal. Its cut-away lid shows a Raspberry Pi Pico W and an orientation sensor, and the ring on the lid lights when the tilt crosses the tamper threshold.',
-          draft: true,
-        },
-        tags: [
-          'Raspberry Pi Pico W',
-          'I2C Sensors',
-          'Embedded Logic',
-          '3D Printing',
-          'Hardware Prototyping',
-        ],
-      },
-    },
-    {
       id: 'sdsj',
       kind: 'volunteer',
       role: 'President',
@@ -549,7 +504,7 @@ export const resume = {
       title: 'Volunteer & Leadership',
       after: 'mysa',
       side: 'right',
-      items: ['safe-sip', 'sdsj'],
+      items: ['sdsj'],
     },
   ],
 } satisfies ResumeInput;

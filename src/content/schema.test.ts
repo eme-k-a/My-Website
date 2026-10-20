@@ -109,10 +109,10 @@ describe('refineResume rules (ARCHITECTURE §3.4)', () => {
   it('2: reserved ids are rejected', () => {
     const r = input();
     r.experiences[3]!.id = 'lobby';
-    r.volunteer[1]!.id = 'certifications';
+    r.volunteer[0]!.id = 'certifications';
     const paths = issuePaths(r);
     expect(paths).toContain('experiences.3.id');
-    expect(paths).toContain('volunteer.1.id');
+    expect(paths).toContain('volunteer.0.id');
   });
 
   it('3: ranges never end before they start; education starts before graduation', () => {
@@ -127,7 +127,11 @@ describe('refineResume rules (ARCHITECTURE §3.4)', () => {
   it('4: experiences, volunteer and dated projects are newest first', () => {
     const r = input();
     r.experiences[1]!.dates = { start: '2026-10', end: '2026-11' };
-    r.volunteer[1]!.dates = { start: '2025-10', end: 'present' };
+    // The volunteer wing holds one entry, so a second (older-first) entry is appended for the rule.
+    r.volunteer.push({
+      ...structuredClone(r.volunteer[0]!),
+      dates: { start: '2025-10', end: 'present' },
+    });
     r.projects[0]!.dates = { start: '2023-01', end: '2023-06' };
     r.projects[1]!.dates = { start: '2024-01', end: '2024-06' };
     const paths = issuePaths(r);
@@ -157,12 +161,12 @@ describe('refineResume rules (ARCHITECTURE §3.4)', () => {
 
     const wrongPool = input();
     wrongPool.wings[0]!.items = ['klarup', 'finance-tracker', 'sdsj'];
-    wrongPool.wings[1]!.items = ['safe-sip'];
+    wrongPool.wings[1]!.items = [];
     expect(issuePaths(wrongPool)).toContain('wings.0.items.2');
 
     const missing = input();
-    missing.wings[1]!.items = ['safe-sip'];
-    expect(issuePaths(missing)).toContain('volunteer.1.id');
+    missing.wings[1]!.items = [];
+    expect(issuePaths(missing)).toContain('volunteer.0.id');
 
     const twice = input();
     twice.wings[0]!.items = ['klarup', 'klarup'];
@@ -171,7 +175,7 @@ describe('refineResume rules (ARCHITECTURE §3.4)', () => {
 
   it('7: main-track entries never sit in a wing', () => {
     const r = input();
-    r.wings[1]!.items = ['safe-sip', 'sdsj', 'mun'];
+    r.wings[1]!.items = ['sdsj', 'mun'];
     expect(messages(r)).toMatch(/'mun' belongs to the main track/);
   });
 

@@ -56,7 +56,7 @@ describe('track selectors (ARCHITECTURE §3.7, EXPERIENCE §3.1)', () => {
 
   it('wing tracks start with their door', () => {
     expect(wingTrack(content, 'projects')).toEqual(['projects-door', 'klarup', 'finance-tracker']);
-    expect(wingTrack(content, 'volunteer')).toEqual(['volunteer-door', 'safe-sip', 'sdsj']);
+    expect(wingTrack(content, 'volunteer')).toEqual(['volunteer-door', 'sdsj']);
   });
 
   it('trackOf puts wing items in their wing and everything else on main', () => {
@@ -73,7 +73,6 @@ describe('track selectors (ARCHITECTURE §3.7, EXPERIENCE §3.1)', () => {
       'klarup',
       'finance-tracker',
       'mysa',
-      'safe-sip',
       'sdsj',
       'wailo',
       'cfia',
@@ -93,8 +92,7 @@ describe('track selectors (ARCHITECTURE §3.7, EXPERIENCE §3.1)', () => {
       certifications: '06',
       klarup: 'P1',
       'finance-tracker': 'P2',
-      'safe-sip': 'V1',
-      sdsj: 'V2',
+      sdsj: 'V1',
     });
   });
 
@@ -150,7 +148,6 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
       ['finance-tracker', 'projects'],
       ['mysa', 'main'],
       ['volunteer-door', 'main'],
-      ['safe-sip', 'volunteer'],
       ['sdsj', 'volunteer'],
       ['wailo', 'main'],
       ['cfia', 'main'],
@@ -180,9 +177,7 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
       // prettier-ignore
       ['No. 02', 'mysa', 'Warm Start', 'Full Stack Software Developer (Co-op)', "Mysa, St. John's, NL", 'Jan 2026 - May 2026', '5 months', null],
       // prettier-ignore
-      ['No. V1', 'safe-sip', 'Tamper Evident', 'Member (Right-To-Rise: Safe Sip)', "Enactus Memorial, St. John's, NL", 'Sep 2025 - Present', '1 yr 2 mo', 'ONGOING'],
-      // prettier-ignore
-      ['No. V2', 'sdsj', 'The Round Table', 'President', "Software Developers of St. John's, St. John's, NL", 'Jul 2024 - Present', '2 yr 4 mo', 'ONGOING'],
+      ['No. V1', 'sdsj', 'The Round Table', 'President', "Software Developers of St. John's, St. John's, NL", 'Jul 2024 - Present', '2 yr 4 mo', 'ONGOING'],
       // prettier-ignore
       ['No. 03', 'wailo', 'The Deep Link', 'Front End Developer (Co-op)', 'Wailo, Calgary, AB / Remote', 'May 2025 - Aug 2025', '4 months', null],
       // prettier-ignore
@@ -249,7 +244,6 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
     const volunteer = card(cards, 'volunteer-door');
     expect(volunteer.kind === 'door' && volunteer.title).toBe('Volunteer & Leadership wing');
     expect(volunteer.kind === 'door' && volunteer.links.map((l) => l.label)).toEqual([
-      'Tamper Evident, Enactus Memorial',
       "The Round Table, Software Developers of St. John's",
     ]);
   });
@@ -278,7 +272,7 @@ describe('threeDStrings (EXPERIENCE §5.4)', () => {
   const texts = (kind: string) => strings.filter((s) => s.kind === kind).map((s) => s.text);
 
   it('numbers every exhibit in catalogue order', () => {
-    expect(texts('number')).toEqual(['01', 'P1', 'P2', '02', 'V1', 'V2', '03', '04', '05', '06']);
+    expect(texts('number')).toEqual(['01', 'P1', 'P2', '02', 'V1', '03', '04', '05', '06']);
   });
 
   it('has the uppercase organization labels of §5.4', () => {
@@ -290,7 +284,6 @@ describe('threeDStrings (EXPERIENCE §5.4)', () => {
         'CANADIAN FOOD INSPECTION AGENCY',
         'KLARUP',
         'PERSONAL FINANCE TRACKER',
-        'ENACTUS MEMORIAL',
         "SOFTWARE DEVELOPERS OF ST. JOHN'S",
         'MEMORIAL UNIVERSITY',
         'CERTIFICATIONS',
@@ -382,7 +375,7 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
       ),
     );
     expect(printed).toEqual(expected);
-    expect(printed.length).toBe(15);
+    expect(printed.length).toBe(14);
   });
 
   it('leaves out Personal Finance Tracker (no printed bullet) but keeps KlarUp', () => {
@@ -395,13 +388,10 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
     expect(projects[0]?.dates).toBeUndefined();
   });
 
-  it('omits a volunteer entry, and the whole section, once nothing in it prints', () => {
+  it('omits the volunteer section once nothing in it prints', () => {
     const c = clone();
-    for (const b of c.volunteer[0]!.bullets) b.print = false;
-    expect(section(printModel(c, { now: OCT_2026 }), 'volunteer').entries.map((e) => e.id)).toEqual(
-      ['sdsj'],
-    );
     for (const v of c.volunteer) for (const b of v.bullets) b.print = false;
+    expect(printModel(c, { now: OCT_2026 }).sections.map((s) => s.kind)).not.toContain('volunteer');
     for (const p of c.projects) for (const b of p.bullets) b.print = false;
     const kinds = printModel(c, { now: OCT_2026 }).sections.map((s) => s.kind);
     expect(kinds).toEqual(['education', 'experience', 'skills', 'certifications']);
@@ -502,7 +492,6 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
       'mysa 3 p2',
       'verafin 3 p2',
       'verafin 2 p2',
-      'safe-sip 1 p2',
       'klarup 2 p2',
     ]);
   });

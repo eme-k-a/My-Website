@@ -83,13 +83,9 @@ const POSES: Record<string, [Vec3, Vec3]> = {
     [-5.6, 1.6, -17.4],
     [-9, 1.35, -18.2],
   ],
-  'safe-sip': [
-    [5.6, 1.6, -26.6],
-    [9, 1.35, -25.8],
-  ],
   sdsj: [
-    [5.6, 1.6, -29.4],
-    [9, 1.35, -30.2],
+    [5.6, 1.6, -28],
+    [9, 1.35, -28],
   ],
 };
 
@@ -119,9 +115,9 @@ describe('tracks and poses (EXPERIENCE §2.4, §2.5)', () => {
     ]);
   });
 
-  it('wing tracks are [door, item, item] with the door pose at index 0', () => {
+  it('wing tracks are [door, ...items] with the door pose at index 0', () => {
     expect(stopIds(layout, 'projects')).toEqual(['projects-door', 'klarup', 'finance-tracker']);
-    expect(stopIds(layout, 'volunteer')).toEqual(['volunteer-door', 'safe-sip', 'sdsj']);
+    expect(stopIds(layout, 'volunteer')).toEqual(['volunteer-door', 'sdsj']);
     for (const wing of ['projects', 'volunteer'] as const) {
       const door = layout.tracks[wing].stops[0]!;
       expect(door).toEqual(pose(layout, `${wing}-door`));
@@ -161,8 +157,7 @@ describe('slots and rooms', () => {
       klarup: [-9, 0, -13.8],
       'finance-tracker': [-9, 0, -18.2],
       mysa: [-2.4, 0, -22],
-      'safe-sip': [9, 0, -25.8],
-      sdsj: [9, 0, -30.2],
+      sdsj: [9, 0, -28],
       wailo: [2.4, 0, -34],
       cfia: [-2.4, 0, -46],
       mun: [-2.5, 0, -57],
@@ -238,7 +233,6 @@ describe('time in the space (EXPERIENCE §6.9)', () => {
       klarup: 0.167,
       'finance-tracker': 0.167,
       'volunteer-door': 0.5,
-      'safe-sip': 0.5,
       sdsj: 0.5,
       mun: 1,
       certifications: 1,
@@ -313,6 +307,24 @@ describe('computed from content (EXPERIENCE §2.7)', () => {
   });
 });
 
+describe('a wing with one item (F-035)', () => {
+  it('centres the lone item on its door axis, camera straight in front', () => {
+    const l = computeLayout(draftContent(), NOW);
+    const door = l.doors.find((d) => d.wing === 'volunteer')!;
+    expect(round3(slot(l, 'sdsj').position)).toEqual([9, 0, door.z]);
+    expectVec(pose(l, 'sdsj').camera, [5.6, 1.6, door.z], 'sdsj.camera');
+    expectVec(pose(l, 'sdsj').look, [9, 1.35, door.z], 'sdsj.look');
+    expect(slot(l, 'sdsj').rotationY).toBeCloseTo(-Math.PI / 2, 6);
+  });
+
+  it('keeps a two-item wing at +-2.2 m around its door', () => {
+    const l = computeLayout(draftContent(), NOW);
+    const door = l.doors.find((d) => d.wing === 'projects')!;
+    expect(slot(l, 'klarup').position[2]).toBeCloseTo(door.z + 2.2, 6);
+    expect(slot(l, 'finance-tracker').position[2]).toBeCloseTo(door.z - 2.2, 6);
+  });
+});
+
 describe('validation (EXPERIENCE §2.2 rule 2)', () => {
   it('rejects a wing after the last work exhibit', () => {
     const c = draftContent();
@@ -341,7 +353,7 @@ describe('validation (EXPERIENCE §2.2 rule 2)', () => {
     notWork.wings[1]!.after = 'mun';
     expect(() => computeLayout(notWork, NOW)).toThrow(/Wing 'volunteer'.*not a work exhibit/);
     const stray = draftContent();
-    stray.wings[1]!.items = ['safe-sip', 'klarup'];
+    stray.wings[1]!.items = ['sdsj', 'klarup'];
     expect(() => computeLayout(stray, NOW)).toThrow(/Wing 'volunteer'.*'klarup' is not/);
   });
 });

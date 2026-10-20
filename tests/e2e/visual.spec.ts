@@ -1,9 +1,9 @@
 // Visual baselines for the M2 slice (WP-17; ARCHITECTURE §13.6). Compared in CI only: SwiftShader
 // output differs by CPU, so locally every test skips unless VISUAL_LOCAL=1 (advisory, never
 // committed). Baselines come from the `update-baselines` dispatch of ci.yml.
-// - Canvas: the slice stops lobby, verafin, projects-door, volunteer-door, safe-sip and desk at
+// - Canvas: the slice stops lobby, verafin, projects-door, volunteer-door and desk at
 //   ?test=1 (tier medium) on desktop and pixel7, one page per project walked with goTo instant.
-// - DOM, canvas masked: the verafin and safe-sip dialogs (desktop panel, Pixel 7 sheet), /resume/
+// - DOM, canvas masked: the verafin dialog (desktop panel, Pixel 7 sheet), /resume/
 //   light and dark, and 404.html (desktop).
 // Every shot hides `dialog-duration` and the cards' durations (ongoing roles change monthly).
 import type { Page } from '@playwright/test';
@@ -12,15 +12,8 @@ import type { ExhibitId, StopId } from '../../src/content/ids';
 import { expect, test } from './fixtures';
 import { compareScreenshots, goToStop, museumUrl, shot, waitForMuseum } from './helpers';
 
-const SLICE_STOPS: StopId[] = [
-  'lobby',
-  'verafin',
-  'projects-door',
-  'volunteer-door',
-  'safe-sip',
-  'desk',
-];
-const DIALOGS: ExhibitId[] = ['verafin', 'safe-sip'];
+const SLICE_STOPS: StopId[] = ['lobby', 'verafin', 'projects-door', 'volunteer-door', 'desk'];
+const DIALOGS: ExhibitId[] = ['verafin'];
 const WEBGL_PROJECTS = ['desktop', 'pixel7'];
 
 const project = () => test.info().project.name;

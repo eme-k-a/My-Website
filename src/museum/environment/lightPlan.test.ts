@@ -80,7 +80,6 @@ describe('warmth by age (EXPERIENCE §6.9 table)', () => {
       // Wings take their door's t: projects 1/6 (between light-0 and light-1), volunteer 1/2.
       ['klarup', mix(ramp[0], ramp[1], 0.5)],
       ['finance-tracker', mix(ramp[0], ramp[1], 0.5)],
-      ['safe-sip', mix(ramp[1], ramp[2], 0.5)],
       ['sdsj', mix(ramp[1], ramp[2], 0.5)],
     ];
     for (const [id, color] of expected) expect(targetColor(layout, id), id).toBe(color);
@@ -102,7 +101,7 @@ describe('light targets (EXPERIENCE §5.5, §6.8)', () => {
       ['portrait', [2.2, 5.4, -2.6], [3.0, 1.7, -3.95]],
       ['verafin', [2.4, 4.6, -9.4], [2.4, 1.35, -10]],
       ['klarup', [-8.4, 3.7, -13.8], [-9, 1.35, -13.8]],
-      ['sdsj', [8.4, 3.7, -30.2], [9, 1.35, -30.2]],
+      ['sdsj', [8.4, 3.7, -28], [9, 1.35, -28]],
       ['mun', [-2.5, 4.6, -56.4], [-2.5, 1.25, -57]],
       ['certifications', [4.4, 4.6, -57], [5.85, 1.6, -57]],
       ['desk', [0, 3.7, -66.9], [0, 0.765, -67.5]],

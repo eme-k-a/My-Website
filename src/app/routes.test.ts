@@ -88,7 +88,7 @@ describe('route table and paths (ARCHITECTURE §5.6)', () => {
   });
 
   it('exhibitPath always ends with a slash', () => {
-    expect(exhibitPath('safe-sip')).toBe('/exhibit/safe-sip/');
+    expect(exhibitPath('sdsj')).toBe('/exhibit/sdsj/');
   });
 
   it('readHistoryState accepts only app state', () => {
@@ -139,7 +139,7 @@ describe('history transitions, one per ARCHITECTURE §5.6 row', () => {
   it('row 4: closing an in-app story goes back', () => {
     const h = memoryHistory({ url: '/', state: null });
     h.apply(transitions.openStory(h.here, 'mysa', 'main'));
-    h.apply(transitions.stepStory(h.here, 'safe-sip', 'main'));
+    h.apply(transitions.stepStory(h.here, 'wailo', 'main'));
     h.apply(transitions.closeStory(h.here));
     expect(h.current.url).toBe('/');
     expect(deriveUi(h.here.pathname, h.here.state)).toEqual({ openId: null, track: 'main' });

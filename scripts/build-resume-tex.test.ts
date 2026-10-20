@@ -73,7 +73,7 @@ describe('renderResumeTex', () => {
 
   it('writes date ranges with -- and has no en dash or em dash anywhere', () => {
     expect(tex).toContain('{Software Development Co-op Student}{Sep 2026 -- Dec 2026}');
-    expect(tex).toContain('{Member (Right-To-Rise: Safe Sip)}{Sep 2025 -- Present}');
+    expect(tex).toContain('{President}{Jul 2024 -- Present}');
     expect(tex).toContain('{B.Eng in Computer Engineering}{Expected Graduation: May 2027}');
     expect(tex).not.toContain(EN_DASH);
     expect(tex).not.toContain(EM_DASH);

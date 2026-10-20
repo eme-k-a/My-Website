@@ -13,8 +13,8 @@ import { expect, test } from './fixtures';
 import { goToStop, museumCanvas, museumUrl, stats, waitForMuseum } from './helpers';
 
 const INSTALLING = 'Installation in progress';
-/** The exhibits built in M2 (WP-12 verafin, WP-13 safe-sip). */
-const BUILT: ExhibitId[] = ['verafin', 'safe-sip'];
+/** The exhibits built so far (WP-12 verafin). */
+const BUILT: ExhibitId[] = ['verafin'];
 /** EXPERIENCE §10.4: reduced motion holds every exhibit still; checked over this window. */
 const STILL_MS = 10_000;
 /**

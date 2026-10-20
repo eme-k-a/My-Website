@@ -70,7 +70,7 @@ export function entryById(c: Content, id: ExhibitId): ExhibitEntry {
 }
 
 /**
- * "01" to "06" in main-track order; wing items "P1", "P2", "V1", "V2" (the wing's first letter).
+ * "01" to "06" in main-track order; wing items "P1", "P2", "V1" (the wing's first letter).
  * Displayed as "No. 01" or "No. P1". Computed, never stored.
  */
 export function exhibitNumber(c: Content, id: ExhibitId): string {

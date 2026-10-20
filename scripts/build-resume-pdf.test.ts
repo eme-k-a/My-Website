@@ -108,9 +108,9 @@ describe.skipIf(!hasChromium)('overflow gate (checkOverflow)', () => {
     const overflow = await measureOverflow(page);
     expect(overflow.px).toBeGreaterThan(0);
     expect(overflow.lines).toBeGreaterThanOrEqual(1);
-    // The gate only reports: all 21 printed bullets are still on the page.
+    // The gate only reports: all 20 printed bullets are still on the page.
     expect(await page.locator('.pr-bullet').count()).toBe(printedCount(model));
-    expect(printedCount(model)).toBe(21);
+    expect(printedCount(model)).toBe(20);
     await page.context().close();
   }, 30_000);
 

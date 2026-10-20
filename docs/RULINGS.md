@@ -123,3 +123,4 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - F-027 and F-032 (P2) and F-033 (P3) from the review.
   - Move the wing title measurements into a module without font imports, so `placard.ts` and `rail-input` (g) share it.
   - The EXPERIENCE §5.4 rewrite.
+- **Gate G2 passed (Emeka, 2026-10-20):** he approved the slice stills (`review/runs/2026-10-20-g2r3/stills/`) and the preview at CI run 60 (`5ba1b84`). M2 is complete.

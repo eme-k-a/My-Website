@@ -50,7 +50,7 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | WP-17 | M2b: slice tests | Done 2026-10-17: merged and verified; six e2e shards; 19 CI baselines (`e4b5a40`, committed by the CI bot); A4 passed with CI runs 41, 43 and 45 green in a row (about 13.5 min each) |
 | WP-19 and F-G2 | Slice review and fixes | Done 2026-10-20. Round 1: 3.33. Round 2: 3.65. Round 3: 3.74 (desktop 3.83, Pixel 7 3.65), the last allowed round. Every P1 is closed: F-020 to F-023, F-036 and F-037 by F-G2a, F-G2b and F-G2r2; F-038 by its own scoped fix with an e2e check (`0d291d9`). Open P2 and P3: F-027, F-032, F-033. Baselines were refreshed by the CI bot (`fee0ac2`). Stills for Emeka: `review/runs/2026-10-20-g2r3/stills/` |
 | F-035 | Remove Safe Sip and Enactus | Done 2026-10-20 (Emeka's decision): gone from the gallery, its story page, `/resume/`, the PDF and the tex. The volunteer wing holds only SDSJ |
-| Gate G2 | Slice sign-off | **Waiting on Emeka's approval** of the stills and the preview (sent 2026-10-20). After he approves: M2 is complete, he runs `/compact`, then M3 starts on his "go" (fan-out in separate cloud sessions, PLAN section 7) |
+| Gate G2 | Slice sign-off | **Passed 2026-10-20: Emeka approved the stills and the preview.** Review round 3 scored 3.74 with no open P0 or P1, and CI run 60 was green and deployed. **M2 is complete.** Next: Emeka runs `/compact`, then M3 (WP-20 to WP-25) starts on his "go", with builders in separate cloud sessions a few at a time (PLAN section 7). The usage-limit check-ins are paused until then (section 9) |
 | WP-20 onward | M3 to M7 | Not started |
 
 How to tell what's done:
@@ -133,7 +133,7 @@ claude/intelligent-sagan-poq45q. Act as R0, the orchestrator described in docs/P
 4. Netlify: the site exists (section 5). WP-18 waits for Emeka's two GitHub secrets.
 
 
-## 9. Automatic resume after usage limits (2026-10-20)
+## 9. Automatic resume after usage limits (2026-10-20; paused at the M2 boundary, re-arm on M3 "go")
 
 Emeka asked for a cheap automatic resume.
 

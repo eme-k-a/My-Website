@@ -1,0 +1,138 @@
+{
+  "wp": "WP-21",
+  "role": "R5 (Builder B), with R2 for the three concept verdicts",
+  "status": "done",
+  "branch": "claude/m3-wp-21",
+  "commits": [
+    "0945b86 feat(exhibit-cfia): the ticket spindle",
+    "3dbab8f feat(exhibit-mun): work in progress",
+    "f9bca50 feat(exhibit-certifications): the medal cabinet",
+    "docs(concepts): cfia, mun and certifications verdicts (this commit carries this report)"
+  ],
+  "changedFiles": [
+    "src/museum/exhibits/cfia/index.ts",
+    "src/museum/exhibits/cfia/TicketSpindle.tsx",
+    "src/museum/exhibits/cfia/spindle.ts",
+    "src/museum/exhibits/cfia/spindle.test.ts",
+    "src/museum/exhibits/cfia/README.md",
+    "src/museum/exhibits/mun/index.ts",
+    "src/museum/exhibits/mun/WorkInProgress.tsx",
+    "src/museum/exhibits/mun/chip.ts",
+    "src/museum/exhibits/mun/chip.test.ts",
+    "src/museum/exhibits/mun/tiers.ts",
+    "src/museum/exhibits/mun/tiers.test.ts",
+    "src/museum/exhibits/mun/README.md",
+    "src/museum/exhibits/certifications/index.ts",
+    "src/museum/exhibits/certifications/MedalCabinet.tsx",
+    "src/museum/exhibits/certifications/cabinet.ts",
+    "src/museum/exhibits/certifications/cabinet.test.ts",
+    "src/museum/exhibits/certifications/README.md",
+    "review/concepts/cfia.md",
+    "review/concepts/mun.md",
+    "review/concepts/certifications.md",
+    "review/reports/WP-21.json"
+  ],
+  "measurements": {
+    "cfia": {
+      "triangles": 1116,
+      "drawCalls": 6,
+      "inBounds": true,
+      "budgetDeclared": { "triangles": 2000, "drawCalls": 8, "textureMB": 0 },
+      "chunkGzipKB": 1.67
+    },
+    "mun": {
+      "triangles": 2676,
+      "drawCalls": 8,
+      "inBounds": true,
+      "tiersRemainingAtBuild": 1,
+      "budgetDeclared": { "triangles": 4000, "drawCalls": 10, "textureMB": 0 },
+      "chunkGzipKB": 2.2
+    },
+    "certifications": {
+      "triangles": 3924,
+      "drawCalls": 7,
+      "inBounds": true,
+      "budgetDeclared": { "triangles": 5000, "drawCalls": 8, "textureMB": 0 },
+      "chunkGzipKB": 1.92
+    },
+    "entryGzipKB": 94.84,
+    "museumChunkGzipKB": 319.22
+  },
+  "evidencePaths": {
+    "screenshots": "out/wp21/{cfia,mun,certifications}-{desktop,pixel7}.png",
+    "stats": "out/wp21/{cfia,mun,certifications}-{desktop,pixel7}.json",
+    "thumbnails": "out/wp21/{cfia,mun,certifications}-thumb.png (full frame, per the brief command)",
+    "caseCropThumbnails": "out/wp21/{cfia,mun,certifications}-crop-thumb.png (320 px grayscale crops of the case, EXPERIENCE §4 wording; the certifications emblem check)"
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "npm run verify and the registry test pass; mun/tiers.test.ts passes",
+      "command": "npm run verify && npx vitest run --project unit src/museum/exhibits",
+      "result": "pass",
+      "evidence": "verify: lint, prettier, typecheck clean; 70 files / 786 unit tests pass, including registry.test.ts, tiers.test.ts (1 at 2026-10, 0 at 2027-06, 5 at 5+ years), spindle, chip and cabinet tests"
+    },
+    {
+      "id": "A2",
+      "criterion": "Each exhibit chunk at most 40 KB gzip",
+      "command": "npm run build && npm run check:budgets",
+      "result": "pass",
+      "evidence": "exhibits/cfia 1.67, exhibits/mun 2.20, exhibits/certifications 1.92 KB gzip; entry 94.84, museum 319.22; budgets ok; check:glyphs ok"
+    },
+    {
+      "id": "A3",
+      "criterion": "exhibit-contract.spec.ts: inBounds against the slot variant, triangles <= 20000, click opens the dialog, Esc returns focus, deterministic frames; desktop and pixel7",
+      "command": "npx playwright test tests/e2e/exhibit-contract.spec.ts --grep \"cfia|mun|certifications\" --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "6 passed on the final build (cfia, mun, certifications x desktop, pixel7); stats inBounds true with 1116, 2676 and 3924 triangles"
+    },
+    {
+      "id": "A4",
+      "criterion": "R2 checklist: 0 unchecked boxes and Verdict PASS for each",
+      "command": "grep -c '^- \\[ \\]' review/concepts/cfia.md review/concepts/mun.md review/concepts/certifications.md",
+      "result": "pass",
+      "evidence": "0, 0, 0; each Verdict PASS, 2026-10-20, signed R2 (Art Director), WP-21, with one evidence line per box"
+    }
+  ],
+  "otherChecks": [
+    "Motion probe on the built site (?test=1&mode=museum&idle=1, canvas at 0, 3 and 8 s): every exhibit changes with motion on and is byte-identical under reducedMotion 'reduce'",
+    "tests/e2e/greybox.spec.ts and exhibits.spec.ts on desktop and pixel7: 8 passed, 4 skipped",
+    "npm run check:copy ok; no U+2014 in any WP-21 file",
+    "No visual baselines exist yet for the cfia, mun or certifications stops, so none go stale"
+  ],
+  "deviations": [
+    "Certifications emblems are bevelled (frustum lobes, blades and hub; four-sided pyramid diamonds; a square-frustum base bar) instead of flat-topped. With flat 4 mm tops the first capture showed no emblem at all: a flat brass face square to the camera mirrors the dark room. Same shapes, same brass, still 4 mm relief.",
+    "R2 judged 'emblems distinct in a 320 px grayscale thumbnail' on a 320 px crop of the case (EXPERIENCE §4 says 'a 320 px wide grayscale crop of the stop screenshot'). In the brief's full-frame thumbnail each medallion is about 10 px wide.",
+    "CFIA motion details the spec leaves open: each 6 s cycle rests 2.8 s (so t = 0 is the reduced pose), the falling ticket grows in over 0.3 s at y 0.52 instead of popping in, and the bottom ticket drops about 1 cm into the box during the 0.8 s sink, because a one-pitch sink alone (6 mm) leaves it 1 mm above the box top.",
+    "MUN X-bracing is on the left and right faces (x = +-0.45), so the front face stays open toward the camera.",
+    "Certifications swing: each medallion starts from rest at its own offset (0, 4, 8 s) and eases its amplitude in over 3 s, so t = 0 matches the reduced pose with no jump."
+  ],
+  "openQuestions": [
+    {
+      "question": "The MUN slot floor is y 0.10, so the spec'd base plate (y 0.10 to 0.13) and the scaffold (from y 0.13) stand 10 cm above the plinth top with nothing under them. At the stop it reads as a raised display, but the gap shows. Should the MUN slot floor (frozen contract) drop to 0, or the plate move down in a later pass?",
+      "for": "R0",
+      "default": "Built exactly as EXPERIENCE §4.9 and §5.3 specify; noted in the README and the R2 notes."
+    },
+    {
+      "question": "The wall vitrine slot starts at z 0.05, but the vitrine back panel's face is at z 0.03 (backing 0.02 + back 0.01), so the rail standoffs start 2 cm in front of the panel. It does not show from the frontal stop camera. Should the wall slot's min z become 0.03?",
+      "for": "R0",
+      "default": "Standoffs run from z 0.05 to the rail axis, strictly inside the slot."
+    },
+    {
+      "question": "Certifications checklist box 6 says the DOM shows the placeholder while dates and issuers are unknown. src/content/resume.ts omits them instead (CONTENT_DRAFT §7 item 8), and RELEASE=1 check:copy still blocks launch through the draft flags. R2 passed the box on that basis; should R1 show the placeholders in the DOM?",
+      "for": "R0",
+      "default": "No content change (content is R1's); the 3D object depends on no date or issuer."
+    },
+    {
+      "question": "As in WP-12, the R2 reviews ran in the builder session. Should R11 confirm the three verdicts at G3?",
+      "for": "R0",
+      "default": "Verdicts committed with evidence lines; the session is noted in each Notes field."
+    }
+  ],
+  "missingSliceSpecsForWP17": [
+    "Visual baselines for the cfia, mun and certifications stops on desktop and pixel7 (CI only)",
+    "A motion/reduced-motion stillness spec per exhibit (the probe above as a spec)"
+  ],
+  "depsRequest": [],
+  "notes": "Built on the integration tip 8716687 on branch claude/m3-wp-21. Only WP-21 globs were written; no kit, materials, content or tests/** changes. The MUN tier state is computed in the exhibit from entry.graduation and __BUILD_DATE__ (1 brass tier at the 2026-10 build). Every instanced part writes its matrices only while its motion runs, so idle frames stop rendering."
+}

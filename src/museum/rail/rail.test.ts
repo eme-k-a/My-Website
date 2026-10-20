@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { content } from '../../content/index';
 import type { TrackId } from '../../content/ids';
-import { computeLayout } from './layout';
+import { AISLE_HALF, computeLayout } from './layout';
 import { buildRail, buildRails, poseArraysAt, poseAt } from './rail';
 
 const NOW = new Date('2026-10-15T00:00:00Z');
@@ -117,4 +117,34 @@ describe('rail', () => {
     const single = buildRail({ id: 'projects', stops: [layout.tracks.main.stops[0]!], via: [] });
     expect(poseArraysAt(single, 0.7).position).toEqual(layout.tracks.main.stops[0]!.camera);
   });
+});
+
+describe('wing rails keep clear of the walls (F-037)', () => {
+  // Every sample of a wing rail is at least 0.4 m from a wall: the aisle walls and the door jambs
+  // on the way in, the wing room's walls inside it.
+  const CLEAR = 0.4;
+  for (const wing of content.wings) {
+    it(`${wing.id}: every sample is ${CLEAR} m or more from the walls`, () => {
+      const rail = rails[wing.id];
+      const door = layout.doors.find((d) => d.wing === wing.id)!;
+      const room = layout.rooms.find((r) => r.id === wing.id)!;
+      const last = rail.stops.length - 1;
+      for (let p = 0; p <= last + 1e-9; p += 0.01) {
+        const [x, , z] = poseArraysAt(rail, p).position;
+        const at = `p ${p.toFixed(2)} (${x.toFixed(2)}, ${z.toFixed(2)})`;
+        const out = Math.abs(x);
+        if (out <= AISLE_HALF - CLEAR) continue;
+        if (out < AISLE_HALF + CLEAR) {
+          // Passing the wall: inside the door opening, clear of both jambs.
+          expect(Math.abs(z - door.z), `${at}: jamb`).toBeLessThanOrEqual(door.width / 2 - CLEAR);
+          continue;
+        }
+        expect(Math.abs(x) - AISLE_HALF, `${at}: in the room`).toBeGreaterThan(0);
+        expect(x - room.min[0], `${at}: room min x`).toBeGreaterThanOrEqual(CLEAR);
+        expect(room.max[0] - x, `${at}: room max x`).toBeGreaterThanOrEqual(CLEAR);
+        expect(z - room.min[1], `${at}: room min z`).toBeGreaterThanOrEqual(CLEAR);
+        expect(room.max[1] - z, `${at}: room max z`).toBeGreaterThanOrEqual(CLEAR);
+      }
+    });
+  }
 });

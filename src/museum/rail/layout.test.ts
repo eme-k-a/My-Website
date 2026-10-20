@@ -84,8 +84,8 @@ const POSES: Record<string, [Vec3, Vec3]> = {
     [-9, 1.35, -18.2],
   ],
   sdsj: [
-    [5.6, 1.6, -28],
-    [9, 1.35, -28],
+    [5.6, 1.6, -30.2],
+    [9, 1.35, -30.2],
   ],
 };
 
@@ -157,7 +157,7 @@ describe('slots and rooms', () => {
       klarup: [-9, 0, -13.8],
       'finance-tracker': [-9, 0, -18.2],
       mysa: [-2.4, 0, -22],
-      sdsj: [9, 0, -28],
+      sdsj: [9, 0, -30.2],
       wailo: [2.4, 0, -34],
       cfia: [-2.4, 0, -46],
       mun: [-2.5, 0, -57],
@@ -307,14 +307,29 @@ describe('computed from content (EXPERIENCE §2.7)', () => {
   });
 });
 
-describe('a wing with one item (F-035)', () => {
-  it('centres the lone item on its door axis, camera straight in front', () => {
+describe('a wing with one item (F-035, F-037)', () => {
+  it('puts the lone item at the far plinth spot, camera straight in front', () => {
     const l = computeLayout(draftContent(), NOW);
     const door = l.doors.find((d) => d.wing === 'volunteer')!;
-    expect(round3(slot(l, 'sdsj').position)).toEqual([9, 0, door.z]);
-    expectVec(pose(l, 'sdsj').camera, [5.6, 1.6, door.z], 'sdsj.camera');
-    expectVec(pose(l, 'sdsj').look, [9, 1.35, door.z], 'sdsj.look');
+    expect(round3(slot(l, 'sdsj').position)).toEqual([9, 0, round3([door.z - 2.2])[0]]);
+    expectVec(pose(l, 'sdsj').camera, [5.6, 1.6, door.z - 2.2], 'sdsj.camera');
+    expectVec(pose(l, 'sdsj').look, [9, 1.35, door.z - 2.2], 'sdsj.look');
     expect(slot(l, 'sdsj').rotationY).toBeCloseTo(-Math.PI / 2, 6);
+  });
+
+  it('shows the lone case whole through the doorway from the door stop (F-037)', () => {
+    const l = computeLayout(draftContent(), NOW);
+    const door = l.doors.find((d) => d.wing === 'volunteer')!;
+    const [cx, , cz] = pose(l, 'volunteer-door').camera;
+    const [px, , pz] = slot(l, 'sdsj').position;
+    // Where the sightline from the door camera to each side of the 0.65 m case (and its pool, a
+    // generous 1 m around the plinth) crosses the door plane: inside the opening, off both jambs.
+    const wallX = 3.5;
+    const crossing = (x: number, z: number) => cz + ((z - cz) * (wallX - cx)) / (x - cx);
+    for (const dz of [-1, -0.325, 0.325, 1]) {
+      const z = crossing(px, pz + dz);
+      expect(Math.abs(z - door.z), `case side ${dz}`).toBeLessThan(door.width / 2 - 0.15);
+    }
   });
 
   it('keeps a two-item wing at +-2.2 m around its door', () => {

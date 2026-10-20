@@ -283,17 +283,22 @@ export function computeLayout(content: Content, now: Date): Layout {
       ceiling: WING_CEILING,
     });
     const stops = [doorPose];
-    // A wing of two items puts them at +-WING_PLINTH_DZ; a lone item (the v1 volunteer wing after
-    // F-035) sits on the door axis with its camera straight in front of it.
+    // A wing of two items puts them at +-WING_PLINTH_DZ. A lone item (the v1 volunteer wing after
+    // F-035) sits at the far plinth spot, zDoor - WING_PLINTH_DZ, with its camera straight in
+    // front of it: the door stop camera stands DOOR_CAM_BACK_Z up the aisle, so its sightline
+    // through the opening runs toward -z, and a case on the door axis hid behind the near jamb
+    // (F-037). At the far spot the case and its pool read whole inside the doorway.
     const pair = wing.items.length > 1;
     wing.items.forEach((itemId, j) => {
       const id = asExhibit(itemId);
-      const plinthZ = pair ? zDoor + WING_PLINTH_DZ - 2 * WING_PLINTH_DZ * j : zDoor;
+      const plinthZ = pair
+        ? zDoor + WING_PLINTH_DZ - 2 * WING_PLINTH_DZ * j
+        : zDoor - WING_PLINTH_DZ;
       const position: Vec3 = [s * (AISLE_HALF + WING_PLINTH_OUT), 0, plinthZ];
       const camera: Vec3 = [
         s * (AISLE_HALF + WING_CAM_OUT),
         EYE_Y,
-        pair ? zDoor + WING_CAM_DZ - 2 * WING_CAM_DZ * j : zDoor,
+        pair ? zDoor + WING_CAM_DZ - 2 * WING_CAM_DZ * j : plinthZ,
       ];
       stops.push(setPose(id, camera, [position[0], SLOT_Y, plinthZ]));
       slots.push({

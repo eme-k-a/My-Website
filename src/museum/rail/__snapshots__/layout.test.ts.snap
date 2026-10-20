@@ -225,7 +225,7 @@ exports[`computeLayout snapshot (now = 2026-10-15) > matches the pinned snapshot
       "position": [
         9,
         0,
-        -28,
+        -30.2,
       ],
       "rotationY": -1.571,
       "side": "right",
@@ -543,13 +543,13 @@ exports[`computeLayout snapshot (now = 2026-10-15) > matches the pinned snapshot
           "camera": [
             5.6,
             1.6,
-            -28,
+            -30.2,
           ],
           "id": "sdsj",
           "look": [
             9,
             1.35,
-            -28,
+            -30.2,
           ],
         },
       ],

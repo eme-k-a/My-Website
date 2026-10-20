@@ -13,8 +13,10 @@ import { expect, test } from './fixtures';
 import { goToStop, museumCanvas, museumUrl, stats, waitForMuseum } from './helpers';
 
 const INSTALLING = 'Installation in progress';
-/** The exhibits built so far (WP-12 verafin). */
+/** Idle-motion checks run for verafin only; WP-25 decides the per-exhibit matrix for M3. */
 const BUILT: ExhibitId[] = ['verafin'];
+/** Exhibits with no folder yet (M3: sdsj until WP-23 merges). Remove ids as they land. */
+const UNBUILT: ExhibitId[] = ['sdsj'];
 /** EXPERIENCE §10.4: reduced motion holds every exhibit still; checked over this window. */
 const STILL_MS = 10_000;
 /**
@@ -58,10 +60,12 @@ test.describe('exhibits', { tag: '@exhibit' }, () => {
     expect(s.mounted, 'the slot is mounted').toContain('verafin');
     expect(s.exhibits.verafin, 'no exhibit was revealed: the crate shows').toBeUndefined();
 
-    // mysa has no exhibit folder yet: its slot is the crate for good.
-    await goToStop(page, 'mysa');
-    await expect(page.getByTestId(TEST_IDS.card('mysa'))).toContainText(INSTALLING);
-    expect((await stats(page)).exhibits.mysa).toBeUndefined();
+    // An exhibit with no folder yet keeps the crate for good (none once WP-23 merges).
+    for (const id of UNBUILT) {
+      await goToStop(page, id);
+      await expect(page.getByTestId(TEST_IDS.card(id))).toContainText(INSTALLING);
+      expect((await stats(page)).exhibits[id]).toBeUndefined();
+    }
 
     // The block is deliberate: acknowledge exactly what it logs, nothing else.
     expect(

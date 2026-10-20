@@ -155,10 +155,12 @@ Emeka said "go" for M3 after G2. Builders run as separate cloud sessions, each o
 | WP-20 | Mysa, Wailo | session_01VEeLNNVFTUjbX2HsbKLCM1 | `claude/m3-wp-20` |
 | WP-21 | CFIA, MUN, Certifications | session_015AAw5CUALiSJ9hb7nBd9YT | `claude/m3-wp-21` |
 | WP-22 | KlarUp, Finance Tracker | session_01UAEqq8fd4Z6z8u9rnHdrQ8 | `claude/m3-wp-22` |
-| WP-23 | SDSJ | next group | `claude/m3-wp-23` |
-| WP-24 | Wing rooms and doors | next group | `claude/m3-wp-24` |
+| WP-23 | SDSJ | session_01Fb4q9FnUpbrUw37qr78qwJ (started 20:17 UTC) | `claude/m3-wp-23` |
+| WP-24 | Wing rooms and doors | session_01TKpHXcQ2rbXarKXZo3A4TM (started 20:17 UTC) | `claude/m3-wp-24` |
 | WP-25 | Test expansion | after WP-20 to WP-24 merge | |
 
 Then the F-M3 follow-ups listed in RULINGS, the review (G3 needs an average of at least 3.5 and no open P0 or P1), and the CI baseline refresh.
+
+**Group 1 status:** WP-20, WP-21 and WP-22 are merged (cherry-picked by R0 on 2026-10-20, 12 commits, `f529e57` to `9eb31c7`). On the merged tip, verify (827 tests), build, budgets and glyphs pass, as do the exhibit contract and exhibit specs on desktop and pixel7. The workflow integrator answered a status question instead of merging, so R0 merged by hand.
 
 Each push to a `claude/m3-*` branch runs CI and deploys an alias preview for that branch. That is harmless. R0 merges the branches into the integration branch with the batch integrator.

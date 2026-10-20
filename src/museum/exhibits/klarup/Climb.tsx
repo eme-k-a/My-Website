@@ -9,6 +9,7 @@ import { useFrame } from '@react-three/fiber';
 import { useLayoutEffect, useMemo, useRef, type RefObject } from 'react';
 import { Matrix4, type InstancedMesh } from 'three';
 import {
+  MergeStatic,
   useExhibitClock,
   useMaterial,
   useMaterialInstance,
@@ -104,7 +105,7 @@ export default function Climb({ runtime }: ExhibitProps) {
   useInstances(strips, stripMatrices);
 
   return (
-    <group name="climb">
+    <MergeStatic name="climb">
       <RoundedBox
         name="tray"
         args={TRAY.size}
@@ -156,6 +157,6 @@ export default function Climb({ runtime }: ExhibitProps) {
       >
         <boxGeometry args={[STRIP.width, CRATE.size, STRIP.width]} />
       </instancedMesh>
-    </group>
+    </MergeStatic>
   );
 }

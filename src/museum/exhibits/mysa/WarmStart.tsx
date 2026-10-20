@@ -8,7 +8,13 @@ import { RoundedBox } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Matrix4, type InstancedMesh, type Mesh, type MeshStandardMaterial } from 'three';
-import { useExhibitClock, useMaterial, useMaterialInstance, type ExhibitProps } from '../_kit';
+import {
+  MergeStatic,
+  useExhibitClock,
+  useMaterial,
+  useMaterialInstance,
+  type ExhibitProps,
+} from '../_kit';
 import { clockFrozen } from '../_kit/clock';
 import {
   BEZEL,
@@ -93,7 +99,7 @@ export default function WarmStart({ runtime }: ExhibitProps) {
   }, []);
 
   return (
-    <group name="warm-start">
+    <MergeStatic name="warm-start">
       <RoundedBox
         name="tray"
         args={TRAY.size}
@@ -165,6 +171,6 @@ export default function WarmStart({ runtime }: ExhibitProps) {
           </instancedMesh>
         </group>
       </group>
-    </group>
+    </MergeStatic>
   );
 }

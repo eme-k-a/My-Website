@@ -7,7 +7,13 @@
 import { useFrame } from '@react-three/fiber';
 import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { InstancedMesh, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
-import { useExhibitClock, useMaterial, useMaterialInstance, type ExhibitProps } from '../_kit';
+import {
+  MergeStatic,
+  useExhibitClock,
+  useMaterial,
+  useMaterialInstance,
+  type ExhibitProps,
+} from '../_kit';
 import type { ExhibitClock } from '../_kit';
 import {
   CUBE,
@@ -84,7 +90,7 @@ export default function RoundTable({ runtime }: ExhibitProps) {
   }, []);
 
   return (
-    <group name="round-table">
+    <MergeStatic name="round-table">
       <mesh name="foot" position-y={FOOT_CENTER_Y} material={brass}>
         <cylinderGeometry args={[FOOT.radius, FOOT.radius, FOOT.height, FOOT.segments]} />
       </mesh>
@@ -112,6 +118,6 @@ export default function RoundTable({ runtime }: ExhibitProps) {
           <Screen index={i} clock={clock} reducedMotion={reducedMotion} />
         </group>
       ))}
-    </group>
+    </MergeStatic>
   );
 }

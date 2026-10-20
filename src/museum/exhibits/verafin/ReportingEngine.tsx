@@ -7,7 +7,13 @@ import { RoundedBox } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { DynamicDrawUsage, type InstancedMesh } from 'three';
-import { useExhibitClock, useMaterial, useMaterialInstance, type ExhibitProps } from '../_kit';
+import {
+  MergeStatic,
+  useExhibitClock,
+  useMaterial,
+  useMaterialInstance,
+  type ExhibitProps,
+} from '../_kit';
 import {
   AXIS,
   BAR_COUNT,
@@ -56,54 +62,59 @@ export default function ReportingEngine({ runtime }: ExhibitProps) {
 
   return (
     <group name="reporting-engine">
-      <RoundedBox
-        name="tray"
-        args={TRAY.size}
-        radius={TRAY.radius}
-        smoothness={TRAY.smoothness}
-        bevelSegments={TRAY.bevelSegments}
-        position={TRAY.center}
-        material={walnut}
-      />
-      <mesh
-        name="conduit"
-        position={CONDUIT_PLACEMENT.position}
-        rotation-y={CONDUIT_PLACEMENT.rotationY}
-        material={brass}
-      >
-        <boxGeometry args={CONDUIT.size} />
-      </mesh>
-      <group name="column" position={[AXIS.x, 0, AXIS.z]}>
-        <mesh
-          name="core"
-          position-y={COLUMN_CENTER_Y}
-          material={core}
-          material-emissiveIntensity={CORE.glow}
-        >
-          <cylinderGeometry args={[CORE.radius, CORE.radius, CORE.height, CORE.segments]} />
-        </mesh>
-        <mesh name="glass" position-y={COLUMN_CENTER_Y} material={frostedGlass}>
-          <cylinderGeometry args={[COLUMN.radius, COLUMN.radius, COLUMN.height, COLUMN.segments]} />
-        </mesh>
-        <mesh name="collar" position-y={COLLAR.y} rotation-x={Math.PI / 2} material={brass}>
-          <torusGeometry
-            args={[COLLAR.radius, COLLAR.tube, COLLAR.tubeSegments, COLLAR.ringSegments]}
-          />
-        </mesh>
-      </group>
-      {CARTRIDGES.map(({ deg, position, rotationY }) => (
+      <MergeStatic>
         <RoundedBox
-          key={deg}
-          name={`cartridge-${deg}`}
-          args={CARTRIDGE.size}
-          radius={CARTRIDGE.radius}
-          smoothness={CARTRIDGE.smoothness}
-          bevelSegments={CARTRIDGE.bevelSegments}
-          position={position}
-          rotation-y={rotationY}
-          material={brass}
+          name="tray"
+          args={TRAY.size}
+          radius={TRAY.radius}
+          smoothness={TRAY.smoothness}
+          bevelSegments={TRAY.bevelSegments}
+          position={TRAY.center}
+          material={walnut}
         />
-      ))}
+        <mesh
+          name="conduit"
+          position={CONDUIT_PLACEMENT.position}
+          rotation-y={CONDUIT_PLACEMENT.rotationY}
+          material={brass}
+        >
+          <boxGeometry args={CONDUIT.size} />
+        </mesh>
+        <group name="column" position={[AXIS.x, 0, AXIS.z]}>
+          <mesh
+            name="core"
+            position-y={COLUMN_CENTER_Y}
+            material={core}
+            material-emissiveIntensity={CORE.glow}
+          >
+            <cylinderGeometry args={[CORE.radius, CORE.radius, CORE.height, CORE.segments]} />
+          </mesh>
+          <mesh name="glass" position-y={COLUMN_CENTER_Y} material={frostedGlass}>
+            <cylinderGeometry
+              args={[COLUMN.radius, COLUMN.radius, COLUMN.height, COLUMN.segments]}
+            />
+          </mesh>
+          <mesh name="collar" position-y={COLLAR.y} rotation-x={Math.PI / 2} material={brass}>
+            <torusGeometry
+              args={[COLLAR.radius, COLLAR.tube, COLLAR.tubeSegments, COLLAR.ringSegments]}
+            />
+          </mesh>
+        </group>
+        {CARTRIDGES.map(({ deg, position, rotationY }) => (
+          <RoundedBox
+            key={deg}
+            name={`cartridge-${deg}`}
+            args={CARTRIDGE.size}
+            radius={CARTRIDGE.radius}
+            smoothness={CARTRIDGE.smoothness}
+            bevelSegments={CARTRIDGE.bevelSegments}
+            position={position}
+            rotation-y={rotationY}
+            material={brass}
+          />
+        ))}
+      </MergeStatic>
+      {/* The bars move, so the grid stays out of the merge. */}
       <instancedMesh
         ref={bars}
         name="report-grid"

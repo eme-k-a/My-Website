@@ -9,7 +9,13 @@ import { RoundedBox } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { TubeGeometry, Vector3, type Mesh, type MeshStandardMaterial } from 'three';
-import { useExhibitClock, useMaterial, useMaterialInstance, type ExhibitProps } from '../_kit';
+import {
+  MergeStatic,
+  useExhibitClock,
+  useMaterial,
+  useMaterialInstance,
+  type ExhibitProps,
+} from '../_kit';
 import { clockFrozen } from '../_kit/clock';
 import {
   ARC,
@@ -120,72 +126,97 @@ export default function DeepLink({ runtime }: ExhibitProps) {
 
   return (
     <group name="deep-link">
-      <RoundedBox
-        name="tray"
-        args={TRAY.size}
-        radius={TRAY.radius}
-        smoothness={TRAY.smoothness}
-        bevelSegments={TRAY.bevelSegments}
-        position={TRAY.center}
-        material={walnut}
-      />
-      <mesh name="stand" geometry={geometry.wedge} position-x={STAND.center[0]} material={walnut} />
-      <group name="phone" position={PHONE_POSITION} rotation={PHONE_ROTATION}>
-        <mesh name="body" geometry={geometry.phone} material={graphite} />
-        <mesh name="screen" position-z={SCREEN.z} material={frostedGlass}>
-          <planeGeometry args={SCREEN.size} />
-        </mesh>
+      <MergeStatic>
         <RoundedBox
-          name="reset-card"
-          args={CARD.size}
-          radius={CARD.radius}
-          smoothness={2}
-          bevelSegments={1}
-          position-z={CARD.z}
-          material={paper}
+          name="tray"
+          args={TRAY.size}
+          radius={TRAY.radius}
+          smoothness={TRAY.smoothness}
+          bevelSegments={TRAY.bevelSegments}
+          position={TRAY.center}
+          material={walnut}
         />
-        <mesh name="glyph-bow" position={[GLYPH.bow.x, GLYPH.y, GLYPH.z]} material={brass}>
-          <torusGeometry
-            args={[
-              GLYPH.bow.radius,
-              GLYPH.bow.tube,
-              GLYPH.bow.radialSegments,
-              GLYPH.bow.tubularSegments,
-            ]}
-          />
-        </mesh>
         <mesh
-          name="glyph-shaft"
-          position={[GLYPH.shaft.from + SHAFT_LENGTH / 2, GLYPH.y, GLYPH.z]}
-          rotation-z={Math.PI / 2}
+          name="stand"
+          geometry={geometry.wedge}
+          position-x={STAND.center[0]}
+          material={walnut}
+        />
+        <group name="phone" position={PHONE_POSITION} rotation={PHONE_ROTATION}>
+          <mesh name="body" geometry={geometry.phone} material={graphite} />
+          <mesh name="screen" position-z={SCREEN.z} material={frostedGlass}>
+            <planeGeometry args={SCREEN.size} />
+          </mesh>
+          <RoundedBox
+            name="reset-card"
+            args={CARD.size}
+            radius={CARD.radius}
+            smoothness={2}
+            bevelSegments={1}
+            position-z={CARD.z}
+            material={paper}
+          />
+          <mesh name="glyph-bow" position={[GLYPH.bow.x, GLYPH.y, GLYPH.z]} material={brass}>
+            <torusGeometry
+              args={[
+                GLYPH.bow.radius,
+                GLYPH.bow.tube,
+                GLYPH.bow.radialSegments,
+                GLYPH.bow.tubularSegments,
+              ]}
+            />
+          </mesh>
+          <mesh
+            name="glyph-shaft"
+            position={[GLYPH.shaft.from + SHAFT_LENGTH / 2, GLYPH.y, GLYPH.z]}
+            rotation-z={Math.PI / 2}
+            material={brass}
+          >
+            <cylinderGeometry
+              args={[GLYPH.shaft.radius, GLYPH.shaft.radius, SHAFT_LENGTH, GLYPH.shaft.segments]}
+            />
+          </mesh>
+          <mesh ref={barMesh} name="reset-bar" position={[0, BAR.y, BAR.z]} material={barGlow}>
+            <boxGeometry args={BAR.size} />
+          </mesh>
+        </group>
+        <group name="envelope" position={ENVELOPE_CENTER} rotation={ENVELOPE_ROTATION}>
+          <mesh name="body" material={paper}>
+            <boxGeometry args={ENVELOPE.size} />
+          </mesh>
+          <mesh
+            name="flap"
+            geometry={geometry.flap}
+            position={FLAP_HINGE}
+            rotation-x={-ENVELOPE.flap.liftDeg * DEG}
+            material={paper}
+          />
+        </group>
+        <mesh
+          name="link-arc"
+          geometry={geometry.arc}
+          material={arcGlow}
+          material-emissiveIntensity={GLOW.arc}
+        />
+        <mesh
+          name="tag"
+          geometry={geometry.tag}
+          position={TAG_CENTER}
+          rotation={TAG_ROTATION}
+          material={brass}
+        />
+        <mesh
+          name="chain"
+          position={CHAIN_PLACEMENT.position}
+          quaternion={CHAIN_PLACEMENT.quaternion}
           material={brass}
         >
           <cylinderGeometry
-            args={[GLYPH.shaft.radius, GLYPH.shaft.radius, SHAFT_LENGTH, GLYPH.shaft.segments]}
+            args={[CHAIN.radius, CHAIN.radius, CHAIN_PLACEMENT.length, CHAIN.segments]}
           />
         </mesh>
-        <mesh ref={barMesh} name="reset-bar" position={[0, BAR.y, BAR.z]} material={barGlow}>
-          <boxGeometry args={BAR.size} />
-        </mesh>
-      </group>
-      <group name="envelope" position={ENVELOPE_CENTER} rotation={ENVELOPE_ROTATION}>
-        <mesh name="body" material={paper}>
-          <boxGeometry args={ENVELOPE.size} />
-        </mesh>
-        <mesh
-          name="flap"
-          geometry={geometry.flap}
-          position={FLAP_HINGE}
-          rotation-x={-ENVELOPE.flap.liftDeg * DEG}
-          material={paper}
-        />
-      </group>
-      <mesh
-        name="link-arc"
-        geometry={geometry.arc}
-        material={arcGlow}
-        material-emissiveIntensity={GLOW.arc}
-      />
+      </MergeStatic>
+      {/* The pulse moves along the arc, so it stays out of the merge. */}
       <mesh
         name="pulse"
         ref={pulse}
@@ -194,23 +225,6 @@ export default function DeepLink({ runtime }: ExhibitProps) {
         material-emissiveIntensity={GLOW.pulse}
       >
         <sphereGeometry args={[PULSE.radius, PULSE.widthSegments, PULSE.heightSegments]} />
-      </mesh>
-      <mesh
-        name="tag"
-        geometry={geometry.tag}
-        position={TAG_CENTER}
-        rotation={TAG_ROTATION}
-        material={brass}
-      />
-      <mesh
-        name="chain"
-        position={CHAIN_PLACEMENT.position}
-        quaternion={CHAIN_PLACEMENT.quaternion}
-        material={brass}
-      >
-        <cylinderGeometry
-          args={[CHAIN.radius, CHAIN.radius, CHAIN_PLACEMENT.length, CHAIN.segments]}
-        />
       </mesh>
     </group>
   );

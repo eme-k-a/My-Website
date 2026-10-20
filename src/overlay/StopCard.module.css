@@ -224,13 +224,38 @@
 }
 
 /*
- * Phone desk card (F-020): in museum mode the closing line is dropped on portrait phones, so the
- * card stays short enough for the desk top to sit above it (framing.ts DESK_PORTRAIT_Y). Without
- * JS or in classic mode the card is the page, and the line stays.
+ * Phone desk card (F-020): in museum mode on portrait phones the card is kept short, so the desk
+ * top sits above it even at 360 x 640 (CameraRig frames the desk into the band between the HUD and
+ * this card's measured top, framing.ts `deskPortraitY`). The closing line is dropped, the body
+ * uses the small size, and the links sit in two columns (Email me and LinkedIn, the PDF and
+ * GitHub, then Walk the aisle again), each still a 44 px target. Without JS or in classic mode the
+ * card is the page, and it keeps the full layout.
  */
 @media (orientation: portrait) and (max-width: 639px) {
   :global(html[data-mode='museum']) .desk .footnote {
     display: none;
+  }
+
+  :global(html[data-mode='museum']) .desk .body {
+    margin-top: 6px;
+    font-size: var(--type-small);
+    line-height: var(--lh-small);
+  }
+
+  :global(html[data-mode='museum']) .desk .deskLinks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 0 12px;
+    margin-top: 10px;
+  }
+
+  :global(html[data-mode='museum']) .desk .deskLinks li:first-child {
+    margin-bottom: 0;
+  }
+
+  :global(html[data-mode='museum']) .desk .deskLink {
+    line-height: 1.3;
   }
 }
 

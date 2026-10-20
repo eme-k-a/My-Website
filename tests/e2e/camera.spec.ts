@@ -4,7 +4,8 @@
 // mysa are all stop poses; (b) at every settled main exhibit the case's screen position is at 62%
 // of the width (desktop) or 36% of the height (pixel7); (c) a wheel walk announces nothing, and
 // keyboard moves announce exactly once per arrival with the EXPERIENCE §8.4 wording; (d) the
-// onboarding hint shows at the lobby and hides at verafin; (e) no parallax under ?test=1.
+// onboarding hint shows at the lobby and hides at verafin; (e) no parallax under ?test=1; (f) on
+// portrait phones (Pixel 7 and 360 x 640) the front desk sits above its card (F-020).
 import type { Page } from '@playwright/test';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { TEST_IDS } from '../../src/app/testIds';
@@ -341,5 +342,50 @@ test.describe('camera feel', () => {
     const after = (await stats(page)).camera;
     after.target.forEach((v, i) => expect(v).toBeCloseTo(before.target[i]!, 6));
     after.position.forEach((v, i) => expect(v).toBeCloseTo(before.position[i]!, 6));
+  });
+});
+
+/**
+ * (f) F-020: on portrait phones the front desk sits above its card. `screenPos('desk')` (the
+ * center of the desk's four object hit boxes; the hook's type stays ExhibitId) is above the desk
+ * card's top edge, at the Pixel 7 size and at 360 x 640 (EXPERIENCE §8.1, the smallest portrait
+ * phone the fast path names). The framing is measured from the card, so a settled frame can take
+ * a few damped frames to land: the check polls.
+ */
+async function expectDeskAboveCard(page: Page): Promise<void> {
+  await openGallery(page);
+  await goToStop(page, 'desk');
+  const card = page.getByTestId(TEST_IDS.card('desk'));
+  await expect(card).toBeVisible();
+  await expect
+    .poll(
+      async () => {
+        const at = await screenPosOf(page, 'desk' as ExhibitId);
+        const top = (await card.boundingBox())?.y ?? 0;
+        return at === null ? Number.NaN : top - at.y;
+      },
+      { message: 'card top minus the desk y, in px' },
+    )
+    .toBeGreaterThanOrEqual(8);
+  const hud = await page.getByTestId(TEST_IDS.hud).boundingBox();
+  const at = await screenPosOf(page, 'desk' as ExhibitId);
+  expect(at!.y, 'desk below the HUD').toBeGreaterThan((hud?.y ?? 0) + (hud?.height ?? 0));
+}
+
+test.describe('camera feel: the phone desk (F-020)', () => {
+  test.describe.configure({ timeout: 120_000 });
+
+  test('(f) Pixel 7: the desk sits above its card', async ({ page }) => {
+    only('pixel7');
+    await expectDeskAboveCard(page);
+  });
+
+  test.describe('360 x 640', () => {
+    test.use({ viewport: { width: 360, height: 640 } });
+
+    test('(f) 360 x 640 portrait: the desk sits above its card', async ({ page }) => {
+      only('pixel7');
+      await expectDeskAboveCard(page);
+    });
   });
 });

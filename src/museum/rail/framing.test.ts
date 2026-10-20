@@ -1,10 +1,18 @@
 import { PerspectiveCamera, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { tokens } from '../../design/tokens';
+import { END_WALL } from '../environment/labels3d';
+import { DESK_TOP_Y } from '../environment/lightPlan';
 import {
   applyFraming,
+  DESK_CARD_CLEARANCE,
+  DESK_POINT_TAN,
+  DESK_POINT_Y,
   DESK_PORTRAIT_Y,
+  deskPortraitY,
   deskWeightAt,
+  END_WALL_TOP_TAN,
+  END_WALL_TOP_Y,
   fovFor,
   framingFor,
   MIN_LEFT_AREA,
@@ -73,6 +81,59 @@ describe('framingFor', () => {
     expect(half).toBeCloseTo((0.36 + DESK_PORTRAIT_Y) / 2, 12);
     // Desktop frames the desk like every other stop.
     expect(framingFor(1440 / 900, null, 1)).toEqual({ x: 0.62, y: 0.5 });
+  });
+
+  it('takes a measured desk framing height (F-020)', () => {
+    expect(framingFor(360 / 640, null, 1, 0.37)).toEqual({ x: 0.5, y: 0.37 });
+    expect(framingFor(360 / 640, null, 0.5, 0.4).y).toBeCloseTo((0.36 + 0.4) / 2, 12);
+    expect(framingFor(1440 / 900, null, 1, 0.37)).toEqual({ x: 0.62, y: 0.5 });
+  });
+});
+
+describe('deskPortraitY (F-020)', () => {
+  const fov = 68;
+  const k = 1 / (2 * Math.tan((fov * Math.PI) / 360));
+  /** Where the desk point and the end-wall line top land, in px, for a band and its framing. */
+  const landing = (height: number, top: number, bottom: number) => {
+    const y = deskPortraitY({ height, top, bottom }, fov);
+    return {
+      y,
+      desk: (y + DESK_POINT_TAN * k) * height,
+      line: (y - END_WALL_TOP_TAN * k) * height,
+    };
+  };
+
+  it('keeps its heights in step with the environment', () => {
+    expect(DESK_POINT_Y).toBeGreaterThan(DESK_TOP_Y);
+    expect(DESK_POINT_Y).toBeLessThan(DESK_TOP_Y + 0.05);
+    expect(END_WALL_TOP_Y).toBeGreaterThanOrEqual(END_WALL.baselineY + END_WALL.capHeight);
+    expect(END_WALL_TOP_Y).toBeLessThan(END_WALL.baselineY + 1.5 * END_WALL.capHeight);
+  });
+
+  it('puts the desk above the card and the end-wall line below the HUD at 360 x 640', () => {
+    // The compact phone desk card's top at 360 x 640 sits near 300 px; the HUD ends at 60 px.
+    const at = landing(640, 60, 300);
+    expect(at.desk).toBeLessThanOrEqual(300 - DESK_CARD_CLEARANCE);
+    expect(at.line).toBeGreaterThanOrEqual(60);
+  });
+
+  it('centers the span from the line to the desk in the band at 412 x 839', () => {
+    const at = landing(839, 60, 520);
+    expect(at.desk).toBeLessThanOrEqual(520 - DESK_CARD_CLEARANCE);
+    expect(at.line).toBeGreaterThanOrEqual(60);
+    expect(at.line - 60).toBeCloseTo(520 - DESK_CARD_CLEARANCE - at.desk, 6);
+  });
+
+  it('keeps the desk above the card when the band is too short for the whole span', () => {
+    const at = landing(640, 60, 200);
+    expect(at.desk).toBeLessThanOrEqual(200 - DESK_CARD_CLEARANCE + 1e-9);
+  });
+
+  it('falls back to DESK_PORTRAIT_Y without a usable band, and stays in [0.22, 0.5]', () => {
+    expect(deskPortraitY({ height: 0, top: 0, bottom: 0 }, fov)).toBe(DESK_PORTRAIT_Y);
+    expect(deskPortraitY({ height: 640, top: 300, bottom: 200 }, fov)).toBe(DESK_PORTRAIT_Y);
+    expect(deskPortraitY({ height: 640, top: 60, bottom: 90 }, fov)).toBe(0.22);
+    expect(deskPortraitY({ height: 2000, top: 60, bottom: 1990 }, fov)).toBe(0.5);
   });
 });
 

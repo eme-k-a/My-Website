@@ -25,6 +25,7 @@ import {
   type PerspectiveCamera,
 } from 'three';
 import { useMuseum } from '../../app/store';
+import { TEST_IDS } from '../../app/testIds';
 import { registerNavProvider, testParams } from '../../app/testHooks';
 import type { ExhibitId, StopId, TrackId } from '../../content/ids';
 import { tokens } from '../../design/tokens';
@@ -32,7 +33,15 @@ import { LAYOUT } from '../../overlay/model';
 import { reportCameraTarget } from '../quality/StatsProbe';
 import { aimDolly, createDolly, stepDolly } from './dolly';
 import { fadeCut } from './fade';
-import { applyFraming, deskWeightAt, fovFor, framingFor, viewOffsetFor } from './framing';
+import {
+  applyFraming,
+  DESK_PORTRAIT_Y,
+  deskPortraitY,
+  deskWeightAt,
+  fovFor,
+  framingFor,
+  viewOffsetFor,
+} from './framing';
 import { gazeAt } from './gaze';
 import {
   installParallax,
@@ -115,6 +124,44 @@ function panelLeft(openId: ExhibitId | null, width: number): number | null {
     panel.left = dialog && width > 0 ? dialog.offsetLeft / width : null;
   }
   return panel.left;
+}
+
+/**
+ * The portrait desk band (F-020, framing.ts `deskPortraitY`), measured from the DOM: the HUD
+ * header's bottom, and how far the desk card's top rises above the bottom of its slot. At the desk
+ * stop the slot fills the viewport, so the card's top on the canvas is the canvas height less
+ * `rise`. Measured when the rig mounts and whenever the card, its slot or the HUD resizes.
+ */
+const deskBand = { hud: 0, rise: 0, ok: false };
+
+function deskElements(): {
+  card: HTMLElement | null;
+  slot: HTMLElement | null;
+  hud: HTMLElement | null;
+} {
+  const card = document.querySelector<HTMLElement>(`[data-testid="${TEST_IDS.card('desk')}"]`);
+  const hud = document.querySelector<HTMLElement>(`[data-testid="${TEST_IDS.hud}"]`);
+  return { card, slot: card?.parentElement ?? null, hud };
+}
+
+/** Re-measures the desk band; true when it changed. */
+function measureDeskBand(): boolean {
+  const { card, slot, hud } = deskElements();
+  const before = `${deskBand.hud}|${deskBand.rise}|${deskBand.ok}`;
+  if (card && slot) {
+    deskBand.rise = slot.getBoundingClientRect().bottom - card.getBoundingClientRect().top;
+    deskBand.hud = hud ? hud.getBoundingClientRect().bottom : 0;
+    deskBand.ok = deskBand.rise > 0;
+  } else {
+    deskBand.ok = false;
+  }
+  return before !== `${deskBand.hud}|${deskBand.rise}|${deskBand.ok}`;
+}
+
+/** The portrait framing height at the desk for a canvas `height` px tall. */
+function deskFramingY(height: number, fov: number): number {
+  if (!deskBand.ok) return DESK_PORTRAIT_Y;
+  return deskPortraitY({ height, top: deskBand.hud, bottom: height - deskBand.rise }, fov);
 }
 
 /** Forgets the damping velocity (after a jump or a glide, the walk starts from rest). */
@@ -272,8 +319,19 @@ export function CameraRig() {
         return { x, y };
       },
     });
+    // The desk band (F-020): the phone desk card changes height with the width and the fonts.
+    measureDeskBand();
+    const remeasure = () => {
+      if (measureDeskBand()) invalidate();
+    };
+    const sizes = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(remeasure);
+    const { card, slot, hud } = deskElements();
+    for (const el of [card, slot, hud]) if (el) sizes?.observe(el);
+    window.addEventListener('resize', remeasure);
     invalidate();
     return () => {
+      sizes?.disconnect();
+      window.removeEventListener('resize', remeasure);
       rig.attached = false;
       finishGlide();
       offWaker();
@@ -389,7 +447,11 @@ export function CameraRig() {
     if (lens.isPerspectiveCamera && size.width > 0 && size.height > 0) {
       const aspect = size.width / size.height;
       const desk = deskWeightAt(railIds.get(held?.track ?? progress.track) ?? [], p);
-      const goal = viewOffsetFor(framingFor(aspect, panelLeft(state.openId, size.width), desk));
+      const fov = fovFor(aspect);
+      const deskY = desk > 0 ? deskFramingY(size.height, fov) : DESK_PORTRAIT_Y;
+      const goal = viewOffsetFor(
+        framingFor(aspect, panelLeft(state.openId, size.width), desk, deskY),
+      );
       if (!shift.framed || state.reducedMotion) {
         shift.x = goal.x;
         shift.y = goal.y;
@@ -400,7 +462,7 @@ export function CameraRig() {
         easing.damp(shift, 'x', goal.x, smooth, dt);
         easing.damp(shift, 'y', goal.y, smooth, dt);
       }
-      applyFraming(lens, fovFor(aspect), shift, size.width, size.height);
+      applyFraming(lens, fov, shift, size.width, size.height);
       framing = shift.x !== goal.x || shift.y !== goal.y;
     }
     const animating =

@@ -135,14 +135,24 @@ jobs:
       - run: npm run a11y
       - if: ${{ !inputs.update-baselines }}
         run: npm run visual
+      # Upload only the screenshots this shard changed or added. Uploading the whole folder let a
+      # shard without @visual tests re-upload the committed (old) files, which then overwrote the
+      # regenerated ones in commit-baselines (run 52: "Baselines unchanged").
       - name: Regenerate the visual baselines
         if: ${{ inputs.update-baselines }}
-        run: npx playwright test --grep @visual --update-snapshots --pass-with-no-tests
+        run: |
+          npx playwright test --grep @visual --update-snapshots=all --pass-with-no-tests
+          mkdir -p baseline-changes
+          git ls-files -m -o --exclude-standard tests/e2e/__screenshots__ | while read -r f; do
+            mkdir -p "baseline-changes/$(dirname "$f")"
+            cp "$f" "baseline-changes/$f"
+          done
+          echo "Changed or new baselines in this shard: $(find baseline-changes -type f | wc -l)"
       - if: ${{ inputs.update-baselines }}
         uses: actions/upload-artifact@v4
         with:
           name: visual-baselines-${{ matrix.shard }}
-          path: tests/e2e/__screenshots__/
+          path: baseline-changes/
           if-no-files-found: ignore
       - if: ${{ failure() }}
         uses: actions/upload-artifact@v4
@@ -173,7 +183,7 @@ jobs:
         with:
           pattern: visual-baselines-*
           merge-multiple: true
-          path: tests/e2e/__screenshots__/
+          path: .
       - name: Commit the baselines
         env:
           WP: ${{ inputs.wp }}

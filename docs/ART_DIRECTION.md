@@ -272,7 +272,7 @@ Every target keeps its pool and wall wash whether or not a real light is assigne
 
 **How clones share programs.** three.js caches compiled shader programs by a key built from the material class and the parameters that change the shader (which maps are present, transparency, blending, side, fog, tone mapping, defines). `Material.clone()` copies every parameter and shares the textures, so a clone gets the same key and reuses the program already compiled for the shared instance; `library.test.ts` checks that a clone serializes identically apart from its uuid. Animate uniforms only: `emissiveIntensity`, `emissive`, `opacity`, `color`. Never change `transparent`, `side`, `blending`, `vertexColors`, `flatShading` or any map on an instance: that makes a new program and compiles mid-walk.
 
-**Glow levels.** `accentGlow` rests at 0.15 and peaks at 1.4. The EXPERIENCE §4 concepts allow brief flashes to 1.6 (the Mysa dial, the Wailo reset bar, the Safe Sip tamper ring); 1.6 is the ceiling for any exhibit. Ramps take at least 0.5 s and never exceed 3 changes per second (EXPERIENCE §10.4).
+**Glow levels.** `accentGlow` rests at 0.15 and peaks at 1.4. The EXPERIENCE §4 concepts allow brief flashes to 1.6 (the Mysa dial, the Wailo reset bar); 1.6 is the ceiling for any exhibit. Ramps take at least 0.5 s and never exceed 3 changes per second (EXPERIENCE §10.4).
 
 **Lifecycle.** `MaterialsProvider` sits inside `<Canvas>` and wraps the Suspense with the scene (ARCHITECTURE §7.1). It builds one library per canvas (a context loss remounts the canvas and builds a fresh one) and disposes every material, the decal texture and the walnut grain on unmount. Without a DOM (SSR, unit tests) the library still builds; walnut then has no grain map.
 
@@ -330,7 +330,7 @@ R11 scores every stop on six dimensions, D1 to D6, from 1 to 5 (half points allo
 
 ## 8. Concept checklists
 
-One file per exhibit id in `review/concepts/<id>.md` (`verafin`, `mysa`, `wailo`, `cfia`, `klarup`, `finance-tracker`, `safe-sip`, `sdsj`, `mun`, `certifications`), created in WP-05 with status `pending`. Each holds a header (exhibit id, artwork title, EXPERIENCE section, builder WP, status, reviewer R2), the checklist copied verbatim from its EXPERIENCE §4 entry as `- [ ]` items, and an empty Verdict block.
+One file per exhibit id in `review/concepts/<id>.md` (`verafin`, `mysa`, `wailo`, `cfia`, `klarup`, `finance-tracker`, `sdsj`, `mun`, `certifications`), created in WP-05 with status `pending`. Each holds a header (exhibit id, artwork title, EXPERIENCE section, builder WP, status, reviewer R2), the checklist copied verbatim from its EXPERIENCE §4 entry as `- [ ]` items, and an empty Verdict block.
 
 **Process.**
 1. The builder WP captures the exhibit's stop screenshot (desktop at `tier=high`, plus Pixel 7 at `tier=medium`), its reduced-motion frames, and the 320 px grayscale thumbnail of the desktop shot (`sharp(shot).resize(320).grayscale()`), under `out/wpNN/` (never committed), and asks R0 for the R2 review.

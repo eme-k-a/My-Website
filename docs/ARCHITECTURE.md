@@ -175,7 +175,7 @@ My-Website/
                         fonts.ts useExhibitClock.ts noise.ts canvasTexture.ts
                         index.ts (+ tests)                                     R3
         verafin/ mysa/ wailo/ cfia/ klarup/ finance-tracker/
-        safe-sip/ sdsj/ mun/ certifications/   index.ts + component + README  R5 (one builder per folder)
+        sdsj/ mun/ certifications/            index.ts + component + README  R5 (one builder per folder)
       debug/            Debug.tsx (lazy, ?debug only)                          R7
     design/             tokens.css tokens.ts fonts.css contrast.ts (+ tests)   R2
     seo/                meta.ts jsonLd.ts OgCard.tsx (+ tests)                 R9
@@ -275,7 +275,7 @@ One typed file, `src/content/resume.ts`, drives the gallery, the DOM cards and d
 export const EXHIBIT_IDS = [
   'verafin', 'mysa', 'wailo', 'cfia',            // main aisle, newest first
   'klarup', 'finance-tracker',                   // projects wing
-  'safe-sip', 'sdsj',                            // volunteer wing
+  'sdsj',                                        // volunteer wing
   'mun', 'certifications',                       // end of the main track
 ] as const;
 export type ExhibitId = (typeof EXHIBIT_IDS)[number];
@@ -520,9 +520,9 @@ Required test values: Sep 2026 to Dec 2026 = `4 months`; Jan 2026 to May 2026 = 
 | Selector | Returns |
 |---|---|
 | `mainTrack(c)` | `['lobby', <work ids with a door inserted after each wing.after>, <education ids>, 'certifications', 'desk']`. For v1: `lobby, verafin, projects-door, mysa, volunteer-door, wailo, cfia, mun, certifications, desk` |
-| `wingTrack(c, wingId)` | `[<wing>-door, ...items]`, for v1 `projects-door, klarup, finance-tracker` and `volunteer-door, safe-sip, sdsj` |
+| `wingTrack(c, wingId)` | `[<wing>-door, ...items]`, for v1 `projects-door, klarup, finance-tracker` and `volunteer-door, sdsj` |
 | `trackOf(c, id)` | the track an exhibit lives on |
-| `readingOrder(c)` | main track exhibits with each wing's items inserted right after its door: `verafin, klarup, finance-tracker, mysa, safe-sip, sdsj, wailo, cfia, mun, certifications`. Drives Newer/Older and keyboard story order |
+| `readingOrder(c)` | main track exhibits with each wing's items inserted right after its door: `verafin, klarup, finance-tracker, mysa, sdsj, wailo, cfia, mun, certifications`. Drives Newer/Older and keyboard story order |
 | `entryById(c, id)` | the `ExhibitEntry` |
 | `exhibitNumber(c, id)` | main-track exhibits `01` to `06` in main-track order (verafin, mysa, wailo, cfia, mun, certifications); wing items `P1`, `P2`, `V1`, `V2`; displayed as "No. 01" or "No. P1" (EXPERIENCE §3.1) |
 | `heroLines(c, now)` | `[roleLine, educationLine]`: `"<shortRole ?? role>, <org>"` of the current work entry (or, when none is current, `"Most recently: <shortRole ?? role>, <org>"` of the newest entry, EXPERIENCE §8.1) and `"<shortDegree ?? degree>, <shortInstitution ?? institution>, expected <Mon YYYY>"` (no "expected" once `isExpected` is false). Today: "Software Development Co-op, Nasdaq Verafin" and "B.Eng Computer Engineering, MUN, expected May 2027" |
@@ -555,7 +555,7 @@ Required test values: Sep 2026 to Dec 2026 = `4 months`; Jan 2026 to May 2026 = 
 }
 ```
 
-Wings in v1 content: `{ id: 'projects', title: 'Projects', after: 'verafin', side: 'left', items: ['klarup', 'finance-tracker'] }` and `{ id: 'volunteer', title: 'Volunteer & Leadership', after: 'mysa', side: 'right', items: ['safe-sip', 'sdsj'] }`. Moving a wing is a content edit of `after` and `side` only.
+Wings in v1 content: `{ id: 'projects', title: 'Projects', after: 'verafin', side: 'left', items: ['klarup', 'finance-tracker'] }` and `{ id: 'volunteer', title: 'Volunteer & Leadership', after: 'mysa', side: 'right', items: ['sdsj'] }`. Moving a wing is a content edit of `after` and `side` only.
 
 ### 3.9 Consumers
 
@@ -887,12 +887,11 @@ Resulting v1 values (the snapshot must match; EXPERIENCE §2.4 and §2.5 are the
 | desk | (0, 1.6, -64) | (0, 1.1, -67.5) |
 | klarup | (-5.6, 1.6, -14.6) | (-9, 1.35, -13.8) |
 | finance-tracker | (-5.6, 1.6, -17.4) | (-9, 1.35, -18.2) |
-| safe-sip | (5.6, 1.6, -26.6) | (9, 1.35, -25.8) |
-| sdsj | (5.6, 1.6, -29.4) | (9, 1.35, -30.2) |
+| sdsj | (5.6, 1.6, -28) | (9, 1.35, -28) |
 
-Wing tracks: `projects` = `[projects-door, klarup, finance-tracker]` and `volunteer` = `[volunteer-door, safe-sip, sdsj]`. The door pose is index 0 of its wing track (the same pose as on the main track), so the track swap has no jump; the wing's exhibit stops are the items (PLAN §2's "projects is klarup, finance-tracker").
+Wing tracks: `projects` = `[projects-door, klarup, finance-tracker]` and `volunteer` = `[volunteer-door, sdsj]`. The door pose is index 0 of its wing track (the same pose as on the main track), so the track swap has no jump; the wing's exhibit stops are the items (PLAN §2's "projects is klarup, finance-tracker"). A wing with one item (volunteer since F-035) centres its plinth and camera on the door axis; a wing with two puts them at the door z plus and minus 2.2 m (cameras 1.4 m).
 
-`layout.test.ts` also asserts: 10 main stops and 2 wing tracks of 3 poses each (door plus 2 exhibit stops); the EXPERIENCE §2.7 worked example; the validation errors of EXPERIENCE §2.2 rule 2; year marks within 0.1 m of EXPERIENCE §6.9; changing a wing's `after` moves its door to the new midpoint and its room, plinths and stops with it. The rail clearance test (every 0.1 m sample at least 0.4 m from every wall, door planes crossed only inside the opening) lives in `src/museum/environment/clearance.test.ts` (WP-24).
+`layout.test.ts` also asserts: 10 main stops and 2 wing tracks (door plus the wing's exhibit stops: 2 in projects, 1 in volunteer), including the lone-item centring rule; the EXPERIENCE §2.7 worked example; the validation errors of EXPERIENCE §2.2 rule 2; year marks within 0.1 m of EXPERIENCE §6.9; changing a wing's `after` moves its door to the new midpoint and its room, plinths and stops with it. The rail clearance test (every 0.1 m sample at least 0.4 m from every wall, door planes crossed only inside the opening) lives in `src/museum/environment/clearance.test.ts` (WP-24).
 
 ### 6.7 Rail curve and wing tracks (`rail.ts`, `CameraRig.tsx`)
 
@@ -1187,10 +1186,10 @@ Owner: R9 (`src/seo/**`, `src/entry-server.tsx`, `scripts/postbuild.ts`, `script
 | File | Notes |
 |---|---|
 | `dist/index.html` | hero and every main stop card prerendered; `og:type` `profile` |
-| `dist/exhibit/<id>/index.html` (10) | same shell plus `#story-static` (role, organization, dates with duration, Medium tags, bullets, the optional curator's note and the story blocks, takeaway, the object, links, Newer/Older links to sibling pages); `og:type` `article` |
+| `dist/exhibit/<id>/index.html` (9) | same shell plus `#story-static` (role, organization, dates with duration, Medium tags, bullets, the optional curator's note and the story blocks, takeaway, the object, links, Newer/Older links to sibling pages); `og:type` `article` |
 | `dist/resume/index.html` | classic page; zero JS; links the CSS-only build output from the manifest |
 | `dist/404.html` | `noindex` |
-| `dist/sitemap.xml` | `/`, `/resume/`, the 10 exhibit pages; `lastmod` = build date. The PDF is linked, not listed |
+| `dist/sitemap.xml` | `/`, `/resume/`, the 9 exhibit pages; `lastmod` = build date. The PDF is linked, not listed |
 | `dist/robots.txt` | `User-agent: *`, `Allow: /`, `Sitemap: <SITE_URL>/sitemap.xml` (generated because it needs SITE_URL) |
 | `dist/_headers` | via `scripts/headers.ts` (§12) |
 
@@ -1345,7 +1344,7 @@ Every spec automatically fails on: a `console` message of type `error`; a `pagee
 
 - **Generated and compared in CI only** (SwiftShader output varies by CPU). Locally, `@visual` specs skip unless `VISUAL_LOCAL=1`, and local diffs are advisory.
 - `expect(page).toHaveScreenshot(name, { maxDiffPixelRatio: 0.02, animations: 'disabled', caret: 'hide', mask: [page.getByTestId('dialog-duration')] })`. Durations of ongoing roles change monthly, hence the mask.
-- Canvas baselines: one per stop (10 main + 4 wing items) on `desktop` and `pixel7`, at `?test=1` (tier medium). DOM screenshots (dialogs, `/resume/`, 404) mask the canvas.
+- Canvas baselines: one per stop (10 main + 3 wing items) on `desktop` and `pixel7`, at `?test=1` (tier medium). DOM screenshots (dialogs, `/resume/`, 404) mask the canvas.
 - Rebaselining: run `ci.yml` by `workflow_dispatch` with `update-baselines: true`; the e2e job runs `npx playwright test --grep @visual --update-snapshots` and uploads `tests/e2e/__screenshots__/` as an artifact; R8 commits it as `test(visual): rebaseline <stops> for <WP or F-###>`.
 
 ### 13.7 Accessibility

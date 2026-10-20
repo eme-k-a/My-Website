@@ -34,7 +34,7 @@
 
 ### 1.1 Gate G0 (resume): what Emeka signs off
 1. The new Nasdaq Verafin entry: title "Software Development Co-op Student", company line "Nasdaq Verafin", dates "Sep 2026 – Dec 2026", location "St. John's, NL" (on-site assumed), and bullets `verafin.b1` to `verafin.b3` (§3.3). The wording choices "accurate, readable reports for end users" and "modular, reusable components" are the editor's, not facts he supplied.
-2. Every rewritten bullet: `mysa.b1`, `mysa.b2`, `mysa.b3`, `wailo.b3`, `cfia.b1` (two bullets merged into one), `safe-sip.b1`, `sdsj.b1` (change log rows 7 to 9, 12, 14, 20 and 23 in §4).
+2. Every rewritten bullet: `mysa.b1`, `mysa.b2`, `mysa.b3`, `wailo.b3`, `cfia.b1` (two bullets merged into one), `sdsj.b1` (change log rows 7 to 9, 12, 14 and 23 in §4).
 3. Style changes: "(Co-Op)" to "(Co-op)"; "IT Support Technician - Intern" to "IT Support Technician (Intern)"; "July 2024" to "Jul 2024"; present tense for ongoing roles ("Engineer", "Spearhead"); a colon instead of the dash in the Enactus bullet.
 4. Skills regrouped into 4 lines, with "Cloud Computing" dropped from Concepts (covered by AWS and the AWS certification).
 5. The KlarUp heading: "KlarUp: Collaborative Productivity App | React Native, Python, Expo" (colon instead of a spaced hyphen; "Expo" added because the second bullet is about Expo Application Services).
@@ -44,7 +44,7 @@
 ### 1.2 Gate G5 (all copy): what Emeka signs off
 1. Name display form on the site: "Chukwuemeka (Emeka) Nduka-Nwagbo".
 2. Lobby: eyebrow, headline, intro, hint (§6.1).
-3. All 10 exhibit stories (§5), every block. Each is first person.
+3. All 9 exhibit stories (§5), every block. Each is first person.
 4. All 10 captions, tags and object descriptions (§5). Captions are written in neutral museum-label voice from resume facts only.
 5. Curator's notes, if any: the field is optional and none is stored until Emeka writes one (or approves wording R1 proposes from facts he supplies).
 6. The desk body, including his target roles (§6.3).
@@ -69,7 +69,6 @@ Every sentence below is in a `draft: true` block. If Emeka does not confirm it, 
 | klarup story | "The idea is that tasks are easier to finish when people hold each other accountable" | Product motivation, not on the resume |
 | klarup story | "KlarUp taught me that a release process deserves as much design as the features it ships." | Lesson learned |
 | finance-tracker story | "What makes it more than a ledger" and "an early look at how language models can turn raw numbers into practical guidance" | Editorial framing; "early" is a timing claim |
-| safe-sip story | "It is the exhibit where my software meets the physical world ..." | Editorial framing |
 | sdsj story | "The heart of the role is our recurring monthly mini-hackathons" | Implies the hackathons are his main duty |
 | sdsj story | "I love bringing those groups together, because each brings a perspective the others need." | Feeling and opinion |
 | sdsj story | "Leading the community has sharpened how I organize, how I communicate, and how I make room for other people to build." | Lesson learned |
@@ -163,10 +162,6 @@ KlarUp: Collaborative Productivity App | React Native, Python, Expo
 - Architected the production release pipeline using Expo Application Services (EAS), securely injecting environment variables to generate untethered, standalone APKs for Android.
 
 VOLUNTEER EXPERIENCE
-Member (Right-To-Rise: Safe Sip)                                      Sep 2025 – Present
-Enactus Memorial                                                            St. John's, NL
-- Engineer a tamper-detecting smart lid MVP: a 3D-printed enclosure with a Raspberry Pi Pico W and I2C orientation sensor, using Euclidean distance and Euler angles to detect tampering in real time.
-
 President                                                             Jul 2024 – Present
 Software Developers of St. John's                                           St. John's, NL
 - Spearhead recurring monthly mini-hackathons, uniting developers, designers, and founders to collaborate on projects and foster an active, cross-functional tech community.
@@ -197,7 +192,6 @@ Priority: 1 keep, 2 normal, 3 trim first. Characters are counted without the bul
 | `klarup.b1` | "Engineered a gamified, cross-platform task management application using React Native and a Python API, integrating collaborative features to drive user accountability and social motivation." | true | 1 | false | 189 |
 | `klarup.b2` | "Architected the production release pipeline using Expo Application Services (EAS), securely injecting environment variables to generate untethered, standalone APKs for Android." | true | 2 | false | 176 |
 | `finance-tracker.b1` | "Built a full-stack personal finance tracker using the MERN stack to manage income, expenses, and budgets, with ChatGPT API integration for real-time financial health analysis and personalized recommendations." | **false** | 3 | false | 208 |
-| `safe-sip.b1` | "Engineer a tamper-detecting smart lid MVP: a 3D-printed enclosure with a Raspberry Pi Pico W and I2C orientation sensor, using Euclidean distance and Euler angles to detect tampering in real time." | true | 2 | false | 196 |
 | `sdsj.b1` | "Spearhead recurring monthly mini-hackathons, uniting developers, designers, and founders to collaborate on projects and foster an active, cross-functional tech community." | true | 3 | false | 170 |
 
 Notes:
@@ -273,8 +267,8 @@ Estimated against the original (no LaTeX here; the Playwright overflow gate and 
 | 17 | KlarUp heading | "KlarUp - Collaborative Productivity App \| React Native, Python" | "KlarUp: Collaborative Productivity App \| React Native, Python, Expo" | Colon instead of a spaced hyphen; Expo named because `klarup.b2` uses Expo Application Services |
 | 18 | Personal Finance Tracker | "Personal Finance Tracker \| MERN, ChatGPT API" plus one 3-line bullet | Removed from the PDF and `.tex` (`print: false`); stays in the gallery's Projects wing | Saves 3 to 4 lines; the weakest item, already outclassed by KlarUp. One-line version kept in §3.5 A6 |
 | 19 | KlarUp `b1`, `b2` | unchanged | unchanged | |
-| 20 | `safe-sip.b1` | (the original uses an en dash as sentence punctuation) "Engineering the hardware MVP for a tamper-detecting smart lid – prototyping a 3D-printed enclosure with a Raspberry Pi Pico W and I2C orientation sensor, with embedded spatial logic using Euclidean distance and Euler angles to detect tampering in real-time." | "Engineer a tamper-detecting smart lid MVP: a 3D-printed enclosure with a Raspberry Pi Pico W and I2C orientation sensor, using Euclidean distance and Euler angles to detect tampering in real time." | Present tense for an ongoing role ("Engineering" was a participle); colon instead of a dash used as sentence punctuation; "in real time" (noun phrase, no hyphen); 3 lines to 2 |
-| 21 | Enactus title | unchanged: "Member (Right-To-Rise: Safe Sip)" | unchanged | Capitalization kept as on the original until Emeka confirms (§7) |
+| 20 | (removed) | The Safe Sip entry and its bullet | Removed on 2026-10-20 (F-035, Emeka's decision) | |
+| 21 | (removed) | The Enactus title | See row 20 | |
 | 22 | SDSJ dates | "July 2024 – Present" | "Jul 2024 – Present" | Three-letter months everywhere |
 | 23 | `sdsj.b1` | "Spearheaded recurring monthly mini-hackathons, ..." | "Spearhead recurring monthly mini-hackathons, ..." (rest unchanged) | Present tense for an ongoing role |
 | 24 | Certifications | unchanged | unchanged | |
@@ -287,7 +281,7 @@ Estimated against the original (no LaTeX here; the Playwright overflow gate and 
 Arrays in `resume.ts`, in this order:
 - `experiences`: `verafin`, `mysa`, `wailo`, `cfia` (newest first; the main aisle).
 - `projects`: `klarup`, `finance-tracker`.
-- `volunteer`: `safe-sip`, `sdsj`.
+- `volunteer`: `sdsj`.
 - `education`: `mun`.
 - `certifications`: one block with id `certifications`.
 
@@ -438,26 +432,9 @@ Arrays in `resume.ts`, in this order:
 1. `p`, draft: "I built this full-stack personal finance tracker on the MERN stack (MongoDB, Express, React, and Node.js) to manage income, expenses, and budgets in one place. What makes it more than a ledger is the ChatGPT API integration, which analyzes financial health in real time and offers personalized recommendations."
 2. `p`, draft: "The project gave me end-to-end practice connecting a database, an API, and a React interface, and an early look at how language models can turn raw numbers into practical guidance."
 
-### 5.7 `safe-sip`
+### 5.7 (removed)
 
-| Field | Value |
-|---|---|
-| `kind` | `volunteer` |
-| `role` | "Member (Right-To-Rise: Safe Sip)" |
-| `org` | "Enactus Memorial" |
-| `location` | city "St. John's", region "NL", mode `on-site` |
-| `dates` | start `2025-09`, end `present` (ONGOING; 1 yr 2 mo at an Oct 2026 build) |
-| `tense` | `present` |
-| `bullets` | `safe-sip.b1` |
-| `exhibit.title` | "Tamper Evident" |
-| `exhibit.caption` | "A tamper-detecting smart lid MVP: a Raspberry Pi Pico W, an orientation sensor, and embedded spatial logic." (107 chars, 17 words) |
-| `exhibit.tags` | "Raspberry Pi Pico W", "I2C Sensors", "Embedded Logic", "3D Printing", "Hardware Prototyping" |
-| `exhibit.curatorNote` | omit until Emeka writes one |
-| `exhibit.object` | "A cup rocks gently inside a brass gimbal. Its cut-away lid shows a Raspberry Pi Pico W and an orientation sensor, and the ring on the lid lights when the tilt crosses the tamper threshold." (`draft: true`) |
-
-**Story** (88 words):
-1. `p`, draft: "With Enactus Memorial, on Right-To-Rise: Safe Sip, I am engineering the hardware MVP for a smart lid that detects tampering. I am prototyping a 3D-printed enclosure around a Raspberry Pi Pico W and an I2C orientation sensor, and writing embedded spatial logic that uses Euclidean distance and Euler angles to recognize, in real time, when the lid has been disturbed."
-2. `p`, draft: "It is the exhibit where my software meets the physical world: every line of code has to make sense to a sensor, a microcontroller, and a printed shell."
+The `safe-sip` entry ("Tamper Evident", Enactus Memorial) was removed on 2026-10-20 (F-035, Emeka's decision). The section number stays so that references to §5.8 and later hold.
 
 ### 5.8 `sdsj`
 
@@ -531,7 +508,7 @@ Use official badge images only if the issuer's badge guidelines allow it; v1 use
 | `id` | `title` | `after` | `side` | `items` (in order) |
 |---|---|---|---|---|
 | `projects` | "Projects" | `verafin` | `left` | `klarup`, `finance-tracker` (order kept until project dates are known) |
-| `volunteer` | "Volunteer & Leadership" | `mysa` | `right` | `safe-sip`, `sdsj` (newest start first) |
+| `volunteer` | "Volunteer & Leadership" | `mysa` | `right` | `sdsj` |
 
 Door positions derive from `after` (midpoint between `after` and the next main exhibit), so moving a wing is an edit of `after` and `side` only.
 
@@ -581,7 +558,7 @@ Strings marked "content" go into `resume.ts`. Strings marked "UI" are owned by R
 ### 6.4 Door stops (wing `title` is content; the rest is UI from EXPERIENCE §8.4)
 **Projects door card:** "Projects wing" / "2 exhibits" / links "The Climb, KlarUp" (to `/exhibit/klarup/`) and "The Balance, Personal Finance Tracker" (to `/exhibit/finance-tracker/`) / button "Step inside" (key hint "Enter") / helper "Or keep scrolling to skip."
 
-**Volunteer door card:** "Volunteer & Leadership wing" / "2 exhibits" / links "Tamper Evident, Enactus Memorial" (to `/exhibit/safe-sip/`) and "The Round Table, Software Developers of St. John's" (to `/exhibit/sdsj/`) / "Step inside" / "Or keep scrolling to skip."
+**Volunteer door card:** "Volunteer & Leadership wing" / "1 exhibit" / link "The Round Table, Software Developers of St. John's" (to `/exhibit/sdsj/`) / "Step inside" / "Or keep scrolling to skip."
 
 **Inside a wing:** HUD "Projects wing, 1 of 2" and "Return to the aisle" (key hint "Esc"); the last wing card also offers "Return to the aisle".
 
@@ -616,8 +593,8 @@ None of these block M0 or M1. Each default applies until he answers; answers upd
 | 7 | Personal Finance Tracker: his role and dates; is "Full-Stack Web App" an acceptable tagline? | No role line, no dates, tagline "Full-Stack Web App" |
 | 8 | Certifications: issue dates, the Tech Stewardship issuing body, verification links | Names only; AWS issuer "Amazon Web Services"; no links |
 | 9 | MUN program start date | Omitted; no duration shown (the 3D scaffold uses the graduation month only) |
-| 10 | Are both volunteer roles still active (Enactus Safe Sip, SDSJ President)? | Both "Present", present tense |
-| 11 | Official capitalization: "Right-To-Rise" or "Right to Rise"? | "Right-To-Rise", as on his resume |
+| 10 | Is the SDSJ President role still active? | "Present", present tense |
+| 11 | (removed) | The only question about the Safe Sip title; the entry was removed in F-035 | |
 | 12 | Did the Mysa web app use a database alongside Cognito? Which? | No database mentioned (§3.5 A4 holds the alternate) |
 | 13 | What roles is he targeting (desk call to action)? | Fallback desk body without the clause (§6.3) |
 | 14 | Does he use SQL at Verafin? | SQL not added to Languages |

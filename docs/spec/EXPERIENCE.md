@@ -34,7 +34,7 @@
 **The walk:**
 1. **Lobby.** The visitor arrives in a lobby. The DOM hero (name, current role, degree, Resume PDF, Email, Classic view) is readable before any 3D loads. Through an arch, the first exhibit's light pool already glows on the right.
 2. **Main aisle (work only, newest first).** Nasdaq Verafin, Mysa, Wailo, CFIA. Each work role is one sculptural object in a lit glass case on a plinth. Every step forward is a step back in time.
-3. **Optional side wings.** Two doors off the aisle lead to small rooms: Projects (KlarUp, Personal Finance Tracker) and Volunteer and Leadership (Safe Sip, Software Developers of St. John's). Visitors step inside on purpose; scrolling past skips them.
+3. **Optional side wings.** Two doors off the aisle lead to small rooms: Projects (KlarUp, Personal Finance Tracker) and Volunteer and Leadership (Software Developers of St. John's). Visitors step inside on purpose; scrolling past skips them.
 4. **Foundations room.** At the end of the aisle: the degree (Memorial University, B.Eng Computer Engineering, expected May 2027) and three certifications. It is on the main path, never optional, because recruiters must always pass degree status.
 5. **Front desk.** The exit: Email, LinkedIn, "Take home the catalogue" (the resume PDF) and GitHub. The end wall reads "You've reached the beginning."
 
@@ -109,7 +109,7 @@ Note on deviations from `p_experience.md`: the projects door moved from z -15 to
 | Lobby | -6 to 6 | 6 to -4 | 6 | Arch in the back wall at z -4 (opening x -2 to 2, 3.6 m tall). Brass "COMMIT HISTORY" above the arch. Portrait in a brass frame right of the arch |
 | Main aisle | -3.5 to 3.5 | -4 to -52 | 5 | 4 work exhibits, 2 doors, 5 year strips, ceiling light slot |
 | Projects wing | -11.5 to -3.5 | -12 to -20 | 4 | Door in the left wall at z -16. KlarUp, Personal Finance Tracker |
-| Volunteer wing | 3.5 to 11.5 | -24 to -32 | 4 | Door in the right wall at z -28. Safe Sip, Software Developers of St. John's |
+| Volunteer wing | 3.5 to 11.5 | -24 to -32 | 4 | Door in the right wall at z -28. Software Developers of St. John's (the only exhibit) |
 | Foundations | -6 to 6 | -52 to -62 | 5 | MUN on its large plinth at (-2.5, -57). Certifications wall vitrine on the right wall at z -57 |
 | Front desk | -5 to 5 | -62 to -70 | 4 | Walnut and brass desk at (0, -67.5). End wall at z -70 |
 
@@ -159,16 +159,17 @@ Each wing track starts with its door pose (index 0, identical to the main-track 
 |---|---|---|---|---|
 | 0 | `volunteer-door` | (0, 1.6, -26.2) | (3.5, 1.5, -28) | (door) |
 | (waypoint) | threshold T | (3.5, 1.6, -28) | not a stop | |
-| 1 | `safe-sip` | (5.6, 1.6, -26.6) | (9, 1.35, -25.8) | (9, -25.8) |
-| 2 | `sdsj` | (5.6, 1.6, -29.4) | (9, 1.35, -30.2) | (9, -30.2) |
+| 1 | `sdsj` | (5.6, 1.6, -28) | (9, 1.35, -28) | (9, -28) |
 
-Wing item order is content order, newest first where dates exist: Safe Sip (Sep 2025) before SDSJ (Jul 2024). Projects order is KlarUp, then Personal Finance Tracker, until [placeholder: project dates] are known.
+A wing with two items puts them at the door z plus and minus 2.2 m (cameras plus and minus 1.4 m). A wing with one item, as the volunteer wing is since F-035 (the Safe Sip entry was removed on 2026-10-20), centres the plinth and the camera on the door axis (z = door z), so the visitor looks straight through the door at it.
+
+Wing item order is content order, newest first where dates exist. Projects order is KlarUp, then Personal Finance Tracker, until [placeholder: project dates] are known.
 
 ### 2.6 Clearances (checked by WP-24's rail sampling test, minimum 0.4 m from any wall)
 
 - Main stops sit at abs(x) ≤ 0.6, at least 2.9 m from the aisle walls.
 - Lobby to Verafin crosses the arch plane (z -4) near x 0.43, 1.57 m inside the 4 m arch.
-- Wing entry rail: door stop camera, then T, then the first wing stop. T is the door center, 1.2 m from each jamb. Wing stops are 2.1 m from the shared aisle wall and 2.6 m from the room's end walls.
+- Wing entry rail: door stop camera, then T, then the first wing stop. T is the door center, 1.2 m from each jamb. Wing stops are 2.1 m from the shared aisle wall and 2.6 m (two-item wing) or 4 m (lone item) from the room's end walls.
 - certifications to desk crosses the desk opening (z -62) near x 0.63, inside x -2.5 to 2.5.
 
 ### 2.7 Computed from content: what a new job does
@@ -194,7 +195,7 @@ Worked example with a hypothetical new entry X:
 The new stop shows the placeholder crate (§5.7) until its exhibit is built. The layout snapshot test is updated in the same commit as the content change and reviewed as a diff.
 
 ### 2.8 Testable rules
-- The layout snapshot pins every number in §2.4 and §2.5 (to 3 decimals) for today's content: 10 main stops and 2 wing tracks of 3 poses each (the door pose at index 0, then the 2 exhibit stops).
+- The layout snapshot pins every number in §2.4 and §2.5 (to 3 decimals) for today's content: 10 main stops and 2 wing tracks (the door pose at index 0, then the wing's exhibit stops: 2 in projects, 1 in volunteer).
 - A unit test adds a fake newest job and asserts the shifts in §2.7.
 - Unit tests cover each validation failure in §2.2 rule 2.
 - Every rail sample (every 0.1 m of arc length, main and wing rails) stays at least 0.4 m from every wall and passes door planes only within the door opening minus 0.4 m.
@@ -205,10 +206,10 @@ The new stop shows the placeholder crate (§5.7) until its exhibit is built. The
 
 ### 3.1 Track model
 - **Main track** (10 stops): `lobby, verafin, projects-door, mysa, volunteer-door, wailo, cfia, mun, certifications, desk`. Built as: lobby, then for each work exhibit its stop followed by the door of any wing whose `after` is that exhibit, then the Foundations items (education, then certifications), then the desk.
-- **Wing tracks:** in `layout.ts` each wing track is `[<wing>-door, ...items]`: `[projects-door, klarup, finance-tracker]` and `[volunteer-door, safe-sip, sdsj]`, so the door pose is index 0 of both its tracks (§2.5). The wing exhibits are `klarup, finance-tracker` (projects) and `safe-sip, sdsj` (volunteer), as PLAN §2 lists them.
-- **Stop ids are frozen.** Exhibit ids: `verafin, mysa, wailo, cfia, klarup, finance-tracker, safe-sip, sdsj, mun, certifications`. Stop-only ids: `lobby, projects-door, volunteer-door, desk`.
-- **Exhibit numbers** are computed, never stored. Main-track exhibits are numbered in track order: verafin 01, mysa 02, wailo 03, cfia 04, mun 05, certifications 06. Wing exhibits use the wing letter: klarup P1, finance-tracker P2, safe-sip V1, sdsj V2. Shown as "No. 01" or "No. P1".
-- **Catalogue order** (keyboard order of stories, dialog Newer/Older order, `/exhibit/` page order): `verafin, klarup, finance-tracker, mysa, safe-sip, sdsj, wailo, cfia, mun, certifications`. Wing items appear right after the exhibit their door follows.
+- **Wing tracks:** in `layout.ts` each wing track is `[<wing>-door, ...items]`: `[projects-door, klarup, finance-tracker]` and `[volunteer-door, sdsj]`, so the door pose is index 0 of both its tracks (§2.5). The wing exhibits are `klarup, finance-tracker` (projects) and `sdsj` (volunteer).
+- **Stop ids are frozen.** Exhibit ids: `verafin, mysa, wailo, cfia, klarup, finance-tracker, sdsj, mun, certifications`. Stop-only ids: `lobby, projects-door, volunteer-door, desk`.
+- **Exhibit numbers** are computed, never stored. Main-track exhibits are numbered in track order: verafin 01, mysa 02, wailo 03, cfia 04, mun 05, certifications 06. Wing exhibits use the wing letter: klarup P1, finance-tracker P2, sdsj V1. Shown as "No. 01" or "No. P1".
+- **Catalogue order** (keyboard order of stories, dialog Newer/Older order, `/exhibit/` page order): `verafin, klarup, finance-tracker, mysa, sdsj, wailo, cfia, mun, certifications`. Wing items appear right after the exhibit their door follows.
 
 ### 3.2 Main track stops
 
@@ -218,7 +219,7 @@ The new stop shows the placeholder crate (§5.7) until its exhibit is built. The
 | 1 | verafin | Exhibit card No. 01 | Open story | verafin |
 | 2 | projects-door | Door card: "Projects wing", 2 exhibits | Step inside | mysa (next target ahead) |
 | 3 | mysa | Exhibit card No. 02 | Open story | mysa |
-| 4 | volunteer-door | Door card: "Volunteer & Leadership wing", 2 exhibits | Step inside | wailo |
+| 4 | volunteer-door | Door card: "Volunteer & Leadership wing", 1 exhibit | Step inside | wailo |
 | 5 | wailo | Exhibit card No. 03 | Open story | wailo |
 | 6 | cfia | Exhibit card No. 04 | Open story | cfia |
 | 7 | mun | Exhibit card No. 05 | Open story | mun |
@@ -420,31 +421,10 @@ There is no trap: the wing has two stops, the top of the wing track is its first
   - [ ] Inside the standard slot; ≤ 20k triangles.
   - [ ] Only walnut, brass, ceramicGraphite, frostedGlass.
 
-### 4.7 safe-sip: "Tamper Evident" (No. V1)
-- **Symbolizes:** the Safe Sip hardware MVP: a 3D-printed smart lid with a Raspberry Pi Pico W and an I2C orientation sensor, using Euler angles and Euclidean distance to detect tampering in real time.
-- **Object:**
-  - Base: `walnut` disc radius 0.20, height 0.03, center (0, 0.04, 0).
-  - Gimbal: `brass` horizontal ring (torus radius 0.13, tube 0.006) at y 0.16 on two `brass` posts, with pivot pins at ±x.
-  - Cup: `frostedGlass` Lathe, height 0.26, bottom radius 0.075, top radius 0.095, wall 0.004, 48 segments, hung in the gimbal (bottom y 0.10, top 0.36).
-  - Lid: `ceramic` (bone) Lathe, radius 0.10, height 0.03, profile with 3 mm stair steps so it reads as 3D printed (geometry, not a shader), with a 90° cut-away wedge (Lathe `phiLength` 270°).
-  - Board in the cut-away: `ceramicGraphite` box 0.06 x 0.004 x 0.024 (the Pico W's proportions) with 20 `brass` pads along its long edges (instanced) and a `ceramicGraphite` sensor chip 0.008 x 0.002 x 0.008.
-  - Tamper ring: `accentGlow` instance, torus radius 0.085, tube 0.003, on the lid top.
-  - Euler gizmo: three `brass` quarter-torus arcs, radius 0.16, tube 0.003, one per axis (roll, pitch, yaw), each with a small `brass` cone arrowhead, fixed to the base frame (static) and centered on the cup at y 0.24.
-- **Motion (one):** the cup and lid rock in the gimbal: roll = 9° sin(2πt/9), pitch = 6° sin(4πt/9 + π/4). The tamper ring brightens from 0.2 to 1.6 while abs(roll) > 8° (a consequence of the same motion). Period 9 s.
-- **Materials:** walnut, brass, frostedGlass, ceramic, ceramicGraphite, accentGlow.
-- **Triangles:** about 6,500.
-- **Reduced-motion pose:** rolled 10°, tamper ring lit at 1.2 (the story moment).
-- **Object description (DOM):** "A cup rocks gently inside a brass gimbal. Its cut-away lid shows a Raspberry Pi Pico W and an orientation sensor, and the ring on the lid lights when the tilt crosses the tamper threshold."
-- **Checklist:**
-  - [ ] Reads as one object: a cup with a cut-away lid inside a brass gimbal.
-  - [ ] The board is graphite with brass pads (no green), in Pico W proportions.
-  - [ ] Print layers are stepped geometry on the lid, not a texture or shader.
-  - [ ] One motion: rocking on a 9 s loop; the ring lights only past the threshold.
-  - [ ] No "Tamper detected" text, no liquid, no hand or figure.
-  - [ ] The gizmo has exactly three arcs and does not move.
-  - [ ] Inside the standard slot; ≤ 20k triangles; only the six listed materials.
+### 4.7 (removed)
+The `safe-sip` exhibit ("Tamper Evident") was removed on 2026-10-20 (F-035, Emeka's decision). The number stays so that the references to §4.8 and later sections hold.
 
-### 4.8 sdsj: "The Round Table" (No. V2)
+### 4.8 sdsj: "The Round Table" (No. V1)
 - **Symbolizes:** Software Developers of St. John's, where Emeka is President: recurring monthly mini-hackathons that bring developers, designers and founders together to build.
 - **Object (fits the standard 0.65 m slot; the 1.4 m plinth override belongs to mun only):**
   - Table: `walnut` top, cylinder radius 0.27, height 0.025, 64 segments, top surface at y 0.20, on a `brass` pedestal (cylinder radius 0.03, height 0.14) and a `brass` foot disc (radius 0.12, height 0.01).
@@ -524,7 +504,7 @@ The kit (`src/museum/exhibits/_kit/`, owned by R3) builds everything in this sec
 
 | Variant | Used by | Plinth | Case | Slot (local, origin = plinth top center) | World slot center y |
 |---|---|---|---|---|---|
-| Standard | verafin, mysa, wailo, cfia, klarup, finance-tracker, safe-sip, sdsj | 0.9 x 0.9 x 1.0 | 0.85 m cube on the plinth (y 1.0 to 1.85) | x, z [-0.325, 0.325]; y [0.025, 0.675] | 1.35 |
+| Standard | verafin, mysa, wailo, cfia, klarup, finance-tracker, sdsj | 0.9 x 0.9 x 1.0 | 0.85 m cube on the plinth (y 1.0 to 1.85) | x, z [-0.325, 0.325]; y [0.025, 0.675] | 1.35 |
 | Large (override) | mun | 1.4 x 1.4 x 0.6 | 1.3 m cube (y 0.6 to 1.9) | x, z [-0.55, 0.55]; y [0.10, 1.20] | 1.25 |
 | Wall vitrine | certifications | none (wall mounted, center y 1.6) | glass box 0.85 W x 0.85 H x 0.30 D, walnut back panel 0.80 x 0.80 x 0.01, brass frame | origin = back panel center, +Z out of the wall: x, y [-0.325, 0.325]; z [0.05, 0.25] | 1.6 |
 
@@ -544,7 +524,7 @@ The kit (`src/museum/exhibits/_kit/`, owned by R3) builds everything in this sec
 | "You've reached the beginning." | End wall (z -70), baseline y 2.6 | Instrument Serif, 0.20 m |
 | Year numerals | Floor, beside each year strip (§6.9) | IBM Plex Sans 500, 0.22 m, tracking 0.2em; decorative, exempt from the size rule |
 
-Organization strings: NASDAQ VERAFIN, MYSA, WAILO, CANADIAN FOOD INSPECTION AGENCY, KLARUP, PERSONAL FINANCE TRACKER, ENACTUS MEMORIAL, SOFTWARE DEVELOPERS OF ST. JOHN'S, MEMORIAL UNIVERSITY, CERTIFICATIONS. The cap heights above give at least 14 CSS px on Pixel 7 from each label's stop camera; R3 may raise them, never lower them.
+Organization strings: NASDAQ VERAFIN, MYSA, WAILO, CANADIAN FOOD INSPECTION AGENCY, KLARUP, PERSONAL FINANCE TRACKER, SOFTWARE DEVELOPERS OF ST. JOHN'S, MEMORIAL UNIVERSITY, CERTIFICATIONS. The cap heights above give at least 14 CSS px on Pixel 7 from each label's stop camera; R3 may raise them, never lower them.
 
 ### 5.5 Spotlight, pool and beam per exhibit
 - Real spotlight mount (used when a real light is assigned, §6.8): standard plinths at (x_p, 4.6, z_p + 0.6); wing plinths at (σ * 8.4, 3.7, z_p); mun at (-2.5, 4.6, -56.4); certifications at (4.4, 4.6, -57); desk at (0, 3.7, -66.9); portrait at (2.6, 5.4, -2.6). Each aims at its slot center (or target).
@@ -591,8 +571,7 @@ All readable stop information lives in this card. It is prerendered HTML, visibl
 | 04 | cfia | The Ticket Spindle | IT Support Technician (Intern) | Canadian Food Inspection Agency, Ottawa, ON / Remote | Dec 2022 – Aug 2024 | 1 yr 9 mo | |
 | P1 | klarup | The Climb | none until [placeholder: KlarUp role] is supplied | KlarUp, Project | none until [placeholder: KlarUp dates] are supplied | omitted until dates exist | |
 | P2 | finance-tracker | The Balance | none until [placeholder: Finance Tracker role] is supplied | Personal Finance Tracker, Project | none until [placeholder: Finance Tracker dates] are supplied | omitted until dates exist | |
-| V1 | safe-sip | Tamper Evident | Member (Right-To-Rise: Safe Sip) | Enactus Memorial, St. John's, NL | Sep 2025 – Present | 1 yr 2 mo (Oct 2026 build) | ONGOING |
-| V2 | sdsj | The Round Table | President | Software Developers of St. John's, St. John's, NL | Jul 2024 – Present | 2 yr 4 mo (Oct 2026 build) | ONGOING |
+| V1 | sdsj | The Round Table | President | Software Developers of St. John's, St. John's, NL | Jul 2024 – Present | 2 yr 4 mo (Oct 2026 build) | ONGOING |
 | 05 | mun | Work in Progress | B.Eng in Computer Engineering | Memorial University of Newfoundland, St. John's, NL | Expected May 2027 | omitted (start date unknown) | |
 | 06 | certifications | The Medal Cabinet | Three credentials | AWS Certified Cloud Practitioner; Tech Stewardship Practice Program; Tech Stewardship for the Energy Transition | none until [placeholder: certification issue dates] are supplied | omitted | |
 
@@ -705,7 +684,7 @@ Under `prefers-reduced-motion: reduce`:
 
 ### 6.8 Lights
 - Real spotlights are fixed per tier at boot: 3 on high, 1 on medium and low. They never change count at runtime.
-- **Light targets in track order:** main track: portrait, verafin, mysa, wailo, cfia, mun, certifications, desk. Wing tracks: their two exhibits.
+- **Light targets in track order:** main track: portrait, verafin, mysa, wailo, cfia, mun, certifications, desk. Wing tracks: their exhibits (two in projects, one in volunteer).
 - **Assignment:** on each arrival, light 1 goes to the current stop's target, or the next target ahead when the stop has none (lobby uses the portrait; door stops use the next main exhibit). On high, lights 2 and 3 go to the next two targets ahead. Reassigned lights move instantly at intensity 0, take the target's temperature color, and fade up over 1 s.
 - Every target always keeps its baked pool and wall wash, so the far aisle glows even without a real light.
 
@@ -929,7 +908,7 @@ Visible in the first viewport at 360 x 640 and 390 x 844, with JS off and with J
 | Exhibit card button | "Read the story" (key hint "Enter") |
 | Exhibit card status | "Installation in progress" |
 | Door card | "Projects wing", "2 exhibits", "Step inside", "Or keep scrolling to skip." |
-| Door card (volunteer) | "Volunteer & Leadership wing", "2 exhibits", "Step inside", "Or keep scrolling to skip." |
+| Door card (volunteer) | "Volunteer & Leadership wing", "1 exhibit", "Step inside", "Or keep scrolling to skip." |
 | Wing HUD | "Projects wing, 1 of 2", "Return to the aisle" (key hint "Esc") |
 | Last wing card | "Return to the aisle" |
 | Dialog | "The work", "Curator's note", "What I took away" (only with a takeaway), "The object", "Medium", "Close" / "Back to the aisle", "Newer", "Older", "Copy link", "Link copied" |

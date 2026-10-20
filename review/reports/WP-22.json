@@ -1,0 +1,123 @@
+{
+  "wp": "WP-22",
+  "role": "R5 (Builder C), with R2 for the concept verdicts (signed in this session)",
+  "status": "done",
+  "branch": "claude/m3-wp-22",
+  "commits": [
+    "ad9c055 feat(exhibit-klarup): the climb",
+    "d380b18 feat(exhibit-finance-tracker): the balance",
+    "471adf5 docs(concepts): klarup and finance-tracker verdicts"
+  ],
+  "changedFiles": [
+    "src/museum/exhibits/klarup/index.ts",
+    "src/museum/exhibits/klarup/Climb.tsx",
+    "src/museum/exhibits/klarup/climb.ts",
+    "src/museum/exhibits/klarup/climb.test.ts",
+    "src/museum/exhibits/klarup/README.md",
+    "src/museum/exhibits/finance-tracker/index.ts",
+    "src/museum/exhibits/finance-tracker/Balance.tsx",
+    "src/museum/exhibits/finance-tracker/counts.ts",
+    "src/museum/exhibits/finance-tracker/counts.test.ts",
+    "src/museum/exhibits/finance-tracker/README.md",
+    "review/concepts/klarup.md",
+    "review/concepts/finance-tracker.md",
+    "review/reports/WP-22.json"
+  ],
+  "measurements": {
+    "klarup": {
+      "triangles": 3036,
+      "trianglesByPart": "tray 556, tiles 5 x 236, posts 4 x 16, check bars 10 x 12, beads 3 x 352, crate 12, strips 4 x 12",
+      "drawCalls": 20,
+      "inBounds": true,
+      "budgetDeclared": { "triangles": 4000, "drawCalls": 20, "textureMB": 0 },
+      "chunkGzipKB": 1.75
+    },
+    "finance-tracker": {
+      "triangles": 7468,
+      "trianglesByPart": "tray 556, coins 3 x 24 x 96 (all instances always drawn, so this is the maximum-count figure)",
+      "drawCalls": 4,
+      "inBounds": true,
+      "budgetDeclared": { "triangles": 8000, "drawCalls": 6, "textureMB": 0 },
+      "chunkGzipKB": 1.41
+    },
+    "museumChunkGzipKB": { "before": null, "after": 319.11 },
+    "stopTotalsAtFinanceTracker": { "calls": 17, "triangles": 11596 }
+  },
+  "evidencePaths": {
+    "desktop": "out/wp22/klarup-desktop.png, out/wp22/finance-tracker-desktop.png",
+    "pixel7": "out/wp22/klarup-pixel7.png, out/wp22/finance-tracker-pixel7.png",
+    "thumbnail": "out/wp22/klarup-thumb.png, out/wp22/finance-tracker-thumb.png",
+    "stats": "out/wp22/<id>-desktop.json, out/wp22/<id>-pixel7.json",
+    "motion": "out/wp22/motion/ (canvas shots with &idle=1, motion on and reducedMotion 'reduce')"
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "npm run verify, the registry test and counts.test.ts pass",
+      "command": "npm run verify && npx vitest run --project unit src/museum/exhibits",
+      "result": "pass",
+      "evidence": "verify: lint, prettier and typecheck clean, 68 files / 766 tests pass; exhibits: 13 files / 89 tests including registry.test.ts, climb.test.ts (9) and counts.test.ts (11, with 1,000 seeded sets and the every-frame invariant)"
+    },
+    {
+      "id": "A2",
+      "criterion": "Exhibit chunk at most 40 KB gzip",
+      "command": "npm run build && npm run check:budgets",
+      "result": "pass",
+      "evidence": "exhibits/klarup 1.75 KB, exhibits/finance-tracker 1.41 KB gzip; entry 94.83, museum 319.11; budgets ok; check:glyphs ok (35 labels)"
+    },
+    {
+      "id": "A3",
+      "criterion": "exhibit-contract.spec.ts: inBounds, triangles <= 20000, click opens the dialog, Esc returns focus, deterministic frames; desktop and pixel7",
+      "command": "npx playwright test tests/e2e/exhibit-contract.spec.ts --grep \"klarup|finance-tracker\" --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "4 passed (1.0 min): klarup { triangles 3036, drawCalls 20, inBounds true }, finance-tracker { triangles 7468, drawCalls 4, inBounds true } on both projects, focus returns to open-<id>"
+    },
+    {
+      "id": "A4",
+      "criterion": "R2 checklist: 0 unchecked and Verdict PASS for each",
+      "command": "grep -c '^- \\[ \\]' review/concepts/klarup.md review/concepts/finance-tracker.md",
+      "result": "pass",
+      "evidence": "0 and 0; both Verdict PASS, 2026-10-20, signed R2 (Art Director), WP-22, one evidence line per box"
+    }
+  ],
+  "otherChecks": [
+    "Captures: CAPTURE_DIR=out/wp22 CAPTURE_STOPS=klarup,finance-tracker @capture on desktop and pixel7, 4 passed; thumbnails made with sharp",
+    "Motion probe (&idle=1, pointer input kept alive): klarup changes only inside the staircase box (canvas x 811 to 951, y 439 to 531), shrinking up the stairs as the checks relight; finance-tracker changes only at the stack tops (x 821 to 945, y 480 to 502) after the first 6 s rebalance. SwiftShader renders about 3 fps and the kit caps a clock step at 0.1 s, so the exhibit clock runs about 0.3x real time there",
+    "Reduced motion (reducedMotion 'reduce' with &idle=1): 0 changed pixels over 4 s (klarup) and 7 s (finance-tracker)",
+    "npm run check:copy: ok; no U+2014 in any WP-22 file; no visual baselines committed"
+  ],
+  "deviations": [
+    "klarup tile 0: EXPERIENCE §4.5 centers it at y 0.06, so its underside (0.045) is 1 cm inside the tray (top 0.055). Built as specified: tile 0 is seated in the tray and has no post (a post would have negative length); tiles 1 to 4 stand on posts. R2 passed 'Every tile is supported by a brass post; nothing floats' on the 'nothing floats' intent and recorded this.",
+    "klarup beads: they rest in a touching row along the back of the top tile, with the check moved toward the tile front (vertex 0.042 in front of center), because a triangle of three 0.018 beads and the check do not both fit on a 0.11 tile without overlapping.",
+    "klarup clock phase: the 10 s cycle is offset so clock 0 sits at the start of the 2 s all-lit hold. That makes the ?test=1 freeze and the reduced-motion pin the spec's all-lit pose without a special case, and an idle stop or resume never jumps.",
+    "finance-tracker: each stack InstancedMesh always draws 24 instances and collapses absent coins to zero scale at the stack top, so stats() always reports the maximum-count triangles (7,468) as A3 asks."
+  ],
+  "missingSliceSpecsForWP17": [
+    "klarup and finance-tracker motion: under ?test=1&idle=1 the canvas changes only inside the object's screen box (needs pointer input to stay under the 15 s idle stop and a long wait, since SwiftShader runs the clock at about 0.3x)",
+    "reduced motion stillness for klarup and finance-tracker over 10 s",
+    "visual baselines for the klarup and finance-tracker stops and dialogs on desktop and pixel7 (CI only)"
+  ],
+  "openQuestions": [
+    {
+      "question": "klarup tile 0 sits 1 cm inside the tray at the spec's y 0.06. Keep it seated (current build), or raise the staircase (for example y = 0.085 + 0.075 i) so every tile stands on a visible post? Raising it changes EXPERIENCE §4.5 coordinates.",
+      "for": "R0",
+      "default": "Built exactly as specified, tile 0 seated, noted in the README and the checklist."
+    },
+    {
+      "question": "The klarup checks lie flat on the tile tops as specified, so at the near-level stop camera they read as thin teal lines. Should the G3 polish tilt them or raise their glow, or is the restrained read intended?",
+      "for": "R0 and R2",
+      "default": "Left as specified; logged as polish in the klarup verdict notes."
+    },
+    {
+      "question": "Under medium-tier lighting the brass coin stack reads dark brown, close in value to the graphite stack. A lighting or brass-material question for the G3 polish, not something the exhibit can change with library materials only.",
+      "for": "R0 and R2",
+      "default": "Logged as polish in the finance-tracker verdict notes."
+    },
+    {
+      "question": "The R2 checklist pass ran in this builder session, as in WP-12. Should R11 confirm both verdicts independently at G3?",
+      "for": "R0",
+      "default": "Verdicts PASS committed with one evidence line per box and the session noted."
+    }
+  ],
+  "depsRequest": []
+}

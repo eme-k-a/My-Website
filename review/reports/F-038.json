@@ -1,0 +1,52 @@
+{
+  "wp": "F-038",
+  "role": "R6 Overlay (no R4 change: framing untouched)",
+  "status": "done",
+  "branch": "claude/intelligent-sagan-poq45q",
+  "commits": [
+    "0d291d9 fix(f-038): hide the wing head at a door reached on the wing track",
+    "docs(review): add the F-038 report"
+  ],
+  "changedFiles": [
+    "src/overlay/ProgressRail.tsx",
+    "src/overlay/ProgressRail.module.css",
+    "tests/e2e/rail-input.spec.ts",
+    "review/reports/F-038.json"
+  ],
+  "fix": "ProgressRail computes atDoor (track is a wing and the current stop is that wing's door). There the wing head (chip and Return to the aisle) is not rendered, so it cannot hold focus; Esc and the door card's Step inside remain. The nav gets data-at-door, and on phones (max-width 1023px or max-height 559px) the rail, now empty, is display: none. Desktop keeps the wing hairline and dots at the right edge. Main-track and wing-exhibit HUD are unchanged.",
+  "acceptance": [
+    {
+      "id": "spec-g-door-in-wing-check",
+      "criterion": "rail-input (g) at each door: Step inside, ArrowUp once, settled; every visible rail and HUD rect avoids the projected transom title on desktop and pixel7",
+      "command": "PORT=4180 npx playwright test tests/e2e/rail-input.spec.ts -g \"door reached on the wing track\" --project=desktop --project=pixel7",
+      "result": "pass",
+      "evidence": "New test '(g) at each door reached on the wing track no HUD rect covers the transom title'. Transom box from labelPlacements (labels3d.ts): band DOOR_H - DOOR_TRANSOM to DOOR_H, caps width estimate capped at DOOR_W, projected through the live camera with applyFraming. Rects checked: rail labels, wing chip, exit control, rail hairline block, header wordmark, links and phone year chip. Also asserts stop is the door, track is the wing, and the title is in frame. With the fix: 2 passed (55.2 s)."
+    },
+    {
+      "id": "fix-disabled-fails",
+      "criterion": "With the fix disabled the new check fails",
+      "command": "same command on the pre-fix build (dist built from 858c5ae)",
+      "result": "pass",
+      "evidence": "2 failed: desktop 'Volunteer & Leadership wing, 1 of 1' {left 1131.5, top 136.2, right 1413, bottom 159.8} over the transom title {left 658, right 1195, top 74, bottom 235}; pixel7 'Projects wing, 1 of 2' {left 16, top 64, right 188.5, bottom 87.6} over the transom title {left 138, right 271, top 78, bottom 155}. Matches the round 3 finding."
+    },
+    {
+      "id": "verify-build-e2e-a11y",
+      "criterion": "verify, build, rail-input, wings, keyboard and dialog specs pass on desktop and pixel7; a11y 0 violations",
+      "command": "npm run verify; npm run build; PORT=4180 npx playwright test rail-input wings keyboard dialog camera --project=desktop --project=pixel7 --grep-invert @visual --workers=2; PORT=4180 npm run a11y -- --workers=2",
+      "result": "pass",
+      "evidence": "verify: 66 files, 746 unit tests passed; build: budgets ok (entry 94.83/110, museum 318.93/350), check-copy ok; specs: 67 passed, 25 skipped by project gating, 0 failed (13.2 min), covering F-020/F-021 (camera, dialog), F-036 (g) and F-037 (wings); a11y: 28 passed, 16 skipped, 0 failed."
+    },
+    {
+      "id": "report-and-probe-recaptures",
+      "criterion": "Re-take the two probe captures and look at them",
+      "command": "node scratch probe (goTo door, Step inside, ArrowUp, settled + 1.2 s) against dist on :4181",
+      "result": "pass",
+      "evidence": "Local captures (gitignored) in out/F-038/: probe-projects-door-in-wing-pixel7.png, probe-volunteer-door-in-wing-pixel7.png, plus the desktop pair and probe-rects.json. State {stop: '<door>', track: '<wing>', scrollY: 0} each time; exit-wing absent; pixel7 rail hidden; desktop rail is only the hairline at x 1349 to 1413, y 180 to 720. Read by eye: PROJECTS and VOLUNTEER & LEADERSHIP read whole on pixel7; on desktop the last P of LEADERSHIP is clear (title ends near x 1160, rail starts at x 1349)."
+    }
+  ],
+  "deviations": [
+    "Probe recaptures are stored in the gitignored out/F-038/ rather than review/runs/ (R11's path; *.png there is gitignored anyway).",
+    "Visual baselines: the door stops are captured on the main track and were not touched; no rebaseline expected. Remote CI is deferred to R0 after push."
+  ],
+  "openQuestions": []
+}

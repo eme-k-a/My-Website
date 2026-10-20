@@ -145,3 +145,20 @@ Emeka asked for a cheap automatic resume.
 **The backup.** A daily backup, "Daily backup for the usage-limit chain" (`trig_01Pj547R92sA2hw76nRLHqLt`, 15:46 UTC), re-arms the chain if it broke. A break happens when a check-in fires while the limit is still in force.
 
 Nothing can read the usage meter directly; reset times come only from limit errors and from `/usage`. A new session that replaces this one should cancel both, or point them at the new session.
+
+## 10. M3 builder sessions (started 2026-10-20 19:27 UTC)
+
+Emeka said "go" for M3 after G2. Builders run as separate cloud sessions, each on its own machine and pushing only to its own branch. R0 polls them about every 90 minutes with a "M3 check-in" scheduled message, because child sessions do not report back on their own.
+
+| WP | Scope | Session | Branch |
+|---|---|---|---|
+| WP-20 | Mysa, Wailo | session_01VEeLNNVFTUjbX2HsbKLCM1 | `claude/m3-wp-20` |
+| WP-21 | CFIA, MUN, Certifications | session_015AAw5CUALiSJ9hb7nBd9YT | `claude/m3-wp-21` |
+| WP-22 | KlarUp, Finance Tracker | session_01UAEqq8fd4Z6z8u9rnHdrQ8 | `claude/m3-wp-22` |
+| WP-23 | SDSJ | next group | `claude/m3-wp-23` |
+| WP-24 | Wing rooms and doors | next group | `claude/m3-wp-24` |
+| WP-25 | Test expansion | after WP-20 to WP-24 merge | |
+
+Then the F-M3 follow-ups listed in RULINGS, the review (G3 needs an average of at least 3.5 and no open P0 or P1), and the CI baseline refresh.
+
+Each push to a `claude/m3-*` branch runs CI and deploys an alias preview for that branch. That is harmless. R0 merges the branches into the integration branch with the batch integrator.

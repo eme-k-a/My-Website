@@ -3,6 +3,7 @@
 // box per kind, so the fixture count never adds draw calls. Every matrix starts from a layout slot
 // (anatomy.ts gives the kit-local offsets). The front desk is its own module (deskParts.ts, Desk.tsx).
 import { BoxGeometry, type BufferGeometry, type Matrix4 } from 'three';
+import { PLINTH_TOP_V } from './lightPools';
 import type { Layout } from '../rail/layout';
 import {
   baseStripBox,
@@ -78,5 +79,24 @@ export function openBottomBox(): BufferGeometry {
   }
   box.setIndex(kept);
   box.clearGroups();
+  return box;
+}
+
+/**
+ * A unit box for the plinths whose UVs feed the plinth glow lightmap (F-024): on the four side
+ * faces v runs from 0 at the foot to 1 at the top (BoxGeometry's own side UVs), and the top and
+ * bottom faces sample one row (PLINTH_TOP_V), so the top reads evenly through the glass.
+ */
+export function plinthGeometry(): BufferGeometry {
+  const box = new BoxGeometry(1, 1, 1);
+  const uv = box.getAttribute('uv');
+  // BoxGeometry builds its faces in the order +x, -x, +y, -y, +z, -z: groups 2 and 3 are the caps.
+  for (const group of [box.groups[2]!, box.groups[3]!]) {
+    const index = box.getIndex()!;
+    for (let i = group.start; i < group.start + group.count; i++) {
+      uv.setXY(index.getX(i), 0.5, PLINTH_TOP_V);
+    }
+  }
+  uv.needsUpdate = true;
   return box;
 }

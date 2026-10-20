@@ -437,3 +437,43 @@ export function createBayWash(): CanvasTexture {
   texture.wrapT = ClampToEdgeWrapping;
   return asLightmap(texture, 'wallWashBay');
 }
+
+// ---------------------------------------------------------------------------------------------
+// Plinth glow (F-024)
+
+/** Plinth lightmap: rows (bottom to top of a side face) and its lightMapIntensity. */
+export const PLINTH_GLOW_ROWS = 64;
+export const PLINTH_GLOW_INTENSITY = 18;
+/** Level at the plinth foot, the wash added toward the top, the top-edge highlight. */
+export const PLINTH_GLOW = { base: 0.12, wash: 0.2, edge: 0.68 } as const;
+/** v of the plinth top face in the glow tile (between the wash and the edge band). */
+export const PLINTH_TOP_V = 0.8;
+
+/**
+ * Plinth side level at height share `v` (0 foot, 1 top), linear: a faint base, a wash that
+ * grows toward the top (the spot catching its front) and a thin highlight along the top edge, so
+ * the plinth reads one step above the floor instead of a black void (F-024).
+ */
+export function plinthGlow(v: number): number {
+  const t = Math.min(1, Math.max(0, v));
+  const g = PLINTH_GLOW;
+  return Math.min(1, g.base + g.wash * t * t + g.edge * smoothstep(0.93, 0.995, t));
+}
+
+/** RGBA pixels of the plinth glow tile: 1 px wide, row 0 at the top (v = 1). */
+export function plinthGlowPixels(rows = PLINTH_GLOW_ROWS): Uint8ClampedArray<ArrayBuffer> {
+  const data = new Uint8ClampedArray(rows * 4);
+  for (let row = 0; row < rows; row++) {
+    const byte = encode(plinthGlow(1 - (row + 0.5) / rows), 0);
+    data.set([byte, byte, byte, 255], row * 4);
+  }
+  return data;
+}
+
+/** The plinth glow lightmap (clamped; side faces map v from foot to top). */
+export function createPlinthGlow(): CanvasTexture {
+  const texture = new CanvasTexture(canvasFrom(1, PLINTH_GLOW_ROWS, plinthGlowPixels()));
+  texture.wrapS = ClampToEdgeWrapping;
+  texture.wrapT = ClampToEdgeWrapping;
+  return asLightmap(texture, 'plinthGlow');
+}

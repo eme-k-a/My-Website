@@ -15,8 +15,8 @@ import { goToStop, museumCanvas, museumUrl, stats, waitForMuseum } from './helpe
 const INSTALLING = 'Installation in progress';
 /** Idle-motion checks run for verafin only; WP-25 decides the per-exhibit matrix for M3. */
 const BUILT: ExhibitId[] = ['verafin'];
-/** Exhibits with no folder yet (M3: sdsj until WP-23 merges). Remove ids as they land. */
-const UNBUILT: ExhibitId[] = ['sdsj'];
+/** Exhibits with no folder yet: none since WP-23 (M3). Kept for future exhibits. */
+const UNBUILT: ExhibitId[] = [];
 /** EXPERIENCE §10.4: reduced motion holds every exhibit still; checked over this window. */
 const STILL_MS = 10_000;
 /**
@@ -60,7 +60,7 @@ test.describe('exhibits', { tag: '@exhibit' }, () => {
     expect(s.mounted, 'the slot is mounted').toContain('verafin');
     expect(s.exhibits.verafin, 'no exhibit was revealed: the crate shows').toBeUndefined();
 
-    // An exhibit with no folder yet keeps the crate for good (none once WP-23 merges).
+    // An exhibit with no folder yet keeps the crate for good (none at the moment).
     for (const id of UNBUILT) {
       await goToStop(page, id);
       await expect(page.getByTestId(TEST_IDS.card(id))).toContainText(INSTALLING);

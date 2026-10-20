@@ -116,16 +116,28 @@ test.describe('greybox', () => {
 
   test('every stop renders within the draw-call budget', async ({ page }) => {
     // Every main and wing stop in turn, each waiting for its compiles under SwiftShader: CI run
-    // 27 took 59.1 s of the 60 s default, a local two-worker run (as in CI) 45 s.
+    // 27 took 59.1 s of the 60 s default, a local two-worker run (as in CI) 45 s. Every stop is
+    // measured before the verdict, so a failure names all offenders, not just the first (F-M3a).
     test.setTimeout(120_000);
     await page.goto(museumUrl('/'));
     await waitForMuseum(page);
+    const table: { stop: StopId; calls: number; triangles: number; mounted: ExhibitId[] }[] = [];
     for (const stop of ALL_STOPS) {
       await goToStop(page, stop);
       const s = await stats(page);
-      expect(s.calls, `${stop} draw calls`).toBeLessThanOrEqual(MAX_CALLS);
-      expect(s.triangles, `${stop} triangles`).toBeLessThanOrEqual(MAX_TRIANGLES);
-      if (isExhibit(stop)) expect(s.mounted, `${stop} is mounted at its stop`).toContain(stop);
+      table.push({ stop, calls: s.calls, triangles: s.triangles, mounted: s.mounted });
+    }
+    test.info().annotations.push({ type: 'stats per stop', description: JSON.stringify(table) });
+    const over = (row: (typeof table)[number]) =>
+      row.calls > MAX_CALLS || row.triangles > MAX_TRIANGLES;
+    expect(
+      table.filter(over).map((r) => `${r.stop}: ${r.calls} calls, ${r.triangles} triangles`),
+      `stops over ${MAX_CALLS} draw calls or ${MAX_TRIANGLES} triangles`,
+    ).toEqual([]);
+    for (const row of table) {
+      if (isExhibit(row.stop)) {
+        expect(row.mounted, `${row.stop} is mounted at its stop`).toContain(row.stop);
+      }
     }
   });
 });

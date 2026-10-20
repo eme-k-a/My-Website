@@ -8,7 +8,9 @@
 //   `compilePending` is held from mount until the final content shows, so `ready` and
 //   `settled` wait for every exhibit within distance 2 (ARCHITECTURE §13.4);
 // - after reveal: exhibit meshes stop raycasting, dev and ?test=1 report measured stats, and
-//   one contact-shadow pass renders on the plinth top.
+//   one contact-shadow pass renders on the plinth top. That pass sees only the slot's own content
+//   (SHADOW_LAYER), not the whole hall, so a stop where several exhibits reveal at once stays
+//   within the draw-call budget (F-M3a).
 import { ContactShadows } from '@react-three/drei';
 import { useThree, type ThreeEvent } from '@react-three/fiber';
 import {
@@ -72,13 +74,38 @@ const SHADOW_OPACITY = 0.6;
 const noRaycast: Object3D['raycast'] = () => {};
 
 /**
+ * The layer the contact-shadow camera renders (F-M3a). drei's ContactShadows renders the whole
+ * scene from a small orthographic camera over the plinth top, and every hall-sized mesh (shell,
+ * cases, beams, trim) passes its frustum test, which cost about ten extra draw calls per baking
+ * slot. Only the slot's own content joins this layer, so the bake draws the exhibit (or the crate)
+ * and nothing else; the main and reflector cameras keep seeing layer 0 as before.
+ */
+export const SHADOW_LAYER = 7;
+
+/** Adds every drawable under `root` to SHADOW_LAYER (layer 0 stays enabled). */
+export function joinShadowLayer(root: Object3D): void {
+  root.traverse((object) => {
+    const drawable = object as Object3D & { isMesh?: boolean; isLine?: boolean };
+    if (drawable.isMesh || drawable.isLine) object.layers.enable(SHADOW_LAYER);
+  });
+}
+
+/**
  * The one contact-shadow pass on the plinth top. drei's ContactShadows renders again after every
  * re-render (its frame counter lives in the component body), so it sits behind `memo` with
  * primitive props: it renders once per mount, not whenever the frame's runtime changes.
  */
 const PlinthShadow = memo(function PlinthShadow({ scale, far }: { scale: number; far: number }) {
+  const root = useRef<Group>(null);
+  // Before the first frame, so the one bake already sees only SHADOW_LAYER.
+  useLayoutEffect(() => {
+    root.current?.traverse((object) => {
+      if ((object as Object3D & { isCamera?: boolean }).isCamera) object.layers.set(SHADOW_LAYER);
+    });
+  }, []);
   return (
     <ContactShadows
+      ref={root}
       position={[0, SHADOW_LIFT, 0]}
       scale={scale}
       far={far}
@@ -219,6 +246,8 @@ function ExhibitMount({ slot, manifest }: { slot: Slot; manifest: ExhibitManifes
   const [revealed, setRevealed] = useState(false);
   const [crateReady, setCrateReady] = useState(false);
   const group = useRef<Group>(null);
+  /** The slot's own content (the crate and the exhibit): what the contact shadow may see. */
+  const ownContent = useRef<Group>(null);
   const showsExhibit = manifest !== undefined && !failed;
   const showsPlaceholder = !showsExhibit || !revealed;
   /** The slot shows its final content (the revealed exhibit, or the crate for good). */
@@ -325,6 +354,11 @@ function ExhibitMount({ slot, manifest }: { slot: Slot; manifest: ExhibitManifes
     [shared],
   );
 
+  // The final content joins SHADOW_LAYER before PlinthShadow's one bake (next frame).
+  useLayoutEffect(() => {
+    if (final && ownContent.current) joinShadowLayer(ownContent.current);
+  }, [final, revealed]);
+
   const onError = useCallback(
     (error: unknown) => {
       console.error(`Exhibit '${id}' failed; showing the placeholder`, error);
@@ -342,25 +376,27 @@ function ExhibitMount({ slot, manifest }: { slot: Slot; manifest: ExhibitManifes
 
   return (
     <>
-      <Placeholder slot={exhibitSlot} visible={showsPlaceholder} />
-      {showsExhibit && manifest && (
-        <group ref={group} name={`exhibit-${id}`} visible={revealed}>
-          <ExhibitBoundary onError={onError}>
-            <Suspense fallback={null}>
-              <ExhibitRuntimeContext.Provider value={runtime}>
-                <LoadedExhibit
-                  manifest={manifest}
-                  entry={entry}
-                  slot={exhibitSlot}
-                  runtime={runtime}
-                  materials={library}
-                />
-              </ExhibitRuntimeContext.Provider>
-              <OnCommit onCommit={onResolved} />
-            </Suspense>
-          </ExhibitBoundary>
-        </group>
-      )}
+      <group ref={ownContent} name="slot-content">
+        <Placeholder slot={exhibitSlot} visible={showsPlaceholder} />
+        {showsExhibit && manifest && (
+          <group ref={group} name={`exhibit-${id}`} visible={revealed}>
+            <ExhibitBoundary onError={onError}>
+              <Suspense fallback={null}>
+                <ExhibitRuntimeContext.Provider value={runtime}>
+                  <LoadedExhibit
+                    manifest={manifest}
+                    entry={entry}
+                    slot={exhibitSlot}
+                    runtime={runtime}
+                    materials={library}
+                  />
+                </ExhibitRuntimeContext.Provider>
+                <OnCommit onCommit={onResolved} />
+              </Suspense>
+            </ExhibitBoundary>
+          </group>
+        )}
+      </group>
       {final && variant !== 'wall' && (
         <PlinthShadow
           key={revealed ? 'exhibit' : 'placeholder'}

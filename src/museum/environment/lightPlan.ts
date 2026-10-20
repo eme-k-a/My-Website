@@ -102,10 +102,14 @@ export function targetColor(layout: Layout, target: TargetId): string {
 // ---------------------------------------------------------------------------------------------
 // Targets, mounts and aim points
 
-/** Lobby portrait (EXPERIENCE §2.3): 0.8 x 1.0 m, center (3.4, 1.7, -3.95), facing +Z. */
-export const PORTRAIT_CENTER: Vec3 = [3.4, 1.7, ARCH_Z + 0.05];
+/**
+ * Lobby portrait (EXPERIENCE §2.3): 0.8 x 1.0 m, facing +Z, right of the arch. Its center moved
+ * from x 3.4 to 3.0 (F-031): on desktop the frame's right edge crossed the progress rail; at 3.0
+ * it ends about 20 px left of the rail column (1440 x 900), still 0.5 m clear of the arch reveal.
+ */
+export const PORTRAIT_CENTER: Vec3 = [3.0, 1.7, ARCH_Z + 0.05];
 export const PORTRAIT_SIZE = [0.8, 1.0] as const;
-/** Portrait spotlight (EXPERIENCE §5.5): (2.6, 5.4, -2.6), i.e. up and out from the frame. */
+/** Portrait spotlight (EXPERIENCE §5.5): 0.8 m left of, up from and out from the frame. */
 export const PORTRAIT_MOUNT: Vec3 = [PORTRAIT_CENTER[0] - 0.8, LOBBY_CEILING - 0.6, ARCH_Z + 1.4];
 
 /** Desk top height above the floor (the low walnut desk, Desk.tsx). */

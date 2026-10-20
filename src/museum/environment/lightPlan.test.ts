@@ -99,7 +99,7 @@ describe('light targets (EXPERIENCE §5.5, §6.8)', () => {
 
   it('mounts each spotlight as EXPERIENCE §5.5 says and aims it at its target', () => {
     const expected: [TargetId, Vec3, Vec3][] = [
-      ['portrait', [2.6, 5.4, -2.6], [3.4, 1.7, -3.95]],
+      ['portrait', [2.2, 5.4, -2.6], [3.0, 1.7, -3.95]],
       ['verafin', [2.4, 4.6, -9.4], [2.4, 1.35, -10]],
       ['klarup', [-8.4, 3.7, -13.8], [-9, 1.35, -13.8]],
       ['sdsj', [8.4, 3.7, -30.2], [9, 1.35, -30.2]],

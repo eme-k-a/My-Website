@@ -28,7 +28,11 @@
       "triangles": 4820,
       "drawCalls": 12,
       "inBounds": true,
-      "budgetDeclared": { "triangles": 6000, "drawCalls": 14, "textureMB": 0 },
+      "budgetDeclared": {
+        "triangles": 6000,
+        "drawCalls": 14,
+        "textureMB": 0
+      },
       "chunkGzipKB": 2.43
     },
     "wailo": {
@@ -38,10 +42,17 @@
       "inBounds": true,
       "arcPeakY": 0.62,
       "arcTopWithTubeY": 0.625,
-      "budgetDeclared": { "triangles": 5000, "drawCalls": 16, "textureMB": 0 },
+      "budgetDeclared": {
+        "triangles": 5000,
+        "drawCalls": 16,
+        "textureMB": 0
+      },
       "chunkGzipKB": 3.66
     },
-    "museumChunkGzipKB": { "before": 319.14, "after": 319.14 },
+    "museumChunkGzipKB": {
+      "before": 319.14,
+      "after": 319.14
+    },
     "verafinChunkGzipKB": 2.03,
     "note": "Triangles and draw calls from stats().exhibits under ?test=1, identical on desktop, pixel7 and desktop at tier high. Chunk sizes from npm run check:budgets on the final build. In the still pose the wailo pulse is hidden, so it is not counted."
   },
@@ -168,17 +179,20 @@
     {
       "question": "Accept the 35 degree turn of the Mysa ring-and-key assembly, or keep the spec's axis on local X (edge-on from the camera)?",
       "for": "R0",
-      "default": "Turned 35 degrees; EXPERIENCE §4.2 may want one line saying so."
+      "default": "Turned 35 degrees; EXPERIENCE §4.2 may want one line saying so.",
+      "resolution": "Accepted by Emeka, 2026-10-20. The 35 degree turn stays; R0 adds one line to EXPERIENCE §4.2 in the next docs pass."
     },
     {
       "question": "Wailo arc level: is 0.5 an acceptable reading of \"arc at rest glow\", or should the arc hold the library rest 0.15?",
       "for": "R0 / R2",
-      "default": "0.5, a one-constant change (GLOW.arc in link.ts)."
+      "default": "0.5, a one-constant change (GLOW.arc in link.ts).",
+      "resolution": "Accepted by Emeka, 2026-10-20. The arc keeps its steady 0.5 glow."
     },
     {
       "question": "The R2 checklist passes ran in the builder session, as in WP-12. Should R11 confirm both verdicts at G3?",
       "for": "R0",
-      "default": "Both verdicts PASS with one evidence line per box and the session noted."
+      "default": "Both verdicts PASS with one evidence line per box and the session noted.",
+      "resolution": "Accepted by Emeka, 2026-10-20. R11 confirms the mysa and wailo verdicts at G3."
     }
   ],
   "depsRequest": [],

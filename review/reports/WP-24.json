@@ -1,0 +1,37 @@
+{
+  "wp": "WP-24",
+  "role": "R3 Environment Builder",
+  "status": "done",
+  "branch": "claude/m3-wp-24",
+  "commits": ["589ba3b feat(environment): finished wing rooms and door signage", "e39e396 test(environment): rail clearance against room walls"],
+  "changedFiles": [
+    "src/museum/environment/clearance.ts",
+    "src/museum/environment/clearance.test.ts",
+    "src/museum/environment/shell.ts",
+    "src/museum/environment/shell.test.ts",
+    "src/museum/environment/Hall.tsx",
+    "review/reports/WP-24.json"
+  ],
+  "minClearance": {
+    "walls": { "today": 0.763, "movedWings": 0.763, "where": "volunteer rail at p 0.71, to the aisle wall stretch past the volunteer door's far jamb (footprint incl. 0.2 m thickness)" },
+    "openingMargins": { "arch": 1.472, "foundations": 2.705, "desk": 1.665, "projects-door": 1.2, "volunteer-door": 1.2 },
+    "ceiling": 2.4
+  },
+  "acceptance": [
+    { "id": "A1", "criterion": "Every rail sample at least 0.4 m from every wall, today's and moved-wing content", "command": "npx vitest run --project unit src/museum/environment/clearance.test.ts", "result": "pass", "evidence": "12 passed. Min 0.763 m (both contents); door planes crossed only inside openings, min margin 1.2 m; moved wings (projects after mysa right, volunteer after wailo) move rooms, plinths and stops with their doors." },
+    { "id": "A2", "criterion": "Budgets at wing-related stops", "command": "npx playwright test tests/e2e/environment.spec.ts --project=desktop --project=pixel7 --workers=2", "result": "pass", "evidence": "desktop tier medium and high passed; pixel7 tier medium passed (pixel7 tier high is skipped by the spec itself)." },
+    { "id": "A3", "criterion": "wings.spec passes", "command": "npx playwright test tests/e2e/wings.spec.ts --project=desktop --project=pixel7 --workers=2", "result": "pass", "evidence": "All wing tests passed on both projects; combined run with environment and rail-input: 30 passed, 10 skipped (project-specific skips in the specs), 0 failed." },
+    { "id": "A4", "criterion": "check:glyphs exit 0", "command": "npm run check:glyphs", "result": "pass", "evidence": "glyphs ok: 35 labels, 76 code points checked in their fonts" },
+    { "id": "verify-build", "criterion": "verify and build", "command": "npm run verify && npm run build", "result": "pass", "evidence": "67 files, 759 tests passed; build ok, budgets ok, check-copy ok" },
+    { "id": "captures", "criterion": "Wing stops captured into out/wp24/", "command": "CAPTURE_DIR=out/wp24 CAPTURE_STOPS=projects-door,klarup,finance-tracker,volunteer-door,sdsj ... --project=desktop (tier high) / --project=pixel7 (tier medium)", "result": "pass", "evidence": "5 + 5 captured and inspected; identical framing to pre-change captures, F-022/F-036/F-037/F-038 behaviour unchanged." }
+  ],
+  "deviations": [
+    "No separate WingRoom.tsx or Doors.tsx: WP-11 and the G2 fixes already derive wing walls, door openings (with F-022 transom), 4 cm brass reveals (trim.ts), room names (labels3d.ts), threshold pools and plinth pools (lightPools.ts), washes, plinths and cases (fixtureMatrices.ts) and wing wall titles (kit placard) from layout.doors and layout.rooms. WP-24 adds the missing wing ceiling slots (shell.ts ceilingSlots, merged with the aisle slot into one draw call) rather than duplicating that code.",
+    "Clearance is measured to each wall's built footprint (thickness included) rather than the zero-width wall line, which is stricter than EXPERIENCE §2.6."
+  ],
+  "openQuestions": [
+    { "question": "Wing ceiling slot runs across the room on the door axis (inset 0.6 m from both end walls). Acceptable, or should it follow another axis?", "for": "R2", "default": "Door axis, x from the aisle wall to the outer wall." }
+  ],
+  "depsRequest": [],
+  "notes": "Hall.tsx CEILING_SLOT_WIDTH and CEILING_SLOT_DROP moved to shell.ts (no other importers). No rail or layout change was needed; nothing for R4. Visual baselines may shift slightly where a wing ceiling is in frame; rebaseline from CI if the visual job flags it."
+}

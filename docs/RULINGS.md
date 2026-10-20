@@ -111,3 +111,4 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - F-017 (R7): `?debug` breaks the CSP, because r3f-perf fetches a `data:` font that `connect-src 'self'` blocks. Fix it inside the debug chunk; do not loosen the production CSP.
   - F-018 (R6): ExhibitDialog `onClose` can close a story reopened before the previous close event landed.
   - F-019 (R3): a failed exhibit chunk import also throws an unhandled rejection.
+- **Safe Sip removal (Emeka, 2026-10-20):** the volunteer entry "Member (Right-To-Rise: Safe Sip), Enactus Memorial" (id `safe-sip`) is removed everywhere: the gallery, its exhibit page, `/resume/`, `resume.pdf` and `resume.tex`. This changes the contracts-v1 content ids with Emeka's approval; brief `docs/wp/F-035.md`. The volunteer wing holds only SDSJ. F-029 (Safe Sip readability) and the F-G2c brief are dropped.

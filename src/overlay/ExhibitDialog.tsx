@@ -171,8 +171,11 @@ export function ExhibitDialog() {
         e.preventDefault();
         closeStory();
       }}
-      onClose={() => {
-        // A cancel the browser would not let us prevent still ends in closeStory().
+      onClose={(e) => {
+        // A cancel the browser would not let us prevent still ends in closeStory(). The 'close'
+        // event is a queued task: when a story reopened before it landed, the dialog is open
+        // again and the event belongs to the earlier close, so it must not close the new story.
+        if (e.currentTarget.open) return;
         if (useMuseum.getState().openId !== null) closeStory();
       }}
       onClick={onClick}

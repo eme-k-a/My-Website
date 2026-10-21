@@ -14,6 +14,11 @@
 //   card on every portrait phone (360 x 640 as well as 412 x 839) and the line clears the HUD.
 //   Without a measurement it falls back to `DESK_PORTRAIT_Y`. The change blends in over the last
 //   half of the walk to the desk (`deskWeightAt`).
+// - portrait at the lobby: 50% of the width, LOBBY_PORTRAIT_Y of the height (F-032). The hero
+//   (name, links, "Begin the walk", the welcome line) fills the top 60% of a phone's first
+//   viewport, so the arch, the first case and the warm pool are framed into the free band under
+//   it, and the h1 sits over plain ink. It blends out over the first half of the walk to the
+//   first exhibit (`lobbyWeightAt`), so every exhibit keeps the 36% framing.
 // Vertical FOV is 50 at aspect >= 1, 68 at aspect <= 0.6, linear in between. CameraRig damps shift
 // changes over `tokens.motion.framingSmoothS` (0.4 s). Pure math: three.js only as a type.
 import type { PerspectiveCamera } from 'three';
@@ -96,6 +101,13 @@ export function deskPortraitY(band: DeskBand, fov: number): number {
 
 /** The stop that gets the desk framing. */
 const DESK_ID = 'desk';
+/** The stop that gets the lobby framing. */
+const LOBBY_ID = 'lobby';
+/**
+ * The portrait framing height at the lobby (F-032): the arch's top edge lands just under the
+ * hero's welcome line and its floor pool above the swipe hint on a 412 x 839 phone (FOV 68).
+ */
+export const LOBBY_PORTRAIT_Y = 0.8;
 
 /** Hermite smoothstep of `x` between `edge0` and `edge1`, clamped to [0, 1]. */
 function smooth(edge0: number, edge1: number, x: number): number {
@@ -114,6 +126,13 @@ export function deskWeightAt(ids: readonly string[], p: number): number {
   return 1 - smooth(0, 0.5, Math.abs(p - at));
 }
 
+/** How far the lobby framing applies at progress `p`: 1 at the lobby, 0 half a stop away. */
+export function lobbyWeightAt(ids: readonly string[], p: number): number {
+  const at = ids.indexOf(LOBBY_ID);
+  if (at < 0 || !Number.isFinite(p)) return 0;
+  return 1 - smooth(0, 0.5, Math.abs(p - at));
+}
+
 /** Vertical field of view in degrees for a viewport aspect (width / height). */
 export function fovFor(aspect: number): number {
   const { fovDesktop, fovPortrait, portraitAspect } = tokens.camera;
@@ -128,13 +147,15 @@ export function fovFor(aspect: number): number {
  * story panel as a fraction of the width (null while the dialog is closed); a full-width sheet
  * leaves no area to frame into and keeps the normal framing. `desk` is `deskWeightAt` (portrait
  * only; desktop frames the desk like every other stop), and `deskY` the portrait framing height
- * at the desk (`deskPortraitY` of the measured band, or the DESK_PORTRAIT_Y fallback).
+ * at the desk (`deskPortraitY` of the measured band, or the DESK_PORTRAIT_Y fallback). `lobby`
+ * is `lobbyWeightAt` (portrait only).
  */
 export function framingFor(
   aspect: number,
   panelLeft: number | null = null,
   desk = 0,
   deskY = DESK_PORTRAIT_Y,
+  lobby = 0,
 ): ScreenPoint {
   if (!(aspect < 1)) {
     if (panelLeft !== null && panelLeft >= MIN_LEFT_AREA && panelLeft < 1) {
@@ -143,7 +164,9 @@ export function framingFor(
     return { x: tokens.camera.framingDesktopX, y: 0.5 };
   }
   const w = Math.min(1, Math.max(0, desk));
-  const y = tokens.camera.framingPortraitY;
+  const l = Math.min(1, Math.max(0, lobby));
+  const base = tokens.camera.framingPortraitY;
+  const y = l > 0 ? base + (LOBBY_PORTRAIT_Y - base) * l : base;
   return { x: 0.5, y: w > 0 ? y + (deskY - y) * w : y };
 }
 

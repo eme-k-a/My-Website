@@ -1,0 +1,166 @@
+{
+  "wp": "F-M3",
+  "role": "R0 fixer acting as R3, R6 and R7, with R0 docs grants",
+  "status": "done",
+  "branch": "claude/m3-f-m3",
+  "commits": [
+    "52b2a8e fix(F-018): ignore a stale dialog close event after a reopen",
+    "dbd1c34 fix(F-019): catch a failed exhibit chunk import in the loader",
+    "e981f79 fix(F-017): debug panel shows r3f-perf numbers without a data: font",
+    "866587e fix(F-015): a compiling mount no longer renders every frame",
+    "54e8dcf refactor(F-M3): share the wall-title measurements through titleMetrics.ts",
+    "84121bd fix(F-027): keep the wing beam off the wall title and lift the title",
+    "658460e fix(F-033): wall titles in a brighter brass",
+    "ff33d7c fix(F-032): frame the phone lobby under the hero",
+    "abb04d9 fix(F-M3): a riser on the mun plinth under the base plate",
+    "f9385dc docs(F-M3): label sizes, the mysa assembly turn and MergeStatic"
+  ],
+  "changedFiles": [
+    "docs/ARCHITECTURE.md",
+    "docs/spec/EXPERIENCE.md",
+    "docs/wp/WP-35.md",
+    "docs/wp/packs/WP-35.md",
+    "src/museum/debug/Debug.tsx",
+    "src/museum/environment/Beams.tsx",
+    "src/museum/environment/beams.test.ts",
+    "src/museum/environment/fixtureMatrices.test.ts",
+    "src/museum/environment/fixtureMatrices.ts",
+    "src/museum/environment/lightPlan.test.ts",
+    "src/museum/environment/lightPlan.ts",
+    "src/museum/exhibits/_kit/ExhibitFrame.tsx",
+    "src/museum/exhibits/_kit/Placard.tsx",
+    "src/museum/exhibits/_kit/anatomy.ts",
+    "src/museum/exhibits/_kit/fonts.ts",
+    "src/museum/exhibits/_kit/placard.test.ts",
+    "src/museum/exhibits/_kit/placard.ts",
+    "src/museum/exhibits/_kit/titleMetrics.ts",
+    "src/museum/quality/FrameDriver.tsx",
+    "src/museum/quality/frameDemand.test.ts",
+    "src/museum/quality/frameDemand.ts",
+    "src/museum/rail/CameraRig.tsx",
+    "src/museum/rail/framing.test.ts",
+    "src/museum/rail/framing.ts",
+    "src/overlay/ExhibitDialog.tsx",
+    "tests/e2e/exhibits.spec.ts",
+    "tests/e2e/keyboard.spec.ts",
+    "tests/e2e/quality.spec.ts",
+    "tests/e2e/rail-input.spec.ts",
+    "review/runs/2026-10-21-f-m3/*",
+    "review/reports/F-M3.json"
+  ],
+  "items": [
+    {
+      "id": "F-018",
+      "role": "R6",
+      "change": "ExhibitDialog onClose returns when the dialog is open again: the queued 'close' event of an earlier close no longer closes a story reopened before it landed. keyboard.spec drops the wait for the close event.",
+      "evidence": "Probe on the built site: close the verafin story and click its opener in the same task the dialog closes. Old build: the story ends closed at '/'. New build: open at /exhibit/verafin/. keyboard.spec and dialog.spec pass on desktop and pixel7 without the wait."
+    },
+    {
+      "id": "F-019",
+      "role": "R3",
+      "change": "loadExhibit resolves to { error } instead of rejecting; LoadedExhibit hands the error to the frame (LoadFailed), which keeps the placeholder crate. The preload no longer needs a catch. The pageerror acknowledgement in exhibits.spec is removed.",
+      "evidence": "Root cause: R3F's createRoot passes reportError as onCaughtError, so any error caught by the exhibit's boundary inside the canvas also fires a window error (the 'pageerror'). Reproduced by removing the acknowledgement (guards tripped with 'Failed to fetch dynamically imported module'); after the fix exhibits.spec passes on pixel7 with only the console acknowledgements."
+    },
+    {
+      "id": "F-017",
+      "role": "R7",
+      "change": "The debug chunk renders r3f-perf's PerfHeadless with a plain DOM readout (fps, GPU and CPU ms, calls, triangles, programs; bottom-left, fixed) instead of <Perf>, whose WebGL texts load a bundled data: woff through drei's preloadFont. Production CSP unchanged. ARCHITECTURE line on r3f-perf updated. New quality.spec (k) loads ?debug under the global guards (desktop).",
+      "evidence": "quality (k) failed before the fix with 'Refused to connect to data:font/woff... connect-src self' and passes after. A first attempt (patching troika Text.sync to swap the font) could not reach preloadFont, so it was dropped. Debug chunk 112.5 KB to 86.5 KB (reported, not budgeted)."
+    },
+    {
+      "id": "F-015",
+      "role": "R7",
+      "decision": "dropped",
+      "change": "frameDemand no longer has a 'compiling' input: a compiling mount adds no frames. ready and settled still wait for compilePending and textPending. ARCHITECTURE section 8.5 updated.",
+      "evidence": "review/runs/2026-10-21-f-m3/f015-compile-frames-{on,off}.json from f015-probe.mjs, desktop 1440x900 and pixel7, 10 stops (goTo instant) plus a glided lobby to mysa arrival. Per stop the settled frame equals a frame forced afterwards by a resize (maxd 0 everywhere, both builds), and the settled frames of the two builds are byte-identical at all 22 captures. No pop and no stale frame. Frames to ready: desktop 14 to 9, pixel7 16 to 7; cumulative frames through the desk: 142 to 77 and 192 to 101. Ready time unchanged locally (about 4.1 to 4.6 s). Real-GPU confirmation stays with the G5 device check."
+    },
+    {
+      "id": "F-027",
+      "role": "R3",
+      "change": "Wing beam cones stay dark down to their case top (BeamSpec.fadeStart, about 0.79 of the cone) and draw as a second instanced mesh, so no light shaft crosses the wing titles; the cone shows as a glow inside the case. The wing title's last baseline rises 2.14 to 2.20 m, opening a gap above the case frame. Main-aisle cones are unchanged.",
+      "evidence": "Captures (scratch, not committed) at finance-tracker and sdsj desktop and pixel7: the vertical shaft through P2 / V1 and the titles is gone, TRACKER and OF ST. JOHN'S clear the case top. projects-door: the inner P2 title is no longer crossed by the beam. One more draw call wherever the wing cones are in view (max per-stop calls in F-M3a were 53 of 80 medium and 107 of 150 high). rail-input (g) passes with the new height through the shared metrics."
+    },
+    {
+      "id": "F-033",
+      "role": "R3",
+      "change": "Wall titles (Placard) use a per-library clone of brass: metalness 0.7, roughness 0.4, brass emissive at 0.3. Same shader program; case brass and environment labels unchanged.",
+      "evidence": "Captures at verafin, mysa and finance-tracker desktop: NASDAQ VERAFIN went from near-black letters on the wash to legible brass; a metalness-only change (0.4) was tried first and made verafin blend into the wall, so it was replaced. Taste call stays with R2 at the next review."
+    },
+    {
+      "id": "F-032",
+      "role": "R4 (framing code)",
+      "change": "Portrait lobby framing: the look point lands at 80% of the height (LOBBY_PORTRAIT_Y), blending back to 36% over the first half stop (lobbyWeightAt). A jump (instant travel) now snaps the framing shift with the gaze, so the first exhibit is framed at once. Desktop unchanged.",
+      "evidence": "Pixel 7 capture: the arch and the first case sit under 'Welcome. Walk through my work.', the h1 over plain ink, the arch's brass top no longer behind the name. 360x640: the hero fills about 85% of the viewport, so the arch sits behind the lower buttons and the portrait still touches the right edge (residual). camera (b) at verafin first failed at 41.8% (the shift was still easing from the lobby); fixed by the jump snap; camera, greybox and fast-path pass on desktop and pixel7."
+    },
+    {
+      "id": "MUN plate gap",
+      "role": "R3",
+      "change": "anatomy riserBox: a 0.6 x floor x 0.6 m plinth-material riser on the wide plinth, its height taken from the slot's own floor (0.10). It is one more instance of the plinth mesh (no draw call); the frozen slot contract is unchanged.",
+      "evidence": "fixtureMatrices.test: the riser spans the plinth top to the slot floor with the plate footprint. mun desktop capture: the walnut plate stands on the riser, no gap."
+    },
+    {
+      "id": "Wing title measurements",
+      "role": "R3 (+ one-import spec edit)",
+      "change": "_kit/titleMetrics.ts (no font imports) holds CAP_HEIGHT_RATIO, fontSizeForCap, TITLE_METRICS per kind, tracking, line height, advances, end margin, sansLineWidth and breakLines. placard.ts and fonts.ts re-export them. rail-input.spec imports them; its local constants now alias the shared values.",
+      "evidence": "Unit tests pass (placard, fonts, labels); rail-input (g) passes on desktop."
+    },
+    {
+      "id": "Docs",
+      "role": "R0 grant",
+      "change": "EXPERIENCE 5.4: room names 0.10 m on the door transom, main-aisle organization labels 0.12 m, the raise-never-lower rule replaced by the 14 px floor plus an R0 ruling. EXPERIENCE 4.2: the 35 degree ring-and-key assembly turn. ARCHITECTURE 7.5: MergeStatic. WP-35 brief and pack: the exhibit README template asks for static parts inside MergeStatic.",
+      "evidence": "check:copy ok."
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "npm run verify",
+      "command": "npm run verify",
+      "result": "pass",
+      "evidence": "lint, typecheck, 865 unit tests"
+    },
+    {
+      "id": "A2",
+      "criterion": "npm run build",
+      "command": "npm run build",
+      "result": "pass",
+      "evidence": "budgets ok, check-copy ok"
+    },
+    {
+      "id": "A3",
+      "criterion": "Specs touched pass on desktop and pixel7",
+      "command": "npx playwright test tests/e2e/{dialog,keyboard,exhibits,exhibit-contract,rail-input,wings,environment,greybox,camera,quality}.spec.ts --project=desktop --project=pixel7 --workers=2",
+      "result": "fail",
+      "evidence": "107 passed, 41 skipped (project-gated), 0 failed in 18.0 min: dialog, keyboard, exhibits, exhibit-contract, rail-input, wings, environment, greybox, camera, quality (incl. the ?debug check (k)) on desktop and pixel7"
+    }
+  ],
+  "deviations": [
+    "F-015 commit was amended once on this branch to change its prefix from perf to fix (force-with-lease on claude/m3-f-m3 only).",
+    "F-017 replaces the <Perf> panel (graph and programs tab) with a numeric DOM readout; patching the font inside the chunk is not possible because drei's preloadFont fetches before any mesh exists.",
+    "F-032 touches src/museum/rail (framing.ts, CameraRig.tsx), which the finding pointed at as R4's lobby framing."
+  ],
+  "openQuestions": [
+    {
+      "question": "F-032 at 360x640: the hero fills about 85% of the first viewport, so the arch cannot sit fully under it, and the lobby portrait still touches the right edge. Shorten the phone hero, or accept?",
+      "for": "R2",
+      "default": "Accepted; the Pixel 7 framing is fixed."
+    },
+    {
+      "question": "F-033 brass values (metalness 0.7, roughness 0.4, emissive 0.3) are a taste call. Apply the same to the environment labels (room names, FOUNDATIONS)?",
+      "for": "R2",
+      "default": "Wall titles only."
+    },
+    {
+      "question": "Main-aisle beams still cross the main titles (verafin, mysa), as in round 3 captures. F-027 named the wing titles only. Extend the late-start fade to main cones?",
+      "for": "R0",
+      "default": "Not changed."
+    },
+    {
+      "question": "Visual baselines for lobby-pixel7, the wing stops, mun and every stop with a wall title change with F-027, F-032, F-033 and the riser.",
+      "for": "R0",
+      "default": "Rebaseline through the CI dispatch (WP-17 ruling)."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Scratch captures are not committed (review/runs PNGs are gitignored); review/runs/2026-10-21-f-m3/capture-probe.mjs regenerates them against a served dist. The visual spec was not run locally (baselines come from CI)."
+}

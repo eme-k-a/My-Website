@@ -1,0 +1,870 @@
+{
+  "round": 1,
+  "gate": "G3",
+  "date": "2026-10-21",
+  "build": "bc1ac35 (claude/intelligent-sagan-poq45q, M3 complete), npm ci && npm run build (budgets ok, check-copy ok), served by scripts/serve-dist.ts on PORT=4174",
+  "capture": "tests/e2e/capture.spec.ts @capture, CAPTURE_DIALOGS=1, ?test=1&mode=museum; desktop 1440x900 at tier=high, pixel7 412x839 at tier medium; every main and wing stop (13) and every exhibit dialog (9)",
+  "scale": "1 to 5, half points; anchors in docs/ART_DIRECTION.md section 7",
+  "scope": "all 13 stops: lobby, verafin, projects-door, klarup, finance-tracker, mysa, volunteer-door, sdsj, wailo, cfia, mun, certifications, desk (156 cells)",
+  "previous": "review/runs/2026-10-20-g2r3/scores.json",
+  "scores": {
+    "lobby": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "Unchanged since G2 round 3: deep ink and the first case glowing through the arch, but the arch interior is dead and the beam wedge behind the portrait is grey.",
+          "review/runs/2026-10-21-g3r1/lobby-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Hero in its scrim at left, arch and the Verafin case in the sightline, portrait clear of the rail (Lobby label ends at x 1322, portrait at 1197 to 1297, y from 375).",
+          "review/runs/2026-10-21-g3r1/lobby-desktop.png"
+        ],
+        "D3": [
+          4.5,
+          "Name, role, degree and three links read at a glance; COMMIT HISTORY is crisp. Not 5: the 2026 floor numeral is a faint smear.",
+          "review/runs/2026-10-21-g3r1/lobby-desktop.png"
+        ],
+        "D4": [
+          4,
+          "Arch, glowing case and wall title say \"walk into a gallery\" before any card; the portrait introduces the person.",
+          "review/runs/2026-10-21-g3r1/lobby-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Brass arch, portrait frame and title share the vocabulary; same as round 3.",
+          "review/runs/2026-10-21-g3r1/lobby-desktop.png"
+        ],
+        "D6": [
+          3.5,
+          "Thumbnail: the arch reads as one shape, but the hero type dominates and the case inside is a speck.",
+          "review/runs/2026-10-21-g3r1/lobby-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "F-032 fix: the arch and its first case now sit in the lower half under \"Welcome. Walk through my work.\" The pool is dim and the case small, so the room is calm but not yet inviting.",
+          "review/runs/2026-10-21-g3r1/lobby-pixel7.png"
+        ],
+        "D2": [
+          3.5,
+          "h1 over plain ink, the stage below the hero instead of behind it (round 3: 3). The case is tiny at the lower right and the Swipe pill sits on the arch threshold.",
+          "review/runs/2026-10-21-g3r1/lobby-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Fast path whole above y 371; h1 no longer has the arch top behind it.",
+          "review/runs/2026-10-21-g3r1/lobby-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "The arch with a lit case ahead now says \"gallery\" on the phone; the COMMIT HISTORY sign stays out of frame.",
+          "review/runs/2026-10-21-g3r1/lobby-pixel7.png"
+        ],
+        "D5": [
+          3.5,
+          "Brass arch matches the HUD hairlines; the case is too small to judge craft.",
+          "review/runs/2026-10-21-g3r1/lobby-pixel7.png"
+        ],
+        "D6": [
+          3,
+          "Reduced: the arch reads as one brass frame in the lower half (round 3: 2.5); the case is a speck.",
+          "review/runs/2026-10-21-g3r1/lobby-pixel7.png"
+        ]
+      }
+    },
+    "verafin": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "Case in its pool under a soft shaft; the left half of the frame is still a featureless void and no next pool reads ahead.",
+          "review/runs/2026-10-21-g3r1/verafin-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Case centre x 883 (61.3%), card clear, title above the case; no sightline ahead.",
+          "review/runs/2026-10-21-g3r1/verafin-desktop.png"
+        ],
+        "D3": [
+          4,
+          "F-033: NASDAQ VERAFIN now reads as brass, not near-black letters; card at the 5 anchor. Not 4.5: the title is skewed by the wall angle.",
+          "review/runs/2026-10-21-g3r1/verafin-desktop.png"
+        ],
+        "D4": [
+          4,
+          "Column feeding a grid of bars reads as reporting; nothing suggests detection. The plugin cartridges read only after the card.",
+          "review/runs/2026-10-21-g3r1/verafin-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Library materials, grounded tray, one motion; consistent with mysa and wailo.",
+          "review/runs/2026-10-21-g3r1/verafin-desktop.png"
+        ],
+        "D6": [
+          3.5,
+          "Thumbnail: a tall column beside a block of bars, but the bars merge into one pale mass.",
+          "review/runs/2026-10-21-g3r1/verafin-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Warm pool and shaft; dark surround with no next pool.",
+          "review/runs/2026-10-21-g3r1/verafin-pixel7.png"
+        ],
+        "D2": [
+          4,
+          "Case on the 36% point, title above, compact card below.",
+          "review/runs/2026-10-21-g3r1/verafin-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Card hierarchy clean; title brass legible at medium.",
+          "review/runs/2026-10-21-g3r1/verafin-pixel7.png"
+        ],
+        "D4": [
+          4,
+          "Same read as desktop.",
+          "review/runs/2026-10-21-g3r1/verafin-pixel7.png"
+        ],
+        "D5": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/verafin-pixel7.png"
+        ],
+        "D6": [
+          4,
+          "Reduced: column and bars read as one object on the plinth.",
+          "review/runs/2026-10-21-g3r1/verafin-pixel7.png"
+        ]
+      }
+    },
+    "projects-door": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "Lit case seen through the doorway in its pool; the left 40% of the frame is pure black.",
+          "review/runs/2026-10-21-g3r1/projects-door-desktop.png"
+        ],
+        "D2": [
+          3.5,
+          "Door and case right of centre, card clear; the dead left half and the cropped right jamb keep it from composing.",
+          "review/runs/2026-10-21-g3r1/projects-door-desktop.png"
+        ],
+        "D3": [
+          4,
+          "F-027: the inner P2 title is no longer crossed by a beam (round 3: 3.5); PROJECTS reads on the transom.",
+          "review/runs/2026-10-21-g3r1/projects-door-desktop.png"
+        ],
+        "D4": [
+          3.5,
+          "A door with a lit case beyond invites; the card names both exhibits.",
+          "review/runs/2026-10-21-g3r1/projects-door-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Brass door frame and case read in the same vocabulary.",
+          "review/runs/2026-10-21-g3r1/projects-door-desktop.png"
+        ],
+        "D6": [
+          4,
+          "Thumbnail: one doorway silhouette with a lit case inside.",
+          "review/runs/2026-10-21-g3r1/projects-door-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Dark room, one pool inside the door; unchanged.",
+          "review/runs/2026-10-21-g3r1/projects-door-pixel7.png"
+        ],
+        "D2": [
+          3.5,
+          "Door fills the frame, case inside, card below; right jamb cut.",
+          "review/runs/2026-10-21-g3r1/projects-door-pixel7.png"
+        ],
+        "D3": [
+          4,
+          "Transom title whole; card clear.",
+          "review/runs/2026-10-21-g3r1/projects-door-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/projects-door-pixel7.png"
+        ],
+        "D5": [
+          3.5,
+          "Inner case small; consistent materials.",
+          "review/runs/2026-10-21-g3r1/projects-door-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reduced: the doorway reads; the case is small.",
+          "review/runs/2026-10-21-g3r1/projects-door-pixel7.png"
+        ]
+      }
+    },
+    "klarup": {
+      "desktop": {
+        "D1": [
+          4,
+          "Deep wing room, one warm pool, a soft glow arch behind the title, no beam shaft (F-027).",
+          "review/runs/2026-10-21-g3r1/klarup-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Case on the 61% point, title above, HUD clear (exit control ends x 1413, title ends x 955). No sightline, expected in a wing.",
+          "review/runs/2026-10-21-g3r1/klarup-desktop.png"
+        ],
+        "D3": [
+          4.5,
+          "P1 KLARUP crisp, card clean, wing chip and exit control legible.",
+          "review/runs/2026-10-21-g3r1/klarup-desktop.png"
+        ],
+        "D4": [
+          4,
+          "A five-step staircase with beads on top reads as climbing together; the checks are thin teal lines and read only after the card.",
+          "review/runs/2026-10-21-g3r1/klarup-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Library materials, posts under every tile, one motion.",
+          "review/runs/2026-10-21-g3r1/klarup-desktop.png"
+        ],
+        "D6": [
+          3.5,
+          "Thumbnail: a staircase silhouette, but thin posts and small tiles leave the case airy.",
+          "review/runs/2026-10-21-g3r1/klarup-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Same room mood at medium.",
+          "review/runs/2026-10-21-g3r1/klarup-pixel7.png"
+        ],
+        "D2": [
+          4,
+          "Case on the 36% point, compact card; P1 clears the exit control by about 4 CSS px.",
+          "review/runs/2026-10-21-g3r1/klarup-pixel7.png"
+        ],
+        "D3": [
+          4,
+          "Title and card read; the exit control sits just above P1.",
+          "review/runs/2026-10-21-g3r1/klarup-pixel7.png"
+        ],
+        "D4": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/klarup-pixel7.png"
+        ],
+        "D5": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/klarup-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reduced: the staircase reads; parts are thin.",
+          "review/runs/2026-10-21-g3r1/klarup-pixel7.png"
+        ]
+      }
+    },
+    "finance-tracker": {
+      "desktop": {
+        "D1": [
+          4,
+          "Wing room dark, warm pool, glow arch behind the title, no shaft.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-desktop.png"
+        ],
+        "D2": [
+          3.5,
+          "Case on the point, but the object fills only the lowest 15% of the case and the three-line title is wider than the case.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-desktop.png"
+        ],
+        "D3": [
+          4.5,
+          "Title and card crisp; HUD clear of the title.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-desktop.png"
+        ],
+        "D4": [
+          3.5,
+          "Three stacks read as money only with the card; the brass Income stack reads dark brown, close to graphite, so the three roles do not separate.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-desktop.png"
+        ],
+        "D5": [
+          3.5,
+          "Library materials, but the brass stack does not read as brass, and the object under-fills the slot against its neighbours.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-desktop.png"
+        ],
+        "D6": [
+          3.5,
+          "Thumbnail: three small stacks on a tray; clear but tiny in an empty case.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Same room mood at medium.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-pixel7.png"
+        ],
+        "D2": [
+          3,
+          "The exit control (x 16 to 189, y 96 to 140) sits on the P2 numeral (F-039); the case itself is on the point.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-pixel7.png"
+        ],
+        "D3": [
+          2.5,
+          "Text drawn over text: \"Return to the aisle\" is laid over P2 (800 brass title pixels inside the control, probe-wing-hud.json).",
+          "review/runs/2026-10-21-g3r1/finance-tracker-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-pixel7.png"
+        ],
+        "D5": [
+          3.5,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reduced: three stacks on a tray, small.",
+          "review/runs/2026-10-21-g3r1/finance-tracker-pixel7.png"
+        ]
+      }
+    },
+    "mysa": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "Case in its pool with a soft shaft; the left half is a void and no next pool reads.",
+          "review/runs/2026-10-21-g3r1/mysa-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Case centre on the 61% point, card clear, title above.",
+          "review/runs/2026-10-21-g3r1/mysa-desktop.png"
+        ],
+        "D3": [
+          4,
+          "02 MYSA reads as brass; card clean. Title slightly skewed by the wall angle.",
+          "review/runs/2026-10-21-g3r1/mysa-desktop.png"
+        ],
+        "D4": [
+          4,
+          "A wall unit with a four-segment dial and a key through a ring reads as release pipeline plus sign-on once the card is read; generic, no product copy.",
+          "review/runs/2026-10-21-g3r1/mysa-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Library materials, one motion, grounded tray; the 35 degree key turn reads well.",
+          "review/runs/2026-10-21-g3r1/mysa-desktop.png"
+        ],
+        "D6": [
+          4,
+          "Thumbnail: an upright slab with a ring dial, key and ring at its foot; one silhouette.",
+          "review/runs/2026-10-21-g3r1/mysa-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Warm pool, dark surround, no next pool.",
+          "review/runs/2026-10-21-g3r1/mysa-pixel7.png"
+        ],
+        "D2": [
+          4,
+          "Case on the 36% point, title above, compact card.",
+          "review/runs/2026-10-21-g3r1/mysa-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Card and title read at a glance.",
+          "review/runs/2026-10-21-g3r1/mysa-pixel7.png"
+        ],
+        "D4": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/mysa-pixel7.png"
+        ],
+        "D5": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/mysa-pixel7.png"
+        ],
+        "D6": [
+          4,
+          "Reduced: slab and dial read as one object.",
+          "review/runs/2026-10-21-g3r1/mysa-pixel7.png"
+        ]
+      }
+    },
+    "volunteer-door": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "Lit sdsj case inside the doorway; the neighbouring wailo case and a cut \"03 / LO\" title crowd the left edge.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-desktop.png"
+        ],
+        "D2": [
+          3.5,
+          "Door and case well placed, card clear; the left-edge crop of the aisle case remains.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-desktop.png"
+        ],
+        "D3": [
+          3.5,
+          "VOLUNTEER & LEADERSHIP whole on the transom; the cut \"LO\" at the left edge is a fragment of 3D text.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-desktop.png"
+        ],
+        "D4": [
+          3.5,
+          "Door invites; the round table inside is too small to read from here.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-desktop.png"
+        ],
+        "D5": [
+          3.5,
+          "Consistent materials; the cropped neighbour makes the frame busy.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-desktop.png"
+        ],
+        "D6": [
+          4,
+          "Thumbnail: one doorway with a lit case.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "One pool inside the door, dark surround.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-pixel7.png"
+        ],
+        "D2": [
+          3.5,
+          "Door and case in frame, card below; right jamb tight.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-pixel7.png"
+        ],
+        "D3": [
+          3.5,
+          "Transom whole; inner title small but legible.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-pixel7.png"
+        ],
+        "D5": [
+          3.5,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reduced: doorway reads; the case is small.",
+          "review/runs/2026-10-21-g3r1/volunteer-door-pixel7.png"
+        ]
+      }
+    },
+    "sdsj": {
+      "desktop": {
+        "D1": [
+          4,
+          "Dark wing room, warm pool, glow behind the title, no shaft crossing V1 (F-027).",
+          "review/runs/2026-10-21-g3r1/sdsj-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Case on the point, title above, the wing rail line 39 px right of the title end.",
+          "review/runs/2026-10-21-g3r1/sdsj-desktop.png"
+        ],
+        "D3": [
+          4.5,
+          "Two-line title crisp; ONGOING pill and card clean.",
+          "review/runs/2026-10-21-g3r1/sdsj-desktop.png"
+        ],
+        "D4": [
+          4,
+          "A round table with laptops facing in reads as a community building together.",
+          "review/runs/2026-10-21-g3r1/sdsj-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Library materials, one motion, nothing floats.",
+          "review/runs/2026-10-21-g3r1/sdsj-desktop.png"
+        ],
+        "D6": [
+          3.5,
+          "Thumbnail: a round table silhouette, small in the lower 40% of the case.",
+          "review/runs/2026-10-21-g3r1/sdsj-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Same room mood at medium.",
+          "review/runs/2026-10-21-g3r1/sdsj-pixel7.png"
+        ],
+        "D2": [
+          3.5,
+          "Case on the point; the V of V1 abuts the exit control border (F-039).",
+          "review/runs/2026-10-21-g3r1/sdsj-pixel7.png"
+        ],
+        "D3": [
+          4,
+          "Title reads, but the numeral touches the HUD border.",
+          "review/runs/2026-10-21-g3r1/sdsj-pixel7.png"
+        ],
+        "D4": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/sdsj-pixel7.png"
+        ],
+        "D5": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/sdsj-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reduced: table and laptops small but distinct.",
+          "review/runs/2026-10-21-g3r1/sdsj-pixel7.png"
+        ]
+      }
+    },
+    "wailo": {
+      "desktop": {
+        "D1": [
+          4,
+          "Case in its pool, and down the aisle the FOUNDATIONS header and a vitrine glow faintly: the one main stop with a promise ahead.",
+          "review/runs/2026-10-21-g3r1/wailo-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Case on the 61% point, title above; the far vitrine sits partly behind the card.",
+          "review/runs/2026-10-21-g3r1/wailo-desktop.png"
+        ],
+        "D3": [
+          4,
+          "03 WAILO reads as brass; card clean.",
+          "review/runs/2026-10-21-g3r1/wailo-desktop.png"
+        ],
+        "D4": [
+          4.5,
+          "Envelope, glowing arc and phone with a reset card say \"a link delivered into the app\" at a glance; the card confirms deep-link recovery. Not 5: the release tag is too small to find.",
+          "review/runs/2026-10-21-g3r1/wailo-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Library materials, one motion; the arc is a clean single tube.",
+          "review/runs/2026-10-21-g3r1/wailo-desktop.png"
+        ],
+        "D6": [
+          4,
+          "Thumbnail: a tilted phone with one arc from the tray; one silhouette.",
+          "review/runs/2026-10-21-g3r1/wailo-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Warm pool, dark surround; no next pool in the narrow frame.",
+          "review/runs/2026-10-21-g3r1/wailo-pixel7.png"
+        ],
+        "D2": [
+          4,
+          "Case on the 36% point, title above, compact card.",
+          "review/runs/2026-10-21-g3r1/wailo-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Card and title read at a glance.",
+          "review/runs/2026-10-21-g3r1/wailo-pixel7.png"
+        ],
+        "D4": [
+          4.5,
+          "Same read as desktop.",
+          "review/runs/2026-10-21-g3r1/wailo-pixel7.png"
+        ],
+        "D5": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/wailo-pixel7.png"
+        ],
+        "D6": [
+          4,
+          "Reduced: phone and arc read as one object.",
+          "review/runs/2026-10-21-g3r1/wailo-pixel7.png"
+        ]
+      }
+    },
+    "cfia": {
+      "desktop": {
+        "D1": [
+          4,
+          "The warmest pool in the building, and the mun case glows ahead at the right edge.",
+          "review/runs/2026-10-21-g3r1/cfia-desktop.png"
+        ],
+        "D2": [
+          3.5,
+          "Case on the point, but the object is small in the case and the next case sits under the progress rail at the right edge.",
+          "review/runs/2026-10-21-g3r1/cfia-desktop.png"
+        ],
+        "D3": [
+          4,
+          "Two-line title legible; card clean.",
+          "review/runs/2026-10-21-g3r1/cfia-desktop.png"
+        ],
+        "D4": [
+          3.5,
+          "A spindle of paper reads as \"tickets\" once the card is read; small at stop distance.",
+          "review/runs/2026-10-21-g3r1/cfia-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Library materials, one motion, grounded box.",
+          "review/runs/2026-10-21-g3r1/cfia-desktop.png"
+        ],
+        "D6": [
+          3,
+          "Thumbnail: a thin rod and a pale block; the walnut box merges with the case floor.",
+          "review/runs/2026-10-21-g3r1/cfia-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Warm pool, dark surround.",
+          "review/runs/2026-10-21-g3r1/cfia-pixel7.png"
+        ],
+        "D2": [
+          3.5,
+          "Case on the point; object small in the case.",
+          "review/runs/2026-10-21-g3r1/cfia-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Title and card read at a glance.",
+          "review/runs/2026-10-21-g3r1/cfia-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/cfia-pixel7.png"
+        ],
+        "D5": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/cfia-pixel7.png"
+        ],
+        "D6": [
+          3,
+          "Reduced: rod and stack are a few pixels wide.",
+          "review/runs/2026-10-21-g3r1/cfia-pixel7.png"
+        ]
+      }
+    },
+    "mun": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "Large case in a dim pool, title in its own wash on the left wall; no next pool.",
+          "review/runs/2026-10-21-g3r1/mun-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Case on the 61% point, title upper left clear of the card.",
+          "review/runs/2026-10-21-g3r1/mun-desktop.png"
+        ],
+        "D3": [
+          4,
+          "05 MEMORIAL UNIVERSITY legible brass; card clean.",
+          "review/runs/2026-10-21-g3r1/mun-desktop.png"
+        ],
+        "D4": [
+          3.5,
+          "A scaffold reads as \"under construction\"; the die reads as a plate on a post, not a chip, and the brass tier separates from the ghosts only by colour.",
+          "review/runs/2026-10-21-g3r1/mun-desktop.png"
+        ],
+        "D5": [
+          3,
+          "The four scaffold legs stop 13 cm above the plinth top outside the 0.6 m riser (F-040): floating parts.",
+          "review/runs/2026-10-21-g3r1/mun-desktop.png"
+        ],
+        "D6": [
+          3,
+          "Thumbnail: a lattice cube reads, but the die is lost and the thin rods compete.",
+          "review/runs/2026-10-21-g3r1/mun-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Dim pool, large case.",
+          "review/runs/2026-10-21-g3r1/mun-pixel7.png"
+        ],
+        "D2": [
+          3,
+          "No wall title in frame (F-041); the wide case fills the width.",
+          "review/runs/2026-10-21-g3r1/mun-pixel7.png"
+        ],
+        "D3": [
+          3.5,
+          "The 3D title is missing; the card carries the content.",
+          "review/runs/2026-10-21-g3r1/mun-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/mun-pixel7.png"
+        ],
+        "D5": [
+          3,
+          "Same floating scaffold as desktop.",
+          "review/runs/2026-10-21-g3r1/mun-pixel7.png"
+        ],
+        "D6": [
+          3,
+          "Reduced: lattice reads, die lost.",
+          "review/runs/2026-10-21-g3r1/mun-pixel7.png"
+        ]
+      }
+    },
+    "certifications": {
+      "desktop": {
+        "D1": [
+          3,
+          "The walnut backing panel glows as a saturated orange-brown rectangle with hard edges (centre about rgb 77 44 26 against 27 25 26 on the verafin wall), the hottest surface in the building (F-043).",
+          "review/runs/2026-10-21-g3r1/certifications-desktop.png"
+        ],
+        "D2": [
+          4,
+          "Vitrine on the 61% point, title above, card clear.",
+          "review/runs/2026-10-21-g3r1/certifications-desktop.png"
+        ],
+        "D3": [
+          4.5,
+          "06 and CERTIFICATIONS crisp; card clean.",
+          "review/runs/2026-10-21-g3r1/certifications-desktop.png"
+        ],
+        "D4": [
+          4,
+          "Three medallions in a cabinet say \"three credentials\"; generic emblems (cloud, compass rose, turbine), no logos.",
+          "review/runs/2026-10-21-g3r1/certifications-desktop.png"
+        ],
+        "D5": [
+          3.5,
+          "Brass only, one motion; the 06 numeral and the backing panel are brighter and more saturated than every other title and wall.",
+          "review/runs/2026-10-21-g3r1/certifications-desktop.png"
+        ],
+        "D6": [
+          3.5,
+          "Thumbnail: a cabinet with three discs; the emblems are distinguishable but tiny.",
+          "review/runs/2026-10-21-g3r1/certifications-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3,
+          "Same hot backing panel at medium.",
+          "review/runs/2026-10-21-g3r1/certifications-pixel7.png"
+        ],
+        "D2": [
+          4,
+          "Vitrine on the point, title above and clear of the HUD, compact card.",
+          "review/runs/2026-10-21-g3r1/certifications-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Title and card read at a glance.",
+          "review/runs/2026-10-21-g3r1/certifications-pixel7.png"
+        ],
+        "D4": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/certifications-pixel7.png"
+        ],
+        "D5": [
+          3.5,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/certifications-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reduced: cabinet and three discs read.",
+          "review/runs/2026-10-21-g3r1/certifications-pixel7.png"
+        ]
+      }
+    },
+    "desk": {
+      "desktop": {
+        "D1": [
+          4.5,
+          "Unchanged: one warm pool, walnut, a faint shaft and the end-wall line; the mood target.",
+          "review/runs/2026-10-21-g3r1/desk-desktop.png"
+        ],
+        "D2": [
+          4.5,
+          "Desk on the point, line above, card clear.",
+          "review/runs/2026-10-21-g3r1/desk-desktop.png"
+        ],
+        "D3": [
+          4.5,
+          "End-wall line crisp; card links clean.",
+          "review/runs/2026-10-21-g3r1/desk-desktop.png"
+        ],
+        "D4": [
+          3.5,
+          "The four desk objects cannot be told apart without the card.",
+          "review/runs/2026-10-21-g3r1/desk-desktop.png"
+        ],
+        "D5": [
+          4,
+          "Walnut and paper in the shared vocabulary.",
+          "review/runs/2026-10-21-g3r1/desk-desktop.png"
+        ],
+        "D6": [
+          4,
+          "Thumbnail: one desk silhouette in a pool.",
+          "review/runs/2026-10-21-g3r1/desk-thumb.png"
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Line high, shaft onto the desk, dark surround.",
+          "review/runs/2026-10-21-g3r1/desk-pixel7.png"
+        ],
+        "D2": [
+          4,
+          "Desk top above the card (F-020 holds).",
+          "review/runs/2026-10-21-g3r1/desk-pixel7.png"
+        ],
+        "D3": [
+          4.5,
+          "Line and card read at a glance.",
+          "review/runs/2026-10-21-g3r1/desk-pixel7.png"
+        ],
+        "D4": [
+          3.5,
+          "Objects too small to name on a phone.",
+          "review/runs/2026-10-21-g3r1/desk-pixel7.png"
+        ],
+        "D5": [
+          4,
+          "Same as desktop.",
+          "review/runs/2026-10-21-g3r1/desk-pixel7.png"
+        ],
+        "D6": [
+          3.5,
+          "Reduced: the desk reads; objects are specks.",
+          "review/runs/2026-10-21-g3r1/desk-pixel7.png"
+        ]
+      }
+    }
+  }
+}

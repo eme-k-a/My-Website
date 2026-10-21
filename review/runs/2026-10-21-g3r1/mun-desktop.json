@@ -1,0 +1,65 @@
+{
+  "stop": "mun",
+  "project": "desktop",
+  "url": "/?test=1&mode=museum&tier=high",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "stats": {
+    "calls": 61,
+    "triangles": 19993,
+    "geometries": 90,
+    "textures": 30,
+    "programs": 37,
+    "textureMB": 11.666996002197266,
+    "frames": 13,
+    "dpr": 1,
+    "tier": "high",
+    "track": "main",
+    "mounted": [
+      "wailo",
+      "cfia",
+      "mun",
+      "certifications"
+    ],
+    "exhibits": {
+      "wailo": {
+        "triangles": 2598,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "cfia": {
+        "triangles": 1116,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "mun": {
+        "triangles": 2676,
+        "drawCalls": 8,
+        "inBounds": true
+      },
+      "certifications": {
+        "triangles": 3924,
+        "drawCalls": 7,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        -0.3,
+        1.6,
+        -54.4
+      ],
+      "target": [
+        -2.5,
+        1.25,
+        -57
+      ]
+    },
+    "progress": {
+      "target": 7,
+      "current": 7
+    }
+  }
+}

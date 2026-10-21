@@ -1,0 +1,140 @@
+[
+  {
+    "dev": "pixel7",
+    "stop": "klarup",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "exit": {
+      "left": 16,
+      "top": 95.59375,
+      "right": 189.359375,
+      "bottom": 139.59375
+    },
+    "chip": {
+      "left": 16,
+      "top": 64,
+      "right": 188.5,
+      "bottom": 87.59375
+    },
+    "dpr": 2.625,
+    "brassPxInExit": 0,
+    "file": "review/runs/2026-10-21-g3r1/probe-klarup-pixel7.png"
+  },
+  {
+    "dev": "pixel7",
+    "stop": "finance-tracker",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "exit": {
+      "left": 16,
+      "top": 95.59375,
+      "right": 189.359375,
+      "bottom": 139.59375
+    },
+    "chip": {
+      "left": 16,
+      "top": 64,
+      "right": 188.5,
+      "bottom": 87.59375
+    },
+    "dpr": 2.625,
+    "brassPxInExit": 800,
+    "file": "review/runs/2026-10-21-g3r1/probe-finance-tracker-pixel7.png"
+  },
+  {
+    "dev": "pixel7",
+    "stop": "sdsj",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "exit": {
+      "left": 16,
+      "top": 95.59375,
+      "right": 189.359375,
+      "bottom": 139.59375
+    },
+    "chip": {
+      "left": 16,
+      "top": 64,
+      "right": 297.46875,
+      "bottom": 87.59375
+    },
+    "dpr": 2.625,
+    "brassPxInExit": 0,
+    "file": "review/runs/2026-10-21-g3r1/probe-sdsj-pixel7.png"
+  },
+  {
+    "dev": "small",
+    "stop": "klarup",
+    "viewport": {
+      "width": 360,
+      "height": 640
+    },
+    "exit": {
+      "left": 16,
+      "top": 95.59375,
+      "right": 189.359375,
+      "bottom": 139.59375
+    },
+    "chip": {
+      "left": 16,
+      "top": 64,
+      "right": 188.5,
+      "bottom": 87.59375
+    },
+    "dpr": 2.625,
+    "brassPxInExit": 514,
+    "file": "review/runs/2026-10-21-g3r1/probe-klarup-small.png"
+  },
+  {
+    "dev": "small",
+    "stop": "finance-tracker",
+    "viewport": {
+      "width": 360,
+      "height": 640
+    },
+    "exit": {
+      "left": 16,
+      "top": 95.59375,
+      "right": 189.359375,
+      "bottom": 139.59375
+    },
+    "chip": {
+      "left": 16,
+      "top": 64,
+      "right": 188.5,
+      "bottom": 87.59375
+    },
+    "dpr": 2.625,
+    "brassPxInExit": 2301,
+    "file": "review/runs/2026-10-21-g3r1/probe-finance-tracker-small.png"
+  },
+  {
+    "dev": "small",
+    "stop": "sdsj",
+    "viewport": {
+      "width": 360,
+      "height": 640
+    },
+    "exit": {
+      "left": 16,
+      "top": 95.59375,
+      "right": 189.359375,
+      "bottom": 139.59375
+    },
+    "chip": {
+      "left": 16,
+      "top": 64,
+      "right": 297.46875,
+      "bottom": 87.59375
+    },
+    "dpr": 2.625,
+    "brassPxInExit": 2290,
+    "file": "review/runs/2026-10-21-g3r1/probe-sdsj-small.png"
+  }
+]

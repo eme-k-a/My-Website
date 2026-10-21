@@ -20,6 +20,10 @@
       "status": "fixed",
       "evidence": "Fixed at both portrait sizes (F-G2r2 dd5d489). review/runs/2026-10-20-g2r3/desk-pixel7.png (412x839): the desk top and all four objects sit above the card, screenPos('desk') y 428 against card top 531, end-wall line high and clear of the HUD. 360x640 scratch probe (Pixel 7 UA, isMobile, DPR 1, ?test=1&mode=museum), review/runs/2026-10-20-g2r3/probe-desk-360x640.png and review/runs/2026-10-20-g2r3/probe-rects.json: card top 311 (round 2: 178), screenPos('desk') y 285 (26 px above the card top), HUD bottom 60, PDF button bottom 52, the end-wall line starts at about y 75 and clears the HUD. The desk front is cut by the card at 360x640, but the desk top and its four objects read whole (D2 of the 5 anchor not claimed).",
       "viewport": "pixel7 and 360x640 portrait: fixed"
+    },
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Holds on bc1ac35: no regression in the G3 round 1 shots (review/runs/2026-10-21-g3r1/<stop>-<desktop|pixel7>.png and the dialog shots)."
     }
   },
   {
@@ -37,6 +41,10 @@
     "round2": {
       "status": "fixed",
       "evidence": "review/runs/2026-10-20-g2r2/verafin-dialog-desktop.png and review/runs/2026-10-20-g2r2/sdsj-dialog-desktop.png: the panel is calm; no HUD button, rail line, rail tooltip, wing chip or exit control shows through or beside the panel text (dialog.spec (n) and (n2) cover it, per F-G2b and F-035)."
+    },
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Holds on bc1ac35: no regression in the G3 round 1 shots (review/runs/2026-10-21-g3r1/<stop>-<desktop|pixel7>.png and the dialog shots)."
     }
   },
   {
@@ -54,6 +62,10 @@
     "round2": {
       "status": "fixed",
       "evidence": "Desktop: review/runs/2026-10-20-g2r2/verafin-desktop.png (01 and NASDAQ VERAFIN whole above the case), review/runs/2026-10-20-g2r2/projects-door-desktop.png and review/runs/2026-10-20-g2r2/volunteer-door-desktop.png (room names whole on the door transoms, clear of the Resume and Classic buttons), review/runs/2026-10-20-g2r2/mysa-desktop.png (02 MYSA whole). Pixel 7: review/runs/2026-10-20-g2r2/verafin-pixel7.png, review/runs/2026-10-20-g2r2/projects-door-pixel7.png, review/runs/2026-10-20-g2r2/volunteer-door-pixel7.png: every title complete and clear of the PDF and Classic buttons; review/runs/2026-10-20-g2r2/sdsj-pixel7.png V1 clears 'Return to the aisle' by about 2 CSS px. The sdsj desktop collision with the rail tooltip is filed separately as F-036 (a stop outside this finding's list, a different owner)."
+    },
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Holds on bc1ac35: no regression in the G3 round 1 shots (review/runs/2026-10-21-g3r1/<stop>-<desktop|pixel7>.png and the dialog shots)."
     }
   },
   {
@@ -71,6 +83,10 @@
     "round2": {
       "status": "fixed",
       "evidence": "Floor region mean luma (x 20 to 390, y 390 to 545 CSS px): review/runs/2026-10-20-g2r2/projects-door-pixel7.png 6.0 and review/runs/2026-10-20-g2r2/volunteer-door-pixel7.png 6.1 at tier medium, against 5.8 and 5.7 for the desktop high floors; no flat area brighter than the pool peak. Within the 15% bar."
+    },
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Holds on bc1ac35: no regression in the G3 round 1 shots (review/runs/2026-10-21-g3r1/<stop>-<desktop|pixel7>.png and the dialog shots)."
     }
   },
   {
@@ -134,7 +150,7 @@
     "evidence": "projects-door-desktop.png: the beam cone cuts the I of FINANCE and the case covers TRACKER; volunteer-door-desktop.png: the beam splits SOFTWARE and the case covers ST.; safe-sip-desktop.png: the beam crosses ENACTUS MEMORIAL. The wash arch behind each title is offset from the text and narrower than it.",
     "expected": "Each wing title reads whole above its case, centered on its wash, with the beam passing in front of the wall below the text.",
     "check": "Capture the two door stops and safe-sip: every wing title is unbroken and centered on its wash.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
     "round2": {
       "status": "open",
@@ -143,6 +159,10 @@
     "round3": {
       "status": "open",
       "evidence": "Unchanged (not in F-G2r2 scope). review/runs/2026-10-20-g2r3/finance-tracker-desktop.png and review/runs/2026-10-20-g2r3/sdsj-desktop.png: the light shaft still crosses the P2 and V1 wall titles, and the case top frame meets the last title line (TRACKER, OF ST. JOHN'S) with almost no gap. review/runs/2026-10-20-g2r3/projects-door-desktop.png and review/runs/2026-10-20-g2r3/volunteer-door-desktop.png: the inner titles are faint behind the beam. Second round open after round 1; one more reopen makes it a taste call for Emeka (PLAN section 6), and M2 has no further round, so it goes to Emeka's backlog."
+    },
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Fixed by F-M3 (84121bd/7ce8f1a: wing cones dark down to the case top, title baseline 2.14 to 2.20 m). review/runs/2026-10-21-g3r1/klarup-desktop.png, review/runs/2026-10-21-g3r1/finance-tracker-desktop.png, review/runs/2026-10-21-g3r1/sdsj-desktop.png: no shaft crosses P1, P2 or V1; TRACKER ends about y 285 and OF ST. JOHN'S about y 282 against case tops near y 300 and 296. review/runs/2026-10-21-g3r1/projects-door-desktop.png: the inner P2 title is clean. Residual in a state outside this finding: the dialog dolly pushes the last title line behind the case top (new F-042)."
     }
   },
   {
@@ -223,7 +243,7 @@
     "evidence": "lobby-pixel7.png: the 3D COMMIT HISTORY label sits directly behind 'Chukwuemeka (Emeka)' and shows through the scrim; the arch and the first case sit behind the link buttons, and the lower 40% of the first viewport is an empty gradient. The fast path itself passes (see the scorecard).",
     "expected": "On portrait the h1 sits over plain ink and the arch with its warm pool shows in the lower part of the first viewport, under the hero, so the stage invites the first swipe.",
     "check": "Capture lobby pixel7: no 3D label inside the h1's bounding box; the arch's light pool is visible below 'Begin the walk'.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
     "round2": {
       "status": "open",
@@ -232,6 +252,10 @@
     "round3": {
       "status": "open",
       "evidence": "Unchanged. review/runs/2026-10-20-g2r3/lobby-pixel7.png: the brass arch and first case still sit behind the hero buttons and the lower 40% is empty floor; review/runs/2026-10-20-g2r3/probe-lobby-360x640.png: the portrait is cut by the right viewport edge behind \"expected\". Fast path still passes at both sizes. Leftover for Emeka's backlog (M2 cap reached)."
+    },
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Fixed by F-M3 (2d51f5e, LOBBY_PORTRAIT_Y). review/runs/2026-10-21-g3r1/lobby-pixel7.png: h1 over plain ink, the arch and the first case sit under 'Welcome. Walk through my work.'; Pixel 7 lobby D6 2.5 to 3, D2 3 to 3.5. Residual at 360x640 (review/runs/2026-10-21-g3r1/probe-lobby-small.png): the arch sits behind Begin the walk and the portrait touches the right edge; fast path still whole above y 396. Not reopened: the residual is on a viewport outside this finding and is polish."
     }
   },
   {
@@ -244,7 +268,7 @@
     "evidence": "verafin-desktop.png (NASDAQ VERAFIN), projects-door-desktop.png (PERSONAL FINANCE TRACKER), safe-sip-desktop.png (ENACTUS MEMORIAL): dark brass letters on a dark wall, well under the contrast the DOM gets. They repeat the DOM, so not a legibility defect.",
     "expected": "Idea: let the wall wash catch the letters (a little more metalness response or a slightly warmer label color) so titles glint like real brass lettering, as the lobby and desk titles already do.",
     "check": "Taste call for R2 on the next capture.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
     "round2": {
       "status": "open",
@@ -253,6 +277,10 @@
     "round3": {
       "status": "open",
       "evidence": "Not attempted (P3). Brass wing titles in the wash still read as dark letters (sdsj-desktop.png, finance-tracker-desktop.png). Backlog."
+    },
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Fixed by F-M3 (74999b1, per-library brass clone for wall titles). review/runs/2026-10-21-g3r1/verafin-desktop.png, review/runs/2026-10-21-g3r1/mysa-desktop.png, review/runs/2026-10-21-g3r1/cfia-desktop.png: titles read as brass, not dark letters on the wash. Side effect noted in F-043: the 06 numeral at certifications now reads brighter than its neighbours."
     }
   },
   {
@@ -287,6 +315,10 @@
     "round3": {
       "status": "fixed",
       "evidence": "Fixed (F-G2r2 401e010). review/runs/2026-10-20-g2r3/sdsj-desktop.png, review/runs/2026-10-20-g2r3/klarup-desktop.png, review/runs/2026-10-20-g2r3/finance-tracker-desktop.png (1440x900, tier high): every wall title reads whole and no rail text crosses it. DOM rects (review/runs/2026-10-20-g2r3/probe-rects.json): the current-stop label at sdsj (x 958 to 1128, y 209 to 238) is clip-path inset(50%) at rest; the wing chip (x 1132 to 1413, y 136 to 160) and Return to the aisle (x 1200 to 1413, y 168 to 212) sit right of and above the titles (SOFTWARE DEVELOPERS ends near x 1115). tests/e2e/rail-input.spec.ts (g) passes on desktop against this build (1 passed, PORT=4174). On Pixel 7 (review/runs/2026-10-20-g2r3/sdsj-pixel7.png) the V1 numeral still clears the Return to the aisle button by only about 2 CSS px, as in round 2; not a defect at this size but no margin."
+    },
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Holds on bc1ac35: no regression in the G3 round 1 shots (review/runs/2026-10-21-g3r1/<stop>-<desktop|pixel7>.png and the dialog shots)."
     }
   },
   {
@@ -304,6 +336,10 @@
     "round3": {
       "status": "fixed",
       "evidence": "Fixed (F-G2r2 f26fae7). review/runs/2026-10-20-g2r3/volunteer-door-desktop.png: the sdsj case, its pool and the V1 title sit wholly inside the door opening, transom VOLUNTEER & LEADERSHIP whole, rail label at y 406 to 435 clear of the case; review/runs/2026-10-20-g2r3/volunteer-door-thumb.png reads as one doorway with a lit case. review/runs/2026-10-20-g2r3/volunteer-door-pixel7.png: the same inside the doorway. Left edge of the desktop frame still crops a neighbouring aisle case and a fragment of its wall text (noted under D1 and D5, not a new finding)."
+    },
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Holds on bc1ac35: no regression in the G3 round 1 shots (review/runs/2026-10-21-g3r1/<stop>-<desktop|pixel7>.png and the dialog shots)."
     }
   },
   {
@@ -316,7 +352,123 @@
     "evidence": "State not captured in rounds 1 and 2 (captures go to the door on the main track). Path a visitor takes: at a door press Step inside, then scroll or swipe back up once (or ArrowUp): the page lands on the door section, which stays visible on the wing track (EXPERIENCE section 3.4 step 2), with track 'volunteer' or 'projects', the camera at the main door pose and the wing HUD still shown. Pixel 7 412x839: review/runs/2026-10-20-g2r3/probe-volunteer-door-in-wing-pixel7.png, the Return to the aisle button (DOM x 16 to 189, y 96 to 140) is drawn over VOLUNTEER on the transom; review/runs/2026-10-20-g2r3/probe-projects-door-in-wing-pixel7.png, the same button covers PRO of PROJECTS, and the wing chip (y 64 to 88) sits on the title band. Text over text and a 3D label covered by the HUD (rubric P1). Desktop 1440x900 tier high: review/runs/2026-10-20-g2r3/probe-volunteer-door-in-wing-desktop.png, the wing chip (x 1132 to 1413, y 136 to 160) covers the lower half of the last P of LEADERSHIP; projects door clear (review/runs/2026-10-20-g2r3/probe-projects-door-in-wing-desktop.png). Probe: scratch Playwright script on this build (goTo the door, click enter-wing-<id>, ArrowUp, wait for settled plus 1.2 s; state {stop: '<door>', track: '<wing>', scrollY: 0}). Not caused by F-G2r2 as far as the evidence shows: the projects door, which F-G2r2 did not touch, shows it too. Rail-input (g) checks only the wing exhibit stops, not the door on the wing track. Also noted: exiting from that state works (Return to the aisle lands on the door, main track) and the chip reads 'wing, 1 of 1' while the visitor stands at the door.",
     "expected": "At a door stop on either track, no HUD element (wing chip, Return to the aisle, rail label) intersects the projected bounds of the door transom title, on desktop and Pixel 7. Options for R6 (with R4): hide the wing head (chip and exit control) or move it below the title band while the current stop is the door on the wing track (Esc and the card still exit), or use the main-track HUD at the door section since the door card offers Step inside again; alternatively R4 frames the door lower on portrait when the wing head is shown.",
     "check": "Scratch or e2e: at each door, enter the wing, ArrowUp once, wait for settled; assert every visible rail and HUD rect avoids the projected transom title (extend tests/e2e/rail-input.spec.ts (g) to the door on the wing track) on desktop and pixel7; capture both doors on pixel7 in that state and read the transom whole.",
+    "status": "fixed",
+    "round": 3,
+    "g3r1": {
+      "status": "fixed",
+      "evidence": "Fixed by 0d291d9 (R6, ProgressRail atDoor). On bc1ac35 `PORT=4174 npx playwright test tests/e2e/rail-input.spec.ts -g \"(g)\" --project=desktop --project=pixel7`: '(g) at each door reached on the wing track no HUD rect covers the transom title' passes on desktop and pixel7 (3 passed, 1 skipped: the wing stop test is desktop only). Main-track door shots unchanged: review/runs/2026-10-21-g3r1/projects-door-pixel7.png, review/runs/2026-10-21-g3r1/volunteer-door-pixel7.png."
+    }
+  },
+  {
+    "id": "F-039",
+    "severity": "P1",
+    "title": "Phone wing stops: the wing HUD is drawn over the 3D wall title",
+    "stop": "finance-tracker (Pixel 7 and 360x640); klarup and sdsj (360x640); sdsj touching on Pixel 7",
+    "viewport": "pixel7 412x839 and 360x640 portrait (Pixel 7 UA)",
+    "path": "src/museum/rail/framing.ts",
+    "evidence": "review/runs/2026-10-21-g3r1/finance-tracker-pixel7.png (capture, tier medium) and the committed CI baseline tests/e2e/__screenshots__/visual.spec.ts/stop-finance-tracker-pixel7.png: the 'Return to the aisle' control (DOM x 16 to 189, y 96 to 140) is laid over the P2 numeral, text over text. Probe review/runs/2026-10-21-g3r1/probe-wing-hud.mjs (results review/runs/2026-10-21-g3r1/probe-wing-hud.json) counts brass title pixels inside the exit control, inset 3 px: Pixel 7 klarup 0, finance-tracker 800, sdsj 0 (the V of V1 abuts the control border, review/runs/2026-10-21-g3r1/sdsj-pixel7.png); 360x640 klarup 514, finance-tracker 2301, sdsj 2290 (review/runs/2026-10-21-g3r1/probe-*-small.png: the control covers P1, PERSONAL FINANCE and SOFTWARE DEVELOPERS, and the wing chip sits on P2 and V1). Cause: F-M3 lifted the wing title (last baseline 2.14 to 2.20 m) and the portrait framing does not reserve the wing head (chip plus exit control, bottom y 140). rail-input (g) at the wing stops runs on desktop only, so CI did not see it. Rubric P1: a label covered by the HUD, text drawn over text.",
+    "expected": "At every wing exhibit stop on Pixel 7 and at 360x640, no wing HUD rect (chip, exit control, rail label) intersects the projected wall title (numeral and organization lines). Fix (R4, framing): on portrait viewports frame wing stops from the measured bottom of the wing head, as F-020 frames the desk from the measured card top, so the title top sits at least 8 px below it; or (R6) a compact wing head on phones (chip and exit on one row, or the exit control moved beside the year chip). Owner R4 with R6.",
+    "check": "Extend tests/e2e/rail-input.spec.ts (g) \"at each wing stop\" to the pixel7 project plus a 360x640 context; re-run probe-wing-hud.mjs: brassPxInExit 0 at all six rows; re-capture finance-tracker on pixel7 and read P2 whole.",
     "status": "open",
-    "round": 3
+    "round": 1,
+    "gate": "G3"
+  },
+  {
+    "id": "F-040",
+    "severity": "P2",
+    "title": "MUN scaffold legs float 13 cm above the plinth top",
+    "stop": "mun",
+    "viewport": "desktop and pixel7",
+    "path": "src/museum/exhibits/_kit/anatomy.ts",
+    "evidence": "review/runs/2026-10-21-g3r1/mun-desktop.png, crop in review/runs/2026-10-21-g3r1/stills/mun-scaffold-crop.png: the four scaffold uprights end at the slot floor (SCAFFOLD.bottom 0.13 in src/museum/exhibits/mun/chip.ts) at plan corners of plus or minus 0.45 m, outside the F-M3 riser (WIDE_RISER_FOOTPRINT 0.6 m), so they stop in the air above the plinth top. The plate is grounded; the scaffold is not. D5 1 anchor: floating parts.",
+    "expected": "Nothing floats: either the riser spans the scaffold footprint (at least 0.912 m) so every upright stands on it, or an R0 ruling lets the scaffold stand on the plinth top (MUN slot floor). Owner R3 (kit) with R0 for any slot change.",
+    "check": "fixtureMatrices.test: the riser footprint contains the scaffold corners; re-capture mun desktop and see the uprights meet a surface.",
+    "status": "open",
+    "round": 1,
+    "gate": "G3"
+  },
+  {
+    "id": "F-041",
+    "severity": "P2",
+    "title": "MUN wall title is out of frame on the phone and in the desktop dialog",
+    "stop": "mun",
+    "viewport": "pixel7 (stop); desktop (dialog)",
+    "path": "src/museum/rail/framing.ts",
+    "evidence": "review/runs/2026-10-21-g3r1/mun-pixel7.png: 05 MEMORIAL UNIVERSITY (left wall, x -5.99, EXPERIENCE 5.4) is not in the frame; only the case shows. review/runs/2026-10-21-g3r1/mun-dialog-desktop.png: only the last letter of UNIVERSITY shows at the left edge. Every other exhibit shows its title on both viewports. EXPERIENCE 5.4 expects each label to hold 14 CSS px on Pixel 7 from its stop camera, which assumes it is in view. The card carries the number and institution, so nothing is lost (not P1).",
+    "expected": "On Pixel 7 the mun stop shows 05 and MEMORIAL UNIVERSITY whole (R4: yaw the portrait camera toward the left wall, or R3/R0: place the mun title above the case like the certifications vitrine).",
+    "check": "Re-capture mun on pixel7: the title is whole and at least 14 CSS px cap height; rail-input (g)-style rect check that it clears the HUD.",
+    "status": "open",
+    "round": 1,
+    "gate": "G3"
+  },
+  {
+    "id": "F-042",
+    "severity": "P2",
+    "title": "Wing story dialogs: the case top cuts the last line of the wall title",
+    "stop": "klarup, finance-tracker, sdsj (dialog open)",
+    "viewport": "desktop",
+    "path": "src/museum/rail/CameraRig.tsx",
+    "evidence": "review/runs/2026-10-21-g3r1/klarup-dialog-desktop.png (KLARUP half hidden behind the case top frame), review/runs/2026-10-21-g3r1/finance-tracker-dialog-desktop.png (TRACKER cut), review/runs/2026-10-21-g3r1/sdsj-dialog-desktop.png (OF ST. JOHN'S cut). The dialog dolly brings the camera close enough that the case top rises over the title's last baseline; at the stop itself the titles clear the case (F-027 fixed). Main-aisle dialogs are clean. Also seen: the neighbouring P2 title ghosts through the panel beside the klarup subtitle (PERS, faint, panel at 0.86).",
+    "expected": "With the dialog open at a wing stop, the wall title is either whole above the case top or framed out entirely; no letters cut by the case frame.",
+    "check": "Re-capture the three wing dialogs on desktop (CAPTURE_DIALOGS=1) and read each title whole or absent.",
+    "status": "open",
+    "round": 1,
+    "gate": "G3"
+  },
+  {
+    "id": "F-043",
+    "severity": "P2",
+    "title": "Certifications: the walnut backing panel glows hot orange with hard edges",
+    "stop": "certifications",
+    "viewport": "desktop and pixel7",
+    "path": "src/museum/environment/lightPlan.ts",
+    "evidence": "review/runs/2026-10-21-g3r1/certifications-desktop.png and review/runs/2026-10-21-g3r1/certifications-pixel7.png: the 2.4 x 1.6 m backing panel (EXPERIENCE 5.3) reads as a saturated orange-brown rectangle with hard vertical edges (x 577 and 1190 on desktop); a 20 px sample at its centre is about rgb(77, 44, 26) against rgb(27, 25, 26) on the verafin wall wash. With the brighter brass 06 (F-033) it is the hottest, most saturated surface in the building and breaks the calm (D1 3 at this stop, the lowest D1).",
+    "expected": "The backing panel sits in the same value and saturation family as the other wall washes (light-3 warmth, soft falloff), so the vitrine and medallions, not the panel, carry the light. Owner R3 (lighting, kit panel) with R2 for taste.",
+    "check": "Re-capture certifications on both viewports; panel centre within the range of the wall wash samples at the other stops; no hard-edged lit rectangle.",
+    "status": "open",
+    "round": 1,
+    "gate": "G3"
+  },
+  {
+    "id": "F-044",
+    "severity": "P2",
+    "title": "Certifications checklist box 6 fails: the DOM shows no placeholder for the unknown dates and issuer",
+    "stop": "certifications",
+    "viewport": "all",
+    "path": "src/content/resume.ts",
+    "evidence": "review/concepts/certifications.md box 6 reads \"while unknown, the DOM shows the placeholder and the release check blocks launch\". dist/exhibit/certifications/index.html and review/runs/2026-10-21-g3r1/certifications-dialog-desktop.png contain no [placeholder: ...] for the certification dates or the Tech Stewardship issuer (the only placeholder in the content is target roles). The release block holds (RELEASE=1 npm run check:copy lists content.certifications.exhibit draft: true). R2 recorded the omission in the WP-21 report; no R0 ruling waives the box. Nothing is invented, so not P0.",
+    "expected": "R1 adds [placeholder: certification issue dates] and [placeholder: Tech Stewardship issuer] where the certifications card or story would show them (CONTENT_DRAFT section 7 item 8), or R0 rules that omission satisfies box 6 and R2 amends the checklist.",
+    "check": "grep \"\\[placeholder:\" dist/exhibit/certifications/index.html finds both; RELEASE=1 npm run check:copy still fails on them.",
+    "status": "open",
+    "round": 1,
+    "gate": "G3"
+  },
+  {
+    "id": "F-045",
+    "severity": "P3",
+    "title": "Small objects under-fill the standard case",
+    "stop": "cfia, finance-tracker, sdsj, klarup",
+    "viewport": "desktop and pixel7",
+    "path": "docs/spec/EXPERIENCE.md",
+    "evidence": "review/runs/2026-10-21-g3r1/stills/exhibit-thumbs.png: in the 320 px thumbnails cfia (spindle and box), finance-tracker (stacks up to y 0.27), sdsj (table top y 0.20) and klarup leave the upper half of the 0.85 m case empty (D6 3 to 3.5), while verafin, mysa and wailo fill it. The finance-tracker brass stack also reads dark brown, close to graphite (R2 noted it at WP-22).",
+    "expected": "Idea for R2 and R0: raise these objects on the slot (a walnut riser or a taller base) or scale them toward the slot height, and give the brass stack the title-brass treatment, so every case reads at a similar fill.",
+    "check": "Taste call at the G4 polish round.",
+    "status": "open",
+    "round": 1,
+    "gate": "G3"
+  },
+  {
+    "id": "F-046",
+    "severity": "P3",
+    "title": "Desktop rail: year ticks sit on stop dots",
+    "stop": "all (rail)",
+    "viewport": "desktop",
+    "path": "src/overlay/ProgressRail.tsx",
+    "evidence": "review/runs/2026-10-21-g3r1/desk-desktop.png (rail at x 1350): the 2025 tick (at 0.434) is drawn through the volunteer-door dot (0.444) and its door stub, and the 2023 tick (0.680) crosses the cfia dot (0.667). Labels stay legible.",
+    "expected": "Nudge a tick that falls within one dot radius of a stop dot, or draw ticks under the dots.",
+    "check": "Desktop rail crop: no tick line crosses a dot.",
+    "status": "open",
+    "round": 1,
+    "gate": "G3"
   }
 ]

@@ -318,6 +318,7 @@ There is no trap: the wing has two stops, the top of the wing track is its first
   - Bezel: `brass` torus radius 0.125, tube 0.004, same center.
   - Key ring: `brass` torus radius 0.06, tube 0.008, upright with its axis along local X, center (0.17, 0.24, 0.06), on a `brass` stand cylinder radius 0.005 from the tray (y 0.055) to the ring.
   - Key: `brass`, frozen mid-pass through the ring along local X. Bow torus radius 0.03, tube 0.007, at x 0.08; shaft cylinder radius 0.006 from x 0.09 to 0.25; three box teeth 0.012 x 0.018 x 0.006 near x 0.24.
+- **Assembly turn:** the ring-and-key assembly turns 35 degrees about the stand axis, with the key's bow toward the camera (`SSO_YAW_DEG` in `mysa/dial.ts`).
 - **Motion (one):** the dial segments light in order, one every 2 s (each ramps 0.15 to 1.6 emissive over 0.6 s), all four hold lit until 8.5 s, then fade together to rest over 1 s. Period 10 s. Key, ring and slab are static.
 - **Materials:** ceramic, walnut, brass, accentGlow.
 - **Triangles:** about 4,500.
@@ -517,14 +518,14 @@ The kit (`src/museum/exhibits/_kit/`, owned by R3) builds everything in this sec
 | Label | Where | Font, cap height |
 |---|---|---|
 | Exhibit number ("01", "P1") | Wall behind the plinth, centered on the plinth z (main aisle: aisle wall at abs(x) 3.49; wings: outer wall at abs(x) 11.49; mun: left wall x -5.99; certifications: above the vitrine). Baseline y 2.75 (wings 2.55) | Instrument Serif, 0.32 m (wings 0.30) |
-| Organization ("NASDAQ VERAFIN") | Same wall, below the number, uppercase, tracking 0.12em. Baseline y 2.40 (wings 2.22) | IBM Plex Sans 500; 0.10 m main aisle and certifications, 0.14 m wings and mun. Max width 3.6 m (wings 3.2 m, mun 2.4 m); wraps at word boundaries |
-| Room names ("PROJECTS", "VOLUNTEER & LEADERSHIP") | Aisle side of the wall above each door, baseline y 3.05 | IBM Plex Sans 500, 0.14 m, tracking 0.12em |
+| Organization ("NASDAQ VERAFIN") | Same wall, below the number, uppercase, tracking 0.12em. Baseline y 2.40 (wings 2.22) | IBM Plex Sans 500; 0.12 m main aisle (F-G2a), 0.10 m certifications, 0.14 m wings and mun. Max width 3.6 m (wings 3.2 m, mun 2.4 m); wraps at word boundaries |
+| Room names ("PROJECTS", "VOLUNTEER & LEADERSHIP") | Aisle side of the wall above each door, on the 0.3 m door transom (F-G2a) | IBM Plex Sans 500, 0.10 m, tracking 0.12em |
 | "FOUNDATIONS" | Header beam at z -52, baseline y 4.3 | IBM Plex Sans 500, 0.22 m, tracking 0.12em |
 | "COMMIT HISTORY" | Above the lobby arch, baseline y 4.1 | Instrument Serif, 0.28 m |
 | "You've reached the beginning." | End wall (z -70), baseline y 2.6 | Instrument Serif, 0.20 m |
 | Year numerals | Floor, beside each year strip (§6.9) | IBM Plex Sans 500, 0.22 m, tracking 0.2em; decorative, exempt from the size rule |
 
-Organization strings: NASDAQ VERAFIN, MYSA, WAILO, CANADIAN FOOD INSPECTION AGENCY, KLARUP, PERSONAL FINANCE TRACKER, SOFTWARE DEVELOPERS OF ST. JOHN'S, MEMORIAL UNIVERSITY, CERTIFICATIONS. The cap heights above give at least 14 CSS px on Pixel 7 from each label's stop camera; R3 may raise them, never lower them.
+Organization strings: NASDAQ VERAFIN, MYSA, WAILO, CANADIAN FOOD INSPECTION AGENCY, KLARUP, PERSONAL FINANCE TRACKER, SOFTWARE DEVELOPERS OF ST. JOHN'S, MEMORIAL UNIVERSITY, CERTIFICATIONS. The cap heights above are the sizes the G2 review approved (F-G2a): room names are 0.10 m, so "VOLUNTEER & LEADERSHIP" fits on one line on the door transom and inside the phone frame, and main-aisle organization labels are 0.12 m. Every label except the decorative year numerals keeps at least 14 CSS px of cap height on Pixel 7 from its stop camera (pinned by a unit test). R3 may change a size only with an R0 ruling, and never below that 14 px floor.
 
 ### 5.5 Spotlight, pool and beam per exhibit
 - Real spotlight mount (used when a real light is assigned, §6.8): standard plinths at (x_p, 4.6, z_p + 0.6); wing plinths at (σ * 8.4, 3.7, z_p); mun at (-2.5, 4.6, -56.4); certifications at (4.4, 4.6, -57); desk at (0, 3.7, -66.9); portrait at (2.6, 5.4, -2.6). Each aims at its slot center (or target).

@@ -17,6 +17,15 @@ import { content } from '../../src/content/index';
 import { entryById, exhibitNumber, mainTrack, wallLabelOf } from '../../src/content/selectors';
 import { applyFraming, fovFor, framingFor, viewOffsetFor } from '../../src/museum/rail/framing';
 import { DOOR_TRANSOM, labelPlacements } from '../../src/museum/environment/labels3d';
+import {
+  CAP_HEIGHT_RATIO,
+  ORGANIZATION_LINE_HEIGHT,
+  ORGANIZATION_TRACKING,
+  SANS_CAPS_ADVANCE,
+  SERIF_NUMBER_ADVANCE,
+  TITLE_END_MARGIN,
+  TITLE_METRICS,
+} from '../../src/museum/exhibits/_kit/titleMetrics';
 import { computeLayout, DOOR_H, DOOR_W } from '../../src/museum/rail/layout';
 import { expect, test } from './fixtures';
 import {
@@ -339,18 +348,15 @@ test.describe('rail input', () => {
 const LAYOUT = computeLayout(content, new Date());
 
 /**
- * The wing wall-title metrics of src/museum/exhibits/_kit/placard.ts (TITLES.wing, the caps of
- * fonts.ts and the width estimate of `sansLineWidth`). That module imports the .woff files as
- * Vite `?url` assets, which Node cannot load, so the numbers are repeated here; the boxes carry a
- * margin for the estimate.
+ * The wing wall-title metrics placard.ts places the titles with (_kit/titleMetrics.ts, which
+ * imports no font file, so Node loads it); the boxes carry a margin for the width estimate.
  */
-const WING_TITLE = { numberCap: 0.3, orgCap: 0.14, orgBottom: 2.14, gap: 0.06, orgWidth: 2.9 };
-const SANS_CAP_RATIO = 0.698;
-const SERIF_CAP_RATIO = 0.72;
-const SANS_EM = 0.62 + 0.12; // mean caps advance plus the 0.12em tracking
-const SERIF_EM = 0.45;
-const LINE_HEIGHT = 1.25;
-const TITLE_END_MARGIN = 0.25;
+const WING_TITLE = TITLE_METRICS.wing;
+const SANS_CAP_RATIO = CAP_HEIGHT_RATIO.sans;
+const SERIF_CAP_RATIO = CAP_HEIGHT_RATIO.serif;
+const SANS_EM = SANS_CAPS_ADVANCE + ORGANIZATION_TRACKING;
+const SERIF_EM = SERIF_NUMBER_ADVANCE;
+const LINE_HEIGHT = ORGANIZATION_LINE_HEIGHT;
 const MARGIN_PX = 6;
 
 interface Rect {

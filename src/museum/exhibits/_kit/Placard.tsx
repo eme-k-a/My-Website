@@ -4,7 +4,7 @@
 // `textPending` from mount until its first sync, and `ready` waits for it (ARCHITECTURE §13.4).
 import { Text } from '@react-three/drei';
 import { Suspense, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
-import type { Material } from 'three';
+import type { Material, MeshStandardMaterial } from 'three';
 import { configureTextBuilder } from 'troika-three-text';
 import { useMuseum } from '../../../app/store';
 import { useMaterialLibrary } from '../../materials';
@@ -16,6 +16,29 @@ import { slotPlacard, type PlacardLabel } from './placard';
 configureTextBuilder(TEXT_BUILDER_CONFIG);
 
 const noRaycast = () => {};
+
+/**
+ * The wall titles' brass (F-033): the library's brass with less metalness and a little more
+ * roughness. Fully metallic letters on a flat wall facing the camera reflect the dark room behind
+ * it and read near black; with some diffuse response they catch the wash and the spotlight and
+ * glint like brass lettering. Same shader program as brass; one clone per library.
+ */
+export const TITLE_BRASS = { metalness: 0.7, roughness: 0.4, glow: 0.3 } as const;
+const titleBrassByLibrary = new WeakMap<object, MeshStandardMaterial>();
+
+export function titleBrass(library: { brass: MeshStandardMaterial }): MeshStandardMaterial {
+  let material = titleBrassByLibrary.get(library);
+  if (!material) {
+    material = library.brass.clone();
+    material.name = 'titleBrass';
+    material.metalness = TITLE_BRASS.metalness;
+    material.roughness = TITLE_BRASS.roughness;
+    material.emissive.copy(library.brass.color);
+    material.emissiveIntensity = TITLE_BRASS.glow;
+    titleBrassByLibrary.set(library, material);
+  }
+  return material;
+}
 
 function addPending(n: number) {
   useMuseum.setState((s) => ({ textPending: s.textPending + n }));
@@ -63,8 +86,8 @@ export function Placard({ layout, slot }: { layout: Layout; slot: Slot }) {
   const spec = useMemo(() => slotPlacard(layout, slot), [layout, slot]);
   return (
     <group name={`placard-${slot.id}`} position={spec.position} rotation-y={spec.rotationY}>
-      <WallText label={spec.number} material={library.brass} />
-      <WallText label={spec.organization} material={library.brass} />
+      <WallText label={spec.number} material={titleBrass(library)} />
+      <WallText label={spec.organization} material={titleBrass(library)} />
     </group>
   );
 }

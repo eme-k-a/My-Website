@@ -11,6 +11,8 @@ import {
   DESK_PORTRAIT_Y,
   deskPortraitY,
   deskWeightAt,
+  lobbyWeightAt,
+  LOBBY_PORTRAIT_Y,
   END_WALL_TOP_TAN,
   END_WALL_TOP_Y,
   fovFor,
@@ -214,5 +216,30 @@ describe('projection shift', () => {
     expect(applyFraming(camera, 68, { x: 0, y: 0.14 }, 412, 839)).toBe(true);
     expect(camera.view?.offsetY).toBeCloseTo(0.14 * 839, 9);
     expect(camera.aspect).toBeCloseTo(412 / 839, 12);
+  });
+});
+
+describe('lobby framing (F-032)', () => {
+  const ids = ['lobby', 'verafin', 'projects-door', 'desk'];
+  it('applies at the lobby only, gone half a stop toward the first exhibit', () => {
+    expect(lobbyWeightAt(ids, 0)).toBe(1);
+    expect(lobbyWeightAt(ids, 0.5)).toBe(0);
+    expect(lobbyWeightAt(ids, 1)).toBe(0);
+    expect(lobbyWeightAt(ids, 0.25)).toBeCloseTo(0.5, 12);
+    expect(lobbyWeightAt(['projects-door', 'klarup'], 0)).toBe(0);
+    expect(lobbyWeightAt(ids, Number.NaN)).toBe(0);
+  });
+
+  it('frames the lobby low on portrait and leaves desktop alone', () => {
+    expect(LOBBY_PORTRAIT_Y).toBeGreaterThan(0.36);
+    expect(framingFor(412 / 839, null, 0, DESK_PORTRAIT_Y, 1)).toEqual({
+      x: 0.5,
+      y: LOBBY_PORTRAIT_Y,
+    });
+    expect(framingFor(412 / 839, null, 0, DESK_PORTRAIT_Y, 0.5).y).toBeCloseTo(
+      (0.36 + LOBBY_PORTRAIT_Y) / 2,
+      12,
+    );
+    expect(framingFor(1440 / 900, null, 0, DESK_PORTRAIT_Y, 1)).toEqual({ x: 0.62, y: 0.5 });
   });
 });

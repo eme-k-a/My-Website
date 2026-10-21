@@ -38,6 +38,7 @@ import {
   DESK_PORTRAIT_Y,
   deskPortraitY,
   deskWeightAt,
+  lobbyWeightAt,
   fovFor,
   framingFor,
   viewOffsetFor,
@@ -102,7 +103,7 @@ const hold = {
   swap: false,
 };
 const heldId = (h: Held) => rails[h.track].stops[h.index]?.id;
-/** Each track's stop ids, for the desk framing (framing.ts `deskWeightAt`). */
+/** Each track's stop ids, for the desk and lobby framing (framing.ts `deskWeightAt`). */
 const railIds = new Map<string, readonly string[]>(
   Object.entries(rails).map(([track, rail]) => [track, rail.stops.map((s) => s.id)]),
 );
@@ -446,13 +447,17 @@ export function CameraRig() {
     const lens = camera as PerspectiveCamera;
     if (lens.isPerspectiveCamera && size.width > 0 && size.height > 0) {
       const aspect = size.width / size.height;
-      const desk = deskWeightAt(railIds.get(held?.track ?? progress.track) ?? [], p);
+      const ids = railIds.get(held?.track ?? progress.track) ?? [];
+      const desk = deskWeightAt(ids, p);
+      const lobby = lobbyWeightAt(ids, p);
       const fov = fovFor(aspect);
       const deskY = desk > 0 ? deskFramingY(size.height, fov) : DESK_PORTRAIT_Y;
       const goal = viewOffsetFor(
-        framingFor(aspect, panelLeft(state.openId, size.width), desk, deskY),
+        framingFor(aspect, panelLeft(state.openId, size.width), desk, deskY, lobby),
       );
-      if (!shift.framed || state.reducedMotion) {
+      // A jump places the camera at once, so its framing lands at once too (the lobby's portrait
+      // framing must not still be easing out at the first exhibit, F-032).
+      if (!shift.framed || state.reducedMotion || jump) {
         shift.x = goal.x;
         shift.y = goal.y;
         shift.framed = true;

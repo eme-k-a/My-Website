@@ -1,20 +1,24 @@
-// Slice exhibit behaviour beyond the per-exhibit contract (WP-17; EXPERIENCE §5.11, §6.7, §10.4;
+// Exhibit behaviour beyond the per-exhibit contract (WP-17, WP-25; EXPERIENCE §5.11, §6.7, §10.4;
 // the WP-12 and WP-13 reports' open items). Pixel 7 only: the checks are about the exhibit, not
 // the device, and a phone frame costs a fraction of a desktop one under SwiftShader.
 // - With an exhibit chunk blocked, its slot shows the placeholder crate and the card says
-//   "Installation in progress"; mysa, which has no exhibit folder yet, shows the same.
-// - With idle motion on (&idle=1), each built exhibit moves; with reduced motion emulated too,
+//   "Installation in progress"; an exhibit with no folder would show the same (none since WP-23).
+// - With idle motion on (&idle=1), each of the nine exhibits moves; with reduced motion emulated too,
 //   its canvas stays byte-identical for 10 s (exhibit-contract covers only the frozen ?test=1
 //   clock).
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
-import type { ExhibitId } from '../../src/content/ids';
+import { EXHIBIT_IDS, type ExhibitId } from '../../src/content/ids';
 import { expect, test } from './fixtures';
 import { goToStop, museumCanvas, museumUrl, stats, waitForMuseum } from './helpers';
 
 const INSTALLING = 'Installation in progress';
-/** Idle-motion checks run for verafin only; WP-25 decides the per-exhibit matrix for M3. */
-const BUILT: ExhibitId[] = ['verafin'];
+/**
+ * Idle motion and reduced motion run for all nine (WP-25): every manifest declares `motion: 'slow'`.
+ * Locally on two workers the 18 tests take about 3.5 minutes; verafin and finance-tracker are the
+ * slow movers (93 and 71 frames).
+ */
+const BUILT: ExhibitId[] = [...EXHIBIT_IDS];
 /** Exhibits with no folder yet: none since WP-23 (M3). Kept for future exhibits. */
 const UNBUILT: ExhibitId[] = [];
 /** EXPERIENCE §10.4: reduced motion holds every exhibit still; checked over this window. */

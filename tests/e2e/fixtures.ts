@@ -89,7 +89,7 @@ function cspListener(): void {
  * the favicon set and its `<link>` tags; this exemption goes away then (an open question in
  * review/reports/WP-07.json). It matches only that exact URL and message.
  */
-function isBrowserFaviconProbe(message: ConsoleMessage, origin: string): boolean {
+export function isBrowserFaviconProbe(message: ConsoleMessage, origin: string): boolean {
   return (
     message.location().url === `${origin}/favicon.ico` &&
     message.text().startsWith('Failed to load resource')

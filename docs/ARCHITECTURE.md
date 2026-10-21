@@ -1445,7 +1445,7 @@ Netlify on a free `*.netlify.app` subdomain. Netlify Git builds are turned off; 
 
 `?debug` lazy-loads `src/museum/debug/Debug.tsx` (its own chunk; never imported statically):
 - leva panel: tier override (sets `?tier=` and reloads, because the tier is fixed per session), a progress slider, `railSmoothTime`, spotlight and light-pool intensities, reflector mix, toggles for stop markers, slot bounds boxes (`Box3Helper`) and the rail curve line.
-- r3f-perf `<Perf position="top-left" />`: calls, triangles, GPU time, programs.
+- r3f-perf `<PerfHeadless />` with a plain DOM readout in the bottom-left corner: fps, GPU and CPU time, calls, triangles, programs. Its `<Perf>` panel is not used, because its WebGL texts load a `data:` font that `connect-src 'self'` blocks (F-017).
 - `F` toggles a free OrbitControls camera that detaches `CameraRig` (debug-only key).
 - `?tier=` and `?test=1` also work without `?debug`.
 

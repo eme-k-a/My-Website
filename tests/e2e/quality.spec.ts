@@ -5,9 +5,8 @@
 // canvas), a back/forward-cache return renders, and phones get the medium tier at DPR 1 under
 // ?test=1. Desktop unless noted. WP-17 (the WP-16 report's open items): (g) runs through WP-14's
 // real sheet; (i) a loss that is never restored falls back after 5 s of visible time; (j) a
-// hidden tab renders nothing and frames come back on return. The ?debug item is not here: the
-// debug panel trips the CSP (a data: font fetch blocked by connect-src), filed in the WP-17
-// report for R7 instead of acknowledged.
+// hidden tab renders nothing and frames come back on return. (k) F-017: the ?debug panel loads
+// under the production CSP without a violation (r3f-perf's data: font used to trip connect-src).
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
 import { content } from '../../src/content/index';
@@ -387,6 +386,18 @@ test.describe('quality: WP-16 follow-ups', () => {
 
     await setHidden(page, false);
     await expect.poll(() => frames(page), { timeout: 20_000 }).toBeGreaterThan(hidden);
+  });
+});
+
+test.describe('quality: ?debug', () => {
+  test('(k) the debug panel loads without a CSP violation (F-017)', async ({ page }) => {
+    onlyOn('desktop');
+    await page.goto(`${museumUrl('/')}&debug`);
+    await waitForMuseum(page);
+    // The lazy debug chunk shows r3f-perf's numbers once its first log lands.
+    await expect(page.locator('[data-debug-perf]')).toContainText(/calls \d+/, { timeout: 30_000 });
+    await page.waitForTimeout(3_000);
+    // The global guards fail the test on any CSP violation, console error or page error.
   });
 });
 

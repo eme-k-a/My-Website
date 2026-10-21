@@ -4,13 +4,16 @@
 // - leva: tier override (sets ?tier= and reloads, because the tier is fixed per session), a
 //   progress slider, railSmoothTime, spotlight and light-pool intensity factors, the reflector mix,
 //   and toggles for stop markers, slot bounds boxes and the rail curve;
-// - r3f-perf in the top-left corner (calls, triangles, GPU time, programs);
+// - r3f-perf's numbers in the bottom-left corner (fps, GPU and CPU time, calls, triangles,
+//   programs): its PerfHeadless collector with a plain DOM readout, because the <Perf> panel's
+//   WebGL texts load a bundled data: font that connect-src 'self' refuses (F-017; the
+//   production CSP stays as it is);
 // - `F` toggles a free OrbitControls camera that detaches the view from CameraRig (debug-only key;
 //   ignored with modifiers, in form fields and while the story dialog is open).
 import { Line } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useControls } from 'leva';
-import { Perf } from 'r3f-perf';
+import { getPerf, PerfHeadless } from 'r3f-perf';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box3,
@@ -125,6 +128,42 @@ function FreeCamera() {
     gl.render(scene, camera);
   }, 1);
 
+  return null;
+}
+
+/** How often the readout refreshes; r3f-perf itself logs a few times a second. */
+const READOUT_MS = 250;
+
+/**
+ * r3f-perf's latest log as DOM text above the page. Read between frames, gl.info.render still
+ * holds the last rendered frame (the demand loop renders nothing in between).
+ */
+function PerfReadout() {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    const panel = document.createElement('pre');
+    panel.dataset.debugPerf = '';
+    panel.style.cssText =
+      'position:fixed;bottom:0;left:0;z-index:2147483000;margin:0;padding:6px 8px;pointer-events:none;' +
+      'font:12px/1.4 ui-monospace,monospace;color:#f2efe8;background:rgba(10,10,12,0.75)';
+    document.body.appendChild(panel);
+    const update = () => {
+      const { log } = getPerf();
+      const { calls, triangles } = gl.info.render;
+      const programs = gl.info.programs?.length ?? 0;
+      const fixed = (value: unknown, digits: number) =>
+        typeof value === 'number' ? value.toFixed(digits) : '-';
+      panel.textContent =
+        `fps ${fixed(log?.fps, 0)}  gpu ${fixed(log?.gpu, 2)} ms  cpu ${fixed(log?.cpu, 2)} ms\n` +
+        `calls ${calls}  triangles ${triangles}  programs ${programs}`;
+    };
+    update();
+    const timer = window.setInterval(update, READOUT_MS);
+    return () => {
+      window.clearInterval(timer);
+      panel.remove();
+    };
+  }, [gl]);
   return null;
 }
 
@@ -283,7 +322,8 @@ export default function Debug() {
 
   return (
     <>
-      <Perf position="top-left" />
+      <PerfHeadless />
+      <PerfReadout />
       {toggles.stopMarkers && <StopMarkers positions={markers} />}
       {toggles.slotBounds && <SlotBounds />}
       {toggles.railCurve && <RailCurves />}

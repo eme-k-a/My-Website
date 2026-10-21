@@ -116,8 +116,8 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
     expect(wing.organization.text).toBe("SOFTWARE DEVELOPERS\nOF ST. JOHN'S");
     expect(wing.organization).toMatchObject({ capHeight: 0.14, lines: 2 });
     const step = ORGANIZATION_LINE_HEIGHT * wing.organization.fontSize;
-    // The last line sits at 2.14 m whatever the line count; the first one a line step higher.
-    expect(wing.organization.baselineY - step).toBeCloseTo(2.14, 9);
+    // The last line sits at 2.20 m (F-027) whatever the line count; the first one a line step higher.
+    expect(wing.organization.baselineY - step).toBeCloseTo(2.2, 9);
     expect(wing.number.baselineY).toBeCloseTo(wing.organization.baselineY + 0.14 + 0.06, 9);
     const mun = specOf('mun');
     expect(mun.organization).toMatchObject({ capHeight: 0.14, text: 'MEMORIAL\nUNIVERSITY' });

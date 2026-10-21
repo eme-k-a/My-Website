@@ -10,7 +10,7 @@
 //   holds a wanted target stays put and only the others move (and fade up from 0).
 import { doorId, WING_IDS, type ExhibitId, type StopId } from '../../content/ids';
 import { tokens } from '../../design/tokens';
-import { slotOrigin, slotVariant } from '../exhibits/_kit/anatomy';
+import { CASE_SIZE, slotOrigin, slotVariant } from '../exhibits/_kit/anatomy';
 import { slotPlacard } from '../exhibits/_kit/placard';
 import type { QualityTier } from '../exhibits/_kit/types';
 import {
@@ -423,6 +423,22 @@ export interface BeamSpec {
   /** Base radius: the spot's bright core (angle times 1 - penumbra) at the aim distance. */
   radius: number;
   color: string;
+  /**
+   * The share of the cone, from the apex, that stays dark before its fade starts. Wing cones
+   * start at the case top (F-027): seen from a wing stop, the wall title hangs right above the
+   * case, and the part of the cone above the case crossed it as a light shaft. 0 elsewhere.
+   */
+  fadeStart: number;
+}
+
+/** Wing plinths: where the cone from `apex` to `base` passes the case top (0 when it never does). */
+function wingFadeStart(layout: Layout, id: TargetId, apex: Vec3, base: Vec3): number {
+  const slot = layout.slots.find((s) => s.id === id);
+  if (!slot || slot.track === 'main' || slotVariant(slot) !== 'standard') return 0;
+  const caseTop = slotOrigin(slot)[1] + CASE_SIZE.standard[1];
+  const drop = apex[1] - base[1];
+  if (drop <= 0 || caseTop >= apex[1]) return 0;
+  return Math.min(1, Math.max(0, (apex[1] - caseTop) / drop));
 }
 
 /** The beam cone of every light target, in lightTargets order. */
@@ -436,6 +452,7 @@ export function beamSpecs(layout: Layout): BeamSpec[] {
       base: [...t.aim],
       radius: length * Math.tan(core),
       color: t.color,
+      fadeStart: wingFadeStart(layout, t.id, t.mount, t.aim),
     };
   });
 }

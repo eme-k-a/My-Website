@@ -1,6 +1,7 @@
 // The demand frame loop (ARCHITECTURE §8.5, §10.3, EXPERIENCE §6.7, §9.4). The canvas always runs
 // frameloop="demand"; this component decides when to call `invalidate()` (frameDemand.ts):
-// - every animation frame while the camera moves, a glide runs or a mount is compiling;
+// - every animation frame while the camera moves or a glide runs (a compiling mount adds none:
+//   F-015, frameDemand.ts);
 // - while only idle motion runs: every frame on fine pointers, 30 fps on coarse pointers;
 // - idle motion stops tokens.motion.idleStopMs (15 s) after the last input, so a settled, idle
 //   scene renders zero frames until the next input;
@@ -63,7 +64,6 @@ export function FrameDriver() {
         ready: s.ready,
         contextLost: s.contextLost,
         moving: cameraMoving(progress.current, progress.target, rig.glide !== null),
-        compiling: s.compilePending + s.textPending > 0,
         motionAllowed: motionAllowed({
           reducedMotion: s.reducedMotion,
           test: params.test,

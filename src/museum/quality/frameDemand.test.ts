@@ -20,7 +20,6 @@ const settledIdle = (patch: Partial<FrameDemandInput> = {}): FrameDemandInput =>
   ready: true,
   contextLost: false,
   moving: false,
-  compiling: false,
   motionAllowed: true,
   sinceInputMs: 1_000,
   idleStopMs: IDLE_STOP,
@@ -28,9 +27,8 @@ const settledIdle = (patch: Partial<FrameDemandInput> = {}): FrameDemandInput =>
 });
 
 describe('frameDemand', () => {
-  it('renders every frame while the camera moves or a mount compiles', () => {
+  it('renders every frame while the camera moves', () => {
     expect(frameDemand(settledIdle({ moving: true }))).toBe('full');
-    expect(frameDemand(settledIdle({ compiling: true, sinceInputMs: 60_000 }))).toBe('full');
     expect(frameDemand(settledIdle({ moving: true, motionAllowed: false }))).toBe('full');
   });
 
@@ -47,17 +45,13 @@ describe('frameDemand', () => {
 
   it('pauses while hidden, under the phone sheet or with a lost context, even mid-move', () => {
     expect(frameDemand(settledIdle({ hidden: true, moving: true }))).toBe('paused');
-    expect(frameDemand(settledIdle({ sheetOpen: true, compiling: true }))).toBe('paused');
+    expect(frameDemand(settledIdle({ sheetOpen: true, moving: true }))).toBe('paused');
     expect(frameDemand(settledIdle({ contextLost: true }))).toBe('paused');
   });
 
   it('lets a gallery that is still loading finish behind a sheet opened at hydration', () => {
-    expect(frameDemand(settledIdle({ sheetOpen: true, ready: false, compiling: true }))).toBe(
-      'full',
-    );
-    expect(frameDemand(settledIdle({ hidden: true, ready: false, compiling: true }))).toBe(
-      'paused',
-    );
+    expect(frameDemand(settledIdle({ sheetOpen: true, ready: false, moving: true }))).toBe('full');
+    expect(frameDemand(settledIdle({ hidden: true, ready: false, moving: true }))).toBe('paused');
   });
 });
 

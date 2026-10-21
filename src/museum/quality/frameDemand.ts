@@ -5,7 +5,9 @@
 //
 //   paused   the tab is hidden, the phone sheet is open (once the gallery is ready) or the
 //            context is lost: no frames at all
-//   full     the camera moves, a scripted glide runs, or a mount is compiling: every frame
+//   full     the camera moves or a scripted glide runs: every frame. A compiling mount adds no
+//            frames (F-015): the hidden exhibit cannot change the image, compileAsync polls on
+//            its own timer, and the reveal, the crate and troika's text sync each invalidate.
 //   idle     only idle motion runs: every frame on fine pointers, 30 fps on coarse pointers
 //   stopped  settled and idle for idleStopMs (15 s), or idle motion is off: zero frames
 
@@ -37,7 +39,6 @@ export interface FrameDemandInput {
   ready: boolean;
   contextLost: boolean;
   moving: boolean;
-  compiling: boolean;
   /** Idle motion is allowed at all (see `motionAllowed`). */
   motionAllowed: boolean;
   /** Milliseconds since the last input. */
@@ -47,7 +48,7 @@ export interface FrameDemandInput {
 
 export function frameDemand(input: FrameDemandInput): FrameDemand {
   if (input.hidden || input.contextLost || (input.sheetOpen && input.ready)) return 'paused';
-  if (input.moving || input.compiling) return 'full';
+  if (input.moving) return 'full';
   if (idleMotionActive(input)) return 'idle';
   return 'stopped';
 }

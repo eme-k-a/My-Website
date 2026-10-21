@@ -83,6 +83,20 @@ export function plinthBox(variant: 'standard' | 'wide'): LocalBox {
   return { center: [0, -size[1] / 2, 0], size: [...size] };
 }
 
+/**
+ * The riser on the wide (mun) plinth: the MUN slot floor is y 0.10 (EXPERIENCE §5.3, frozen), so
+ * the exhibit's base plate would float 10 cm over the plinth top. A plinth-material block as wide
+ * as the plate fills that height (WP-21 open question 1).
+ */
+export const WIDE_RISER_FOOTPRINT = 0.6;
+
+/** The riser under a wide slot whose floor is `floorY` above the plinth top (null at 0). */
+export function riserBox(floorY: number): LocalBox | null {
+  if (!(floorY > 0)) return null;
+  const w = WIDE_RISER_FOOTPRINT;
+  return { center: [0, floorY / 2, 0], size: [w, floorY, w] };
+}
+
 /** The brass base strip of a standard plinth. */
 export function baseStripBox(): LocalBox {
   const [w, h, d] = PLINTH_SIZE.standard;

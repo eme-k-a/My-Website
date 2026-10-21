@@ -15,15 +15,6 @@ export const KIT_FONT_FILES: Readonly<Record<ThreeDFont, string>> = {
   sans: '@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff',
 };
 
-/**
- * Cap height over units per em, measured from the files above (fontkit; pinned by fonts.test.ts).
- * troika sizes text by em, so a label with cap height h uses fontSize h / ratio.
- */
-export const CAP_HEIGHT_RATIO: Readonly<Record<ThreeDFont, number>> = {
-  serif: 0.72,
-  sans: 0.698,
-};
-
 /** troika's unicode fallback points here: a self-hosted, intentionally empty path. */
 export const UNICODE_FALLBACK_URL = '/fonts/unicode-fallback';
 
@@ -42,7 +33,5 @@ export const TEXT_BUILDER_CONFIG = {
   useWorker: false,
 } as const;
 
-/** The troika fontSize that gives `capHeight` meters of cap height in `font`. */
-export function fontSizeForCap(font: ThreeDFont, capHeight: number): number {
-  return capHeight / CAP_HEIGHT_RATIO[font];
-}
+/** Cap heights and troika sizes live in titleMetrics.ts, which Node can load (no ?url imports). */
+export { CAP_HEIGHT_RATIO, fontSizeForCap } from './titleMetrics';

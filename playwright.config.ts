@@ -34,17 +34,17 @@ const spec = (...names: string[]) => new RegExp(`(^|/)(${names.join('|')})\\.spe
 export const SHARDS: Record<string, Record<string, RegExp | 'rest'>> = {
   'desktop-input': { desktop: spec('rail-input') },
   'desktop-walks': { desktop: spec('camera', 'wings', 'environment', 'keyboard') },
+  // WP-25 moved pixel7-landscape here and no-webgl to desktop-rest: phones-rest took the
+  // nine-exhibit idle and reduced-motion checks (561 s of test time in CI run 84) and every
+  // Pixel 7 visual case. Run 84 jobs: desktop-dialog 4.7 min, pixel7-landscape about 3.5 min of
+  // test time.
   'desktop-dialog': {
     desktop: spec('dialog', 'exhibits', 'exhibit-contract', 'greybox', 'no-placeholders'),
-  },
-  // no-webgl moved here from phones-rest in WP-25: phones-rest took the nine-exhibit idle and
-  // reduced-motion checks (about 3.5 min of test time) and every Pixel 7 visual case.
-  'desktop-rest': { desktop: 'rest', 'no-webgl': 'rest' },
-  pixel7: { pixel7: 'rest' },
-  'phones-rest': {
-    pixel7: spec('visual', 'exhibits', 'no-placeholders'),
     'pixel7-landscape': 'rest',
   },
+  'desktop-rest': { desktop: 'rest', 'no-webgl': 'rest' },
+  pixel7: { pixel7: 'rest' },
+  'phones-rest': { pixel7: spec('visual', 'exhibits', 'no-placeholders') },
 };
 
 const SHARD = process.env.E2E_SHARD;

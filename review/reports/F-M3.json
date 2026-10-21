@@ -130,7 +130,7 @@
       "id": "A3",
       "criterion": "Specs touched pass on desktop and pixel7",
       "command": "npx playwright test tests/e2e/{dialog,keyboard,exhibits,exhibit-contract,rail-input,wings,environment,greybox,camera,quality}.spec.ts --project=desktop --project=pixel7 --workers=2",
-      "result": "fail",
+      "result": "pass",
       "evidence": "107 passed, 41 skipped (project-gated), 0 failed in 18.0 min: dialog, keyboard, exhibits, exhibit-contract, rail-input, wings, environment, greybox, camera, quality (incl. the ?debug check (k)) on desktop and pixel7"
     }
   ],

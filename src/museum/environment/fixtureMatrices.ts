@@ -11,6 +11,7 @@ import {
   caseBox,
   edgeBoxes,
   plinthBox,
+  riserBox,
   slotMatrix,
   slotVariant,
   wallPanelBoxes,
@@ -21,7 +22,7 @@ export interface FixtureInstances {
   standardPlinths: Matrix4[];
   /** One brass base strip per standard plinth. */
   baseStrips: Matrix4[];
-  /** The wide mun plinth. */
+  /** The wide mun plinth and the riser under its exhibit (anatomy `riserBox`). */
   widePlinths: Matrix4[];
   /** One glass case per slot, every variant (caseGlass). */
   cases: Matrix4[];
@@ -48,6 +49,8 @@ export function fixtureInstances(layout: Layout): FixtureInstances {
       out.baseStrips.push(boxMatrix(frame, baseStripBox()));
     } else if (variant === 'wide') {
       out.widePlinths.push(boxMatrix(frame, plinthBox('wide')));
+      const riser = riserBox(slot.bounds.min[1]);
+      if (riser) out.widePlinths.push(boxMatrix(frame, riser));
     } else {
       for (const panel of wallPanelBoxes()) out.wallPanels.push(boxMatrix(frame, panel));
     }

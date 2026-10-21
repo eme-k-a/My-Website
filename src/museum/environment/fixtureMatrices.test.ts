@@ -1,7 +1,7 @@
-import { Vector3 } from 'three';
+import { Quaternion, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import { content } from '../../content/index';
-import { EDGES_PER_CASE, slotOrigin } from '../exhibits/_kit/anatomy';
+import { EDGES_PER_CASE, slotOrigin, WIDE_RISER_FOOTPRINT } from '../exhibits/_kit/anatomy';
 import { computeLayout } from '../rail/layout';
 import { fixtureInstances, openBottomBox } from './fixtureMatrices';
 
@@ -14,7 +14,8 @@ describe('fixture instancing (EXPERIENCE §5.2, §5.3)', () => {
     expect(count('standard')).toBe(7);
     expect(inst.standardPlinths).toHaveLength(count('standard'));
     expect(inst.baseStrips).toHaveLength(count('standard'));
-    expect(inst.widePlinths).toHaveLength(count('wide'));
+    // Each wide plinth carries a riser up to its slot floor (WP-21 open question 1).
+    expect(inst.widePlinths).toHaveLength(2 * count('wide'));
     expect(inst.cases).toHaveLength(layout.slots.length);
     expect(inst.edges).toHaveLength(layout.slots.length * EDGES_PER_CASE);
     expect(inst.wallPanels).toHaveLength(2 * count('none'));
@@ -56,5 +57,20 @@ describe('fixture instancing (EXPERIENCE §5.2, §5.3)', () => {
     for (let i = 0; i < index.count; i++) {
       expect(normal.getY(index.getX(i))).not.toBe(-1);
     }
+  });
+});
+
+describe('the mun riser (WP-21 open question 1)', () => {
+  it('fills the plinth top up to the MUN slot floor under the base plate', () => {
+    const mun = layout.slots.find((s) => s.id === 'mun')!;
+    const riser = inst.widePlinths[1]!;
+    const position = new Vector3();
+    const scale = new Vector3();
+    riser.decompose(position, new Quaternion(), scale);
+    const top = slotOrigin(mun)[1];
+    expect(position.y - scale.y / 2).toBeCloseTo(top, 9);
+    expect(position.y + scale.y / 2).toBeCloseTo(top + mun.bounds.min[1], 9);
+    expect(scale.x).toBeCloseTo(WIDE_RISER_FOOTPRINT, 9);
+    expect(scale.z).toBeCloseTo(WIDE_RISER_FOOTPRINT, 9);
   });
 });

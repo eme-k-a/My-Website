@@ -51,12 +51,12 @@ export interface TitleSpec {
 /**
  * Per kind. Main aisle: the organization cap is 0.12 m (EXPERIENCE §5.4 allows raising it), so
  * it keeps 14 CSS px on a Pixel 7 from the stop now that the title hangs farther along the wall.
- * Wings: the block sits low (last baseline 2.08 m, just over the case edge seen from the stop),
- * so on phones it stays under the wing HUD. Mun and the vitrine keep their EXPERIENCE §5.4 heights.
+ * Wings: the block sits low (last baseline 2.20 m, a little over the case edge seen from the
+ * stop, F-027), so on phones it stays under the wing HUD. Mun and the vitrine keep their EXPERIENCE §5.4 heights.
  */
 export const TITLE_METRICS: Readonly<Record<PlacardKind, TitleSpec>> = {
   main: { numberCap: 0.32, orgCap: 0.12, orgBottom: 2.32, gap: 0.2, orgWidth: 2.6 },
-  wing: { numberCap: 0.3, orgCap: 0.14, orgBottom: 2.14, gap: 0.06, orgWidth: 2.9 },
+  wing: { numberCap: 0.3, orgCap: 0.14, orgBottom: 2.2, gap: 0.06, orgWidth: 2.9 },
   wide: { numberCap: 0.32, orgCap: 0.14, orgBottom: 2.14, gap: 0.22, orgWidth: 2.4 },
   wall: { numberCap: 0.32, orgCap: 0.1, orgBottom: 2.4, gap: 0.25, orgWidth: 3.6 },
 };

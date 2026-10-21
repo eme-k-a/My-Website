@@ -216,5 +216,12 @@ describe('beam cones (EXPERIENCE §5.5)', () => {
     const length = Math.hypot(0, 4.6 - 1.35, 0.6);
     expect(verafin.radius).toBeCloseTo(length * Math.tan(0.38 * 0.4), 6);
     expect(verafin.apex).toEqual(targets.find((t) => t.id === 'verafin')!.mount);
+    expect(verafin.fadeStart).toBe(0);
+  });
+
+  it('starts a wing cone at its case top, so it never crosses the wall title (F-027)', () => {
+    const sdsj = beamSpecs(layout).find((b) => b.id === 'sdsj')!;
+    // Apex 3.7 m, aim 1.35 m, case top 1.0 + 0.85 m.
+    expect(sdsj.fadeStart).toBeCloseTo((3.7 - 1.85) / (3.7 - 1.35), 6);
   });
 });

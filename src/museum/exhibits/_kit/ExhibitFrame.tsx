@@ -118,22 +118,42 @@ const PlinthShadow = memo(function PlinthShadow({ scale, far }: { scale: number;
   );
 });
 
-type ExhibitModule = { default: ComponentType<ExhibitProps> };
-const loads = new Map<ExhibitId, Promise<ExhibitModule>>();
+/** The chunk's exhibit, or the import error: the loader never rejects. */
+type ExhibitLoad = { Exhibit: ComponentType<ExhibitProps> } | { error: unknown };
+const loads = new Map<ExhibitId, Promise<ExhibitLoad>>();
 
-/** The exhibit chunk, requested once per page (the distance-3 preload and the mount share it). */
-export function loadExhibit(manifest: ExhibitManifest): Promise<ExhibitModule> {
+/**
+ * The exhibit chunk, requested once per page (the distance-3 preload and the mount share it). A
+ * failed import resolves to its error instead of rejecting: thrown into the canvas, it would also
+ * reach R3F's root error handlers, which report every caught error as a page error (F-019).
+ */
+export function loadExhibit(manifest: ExhibitManifest): Promise<ExhibitLoad> {
   let pending = loads.get(manifest.id);
   if (!pending) {
-    pending = manifest.load();
+    pending = manifest.load().then(
+      (module): ExhibitLoad => ({ Exhibit: module.default }),
+      (error: unknown): ExhibitLoad => ({ error }),
+    );
     loads.set(manifest.id, pending);
   }
   return pending;
 }
 
-/** Suspends until the chunk is in, then renders the exhibit; a failed chunk throws to the boundary. */
-function LoadedExhibit({ manifest, ...props }: ExhibitProps & { manifest: ExhibitManifest }) {
-  const { default: Exhibit } = use(loadExhibit(manifest));
+/** Hands a failed chunk import to the frame, which keeps the placeholder crate. */
+function LoadFailed({ error, onError }: { error: unknown; onError: (error: unknown) => void }) {
+  useEffect(() => onError(error), [error, onError]);
+  return null;
+}
+
+/** Suspends until the chunk is in, then renders the exhibit; a failed chunk reports `onError`. */
+function LoadedExhibit({
+  manifest,
+  onError,
+  ...props
+}: ExhibitProps & { manifest: ExhibitManifest; onError: (error: unknown) => void }) {
+  const loaded = use(loadExhibit(manifest));
+  if ('error' in loaded) return <LoadFailed error={loaded.error} onError={onError} />;
+  const { Exhibit } = loaded;
   return <Exhibit {...props} />;
 }
 
@@ -201,7 +221,7 @@ interface BoundaryProps {
   children: ReactNode;
 }
 
-/** A failed chunk or a throwing exhibit renders nothing here; the frame shows the crate. */
+/** A throwing exhibit renders nothing here; the frame shows the crate. */
 class ExhibitBoundary extends Component<BoundaryProps, { failed: boolean }> {
   state = { failed: false };
 
@@ -385,6 +405,7 @@ function ExhibitMount({ slot, manifest }: { slot: Slot; manifest: ExhibitManifes
                 <ExhibitRuntimeContext.Provider value={runtime}>
                   <LoadedExhibit
                     manifest={manifest}
+                    onError={onError}
                     entry={entry}
                     slot={exhibitSlot}
                     runtime={runtime}
@@ -422,8 +443,8 @@ export function ExhibitFrame({ slot, layout, here }: ExhibitFrameProps) {
   if (decision.mount !== mounted) setMounted(decision.mount);
   const manifest = registry.get(slot.id);
   useEffect(() => {
-    // The chunk lands in the module cache; a failure surfaces later through the boundary.
-    if (decision.preload && manifest) loadExhibit(manifest).catch(() => undefined);
+    // The chunk lands in the module cache; a failure surfaces at mount, through LoadedExhibit.
+    if (decision.preload && manifest) void loadExhibit(manifest);
   }, [decision.preload, manifest]);
   const origin = useMemo(() => slotOrigin(slot), [slot]);
   return (

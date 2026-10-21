@@ -72,12 +72,6 @@ test.describe('exhibits', { tag: '@exhibit' }, () => {
       guards.acknowledge('console', /Exhibit 'verafin' failed; showing the placeholder/),
     ).not.toHaveLength(0);
     guards.acknowledge('console', /Failed to load resource: net::ERR_FAILED/);
-    // The failed import also surfaces as an unhandled rejection (filed for R3 in the WP-17
-    // report): the crate and the card are right, so only that exact error is acknowledged.
-    guards.acknowledge(
-      'pageerror',
-      /Failed to fetch dynamically imported module: .*ReportingEngine/,
-    );
   });
 
   test('a revealed exhibit card does not say "Installation in progress"', async ({ page }) => {

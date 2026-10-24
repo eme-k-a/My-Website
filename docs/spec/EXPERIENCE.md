@@ -450,7 +450,7 @@ The `safe-sip` exhibit ("Tamper Evident") was removed on 2026-10-20 (F-035, Emek
   - Base plate: `walnut` 0.60 x 0.03 x 0.60 (y 0.10 to 0.13).
   - Post: `brass` cylinder radius 0.02, y 0.13 to 0.53.
   - Die: `ceramicGraphite` RoundedBox 0.36 x 0.035 x 0.36, radius 0.004, y 0.53 to 0.565. 48 `brass` pins (12 per edge, boxes 0.008 x 0.004 x 0.03, instanced). About 40 `brass` traces on the die top (boxes 0.004 wide, 0.0015 high, 0.04 to 0.16 long, seeded Manhattan pattern, instanced) and a `brass` core square 0.08 x 0.002 x 0.08.
-  - Scaffold: a cube lattice 0.90 x 0.90 in plan, 5 tiers of 0.20 m from y 0.13 to 1.13. Each tier has 4 corner uprights, 4 top rails and X-bracing on two opposite faces; rods are 0.012 m square boxes (instanced).
+  - Scaffold: a cube lattice 0.90 x 0.90 in plan, 5 tiers of 0.20 m from y 0.10 to 1.10, standing on the kit riser, which spans the scaffold footprint (0.96 m square, plinth top to the slot floor; F-040). Each tier has 4 corner uprights, 4 top rails and X-bracing on two opposite faces; rods are 0.012 m square boxes (instanced).
   - Tier state: `tiersRemaining = clamp(ceil(monthsUntilGraduation / 12), 0, 5)`, computed from the expected graduation month and the build date only (no start date needed; today 7 months, so 1 tier). Remaining tiers are the bottom ones, in `brass`; tiers already taken down stay as ghost outlines in `frostedGlass` instances at opacity 0.25. After graduation all 5 tiers are ghosts.
 - **Motion (one):** the die turns on its post, one revolution per 40 s. The scaffold is static.
 - **Materials:** walnut, brass, ceramicGraphite, frostedGlass.

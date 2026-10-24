@@ -14,20 +14,20 @@ The B.Eng in Computer Engineering at Memorial University of Newfoundland that ev
 
 Large (MUN) slot (EXPERIENCE §5.3), local meters, origin at the top center of the 1.4 x 1.4 x 0.6 plinth, +Z toward the stop camera: x and z in [-0.55, 0.55], y in [0.10, 1.20].
 
-| Part        | Material                              | Placement                                                                                                                                                                 |
-| ----------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Base plate  | `walnut`                              | RoundedBox 0.60 x 0.03 x 0.60, radius 0.006, y 0.10 to 0.13                                                                                                               |
-| Post        | `brass`                               | cylinder r 0.02, y 0.13 to 0.53                                                                                                                                           |
-| Die         | `ceramicGraphite`                     | RoundedBox 0.36 x 0.035 x 0.36, radius 0.004, y 0.53 to 0.565                                                                                                             |
-| Pins        | `brass`                               | 48 boxes 0.03 (radial) x 0.004 x 0.008, 12 per edge on a 0.025 pitch, 5 mm into the die edge (one InstancedMesh)                                                          |
-| Traces      | `brass`                               | 40 boxes 0.004 wide, 0.0015 high, 0.04 to 0.135 long on the die top: per edge a seeded three-line staircase bus plus one straight trace, core to pins (one InstancedMesh) |
-| Core        | `brass`                               | box 0.08 x 0.002 x 0.08 on the die top                                                                                                                                    |
-| Scaffold    | `brass` (remaining tiers)             | 0.90 x 0.90 in plan, 5 tiers of 0.20 m from y 0.13 to 1.13; per tier 4 uprights, 4 top rails, X-bracing on the left and right faces; 0.012 m square rods (instanced)      |
-| Ghost tiers | `frostedGlass` instance, opacity 0.25 | the tiers already taken down, same rods (instanced)                                                                                                                       |
+| Part        | Material                              | Placement                                                                                                                                                                            |
+| ----------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Base plate  | `walnut`                              | RoundedBox 0.60 x 0.03 x 0.60, radius 0.006, y 0.10 to 0.13                                                                                                                          |
+| Post        | `brass`                               | cylinder r 0.02, y 0.13 to 0.53                                                                                                                                                      |
+| Die         | `ceramicGraphite`                     | RoundedBox 0.36 x 0.035 x 0.36, radius 0.004, y 0.53 to 0.565                                                                                                                        |
+| Pins        | `brass`                               | 48 boxes 0.03 (radial) x 0.004 x 0.008, 12 per edge on a 0.025 pitch, 5 mm into the die edge (one InstancedMesh)                                                                     |
+| Traces      | `brass`                               | 40 boxes 0.004 wide, 0.0015 high, 0.04 to 0.135 long on the die top: per edge a seeded three-line staircase bus plus one straight trace, core to pins (one InstancedMesh)            |
+| Core        | `brass`                               | box 0.08 x 0.002 x 0.08 on the die top                                                                                                                                               |
+| Scaffold    | `brass` (remaining tiers)             | 0.90 x 0.90 in plan, 5 tiers of 0.20 m from y 0.10 (the riser top) to 1.10; per tier 4 uprights, 4 top rails, X-bracing on the left and right faces; 0.012 m square rods (instanced) |
+| Ghost tiers | `frostedGlass` instance, opacity 0.25 | the tiers already taken down, same rods (instanced)                                                                                                                                  |
 
 The X-bracing is on the side faces (x = +-0.45), so the front stays open and the die reads from the stop camera.
 
-Measured under `?test=1` (`stats().exhibits.mun`): `inBounds: true`, 2,676 triangles, 8 draw calls. Overall box: x and z -0.456 to 0.456, y 0.10 to 1.136.
+Measured under `?test=1` (`stats().exhibits.mun`): `inBounds: true`, 2,676 triangles, 8 draw calls. Overall box: x and z -0.456 to 0.456, y 0.10 to 1.106.
 
 ## Tier state
 

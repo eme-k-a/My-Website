@@ -85,10 +85,11 @@ export function plinthBox(variant: 'standard' | 'wide'): LocalBox {
 
 /**
  * The riser on the wide (mun) plinth: the MUN slot floor is y 0.10 (EXPERIENCE §5.3, frozen), so
- * the exhibit's base plate would float 10 cm over the plinth top. A plinth-material block as wide
- * as the plate fills that height (WP-21 open question 1).
+ * the exhibit would float 10 cm over the plinth top. A plinth-material block fills that height
+ * (WP-21 open question 1). It spans the whole scaffold footprint (0.90 m plus the 0.012 m rods),
+ * so the base plate and every scaffold upright stand on it (F-040).
  */
-export const WIDE_RISER_FOOTPRINT = 0.6;
+export const WIDE_RISER_FOOTPRINT = 0.96;
 
 /** The riser under a wide slot whose floor is `floorY` above the plinth top (null at 0). */
 export function riserBox(floorY: number): LocalBox | null {

@@ -1,5 +1,6 @@
 import { Matrix4, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
+import { riserBox } from '../_kit/anatomy';
 import {
   CORE,
   DIE,
@@ -113,14 +114,52 @@ describe('mun geometry (EXPERIENCE §4.9)', () => {
     }
   });
 
-  it('builds 5 tiers of 12 rods in a 0.90 x 0.90 lattice from y 0.13 to 1.13', () => {
+  it('builds 5 tiers of 12 rods in a 0.90 x 0.90 lattice from y 0.10 to 1.10', () => {
     expect(tierParts(0)).toHaveLength(SCAFFOLD.rodsPerTier);
     const all = [0, 1, 2, 3, 4].flatMap((i) => tierParts(i));
     const ys = all.flatMap((p) => corners(p).map((c) => c.y));
-    expect(Math.min(...ys)).toBeCloseTo(0.13, 2);
-    expect(Math.max(...ys)).toBeLessThanOrEqual(1.13 + SCAFFOLD.rod);
+    expect(Math.min(...ys)).toBeCloseTo(0.1, 2);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(1.1 + SCAFFOLD.rod);
     const xs = all.flatMap((p) => corners(p).map((c) => Math.abs(c.x)));
     expect(Math.max(...xs)).toBeCloseTo(0.45 + SCAFFOLD.rod / 2, 9);
+  });
+
+  it('stands every upright and the plate on a surface: nothing floats (F-040)', () => {
+    // The kit draws the riser from the plinth top up to the slot floor (fixtureMatrices.test).
+    const riser = riserBox(SLOT.min[1]!)!;
+    const half = riser.size[0] / 2;
+    const riserTop = riser.center[1] + riser.size[1] / 2;
+    // The surface under a plan point: the riser top inside its footprint, else the plinth top (0).
+    const surfaceAt = (x: number, z: number) =>
+      Math.abs(x) <= half + 1e-9 && Math.abs(z) <= half + 1e-9 ? riserTop : 0;
+    const uprightsOf = (i: number) =>
+      tierParts(i).filter((p) => p.size[1] === SCAFFOLD.tierHeight && !p.pitch);
+    const bottomOf = (p: Part) => Math.min(...corners(p).map((c) => c.y));
+    const topOf = (p: Part) => Math.max(...corners(p).map((c) => c.y));
+    for (let i = 0; i < 5; i++) {
+      const uprights = uprightsOf(i);
+      expect(uprights).toHaveLength(4);
+      uprights.forEach((part, k) => {
+        const bottom = bottomOf(part);
+        // The bottom tier stands on the riser (every corner of its foot over it); each upper
+        // upright stands on the one below it.
+        const under =
+          i === 0 ? corners(part).map((c) => surfaceAt(c.x, c.z)) : [topOf(uprightsOf(i - 1)[k]!)];
+        for (const surface of under) {
+          expect(bottom - surface).toBeGreaterThanOrEqual(-1e-9);
+          expect(bottom - surface).toBeLessThanOrEqual(0.002);
+        }
+      });
+    }
+    // No scaffold part reaches below the riser top.
+    const lowest = Math.min(...[0, 1, 2, 3, 4].flatMap((i) => tierParts(i)).map(bottomOf));
+    expect(lowest).toBeGreaterThanOrEqual(riserTop - 1e-9);
+    const plateBottom = PLATE.center[1] - PLATE.size[1] / 2;
+    for (const sx of [-1, 1])
+      for (const sz of [-1, 1]) {
+        const gap = plateBottom - surfaceAt((sx * PLATE.size[0]) / 2, (sz * PLATE.size[2]) / 2);
+        expect(gap).toBeCloseTo(0, 9);
+      }
   });
 
   it('splits the tiers: bottom ones brass, the rest glass ghosts from the top down', () => {

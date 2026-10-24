@@ -209,3 +209,5 @@ All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refre
 
 **G4 round 1 (15:40 UTC):** the average is 3.90 against the 4.0 bar. Emeka approved the 10 stills (recorded in ART_DIRECTION §10). The review session is merged and archived. Next: one fix session, F-M4b (brief `docs/wp/F-M4b.md`: F-048, the doors with F-051, F-049, F-050, F-052 and F-053), then G4 round 2. It starts on Emeka's go-ahead.
 
+**Paused (Emeka, 2026-10-24 16:40 UTC, "wait"):** the F-M4b fix round starts after the weekly reset, by a scheduled task at 2026-10-27 02:02 UTC (`trig_013ocREzx7Vvv6HKuoiPf6pf`). The 5-hour usage chain and the daily backup stay armed but never start it early. After F-M4b: merge, a baseline refresh, a green run, then G4 round 2.
+

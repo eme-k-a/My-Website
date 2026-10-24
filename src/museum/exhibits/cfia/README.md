@@ -16,14 +16,14 @@ Standard slot (EXPERIENCE §5.3), local meters, origin at the plinth top center,
 
 | Part    | Material          | Placement                                                                                                                                                          |
 | ------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Box     | `walnut`          | RoundedBox 0.30 x 0.12 x 0.22, radius 0.01, center (0, 0.085, 0); y 0.025 to 0.145                                                                                 |
-| Disc    | `brass`           | cylinder r 0.04, h 0.006 on the box top                                                                                                                            |
-| Rod     | `brass`           | cylinder r 0.005, y 0.145 to 0.545                                                                                                                                 |
-| Tip     | `brass`           | cone r 0.005, h 0.03, y 0.545 to 0.575                                                                                                                             |
-| Tickets | `paper`           | 15 boxes 0.12 x 0.0025 x 0.08 (one InstancedMesh): 14 stacked from y 0.152 at a 0.006 pitch plus the falling one; seeded yaw within 12 degrees, offset within 4 mm |
-| Stamps  | `ceramicGraphite` | 15 blank marks 0.035 x 0.0005 x 0.014 on each ticket's front right corner, turned 8 degrees (one InstancedMesh)                                                    |
+| Box     | `walnut`          | RoundedBox 0.34 x 0.26 x 0.26, radius 0.012, center (0, 0.155, 0); y 0.025 to 0.285 (F-045)                                                                        |
+| Disc    | `brass`           | cylinder r 0.05, h 0.006 on the box top                                                                                                                            |
+| Rod     | `brass`           | cylinder r 0.007, y 0.285 to 0.63                                                                                                                                  |
+| Tip     | `brass`           | cone r 0.007, h 0.035, y 0.63 to 0.665                                                                                                                             |
+| Tickets | `paper`           | 15 boxes 0.17 x 0.004 x 0.115 (one InstancedMesh): 14 stacked from y 0.292 at a 0.009 pitch plus the falling one; seeded yaw within 12 degrees, offset within 4 mm |
+| Stamps  | `ceramicGraphite` | 15 blank marks 0.05 x 0.0005 x 0.02 on each ticket's front right corner, turned 8 degrees (one InstancedMesh)                                                      |
 
-Measured under `?test=1` (`stats().exhibits.cfia`): `inBounds: true`, 1,116 triangles, 6 draw calls. Overall box: x -0.15 to 0.15, y 0.025 to 0.575, z -0.11 to 0.11 (the falling ticket starts at y 0.52).
+Measured under `?test=1` (`stats().exhibits.cfia`): `inBounds: true`, 1,116 triangles, 6 draw calls. Overall box: x -0.17 to 0.17, y 0.025 to 0.665, z -0.13 to 0.13 (the falling ticket starts at y 0.60).
 
 ## Budget
 

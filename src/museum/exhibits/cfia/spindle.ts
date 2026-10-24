@@ -6,27 +6,31 @@ import { rng } from '../_kit/noise';
 
 export type Vec3 = [number, number, number];
 
-/** Walnut box: RoundedBox 0.30 x 0.12 x 0.22 centered at (0, 0.085, 0); bottom on the slot floor. */
+/**
+ * Walnut box: RoundedBox 0.34 x 0.26 x 0.26 centered at (0, 0.155, 0); bottom on the slot floor.
+ * Tall enough to lift the stack into the middle of the case, where it reads in the thumbnail
+ * (F-045).
+ */
 export const BOX = {
-  size: [0.3, 0.12, 0.22] as Vec3,
-  radius: 0.01,
-  center: [0, 0.085, 0] as Vec3,
+  size: [0.34, 0.26, 0.26] as Vec3,
+  radius: 0.012,
+  center: [0, 0.155, 0] as Vec3,
   smoothness: 3,
   bevelSegments: 2,
 } as const;
 export const BOX_TOP = BOX.center[1] + BOX.size[1] / 2;
 
-/** Brass spindle: base disc on the box top, rod, cone tip (top at y 0.575). */
-export const DISC = { radius: 0.04, height: 0.006, segments: 32 } as const;
-export const ROD = { radius: 0.005, bottom: 0.145, top: 0.545, segments: 12 } as const;
-export const TIP = { radius: 0.005, height: 0.03, segments: 12 } as const;
+/** Brass spindle: base disc on the box top, rod, cone tip (top at y 0.665). */
+export const DISC = { radius: 0.05, height: 0.006, segments: 32 } as const;
+export const ROD = { radius: 0.007, bottom: 0.285, top: 0.63, segments: 12 } as const;
+export const TIP = { radius: 0.007, height: 0.035, segments: 12 } as const;
 
 /** Paper tickets: 14 on the stack plus the falling one, one InstancedMesh. */
 export const TICKET = {
-  size: [0.12, 0.0025, 0.08] as Vec3,
-  /** Bottom face of the lowest stacked ticket. */
-  base: 0.152,
-  pitch: 0.006,
+  size: [0.17, 0.004, 0.115] as Vec3,
+  /** Bottom face of the lowest stacked ticket (just above the disc). */
+  base: 0.292,
+  pitch: 0.009,
   stacked: 14,
   maxYawDeg: 12,
   maxOffset: 0.004,
@@ -35,9 +39,9 @@ export const TICKET_COUNT = TICKET.stacked + 1;
 
 /** Blank graphite stamp near the front right corner of each ticket's top face, turned 8 degrees. */
 export const STAMP = {
-  size: [0.035, 0.0005, 0.014] as Vec3,
+  size: [0.05, 0.0005, 0.02] as Vec3,
   /** Center on the ticket's top face, in the ticket's own frame. */
-  at: [0.03, 0.022] as [number, number],
+  at: [0.045, 0.032] as [number, number],
   yawDeg: 8,
 } as const;
 
@@ -48,7 +52,7 @@ export const MOTION = {
   descendS: 2.4,
   sinkS: 0.8,
   /** Bottom face of the falling ticket when it appears. */
-  fromY: 0.52,
+  fromY: 0.6,
   /** The falling ticket grows in over this long at the start of its descent (no pop). */
   appearS: 0.3,
 } as const;
@@ -93,7 +97,7 @@ export interface TicketPose {
 
 /**
  * The 15 tickets at clock `t`. Cycle c = floor(t / 6) starts with serials c to c + 13 stacked
- * (bottom to top) at rest; then serial c + 14 descends from y 0.52 onto the stack in 2.4 s, and
+ * (bottom to top) at rest; then serial c + 14 descends from y 0.60 onto the stack in 2.4 s, and
  * the stack sinks one pitch in 0.8 s while serial c slips into the box. At t = 0 (and under
  * reduced motion) the pose is the rest pose: 14 stacked, no falling ticket.
  */

@@ -18,6 +18,8 @@ import {
   setsAt,
   STACKS,
   stackHeight,
+  STAND,
+  STAND_TOP,
   TRAY,
   TRAY_TOP,
   writeStack,
@@ -139,11 +141,13 @@ describe('finance-tracker counts (EXPERIENCE §4.6)', () => {
 });
 
 describe('finance-tracker geometry', () => {
-  it('stands the stacks on the tray and tops a full stack at y 0.271', () => {
-    expect(TRAY_TOP).toBeCloseTo(0.055, 9);
+  it('stands the stacks on the tray and tops a full stack at y 0.479', () => {
+    expect(STAND.center[1] - STAND.size[1] / 2).toBeCloseTo(0.025, 9);
+    expect(TRAY.center[1] - TRAY.size[1] / 2).toBeCloseTo(STAND_TOP, 9);
+    expect(TRAY_TOP).toBeCloseTo(0.215, 9);
     const mesh = stack();
     const top = writeStack(mesh, 0, MAX_COINS, MAX_COINS, 0);
-    expect(top).toBeCloseTo(0.271, 9);
+    expect(top).toBeCloseTo(0.479, 9);
   });
 
   it('keeps the tray and full stacks inside the standard slot', () => {
@@ -161,7 +165,9 @@ describe('finance-tracker geometry', () => {
     }
     // Neighbouring stacks never touch.
     expect(STACKS[1]!.x - STACKS[0]!.x).toBeGreaterThan(2 * COIN.radius);
-    expect(0.055 + MAX_COINS * COIN.height).toBeLessThanOrEqual(SLOT.max[1]!);
+    expect(TRAY_TOP + MAX_COINS * COIN.height).toBeLessThanOrEqual(SLOT.max[1]!);
+    // The stand sits inside the tray's footprint.
+    for (const i of [0, 2]) expect(STAND.size[i]!).toBeLessThan(TRAY.size[i]!);
   });
 
   it('collapses absent coins at the stack top, inside the slot', () => {

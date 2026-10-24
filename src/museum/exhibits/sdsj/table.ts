@@ -5,16 +5,25 @@ import { Euler, Matrix4, Quaternion, Vector3 } from 'three';
 
 export type Vec3 = [number, number, number];
 
-/** Walnut table top: its top surface at y 0.20, diameter 0.54 m (the slot is 0.65 m). */
-export const TOP = { radius: 0.27, height: 0.025, segments: 64, surfaceY: 0.2 } as const;
+/**
+ * Walnut table top: its top surface at y 0.36 (raised into the middle of the case so the table
+ * reads in the thumbnail, F-045), diameter 0.54 m (the slot is 0.65 m).
+ */
+export const TOP = { radius: 0.27, height: 0.025, segments: 64, surfaceY: 0.36 } as const;
 export const TOP_CENTER_Y = TOP.surfaceY - TOP.height / 2;
 
+/**
+ * Brass rim around the table edge (an open band, 128 triangles): it gives the dark walnut disc a
+ * bright outline against the case floor (F-045).
+ */
+export const RIM = { radius: 0.272, height: 0.029, segments: 64 } as const;
+
 /** Brass foot disc, standing on the slot floor (y 0.025). */
-export const FOOT = { radius: 0.12, height: 0.01, segments: 48, bottomY: 0.025 } as const;
+export const FOOT = { radius: 0.15, height: 0.01, segments: 48, bottomY: 0.025 } as const;
 export const FOOT_CENTER_Y = FOOT.bottomY + FOOT.height / 2;
 
-/** Brass pedestal from the foot disc up to the underside of the top (y 0.035 to 0.175). */
-export const PEDESTAL = { radius: 0.03, height: 0.14, segments: 24 } as const;
+/** Brass pedestal from the foot disc up to the underside of the top (y 0.035 to 0.335). */
+export const PEDESTAL = { radius: 0.03, height: 0.3, segments: 24 } as const;
 export const PEDESTAL_CENTER_Y = FOOT.bottomY + FOOT.height + PEDESTAL.height / 2;
 
 /** The shared project: a static brass cube standing at the table center. */

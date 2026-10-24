@@ -13,11 +13,19 @@ import { rng } from '../_kit/noise';
 
 export type Vec3 = [number, number, number];
 
-/** Ledger tray: walnut RoundedBox, its bottom on the slot floor (y 0.025). */
+/**
+ * Walnut stand under the tray, on the slot floor (y 0.025 to 0.185): it lifts the stacks into the
+ * middle of the case so they read in the thumbnail (F-045). A plain box (12 triangles), inset from
+ * the tray so the tray's edge shows as a ledge.
+ */
+export const STAND = { size: [0.48, 0.16, 0.22] as Vec3, center: [0, 0.105, 0] as Vec3 } as const;
+export const STAND_TOP = STAND.center[1] + STAND.size[1] / 2;
+
+/** Ledger tray: walnut RoundedBox on the stand (y 0.185 to 0.215). */
 export const TRAY = {
   size: [0.56, 0.03, 0.3] as Vec3,
   radius: 0.008,
-  center: [0, 0.04, 0] as Vec3,
+  center: [0, 0.2, 0] as Vec3,
   smoothness: 3,
   bevelSegments: 2,
 } as const;
@@ -26,9 +34,9 @@ export const TRAY = {
 export const TRAY_TOP = TRAY.center[1] + TRAY.size[1] / 2;
 
 /** One coin: a cylinder, 24 segments (96 triangles with its caps). */
-export const COIN = { radius: 0.055, height: 0.009, segments: 24 } as const;
+export const COIN = { radius: 0.065, height: 0.011, segments: 24 } as const;
 
-/** Coins per stack (top of a full stack: 0.055 + 24 x 0.009 = 0.271). */
+/** Coins per stack (top of a full stack: 0.215 + 24 x 0.011 = 0.479). */
 export const MIN_COINS = 8;
 export const MAX_COINS = 24;
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { content } from '../../content/index';
 import { computeLayout } from '../rail/layout';
 import { poseRotation } from './gallery';
-import { shouldRemeasureStage, stageStyle } from './stage';
+import { shouldRemeasureStage, stageStyle, vignetteStyle } from './stage';
 
 describe('stage height (ARCHITECTURE §10.3)', () => {
   const last = { width: 412, height: 915 };
@@ -57,5 +57,16 @@ describe('stage style (ARCHITECTURE §6.1, §10.3)', () => {
       transition: 'opacity var(--dur-slow) var(--ease-out)',
     });
     expect(stageStyle(true, true)).toMatchObject({ opacity: 1, transition: 'none' });
+  });
+});
+
+describe('vignette (EXPERIENCE §7.5, ARCHITECTURE §8.6)', () => {
+  it('covers the stage, never takes the pointer and paints the --vignette token', () => {
+    expect(vignetteStyle()).toEqual({
+      position: 'absolute',
+      inset: 0,
+      pointerEvents: 'none',
+      background: 'var(--vignette)',
+    });
   });
 });

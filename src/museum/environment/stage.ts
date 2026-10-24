@@ -24,6 +24,20 @@ export function shouldRemeasureStage(
 }
 
 /**
+ * The vignette layer over the canvas (EXPERIENCE §7.5, ARCHITECTURE §8.6): CSS only, fixed to the
+ * stage, never a pointer target, its gradient from the `--vignette` token. A child element instead
+ * of `.stage::after`, for the same reason the stage style is inline (no museum CSS file).
+ */
+export function vignetteStyle(): Record<string, string | number> {
+  return {
+    position: 'absolute',
+    inset: 0,
+    pointerEvents: 'none',
+    background: 'var(--vignette)',
+  };
+}
+
+/**
  * The stage's inline style (ARCHITECTURE §6.1, §10.3): fixed under the track (z-index 1), 100lvh
  * tall through --stage-h, transparent until `ready`, then a 600 ms fade (none under reduced motion
  * and ?test=1). Inline rather than a CSS module: a stylesheet would turn the museum chunk into a

@@ -3,9 +3,12 @@
 // (Resume PDF, Email, Classic view), all inside the first phone viewport with or without JS. Then
 // the reserved 20 px loading row, "Begin the walk" (an in-page anchor), the lobby headline as a lead
 // sentence, the intro paragraph (below the fold on phones), the static hint, and the onboarding
-// hint element, shown and hidden by the rail's useHint() (EXPERIENCE §8.3, WP-15).
-import type { MouseEvent } from 'react';
+// hint element, shown and hidden by the rail's useHint() (EXPERIENCE §8.3, WP-15). "Begin the walk"
+// is the admission ticket (EXPERIENCE §11.1 item 3): a stub with a perforated edge, stamped with
+// today's date after hydration (ticket.ts), that tears off on click (none under reduced motion).
+import { useEffect, useState, useSyncExternalStore, type MouseEvent } from 'react';
 import { useMuseum } from '../app/store';
+import { testParams } from '../app/testHooks';
 import { TEST_IDS } from '../app/testIds';
 import type { LobbyCard } from '../content/selectors';
 import { hintStyle, useHint } from '../museum/rail/hint';
@@ -15,6 +18,7 @@ import { LoadingRow } from './LoadingRow';
 import { CLASSIC_PATH, EMAIL_HREF, FIRST_EXHIBIT, PDF_PATH } from './model';
 import styles from './Intro.module.css';
 import overlay from './overlay.module.css';
+import { stampText, TEST_STAMP } from './ticket';
 import ui from './ui.module.css';
 
 const plainClick = (e: MouseEvent) =>
@@ -40,13 +44,44 @@ function Name({ name }: { name: string }) {
   );
 }
 
+let todayStamp: string | undefined;
+const noSubscription = () => () => {};
+/** Today's stamp on the client (the frozen test stamp under ?test=1); computed once. */
+const clientStamp = () =>
+  (todayStamp ??= testParams(window.location.search).test ? TEST_STAMP : stampText(new Date()));
+/** The prerender (and so hydration) has no stamp: the area is reserved, then filled. */
+const serverStamp = () => '';
+
+/**
+ * The ticket's state: the date stamp, empty in the prerender and filled right after hydration,
+ * and whether the stub is torn. A torn stub comes back once the visitor has left the lobby and
+ * returned to it.
+ */
+function useTicket() {
+  const stamp = useSyncExternalStore(noSubscription, clientStamp, serverStamp);
+  const [torn, setTorn] = useState(false);
+  useEffect(() => {
+    let left = false;
+    return useMuseum.subscribe(({ stop }) => {
+      if (stop !== 'lobby') left = true;
+      else if (left) {
+        left = false;
+        setTorn(false);
+      }
+    });
+  }, []);
+  return { stamp, torn, tear: () => setTorn(true) };
+}
+
 export function Intro({ card }: { card: LobbyCard }) {
   const ready = useMuseum((s) => s.ready);
   const hint = useHint();
+  const ticket = useTicket();
   const beginWalk = (e: MouseEvent<HTMLAnchorElement>) => {
     if (!plainClick(e)) return;
     // With JS the walk starts through the rail, so no fragment is written to the URL.
     e.preventDefault();
+    ticket.tear();
     useMuseum.setState({ inputSource: 'hud' });
     travelTo(FIRST_EXHIBIT).catch(() => {});
   };
@@ -86,10 +121,18 @@ export function Intro({ card }: { card: LobbyCard }) {
             className={`${ui.secondary} ${styles.begin}`}
             href={`#stop-${FIRST_EXHIBIT}`}
             data-testid={TEST_IDS.beginWalk}
+            data-torn={ticket.torn ? '' : undefined}
             onClick={beginWalk}
           >
-            <Icon name="ticket" />
-            Begin the walk
+            <span className={styles.admit}>
+              <Icon name="ticket" />
+              Begin the walk
+            </span>
+            <span className={styles.stub} data-stub="" aria-hidden="true">
+              <span className={styles.stamp} data-stamp="">
+                {ticket.stamp}
+              </span>
+            </span>
           </a>
           <p className={styles.lead}>{card.headline}</p>
         </div>

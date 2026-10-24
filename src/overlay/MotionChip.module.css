@@ -1,0 +1,43 @@
+/*
+ * The reduced-motion chip (EXPERIENCE §8.4): a solid HUD chip (§7.8) at the bottom of the first
+ * viewport, above the onboarding hint, inside the safe area. Fixed, so it shifts nothing.
+ */
+.chip {
+  position: fixed;
+  z-index: 3;
+  left: 50%;
+  bottom: calc(max(16px, calc(env(safe-area-inset-bottom) + 12px)) + 48px);
+  display: flex;
+  align-items: center;
+  gap: 4px 12px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 0 4px 0 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--panel-solid);
+  color: var(--text);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+  transform: translateX(-50%);
+}
+
+.text {
+  margin: 0;
+}
+
+.link {
+  display: inline-block;
+  padding: 12px 0;
+  color: var(--brass-hi);
+  text-underline-offset: 4px;
+}
+
+.close {
+  flex: none;
+  border-color: transparent;
+}
+
+:global(html:has(dialog[open])) .chip {
+  visibility: hidden;
+}

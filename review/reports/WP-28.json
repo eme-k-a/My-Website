@@ -1,0 +1,119 @@
+{
+  "wp": "WP-28",
+  "role": "R7 Performance Engineer",
+  "status": "done",
+  "branch": "claude/m4-wp-28",
+  "base": "beed37a (claude/intelligent-sagan-poq45q)",
+  "commits": [
+    "60544df perf(fonts): subset dom and troika fonts",
+    "1b3329d perf(fonts): preload hero face",
+    "b5afd57 perf(fonts): leave credits.html out of the dom subset sources",
+    "217e84f docs(credits): credits page and license texts",
+    "1c8b4b8 test(e2e): transfer budgets"
+  ],
+  "changedFiles": [
+    "package.json (scripts.fonts only)",
+    "scripts/subset-fonts.ts",
+    "scripts/check-glyphs.ts",
+    "scripts/check-glyphs.test.ts",
+    "scripts/prerender.ts (the <!--preload--> injection only)",
+    "public/fonts/instrument-serif-400.woff2",
+    "public/fonts/instrument-serif-400-italic.woff2",
+    "public/fonts/ibm-plex-sans-400.woff2",
+    "public/fonts/ibm-plex-sans-500.woff2",
+    "public/fonts/instrument-serif-400.woff",
+    "public/fonts/ibm-plex-sans-500.woff",
+    "src/design/fonts.css",
+    "src/design/css.test.ts (fonts.css block only, see openQuestions)",
+    "src/museum/exhibits/_kit/fonts.ts",
+    "public/credits.html",
+    "LICENSES/OFL-Instrument-Serif.txt",
+    "LICENSES/OFL-IBM-Plex-Sans.txt",
+    "LICENSES/ISC-Lucide.txt",
+    "LICENSES/MIT-Jakes-Resume.txt",
+    "LICENSES/THIRD_PARTY.txt",
+    "tests/e2e/transfer.spec.ts",
+    "review/reports/WP-28.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Transfer budgets: first three exhibits at most 1.2 MB, full walk at most 4 MB",
+      "command": "npx playwright test tests/e2e/transfer.spec.ts --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "desktop and pixel7: 0.561 MB at wailo, 0.563 MB after every stop on every track (before WP-28: 0.586 and 0.588). environment.spec's own transfer check agrees (0.563)."
+    },
+    {
+      "id": "A2",
+      "criterion": "Glyph coverage on subsets; the missing-glyph case fails",
+      "command": "npm run check:glyphs && npx vitest run --project unit scripts/check-glyphs.test.ts",
+      "result": "pass",
+      "evidence": "glyphs ok: 35 labels, 76 code points, DOM subsets complete. 13 tests: U+E000 fails with no hint; U+00C9 in 3D and U+0152 in the DOM (in the source faces, not in the subsets) fail with 'run `npm run fonts`' (R0 ruling 3); printable ASCII is in both 3D subsets (ruling 1)."
+    },
+    {
+      "id": "A3",
+      "criterion": "Preload present and fast path intact",
+      "command": "grep -c 'rel=\"preload\"' dist/index.html; npx playwright test tests/e2e/fast-path.spec.ts --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "2 preloads (instrument-serif-400.woff2, ibm-plex-sans-400.woff2) on the gallery and every exhibit page. fast-path: 9 passed, LCP element is the h1, CLS desktop 0.0003, pixel7 0."
+    },
+    {
+      "id": "A4",
+      "criterion": "Zero cross-origin or fallback-font requests",
+      "command": "transfer, fast-path, environment and exhibits specs on desktop and pixel7 (global guards in fixtures.ts)",
+      "result": "pass",
+      "evidence": "34 passed, 0 failed, 28 skipped by project rules; no guard tripped (crossOrigin, fallbackFont, csp, console)."
+    },
+    {
+      "id": "A5",
+      "criterion": "Credits: every listed font and library covered",
+      "command": "ls public/credits.html LICENSES/",
+      "result": "pass",
+      "evidence": "credits.html (zero JS, inline style, gallery colors, system fonts) lists the three fonts (OFL-1.1), the 20 packages the gallery bundles and 50 packages only in the ?debug chunk, found from source maps of a scratch build, each with the license its own package.json declares and its license text. That covers three, react, react-dom, @react-three/fiber, drei, zustand, maath, troika-three-text/-utils/worker-utils. wouter (Unlicense) is listed as installed but not bundled: src/ never imports it. It also credits Lucide (ISC, with the MIT notice for the six Feather-derived icons we use: arrow-down, chevron-left, chevron-right, external-link, link, x) and Jake's Resume (MIT). @react-three/fiber, maath, @stitches/react and @utsubo/events ship no license file; the page says so and gives the license their package.json declares."
+    }
+  ],
+  "measurements": {
+    "fontsKB": {
+      "before": {
+        "instrument-serif-latin-400-normal.woff2": 20.5,
+        "instrument-serif-latin-400-italic.woff2": 21.6,
+        "ibm-plex-sans-latin-400-normal.woff2": 22.1,
+        "ibm-plex-sans-latin-500-normal.woff2": 23.6,
+        "instrument-serif-latin-400-normal.woff (troika)": 17.9,
+        "ibm-plex-sans-latin-500-normal.woff (troika)": 23.4,
+        "total": 129.1
+      },
+      "after": {
+        "instrument-serif-400.woff2": 18.6,
+        "instrument-serif-400-italic.woff2": 19.6,
+        "ibm-plex-sans-400.woff2": 19.2,
+        "ibm-plex-sans-500.woff2": 20.6,
+        "instrument-serif-400.woff": 11.7,
+        "ibm-plex-sans-500.woff": 13.7,
+        "total": 103.4
+      },
+      "codePoints": { "domSerif": 185, "domSans": 198, "troikaSerif": 95, "troikaSans": 96 }
+    },
+    "transferMB": {
+      "before": { "atWailo": 0.586, "fullWalk": 0.588 },
+      "after": { "atWailo": 0.561, "fullWalk": 0.563 },
+      "afterByTypeKB": { "js": 431.1, "woff2": 79.6, "woff": 26.1, "webp": 26.3, "css": 6.8 }
+    },
+    "cls360x640WithFontsDelayed2s": { "before": 0.0392, "after": 0.0005 },
+    "budgets": "check:budgets ok: entry 94.85 KB, museum 321.85 KB gzip (unchanged)"
+  },
+  "openQuestions": [
+    "src/design/css.test.ts (R2) pinned the old @fontsource imports, so swapping them broke it. I rewrote only its fonts.css describe block to check the subset faces and the new fallback order. Please ratify this as part of the fonts.css grant; WP-26 may touch the same file.",
+    "Linux/Android serif fallback (RULINGS: small-phone CLS): with no token change I could make, each 'Instrument Serif Fallback' style now has three faces with the same descriptors (DejaVu Serif, Noto Serif, then Georgia). Chromium tries the last face first and skips one whose local() fonts are all missing, which I confirmed here: CLS at 360x640 went from 0.039 to 0.0005. Firefox and WebKit order is not verified (not installed); Android needs the G5 phone check. Noto metrics were measured from @fontsource/noto-serif fetched with npm pack into the scratchpad, not installed. Sans on Android (Roboto, no Arial) is untuned.",
+    "/fonts/* has no Cache-Control rule in scripts/headers.ts (R10), so it gets Netlify's default revalidation. That is fine for size, but R10 may want an explicit rule. The files are unhashed by design: stable URLs for the preloads and troika.",
+    "credits.html and LICENSES/THIRD_PARTY.txt were generated by a scratch script (not committed; no owned path for it). A dependency bump would make them stale. A scripts/credits.ts under an R0 grant would keep them in sync.",
+    "Visual baselines: subsetting keeps outlines, metrics and layout features, and baselines are captured after document.fonts.ready, so I expect no screenshot change. CI is the authority; not compared locally."
+  ],
+  "depsRequest": [],
+  "ciRunUrls": [],
+  "notes": [
+    "Environment: this container ships Chromium 1243 under /opt/pw-browsers, not 1194, so @playwright/test 1.56.1 failed to launch it (the build's PDF step broke). I added local-only symlinks /opt/pw-browsers/chromium-1194 and chromium_headless_shell-1194 pointing at the 1243 builds. Nothing in the repo changed; CLAUDE.md's environment note is out of date.",
+    "U+FFFD is kept in the Plex subsets so the glyf table never ends on an empty glyph. Without it, fontkit (used by the placard and kit metric tests) read past the table for the space of an ASCII-only Plex subset.",
+    "npm run fonts is deterministic: two runs give byte-identical files."
+  ]
+}

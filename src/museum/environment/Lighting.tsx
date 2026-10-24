@@ -41,7 +41,7 @@ const motion = tokens.motion;
 export const LIGHTFORMERS = {
   /** The ceiling strip: light-0, intensity 2, 0.3 x 60 m along the centerline at y 4.9. */
   ceiling: { color: light.ramp[0], intensity: 2, scale: [0.3, 60], position: [0, 4.9, 0] },
-  /** Two side panels along the aisle walls: light-1, intensity 0.6. */
+  /** Two side panels along the aisle walls at the horizon: light-1, intensity 1.2 (WP-26). */
   sides: { color: light.ramp[1], intensity: 1.2, scale: [40, 3.2], x: 10, y: 1.4 },
   /** One lobby panel behind the visitor (the lobby front), light-0. */
   lobby: { color: light.ramp[0], intensity: 1.2, scale: [14, 3.2], position: [0, 1.4, 8] },

@@ -57,6 +57,21 @@ function plinthMaterial(plinth: MeshStandardMaterial, glow: Texture): MeshStanda
   return m;
 }
 
+/**
+ * Walnut tone of the certifications wall panels, as a share of the library `walnut` color (F-043):
+ * the 2.4 x 1.6 m backing panel faces its spot and the environment square on, so at full walnut it
+ * was the hottest surface in the building. At this share it reads as dark walnut in its wash.
+ */
+export const WALL_PANEL_TONE = 0.45;
+
+/** A clone of the library `walnut` (same program and grain) at WALL_PANEL_TONE. */
+function wallPanelMaterial(walnut: MeshStandardMaterial): MeshStandardMaterial {
+  const m = walnut.clone();
+  m.name = 'walnutWallPanel';
+  m.color.multiplyScalar(WALL_PANEL_TONE);
+  return m;
+}
+
 export function Fixtures({ layout }: { layout: Layout }) {
   const library = useMaterialLibrary();
   const instances = useMemo(() => fixtureInstances(layout), [layout]);
@@ -65,6 +80,8 @@ export function Fixtures({ layout }: { layout: Layout }) {
   const plinthBox = useMemo(() => plinthGeometry(), []);
   const [glow] = useState(createPlinthGlow);
   const plinth = useMemo(() => plinthMaterial(library.plinth, glow), [library, glow]);
+  const panel = useMemo(() => wallPanelMaterial(library.walnut), [library]);
+  useEffect(() => () => panel.dispose(), [panel]);
   useEffect(() => () => box.dispose(), [box]);
   useEffect(() => () => glass.dispose(), [glass]);
   useEffect(() => () => plinthBox.dispose(), [plinthBox]);
@@ -82,7 +99,7 @@ export function Fixtures({ layout }: { layout: Layout }) {
       <Instanced
         name="wall-panels"
         geometry={box}
-        material={library.walnut}
+        material={panel}
         matrices={instances.wallPanels}
       />
       <Instanced name="fixture-brass" geometry={box} material={library.brass} matrices={brass} />

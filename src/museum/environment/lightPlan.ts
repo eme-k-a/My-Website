@@ -10,9 +10,10 @@
 //   holds a wanted target stays put and only the others move (and fade up from 0).
 import { doorId, WING_IDS, type ExhibitId, type StopId } from '../../content/ids';
 import { tokens } from '../../design/tokens';
-import { CASE_SIZE, slotOrigin, slotVariant } from '../exhibits/_kit/anatomy';
+import { BACKING_PANEL_SIZE, CASE_SIZE, slotOrigin, slotVariant } from '../exhibits/_kit/anatomy';
 import { slotPlacard } from '../exhibits/_kit/placard';
 import type { QualityTier } from '../exhibits/_kit/types';
+import { stopRecipe } from './lightRecipe';
 import {
   ARCH_Z,
   LOBBY_CEILING,
@@ -125,8 +126,17 @@ export const SPOT_MAX_Y = 4.6;
 export const POOL_SHIFT = 0.3;
 /** Narrowest wall-wash bay behind a target (one 2 m wall panel). */
 export const WASH_BAY_WIDTH = 2;
-/** A title's bay is this much wider than the title, so the lit core covers the whole title. */
-export const WASH_TITLE_PAD = 1;
+/**
+ * A title's bay is this much wider than the title, so the lit core covers the whole title and the
+ * soft edge spreads along the wall to either side (WP-26: 1 until G3, when the wall beside a case
+ * read as a void at mysa and cfia).
+ */
+export const WASH_TITLE_PAD = 2.6;
+/**
+ * The wall vitrine's bay runs this far past each side of its walnut backing panel, so the panel
+ * sits in a soft wash with no lit rectangle around it (F-043).
+ */
+export const WASH_PANEL_MARGIN = 1.2;
 
 const EPS = 1e-6;
 const inside = (room: Room, x: number, z: number) =>
@@ -226,12 +236,17 @@ function washBehind(room: Room, x: number, z: number, away: [number, number]): W
  * than it, trimmed so it never runs past the ends of its wall.
  */
 function titleWash(layout: Layout, slot: Slot, room: Room, wash: WashBay): WashBay {
-  if (slotVariant(slot) === 'wall' || wash.axis !== 'z') return wash;
+  const [lo, hi] = wash.axis === 'z' ? [room.min[1], room.max[1]] : [room.min[0], room.max[0]];
+  const fit = (center: number, want: number) =>
+    Math.min(Math.max(WASH_BAY_WIDTH, want), Math.min(center - lo, hi - center) * 2);
+  if (slotVariant(slot) === 'wall') {
+    // F-043: wider than the backing panel, so the panel's edges sit inside the soft wash.
+    return { ...wash, width: fit(wash.center, BACKING_PANEL_SIZE[0] + 2 * WASH_PANEL_MARGIN) };
+  }
+  if (wash.axis !== 'z') return wash;
   const title = slotPlacard(layout, slot);
   const center = title.position[2];
-  const fits = Math.min(center - room.min[1], room.max[1] - center) * 2;
-  const width = Math.min(Math.max(WASH_BAY_WIDTH, title.width + WASH_TITLE_PAD), fits);
-  return { ...wash, center, width };
+  return { ...wash, center, width: fit(center, title.width + WASH_TITLE_PAD) };
 }
 
 /**
@@ -423,6 +438,8 @@ export interface BeamSpec {
   /** Base radius: the spot's bright core (angle times 1 - penumbra) at the aim distance. */
   radius: number;
   color: string;
+  /** The recipe's beam strength (lightRecipe.ts): multiplies the cone's tint. */
+  strength: number;
   /**
    * The share of the cone, from the apex, that stays dark before its fade starts. Wing cones
    * start at the case top (F-027): seen from a wing stop, the wall title hangs right above the
@@ -441,8 +458,8 @@ function wingFadeStart(layout: Layout, id: TargetId, apex: Vec3, base: Vec3): nu
   return Math.min(1, Math.max(0, (apex[1] - caseTop) / drop));
 }
 
-/** The beam cone of every light target, in lightTargets order. */
-export function beamSpecs(layout: Layout): BeamSpec[] {
+/** The beam cone of every light target, in lightTargets order, at the tier's recipe. */
+export function beamSpecs(layout: Layout, tier: QualityTier = 'high'): BeamSpec[] {
   const core = light.spotAngle * (1 - light.spotPenumbra);
   return lightTargets(layout).map((t) => {
     const length = Math.hypot(t.aim[0] - t.mount[0], t.aim[1] - t.mount[1], t.aim[2] - t.mount[2]);
@@ -452,6 +469,7 @@ export function beamSpecs(layout: Layout): BeamSpec[] {
       base: [...t.aim],
       radius: length * Math.tan(core),
       color: t.color,
+      strength: stopRecipe(t.stop, tier).beam,
       fadeStart: wingFadeStart(layout, t.id, t.mount, t.aim),
     };
   });

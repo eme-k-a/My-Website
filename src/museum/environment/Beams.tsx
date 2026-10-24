@@ -17,6 +17,7 @@ import {
   Vector3,
   type InstancedMesh,
 } from 'three';
+import { useMuseum } from '../../app/store';
 import { useMaterialLibrary } from '../materials';
 import type { Layout } from '../rail/layout';
 import { beamSpecs, type BeamSpec } from './lightPlan';
@@ -88,7 +89,7 @@ function BeamGroup({ beams, start }: { beams: BeamSpec[]; start: number }) {
     const color = new Color();
     beams.forEach((beam, i) => {
       mesh.setMatrixAt(i, beamMatrix(beam));
-      mesh.setColorAt(i, color.set(beam.color));
+      mesh.setColorAt(i, color.set(beam.color).multiplyScalar(beam.strength));
     });
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
@@ -117,7 +118,8 @@ export function beamGroups(beams: BeamSpec[]): { start: number; beams: BeamSpec[
 }
 
 export function Beams({ layout }: { layout: Layout }) {
-  const groups = useMemo(() => beamGroups(beamSpecs(layout)), [layout]);
+  const tier = useMuseum((s) => s.tier);
+  const groups = useMemo(() => beamGroups(beamSpecs(layout, tier)), [layout, tier]);
   return (
     <>
       {groups.map((g) => (

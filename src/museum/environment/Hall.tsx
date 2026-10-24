@@ -12,6 +12,7 @@ import {
   type MeshStandardMaterial,
   type Texture,
 } from 'three';
+import { useMuseum } from '../../app/store';
 import { useMaterialLibrary } from '../materials';
 import type { Layout } from '../rail/layout';
 import {
@@ -41,7 +42,7 @@ function fillBays(mesh: InstancedMesh, bays: WashPlacement[]): void {
   const color = new Color();
   bays.forEach((b, i) => {
     mesh.setMatrixAt(i, washMatrix(b.bay));
-    mesh.setColorAt(i, color.set(b.color));
+    mesh.setColorAt(i, color.set(b.color).multiplyScalar(b.strength));
   });
   mesh.instanceMatrix.needsUpdate = true;
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
@@ -60,7 +61,8 @@ function bayMaterial(wall: MeshStandardMaterial, wash: Texture): MeshStandardMat
 
 function WashBays({ layout }: { layout: Layout }) {
   const library = useMaterialLibrary();
-  const { bays } = useMemo(() => washLayout(layout), [layout]);
+  const tier = useMuseum((s) => s.tier);
+  const { bays } = useMemo(() => washLayout(layout, tier), [layout, tier]);
   const plane = useMemo(() => new PlaneGeometry(1, 1), []);
   const [wash] = useState(createBayWash);
   useEffect(() => () => wash.dispose(), [wash]);

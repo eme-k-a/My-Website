@@ -1,5 +1,4 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -8,7 +7,6 @@ import { tokens } from './tokens';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const read = (file: string) => readFileSync(resolve(here, file), 'utf8');
-const require = createRequire(import.meta.url);
 
 interface Rule {
   prelude: string;
@@ -200,55 +198,58 @@ function rgba(c: { r: number; g: number; b: number; a: number }) {
 
 describe('fonts.css (EXPERIENCE §7.7, ARCHITECTURE §8.3)', () => {
   const css = read('fonts.css');
-  const imports = [...css.matchAll(/@import\s+(?:url\()?['"]([^'"]+)['"]\)?\s*;/g)].map(
-    (m) => m[1]!,
-  );
+  const faces = parseRules(css).filter((r) => r.prelude === '@font-face');
+  const describeFace = (r: Rule) =>
+    `${r.decls.get('font-family')} ${r.decls.get('font-style')} ${r.decls.get('font-weight')}`;
+  const webFaces = faces.filter((r) => !r.decls.get('font-family')!.includes('Fallback'));
+  const fallbacks = faces.filter((r) => r.decls.get('font-family')!.includes('Fallback'));
 
-  it('imports the four latin faces from @fontsource, in order', () => {
-    expect(imports).toEqual([
-      '@fontsource/instrument-serif/latin-400.css',
-      '@fontsource/instrument-serif/latin-400-italic.css',
-      '@fontsource/ibm-plex-sans/latin-400.css',
-      '@fontsource/ibm-plex-sans/latin-500.css',
+  it('declares the four DOM subsets from /fonts/ (WP-28), in order, with font-display swap', () => {
+    expect(css).not.toMatch(/@import/);
+    expect(webFaces.map(describeFace)).toEqual([
+      "'Instrument Serif' normal 400",
+      "'Instrument Serif' italic 400",
+      "'IBM Plex Sans' normal 400",
+      "'IBM Plex Sans' normal 500",
     ]);
-  });
-
-  it.each(imports)('%s resolves in node_modules to local woff2 and woff files', (spec) => {
-    const file = require.resolve(spec);
-    expect(file).toMatch(/node_modules[\\/]@fontsource[\\/]/);
-    const face = readFileSync(file, 'utf8');
-    const urls = [...face.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)].map((m) => m[1]!);
-    expect(urls.length).toBeGreaterThan(0);
-    for (const url of urls) {
-      expect(url).not.toMatch(/^(https?:)?\/\//);
-      expect(existsSync(resolve(dirname(file), url)), url).toBe(true);
+    for (const face of webFaces) {
+      expect(face.decls.get('font-display'), describeFace(face)).toBe('swap');
+      const urls = [...face.decls.get('src')!.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)].map(
+        (m) => m[1]!,
+      );
+      expect(urls).toHaveLength(1);
+      expect(urls[0]).toMatch(/^\/fonts\/[a-z0-9-]+\.woff2$/);
+      expect(existsSync(resolve(here, '../../public', urls[0]!.slice(1))), urls[0]).toBe(true);
     }
-    expect(urls.some((u) => u.endsWith('.woff2'))).toBe(true);
-    expect(urls.some((u) => u.endsWith('.woff'))).toBe(true);
-    expect(face).toMatch(/font-display:\s*swap/);
   });
 
-  it('declares metric-matched local fallbacks for Georgia and Arial', () => {
-    const faces = parseRules(css).filter((r) => r.prelude === '@font-face');
-    const describeFace = (r: Rule) =>
-      `${r.decls.get('font-family')} ${r.decls.get('font-style')} ${r.decls.get('font-weight')}`;
-    expect(faces.map(describeFace)).toEqual([
+  it('declares metric-matched local fallbacks, Georgia last so it wins where it exists', () => {
+    expect(fallbacks.map(describeFace)).toEqual([
       "'Instrument Serif Fallback' normal 400",
+      "'Instrument Serif Fallback' normal 400",
+      "'Instrument Serif Fallback' normal 400",
+      "'Instrument Serif Fallback' italic 400",
+      "'Instrument Serif Fallback' italic 400",
       "'Instrument Serif Fallback' italic 400",
       "'IBM Plex Sans Fallback' normal 400",
       "'IBM Plex Sans Fallback' normal 500",
     ]);
-    for (const face of faces) {
+    const srcs = fallbacks.map((f) => f.decls.get('src')!);
+    expect(srcs[2]).toContain("local('Georgia'");
+    expect(srcs[5]).toContain("local('Georgia");
+    expect(srcs.slice(0, 2).join(' ') + srcs.slice(3, 5).join(' ')).toMatch(/DejaVu Serif/);
+    expect(srcs.slice(0, 2).join(' ') + srcs.slice(3, 5).join(' ')).toMatch(/Noto Serif/);
+    for (const face of fallbacks) {
       const src = face.decls.get('src')!;
       expect(src).toMatch(/^local\(/);
       expect(src).not.toMatch(/url\(/);
       const family = face.decls.get('font-family')!;
-      expect(src).toContain(family.includes('Serif') ? "local('Georgia" : "local('Arial'");
+      if (!family.includes('Serif')) expect(src).toContain("local('Arial'");
       for (const prop of ['size-adjust', 'ascent-override', 'descent-override']) {
         const value = face.decls.get(prop);
         expect(value, `${describeFace(face)} ${prop}`).toMatch(/^\d+(\.\d+)?%$/);
         expect(parseFloat(value!)).toBeGreaterThan(prop === 'descent-override' ? 10 : 50);
-        expect(parseFloat(value!)).toBeLessThan(150);
+        expect(parseFloat(value!)).toBeLessThan(160);
       }
     }
   });

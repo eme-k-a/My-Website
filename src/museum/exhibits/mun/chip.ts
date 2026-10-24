@@ -52,6 +52,13 @@ const CORE_HALF = CORE.size[0] / 2;
 export const TRACE = { width: 0.004, height: 0.0015 } as const;
 export const TRACE_SEED = 0x3a5e05;
 
+/**
+ * The die head leans its top 30 degrees toward the stop camera (+Z) about the post top, so the
+ * camera, about 0.45 m above the die, sees its face (core, traces and pins) instead of its edge
+ * (F-045). The turn runs about the die's own axis, so the lean holds while it turns.
+ */
+export const DIE_TILT_DEG = 30;
+
 /** The one motion: one revolution per 40 s, starting from the reduced-motion yaw of 30 degrees. */
 export const TURN = { periodS: 40, restYawDeg: 30 } as const;
 
@@ -74,6 +81,23 @@ export function dieYaw(t: number, reducedMotion: boolean): number {
   const clock = reducedMotion || !(t > 0) ? 0 : t;
   const turns = (clock / TURN.periodS) % 1;
   return TURN.restYawDeg * DEG + turns * 2 * Math.PI;
+}
+
+const tiltPivot = new Matrix4();
+const tiltRotate = new Matrix4();
+const tiltBack = new Matrix4();
+const spin = new Matrix4();
+
+/**
+ * The die group's frame at yaw `yaw`: turn about the die axis, then lean by DIE_TILT_DEG about
+ * the post top. Die parts are placed in plinth-local y, so this maps them into the slot frame.
+ */
+export function dieFrame(yaw: number, out = new Matrix4()): Matrix4 {
+  tiltPivot.makeTranslation(0, POST.top, 0);
+  tiltRotate.makeRotationX(DIE_TILT_DEG * DEG);
+  tiltBack.makeTranslation(0, -POST.top, 0);
+  spin.makeRotationY(yaw);
+  return out.copy(tiltPivot).multiply(tiltRotate).multiply(tiltBack).multiply(spin);
 }
 
 /** A placed box: center, size along its own axes, yaw about +Y, then roll about +X. */

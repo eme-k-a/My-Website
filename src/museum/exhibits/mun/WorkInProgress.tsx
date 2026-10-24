@@ -14,6 +14,7 @@ import {
   CORE,
   DIE,
   DIE_CENTER_Y,
+  DIE_TILT_DEG,
   DIE_TOP,
   dieYaw,
   GHOST_OPACITY,
@@ -30,6 +31,7 @@ import { tiersRemaining } from './tiers';
 const PINS_PARTS = pinParts();
 const TRACE_PARTS = traceParts();
 const POST_HEIGHT = POST.top - POST.bottom;
+const DIE_TILT = (DIE_TILT_DEG * Math.PI) / 180;
 
 /** Writes `parts` into a unit-box InstancedMesh once (the parts never move inside their group). */
 function usePlaced(ref: RefObject<InstancedMesh | null>, parts: Part[]) {
@@ -93,35 +95,38 @@ export default function WorkInProgress({ entry, runtime }: ExhibitProps) {
       <mesh name="post" position-y={POST.bottom + POST_HEIGHT / 2} material={brass}>
         <cylinderGeometry args={[POST.radius, POST.radius, POST_HEIGHT, POST.segments]} />
       </mesh>
-      <group ref={die} name="die">
-        <RoundedBox
-          name="die-body"
-          args={DIE.size}
-          radius={DIE.radius}
-          smoothness={DIE.smoothness}
-          bevelSegments={DIE.bevelSegments}
-          position-y={DIE_CENTER_Y}
-          material={graphite}
-        />
-        <mesh name="core" position-y={DIE_TOP + CORE.size[1] / 2} material={brass}>
-          <boxGeometry args={CORE.size} />
-        </mesh>
-        <instancedMesh
-          ref={pins}
-          name="pins"
-          args={[undefined, undefined, PINS_PARTS.length]}
-          material={brass}
-        >
-          <boxGeometry />
-        </instancedMesh>
-        <instancedMesh
-          ref={traces}
-          name="traces"
-          args={[undefined, undefined, TRACE_PARTS.length]}
-          material={brass}
-        >
-          <boxGeometry />
-        </instancedMesh>
+      {/* The lean about the post top (static); the die turns inside it, about its own axis. */}
+      <group name="die-head" position-y={POST.top} rotation-x={DIE_TILT}>
+        <group ref={die} name="die" position-y={-POST.top}>
+          <RoundedBox
+            name="die-body"
+            args={DIE.size}
+            radius={DIE.radius}
+            smoothness={DIE.smoothness}
+            bevelSegments={DIE.bevelSegments}
+            position-y={DIE_CENTER_Y}
+            material={graphite}
+          />
+          <mesh name="core" position-y={DIE_TOP + CORE.size[1] / 2} material={brass}>
+            <boxGeometry args={CORE.size} />
+          </mesh>
+          <instancedMesh
+            ref={pins}
+            name="pins"
+            args={[undefined, undefined, PINS_PARTS.length]}
+            material={brass}
+          >
+            <boxGeometry />
+          </instancedMesh>
+          <instancedMesh
+            ref={traces}
+            name="traces"
+            args={[undefined, undefined, TRACE_PARTS.length]}
+            material={brass}
+          >
+            <boxGeometry />
+          </instancedMesh>
+        </group>
       </group>
       {scaffold.standing.length > 0 && (
         <instancedMesh

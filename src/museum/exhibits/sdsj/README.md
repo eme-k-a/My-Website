@@ -18,21 +18,21 @@ Standard slot (EXPERIENCE §5.3), local meters, origin at the plinth top center,
 
 | Part             | Material                        | Placement                                                                                                                                                                                    |
 | ---------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Foot disc        | `brass`                         | cylinder r 0.12, h 0.01, 48 segments, y 0.025 to 0.035 (on the slot floor)                                                                                                                   |
-| Pedestal         | `brass`                         | cylinder r 0.03, h 0.14, 24 segments, open ended (both ends are covered), y 0.035 to 0.175                                                                                                   |
-| Table top        | `walnut`                        | cylinder r 0.27 (diameter 0.54), h 0.025, 64 segments, y 0.175 to 0.20                                                                                                                       |
-| Shared project   | `brass`                         | cube 0.04 on the table center, y 0.20 to 0.24, static                                                                                                                                        |
+| Foot disc        | `brass`                         | cylinder r 0.15, h 0.01, 48 segments, y 0.025 to 0.035 (on the slot floor)                                                                                                                   |
+| Pedestal         | `brass`                         | cylinder r 0.03, h 0.30, 24 segments, open ended (both ends are covered), y 0.035 to 0.335                                                                                                   |
+| Table top        | `walnut`                        | cylinder r 0.27 (diameter 0.54), h 0.025, 64 segments, y 0.335 to 0.36 (F-045); a `brass` rim band (open cylinder r 0.272, h 0.029, 128 triangles) wraps its edge                            |
+| Shared project   | `brass`                         | cube 0.04 on the table center, y 0.36 to 0.40, static                                                                                                                                        |
 | Laptop bases (6) | `ceramicGraphite`               | box 0.085 x 0.005 x 0.06, centers at radius 0.19 on the table top, azimuths 0, 60, ... 300 degrees (0 = +X, 90 = +Z); front edge at radius 0.16 toward the center, hinge edge at radius 0.22 |
 | Laptop lids (6)  | `ceramicGraphite`               | box 0.085 x 0.06 x 0.004, back face on the hinge line (the base's back top edge), open 105 degrees (15 degrees past upright, leaning outward)                                                |
 | Screens (6)      | `accentGlow`, one instance each | plane 0.075 x 0.05 centered on each lid's inner face, 0.5 mm off it, facing the table center                                                                                                 |
 
 The twelve shell boxes (bases and lids) are one InstancedMesh of a unit box. Azimuth 0 (not 90) keeps a gap between the two front laptops, so the brass cube shows from the stop camera; the two back laptops' screens face the camera.
 
-Measured under `?test=1` (`stats().exhibits.sdsj`, desktop and pixel7): `inBounds: true`, 664 triangles, 11 draw calls. Overall box (analytic): x and z within the table rim (radius 0.27), y 0.025 to about 0.264 (the lid tops).
+Measured under `?test=1` (`stats().exhibits.sdsj`, desktop and pixel7): `inBounds: true`, 792 triangles, 9 draw calls (MergeStatic). Overall box (analytic): x and z within the brass rim (radius 0.272), y 0.025 to about 0.424 (the lid tops).
 
 ## Budget
 
-`index.ts`: 1,500 triangles, 12 draw calls, 0 MB textures. Actual: 664 triangles (top 256, foot 192, pedestal 48, cube 12, shells 12 x 12, screens 6 x 2), 11 draw calls (foot, pedestal, top, cube, shells, six screens). Lazy chunk `RoundTable`: 1.70 KB gzip of the 40 KB limit.
+`index.ts`: 1,500 triangles, 12 draw calls, 0 MB textures. Actual: 792 triangles (top 256, rim 128, foot 192, pedestal 48, cube 12, shells 12 x 12, screens 6 x 2), 9 draw calls measured. Lazy chunk `RoundTable`: 1.70 KB gzip of the 40 KB limit.
 
 ## Materials
 

@@ -9,7 +9,7 @@ import { useFrame } from '@react-three/fiber';
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { DynamicDrawUsage, type InstancedMesh } from 'three';
 import { useExhibitClock, useMaterial, type ExhibitProps } from '../_kit';
-import { COIN, createBalanceDriver, MAX_COINS, TRAY } from './counts';
+import { COIN, createBalanceDriver, MAX_COINS, STAND, TRAY } from './counts';
 
 export default function Balance({ runtime }: ExhibitProps) {
   const walnut = useMaterial('walnut');
@@ -40,6 +40,9 @@ export default function Balance({ runtime }: ExhibitProps) {
 
   return (
     <group name="balance">
+      <mesh name="stand" position={STAND.center} material={walnut}>
+        <boxGeometry args={STAND.size} />
+      </mesh>
       <RoundedBox
         name="tray"
         args={TRAY.size}

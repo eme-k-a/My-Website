@@ -16,18 +16,19 @@ Standard slot (EXPERIENCE §5.3), local meters, origin at the plinth top center,
 
 | Part           | Material          | Placement                                                                        |
 | -------------- | ----------------- | -------------------------------------------------------------------------------- |
-| Ledger tray    | `walnut`          | RoundedBox 0.56 x 0.03 x 0.30, radius 0.008, center (0, 0.04, 0); top at y 0.055 |
+| Stand          | `walnut`          | box 0.48 x 0.16 x 0.22, center (0, 0.105, 0); y 0.025 to 0.185 (F-045)           |
+| Ledger tray    | `walnut`          | RoundedBox 0.56 x 0.03 x 0.30, radius 0.008, center (0, 0.20, 0); top at y 0.215 |
 | Income stack   | `brass`           | x -0.17, z 0; 24-coin InstancedMesh                                              |
 | Expenses stack | `ceramicGraphite` | x 0, z 0; 24-coin InstancedMesh                                                  |
 | Budget stack   | `frostedGlass`    | x +0.17, z 0; 24-coin InstancedMesh                                              |
 
-Each coin is a cylinder r 0.055, h 0.009, 24 segments (96 triangles). A stack holds 8 to 24 coins; a full stack tops out at y 0.271. Each mesh always draws all 24 instances: absent coins are scaled to zero at the stack top, so the measured triangle count is always the maximum-count one.
+Each coin is a cylinder r 0.065, h 0.011, 24 segments (96 triangles). A stack holds 8 to 24 coins; a full stack tops out at y 0.479. Each mesh always draws all 24 instances: absent coins are scaled to zero at the stack top, so the measured triangle count is always the maximum-count one.
 
-Measured under `?test=1` (`stats().exhibits['finance-tracker']`): `inBounds: true`, 7,468 triangles (at the maximum coin count), 4 draw calls. Overall box (analytic): x -0.280 to 0.280, y 0.025 to 0.271 at most, z -0.150 to 0.150.
+Measured under `?test=1` (`stats().exhibits['finance-tracker']`): `inBounds: true`, 7,480 triangles (at the maximum coin count), 5 draw calls. Overall box (analytic): x -0.280 to 0.280, y 0.025 to 0.479 at most, z -0.150 to 0.150.
 
 ## Budget
 
-`index.ts`: 8,000 triangles, 6 draw calls, 0 MB textures. Actual: 7,468 triangles (tray 556, coins 3 x 24 x 96), 4 draw calls (one per stack). Lazy chunk `Balance`: 1.41 KB gzip of the 40 KB limit.
+`index.ts`: 8,000 triangles, 6 draw calls, 0 MB textures. Actual: 7,480 triangles (tray 556, stand 12, coins 3 x 24 x 96), 5 draw calls (stand, tray and one per stack). Lazy chunk `Balance`: 1.41 KB gzip of the 40 KB limit.
 
 ## Materials
 

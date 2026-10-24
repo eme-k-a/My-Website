@@ -17,6 +17,7 @@ import {
   partMatrix,
   PEDESTAL,
   PEDESTAL_CENTER_Y,
+  RIM,
   PERIOD_S,
   screenGlow,
   screenPart,
@@ -47,15 +48,18 @@ function boxCorners(m: ReturnType<typeof partMatrix>): Vector3[] {
 const all = (i: number) => Array.from({ length: LAPTOP.count }, (_, k) => screenGlow(k, i, false));
 
 describe('sdsj geometry (EXPERIENCE §4.8)', () => {
-  it('stacks foot, pedestal and top with the top surface at y 0.20', () => {
+  it('stacks foot, pedestal and top with the top surface at y 0.36', () => {
     expect(FOOT_CENTER_Y - FOOT.height / 2).toBeCloseTo(0.025, 9);
     expect(PEDESTAL_CENTER_Y - PEDESTAL.height / 2).toBeCloseTo(FOOT_CENTER_Y + FOOT.height / 2, 9);
     expect(PEDESTAL_CENTER_Y + PEDESTAL.height / 2).toBeCloseTo(TOP_CENTER_Y - TOP.height / 2, 9);
-    expect(TOP_CENTER_Y + TOP.height / 2).toBeCloseTo(0.2, 9);
+    expect(TOP_CENTER_Y + TOP.height / 2).toBeCloseTo(0.36, 9);
+    // The brass rim wraps the top's edge.
+    expect(RIM.radius).toBeGreaterThan(TOP.radius);
+    expect(RIM.height).toBeGreaterThan(TOP.height);
     expect(TOP.radius * 2).toBeCloseTo(0.54, 9);
     expect(TOP.segments).toBe(64);
     expect([PEDESTAL.radius, PEDESTAL.height, FOOT.radius, FOOT.height]).toEqual([
-      0.03, 0.14, 0.12, 0.01,
+      0.03, 0.3, 0.15, 0.01,
     ]);
   });
 

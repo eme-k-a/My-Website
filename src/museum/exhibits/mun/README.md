@@ -18,7 +18,7 @@ Large (MUN) slot (EXPERIENCE §5.3), local meters, origin at the top center of t
 | ----------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Base plate  | `walnut`                              | RoundedBox 0.60 x 0.03 x 0.60, radius 0.006, y 0.10 to 0.13                                                                                                                          |
 | Post        | `brass`                               | cylinder r 0.02, y 0.13 to 0.53                                                                                                                                                      |
-| Die         | `ceramicGraphite`                     | RoundedBox 0.36 x 0.035 x 0.36, radius 0.004, y 0.53 to 0.565                                                                                                                        |
+| Die         | `ceramicGraphite`                     | RoundedBox 0.36 x 0.035 x 0.36, radius 0.004, y 0.53 to 0.565; the die head leans 30 degrees toward the camera about the post top (F-045)                                            |
 | Pins        | `brass`                               | 48 boxes 0.03 (radial) x 0.004 x 0.008, 12 per edge on a 0.025 pitch, 5 mm into the die edge (one InstancedMesh)                                                                     |
 | Traces      | `brass`                               | 40 boxes 0.004 wide, 0.0015 high, 0.04 to 0.135 long on the die top: per edge a seeded three-line staircase bus plus one straight trace, core to pins (one InstancedMesh)            |
 | Core        | `brass`                               | box 0.08 x 0.002 x 0.08 on the die top                                                                                                                                               |
@@ -43,7 +43,7 @@ Measured under `?test=1` (`stats().exhibits.mun`): `inBounds: true`, 2,676 trian
 
 ## Motion (one)
 
-The die (body, pins, traces, core) turns on its post, one revolution per 40 s, driven only by `useExhibitClock()`: yaw = 30 degrees + 360 degrees x t / 40. The post, plate and scaffold never move.
+The die (body, pins, traces, core) turns on its post about its own axis, which leans 30 degrees toward the stop camera so the face reads (`dieFrame`), one revolution per 40 s, driven only by `useExhibitClock()`: yaw = 30 degrees + 360 degrees x t / 40. The post, plate and scaffold never move.
 
 **Reduced-motion and `?test=1` pose:** die at 30 degrees yaw (reduced motion pins it whatever the clock; `?test=1` freezes the clock at 0, which is the same pose).
 

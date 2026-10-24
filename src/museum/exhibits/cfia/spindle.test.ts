@@ -44,18 +44,18 @@ const visible = (t: number) =>
 describe('cfia geometry (EXPERIENCE §4.4)', () => {
   it('puts the box on the slot floor and the spindle on its top', () => {
     expect(BOX.center[1] - BOX.size[1] / 2).toBeCloseTo(0.025, 9);
-    expect(BOX_TOP).toBeCloseTo(0.145, 9);
+    expect(BOX_TOP).toBeCloseTo(0.285, 9);
     expect(ROD.bottom).toBeCloseTo(BOX_TOP, 9);
-    expect(ROD.top + TIP.height).toBeCloseTo(0.575, 9);
+    expect(ROD.top + TIP.height).toBeCloseTo(0.665, 9);
     expect(BOX_TOP + DISC.height).toBeLessThan(TICKET.base);
   });
 
-  it('stacks 14 tickets from y 0.152 at a 0.006 pitch', () => {
+  it('stacks 14 tickets from y 0.292 at a 0.009 pitch', () => {
     const rest = ticketsAt(0);
     expect(rest).toHaveLength(TICKET_COUNT);
     expect(visible(0)).toHaveLength(14);
-    expect(rest[0]!.y).toBeCloseTo(0.152, 9);
-    expect(rest[13]!.y).toBeCloseTo(0.152 + 13 * 0.006, 9);
+    expect(rest[0]!.y).toBeCloseTo(0.292, 9);
+    expect(rest[13]!.y).toBeCloseTo(0.292 + 13 * 0.009, 9);
     expect(rest[14]!.scale).toBe(0);
   });
 
@@ -98,7 +98,7 @@ describe('cfia geometry (EXPERIENCE §4.4)', () => {
 });
 
 describe('cfia motion (one: descend and settle, period 6 s)', () => {
-  it('rests with no falling ticket until 2.8 s, then descends from y 0.52', () => {
+  it('rests with no falling ticket until 2.8 s, then descends from y 0.60', () => {
     expect(moving(0)).toBe(false);
     expect(moving(2.79)).toBe(false);
     expect(moving(2.81)).toBe(true);

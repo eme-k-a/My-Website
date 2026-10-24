@@ -5,6 +5,8 @@ import {
   CORE,
   DIE,
   DIE_CENTER_Y,
+  dieFrame,
+  DIE_TILT_DEG,
   DIE_TOP,
   dieYaw,
   partMatrix,
@@ -30,6 +32,16 @@ const SLOT = { min: [-0.55, 0.1, -0.55], max: [0.55, 1.2, 0.55] };
 
 function corners(part: Part, yaw = 0): Vector3[] {
   const m = new Matrix4().makeRotationY(yaw).multiply(partMatrix(part));
+  const out: Vector3[] = [];
+  for (const sx of [-0.5, 0.5])
+    for (const sy of [-0.5, 0.5])
+      for (const sz of [-0.5, 0.5]) out.push(new Vector3(sx, sy, sz).applyMatrix4(m));
+  return out;
+}
+
+/** A die part's corners in the slot frame at die yaw `yaw` (turn, then the lean). */
+function dieCorners(part: Part, yaw: number): Vector3[] {
+  const m = dieFrame(yaw).multiply(partMatrix(part));
   const out: Vector3[] = [];
   for (const sx of [-0.5, 0.5])
     for (const sy of [-0.5, 0.5])
@@ -174,8 +186,9 @@ describe('mun geometry (EXPERIENCE §4.9)', () => {
     for (const part of scaffold) expect(corners(part).every(inSlot)).toBe(true);
     for (let deg = 0; deg < 360; deg += 15) {
       const yaw = (deg * Math.PI) / 180;
-      for (const part of [...pinParts(), ...traceParts()]) {
-        for (const c of corners(part, yaw)) {
+      const body: Part = { center: [0, DIE_CENTER_Y, 0], size: [...DIE.size] };
+      for (const part of [body, ...pinParts(), ...traceParts()]) {
+        for (const c of dieCorners(part, yaw)) {
           expect(inSlot(c)).toBe(true);
           // Clear of the scaffold uprights' inner faces.
           expect(Math.max(Math.abs(c.x), Math.abs(c.z))).toBeLessThan(0.45 - SCAFFOLD.rod / 2);
@@ -188,6 +201,25 @@ describe('mun geometry (EXPERIENCE §4.9)', () => {
     // RoundedBox plate and die, post, core, 48 pins, 40 traces, 60 rods (boxes are 12 each).
     const boxes = (PIN_COUNT + TRACE_COUNT + 60 + 1) * 12;
     expect(boxes + 2 * 600 + POST.segments * 4).toBeLessThan(20_000);
+  });
+});
+
+describe('mun die lean (F-045)', () => {
+  it('leans the die face toward the stop camera and keeps the lean while it turns', () => {
+    expect(DIE_TILT_DEG).toBe(30);
+    for (const deg of [0, 45, 90, 180, 270]) {
+      const normal = new Vector3(0, 1, 0).transformDirection(dieFrame((deg * Math.PI) / 180));
+      // The face normal points up and toward +Z (the camera) by the same 30 degrees at every yaw.
+      expect(normal.y).toBeCloseTo(Math.cos(Math.PI / 6), 9);
+      expect(normal.z).toBeCloseTo(Math.sin(Math.PI / 6), 9);
+    }
+  });
+
+  it('pivots on the post top: the die bottom center stays on it', () => {
+    const p = new Vector3(0, DIE.bottom, 0).applyMatrix4(dieFrame(1.234));
+    expect(p.x).toBeCloseTo(0, 9);
+    expect(p.y).toBeCloseTo(POST.top, 9);
+    expect(p.z).toBeCloseTo(0, 9);
   });
 });
 

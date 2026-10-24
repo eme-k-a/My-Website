@@ -24,6 +24,7 @@ import {
   laptopFrame,
   PEDESTAL,
   PEDESTAL_CENTER_Y,
+  RIM,
   screenGlow,
   screenPart,
   SHELL_COUNT,
@@ -101,6 +102,9 @@ export default function RoundTable({ runtime }: ExhibitProps) {
       </mesh>
       <mesh name="top" position-y={TOP_CENTER_Y} material={walnut}>
         <cylinderGeometry args={[TOP.radius, TOP.radius, TOP.height, TOP.segments]} />
+      </mesh>
+      <mesh name="rim" position-y={TOP_CENTER_Y} material={brass}>
+        <cylinderGeometry args={[RIM.radius, RIM.radius, RIM.height, RIM.segments, 1, true]} />
       </mesh>
       <mesh name="project" position-y={CUBE_CENTER_Y} material={brass}>
         <boxGeometry args={[CUBE.size, CUBE.size, CUBE.size]} />

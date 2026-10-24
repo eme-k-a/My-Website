@@ -363,11 +363,11 @@ There is no trap: the wing has two stops, the top of the wing track is its first
 ### 4.4 cfia: "The Ticket Spindle" (No. 04)
 - **Symbolizes:** steady, methodical resolution of high-volume support tickets for a distributed team: where the career began. This case gets the warmest light in the building (§6.9).
 - **Object:**
-  - Box: `walnut` RoundedBox 0.30 x 0.12 x 0.22, center (0, 0.085, 0).
-  - Spindle: `brass` base disc radius 0.04, height 0.006 on the box top; `brass` rod radius 0.005 from y 0.145 to 0.545; `brass` cone tip radius 0.005, height 0.03 (top at 0.575).
-  - Tickets: 14 `paper` boxes 0.12 x 0.0025 x 0.08 impaled on the spindle, stacked from y 0.152 at a 0.006 pitch, each with a seeded yaw within ±12° and offset within ±4 mm. One instanced mesh (15 instances, including the falling one).
-  - Stamps: one `ceramicGraphite` mark 0.035 x 0.0005 x 0.014 near a corner of each ticket, rotated 8°, blank. One instanced mesh.
-- **Motion (one):** a new ticket descends the spindle from y 0.52 and lands on the stack in 2.4 s (easeOutCubic), then the whole stack sinks one pitch into the box over 0.8 s, so the bottom ticket disappears and the count stays 14. Period 6 s.
+  - Box: `walnut` RoundedBox 0.34 x 0.26 x 0.26, center (0, 0.155, 0) (raised so the stack sits in the middle of the case, F-045).
+  - Spindle: `brass` base disc radius 0.05, height 0.006 on the box top; `brass` rod radius 0.007 from y 0.285 to 0.63; `brass` cone tip radius 0.007, height 0.035 (top at 0.665).
+  - Tickets: 14 `paper` boxes 0.17 x 0.004 x 0.115 impaled on the spindle, stacked from y 0.292 at a 0.009 pitch, each with a seeded yaw within ±12° and offset within ±4 mm. One instanced mesh (15 instances, including the falling one).
+  - Stamps: one `ceramicGraphite` mark 0.05 x 0.0005 x 0.02 near a corner of each ticket, rotated 8°, blank. One instanced mesh.
+- **Motion (one):** a new ticket descends the spindle from y 0.60 and lands on the stack in 2.4 s (easeOutCubic), then the whole stack sinks one pitch into the box over 0.8 s, so the bottom ticket disappears and the count stays 14. Period 6 s.
 - **Materials:** walnut, brass, paper, ceramicGraphite.
 - **Triangles:** about 1,000.
 - **Reduced-motion pose:** 14 tickets stacked, no falling ticket.
@@ -406,8 +406,9 @@ There is no trap: the wing has two stops, the top of the wing track is its first
 ### 4.6 finance-tracker: "The Balance" (No. P2)
 - **Symbolizes:** income, expenses and a budget kept in balance in one full-stack app. The language-model analysis lives in the story text, not in 3D.
 - **Object:**
-  - Ledger tray: `walnut` RoundedBox 0.56 x 0.03 x 0.30, center (0, 0.04, 0).
-  - Three coin stacks on the tray at x = -0.17, 0, +0.17 (z 0): Income in `brass`, Expenses in `ceramicGraphite`, Budget in `frostedGlass`. Each coin is a cylinder radius 0.055, height 0.009, 24 segments; each stack holds 8 to 24 coins (top ≤ y 0.271). One instanced mesh per stack.
+  - Stand: `walnut` box 0.48 x 0.16 x 0.22, center (0, 0.105, 0), lifting the tray so the stacks sit in the middle of the case (F-045).
+  - Ledger tray: `walnut` RoundedBox 0.56 x 0.03 x 0.30, center (0, 0.20, 0), on the stand.
+  - Three coin stacks on the tray at x = -0.17, 0, +0.17 (z 0): Income in `brass`, Expenses in `ceramicGraphite`, Budget in `frostedGlass`. Each coin is a cylinder radius 0.065, height 0.011, 24 segments; each stack holds 8 to 24 coins (top ≤ y 0.479). One instanced mesh per stack.
 - **Motion (one):** every 6 s the three stacks ease to a new seeded set of counts over 1.2 s; coins appear or leave at the top with a 200 ms scale. Expenses never exceeds Income, and Budget always sits between them. Period 6 s.
 - **Materials:** walnut, brass, ceramicGraphite, frostedGlass.
 - **Triangles:** about 7,500 at the maximum count.
@@ -428,7 +429,7 @@ The `safe-sip` exhibit ("Tamper Evident") was removed on 2026-10-20 (F-035, Emek
 ### 4.8 sdsj: "The Round Table" (No. V1)
 - **Symbolizes:** Software Developers of St. John's, where Emeka is President: recurring monthly mini-hackathons that bring developers, designers and founders together to build.
 - **Object (fits the standard 0.65 m slot; the 1.4 m plinth override belongs to mun only):**
-  - Table: `walnut` top, cylinder radius 0.27, height 0.025, 64 segments, top surface at y 0.20, on a `brass` pedestal (cylinder radius 0.03, height 0.14) and a `brass` foot disc (radius 0.12, height 0.01).
+  - Table: `walnut` top, cylinder radius 0.27, height 0.025, 64 segments, top surface at y 0.36 (raised to the middle of the case, F-045), edged by a `brass` rim band (open cylinder radius 0.272, height 0.029), on a `brass` pedestal (cylinder radius 0.03, height 0.30) and a `brass` foot disc (radius 0.15, height 0.01).
   - Six laptops evenly spaced at 60°, at radius 0.19, facing the center: `ceramicGraphite` base 0.085 x 0.005 x 0.06 and lid 0.085 x 0.06 x 0.004 hinged at the back edge, open 105°. Each lid's inner face carries an `accentGlow` instance plane 0.075 x 0.05 (the screen).
   - Shared project: a `brass` cube 0.04 at the table center (static).
 - **Motion (one):** the screens glow in turn around the table: one rises to 1.4 while the previous falls to 0.25, 2 s per laptop. Period 12 s.
@@ -449,10 +450,10 @@ The `safe-sip` exhibit ("Tamper Evident") was removed on 2026-10-20 (F-035, Emek
 - **Object (MUN slot override, §5.3: x and z in [-0.55, 0.55], y in [0.10, 1.20] above the 0.6 m plinth):**
   - Base plate: `walnut` 0.60 x 0.03 x 0.60 (y 0.10 to 0.13).
   - Post: `brass` cylinder radius 0.02, y 0.13 to 0.53.
-  - Die: `ceramicGraphite` RoundedBox 0.36 x 0.035 x 0.36, radius 0.004, y 0.53 to 0.565. 48 `brass` pins (12 per edge, boxes 0.008 x 0.004 x 0.03, instanced). About 40 `brass` traces on the die top (boxes 0.004 wide, 0.0015 high, 0.04 to 0.16 long, seeded Manhattan pattern, instanced) and a `brass` core square 0.08 x 0.002 x 0.08.
+  - Die: `ceramicGraphite` RoundedBox 0.36 x 0.035 x 0.36, radius 0.004, y 0.53 to 0.565, its head leaning 30° toward the stop camera about the post top so its face reads (F-045). 48 `brass` pins (12 per edge, boxes 0.008 x 0.004 x 0.03, instanced). About 40 `brass` traces on the die top (boxes 0.004 wide, 0.0015 high, 0.04 to 0.16 long, seeded Manhattan pattern, instanced) and a `brass` core square 0.08 x 0.002 x 0.08.
   - Scaffold: a cube lattice 0.90 x 0.90 in plan, 5 tiers of 0.20 m from y 0.10 to 1.10, standing on the kit riser, which spans the scaffold footprint (0.96 m square, plinth top to the slot floor; F-040). Each tier has 4 corner uprights, 4 top rails and X-bracing on two opposite faces; rods are 0.012 m square boxes (instanced).
   - Tier state: `tiersRemaining = clamp(ceil(monthsUntilGraduation / 12), 0, 5)`, computed from the expected graduation month and the build date only (no start date needed; today 7 months, so 1 tier). Remaining tiers are the bottom ones, in `brass`; tiers already taken down stay as ghost outlines in `frostedGlass` instances at opacity 0.25. After graduation all 5 tiers are ghosts.
-- **Motion (one):** the die turns on its post, one revolution per 40 s. The scaffold is static.
+- **Motion (one):** the die turns on its post about its own (leaning) axis, one revolution per 40 s. The scaffold is static.
 - **Materials:** walnut, brass, ceramicGraphite, frostedGlass.
 - **Triangles:** about 2,100.
 - **Reduced-motion pose:** die at 30° yaw.

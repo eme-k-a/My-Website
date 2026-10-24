@@ -14,7 +14,7 @@
 |---|---|---|---|
 | Review average (156 cells) | **3.90** (608.5 / 156; desktop 3.92, Pixel 7 3.87) | at least 4.0 | **no** |
 | Lowest dimension | D6 Object read 3.76 (both); lowest per viewport D6 Pixel 7 3.69 | none below 3.5 | yes |
-| Emeka's sign-off on 10 screenshots | proposed in `stills/` (see below) | signed | pending |
+| Emeka's sign-off on 10 screenshots | **approved 2026-10-24** (all ten in `stills/`) | signed | yes |
 | Open P0 / P1 (not a G4 bar, reported) | 0 / **1** (new F-048) | | |
 | Open P2 / P3 | 4 (F-047, F-049, F-050, F-051) / 2 (F-052, F-053) | (not gating) | |
 
@@ -210,4 +210,4 @@ No invented facts in any shot: card, dialog and curator's note text match `src/c
 
 ## Next
 
-R0 options: (a) a scoped fix round for F-048 (P1, R4 framing) with F-049, F-050 and F-051 (all framing or title metrics, R4 and R3), plus a door composition pass (F-051, F-052), then G4 round 2; on this evidence those stops are where the missing 15.5 points are (both doors, mun phone, verafin and mysa D1, cfia). (b) Take the stills to Emeka now for the sign-off half of G4 while the fixes run; none of the 10 stills shows a finding. Rounds left for M4: 2.
+R0 options: (a) a scoped fix round for F-048 (P1, R4 framing) with F-049, F-050 and F-051 (all framing or title metrics, R4 and R3), plus a door composition pass (F-051, F-052), then G4 round 2; on this evidence those stops are where the missing 15.5 points are (both doors, mun phone, verafin and mysa D1, cfia). (b) Done: Emeka approved the 10 stills on 2026-10-24, so the sign-off half of G4 holds; G4 now waits only on the 4.0 average. Rounds left for M4: 2.

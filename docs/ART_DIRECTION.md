@@ -56,7 +56,7 @@ Every row of EXPERIENCE §7.2. CSS names are the EXPERIENCE names; `tokens.ts` k
 | `--graphite` | `color.graphite` | `#34343B` | Graphite ceramic |
 | `--walnut` | `color.walnut` | `#4E3322` | Walnut |
 | `--frost` | `color.frost` | `#DDE3E4` | Frosted glass tint |
-| `--ceiling-slot` | `color.ceilingSlot` | `#2A2622` | Ceiling light slot |
+| `--ceiling-slot` | `color.ceilingSlot` | `#6A5A48` | Ceiling light slot (WP-26: a warm leading line down the aisle, `#2A2622` until G3) |
 | `--light-0` | `light.ramp[0]` | `#FFF4E8` | Light ramp, newest |
 | `--light-1` | `light.ramp[1]` | `#FFE9D2` | Light ramp |
 | `--light-2` | `light.ramp[2]` | `#FFDDB8` | Light ramp |
@@ -178,7 +178,7 @@ Weights: `--weight-regular` 400, `--weight-medium` 500. No other weights or styl
 
 EXPERIENCE §7.5, §6.8 and §6.9; ARCHITECTURE §8.1 and §8.2. Values are tokens under `tokens.light` unless noted. The recipe is fixed per tier at boot; only DPR adapts at runtime.
 
-**Ambient.** One hemisphere light: sky `#1A1C22` (`light.hemiSky`), ground `#0B0B0D` (`light.hemiGround`), intensity 0.15 (`light.hemiIntensity`).
+**Ambient.** One hemisphere light: sky `#1A1C22` (`light.hemiSky`), ground `#0B0B0D` (`light.hemiGround`), intensity 0.22 (`light.hemiIntensity`; 0.15 until WP-26).
 
 **Real spotlights.**
 - Count fixed at boot: **3 on high, 1 on medium and 1 on low.** They never change count at runtime.
@@ -203,9 +203,9 @@ Every target keeps its pool and wall wash whether or not a real light is assigne
 
 **Wall wash.** One shared 256 px "scallop" texture on the wall bay behind each target, tinted by the target temperature, with panel seams every 2 m baked in. It is the `wall` material's `lightMap` (§5).
 
-**Environment.** drei `<Environment frames={1} resolution={256}>` built from Lightformers only: a ceiling strip (`light-0`, intensity 2, 0.3 x 60 m) along the centerline at y 4.9, two side panels (`light-1`, intensity 0.6) and one lobby panel. No HDRI files.
+**Environment.** drei `<Environment frames={1} resolution={256}>` built from Lightformers only: a ceiling strip (`light-0`, intensity 2, 0.3 x 60 m) along the centerline at y 4.9, two side panels (`light-1`, intensity 1.2, 40 x 3.2 m, centered at x ±10, y 1.4) and one lobby panel (`light-0`, intensity 1.2, 14 x 3.2 m at z 8, y 1.4). No HDRI files. WP-26 moved the side and lobby panels down to the horizon (they were at y 5 and 2.5): metals reflect mostly horizontal directions, and with the panels above eye level brass mirrored a black horizon and read dark brown (G3 F-045). Values live in `LIGHTFORMERS` (`environment/Lighting.tsx`).
 
-**Fog.** `FogExp2`, color `#0B0B0D`, density 0.045 (`light.fogDensity`). Fog factor is 1 - exp(-(0.045 d)^2): the next case at 12 m is about 25% fogged (clearly visible); the one after at 24 m is about 69% fogged (a faint pool).
+**Fog.** `FogExp2`, color `#0B0B0D`, density 0.038 (`light.fogDensity`; 0.045 until WP-26). Fog factor is 1 - exp(-(0.038 d)^2): the next case at 12 m is about 19% fogged (clearly visible); the one after at 24 m is about 56% fogged (a faint pool, now visible through the lobby arch).
 
 **The age ramp.** `light-0` `#FFF4E8` (newest) to `light-3` `#FFCF9C` (oldest), `tokens.light.ramp`. For main work exhibit i of n, t = i / (n - 1) (0 when n = 1); spotlight, pool and wall-wash colors sample the ramp at t (stops at 0, 1/3, 2/3, 1, linear RGB interpolation). A wing uses its door: t = (k + 0.5) / (n - 1) for `after = w[k]`. Lobby and portrait use `light-0`; Foundations uses `light-3`; the desk uses `light-1`. Placard paper uses the same t from `--paper` to `--paper-old`.
 
@@ -220,6 +220,21 @@ Every target keeps its pool and wall wash whether or not a real light is assigne
 | mun, certifications | 1 | `light-3` |
 | lobby, portrait | | `light-0` |
 | desk | | `light-1` |
+
+**Per-stop recipe (WP-26).** `environment/lightRecipe.ts` holds one row per stop id (data, not hand-placed lights). Each row scales a target's light without changing its temperature: `spot` (share of `light.spotIntensity`), `pool` (baked pool peak alpha), `wash` (wall-wash bay strength), `beam` (beam cone strength). Door rows hold only the threshold pool. Medium and low have one real light, so their pools gain +0.06 alpha (capped at 0.95) and their washes x1.15; low has no cones. The wall-wash shell base is 0.06 (`WALL_WASH_BASE`, 0.04 until WP-26), title bays are the title width plus 2.6 m (`WASH_TITLE_PAD`, 1 m until WP-26), and the wall vitrine's bay runs 1.2 m past each side of its backing panel (`WASH_PANEL_MARGIN`). The certifications wall panels use a clone of `walnut` at 45% tone (`WALL_PANEL_TONE`, `Fixtures.tsx`).
+
+| Stop | spot | pool | wash | beam | Why |
+|---|---|---|---|---|---|
+| lobby (portrait) | 0.35 | 0.85 | 0.45 | 0.4 | The portrait is unlit (basic material), so its spot only painted a grey wedge on the dark front wall (G3 D1) |
+| verafin | 1 | 0.9 | 1.2 | 1 | What the lobby sees through the arch |
+| projects-door, volunteer-door | | 0.42 | | | The threshold invites (spec floor 0.35) |
+| mysa | 1 | 0.85 | 1.2 | 1 | The left half of the desktop frame is its own aisle wall (G3 D1) |
+| wailo | 1 | 0.85 | 1.1 | 1 | |
+| cfia | 1 | 0.85 | 1.15 | 1 | Same aisle-wall framing as mysa |
+| certifications | 0.5 | 0.7 | 0.7 | 0.5 | F-043: the walnut panel was the hottest surface in the building |
+| klarup, finance-tracker, sdsj, mun, desk | 1 | 0.85 | 1 | 1 | Spec values |
+
+Values are for high; medium and low add the tier lift above.
 
 **Tiers.**
 
@@ -245,7 +260,7 @@ Every target keeps its pool and wall wash whether or not a real light is assigne
 
 | Name | Exhibits | Class | Parameters | Texture slots |
 |---|---|---|---|---|
-| `brass` | yes | MeshStandardMaterial | color `--brass-metal` `#B08D57`, metalness 1, roughness 0.35, envMapIntensity 1.0 | |
+| `brass` | yes | MeshStandardMaterial | color `--brass-metal` `#B08D57`, metalness 0.9, roughness 0.42, envMapIntensity 1.0 (WP-26: metalness 1 and roughness 0.35 read dark brown at tier medium, G3 F-045) | |
 | `frostedGlass` | yes | MeshPhysicalMaterial | color `--frost` `#DDE3E4`, roughness 0.55, metalness 0, transmission 0, transparent, opacity 0.55, depthWrite false, envMapIntensity 0.8 | |
 | `walnut` | yes | MeshStandardMaterial | color `--walnut` `#4E3322`, roughness 0.55, metalness 0 | `map`: seeded 256 px walnut grain (library) |
 | `ceramic` | yes | MeshStandardMaterial | color `--ceramic` `#E6E1D8`, roughness 0.85, metalness 0 | |
@@ -258,7 +273,7 @@ Every target keeps its pool and wall wash whether or not a real light is assigne
 | `plinth` | kit | MeshStandardMaterial | color `--plinth` `#1F1F24`, roughness 0.9 | |
 | `beam` | kit | MeshBasicMaterial | additive, transparent, opacity 0.035, depthWrite false, color `light-0` by default (the kit tints each cone to its target temperature) | |
 | `shadowDecal` | kit | MeshBasicMaterial | multiply blending with premultiplied alpha, transparent, opacity 0.45, depthWrite false, color `--ink` | `map`: 64 px radial texture (library) |
-| `ceilingSlot` | kit | MeshBasicMaterial | color `--ceiling-slot` `#2A2622` | |
+| `ceilingSlot` | kit | MeshBasicMaterial | color `--ceiling-slot` `#6A5A48` | |
 | `portrait` | kit | MeshBasicMaterial | | `map`: 512 px headshot, color and duotone (kit) |
 
 **High-tier floor.** The kit builds drei's `MeshReflectorMaterial` from `floorReflectorParams`: resolution 512, blur [300, 100], mixBlur 1, mixStrength 1.5, roughness 0.8, metalness 0.5, mirror 0, color `--floor`, plus the pool lightMap. The library never builds it.

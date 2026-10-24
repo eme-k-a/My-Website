@@ -154,7 +154,9 @@ describe('createMaterialLibrary', () => {
     expect(library.accentGlow.emissive.getHex()).toBe(hex(tokens.color.signal));
     expect(library.accentGlow.emissiveIntensity).toBe(0.15);
     expect(library.accentGlow.toneMapped).toBe(true);
-    expect(library.brass.metalness).toBe(1);
+    // WP-26: brass keeps a little diffuse and a wider highlight, so it reads as brass at medium.
+    expect(library.brass.metalness).toBe(0.9);
+    expect(library.brass.roughness).toBe(0.42);
     expect(library.frostedGlass.opacity).toBe(0.55);
     expect(library.caseGlass.opacity).toBe(0.12);
     expect(library.beam.blending).toBe(AdditiveBlending);

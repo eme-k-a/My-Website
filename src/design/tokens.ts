@@ -29,7 +29,7 @@ export const tokens = {
     graphite: '#34343B',
     walnut: '#4E3322',
     frost: '#DDE3E4',
-    ceilingSlot: '#2A2622',
+    ceilingSlot: '#6A5A48',
     duoShadow: '#16161A',
     duoLight: '#F2EDE4',
   },
@@ -41,12 +41,12 @@ export const tokens = {
     ramp: ['#FFF4E8', '#FFE9D2', '#FFDDB8', '#FFCF9C'], // light-0 (newest) to light-3 (oldest)
     hemiSky: '#1A1C22',
     hemiGround: '#0B0B0D',
-    hemiIntensity: 0.15,
+    hemiIntensity: 0.22,
     spotAngle: 0.38,
     spotPenumbra: 0.6,
     spotDecay: 2,
     spotIntensity: 40, // candela, frozen by R2 in WP-11
-    fogDensity: 0.045,
+    fogDensity: 0.038,
     poolRadius: 1.6,
     poolAlpha: 0.85,
     doorPoolRadius: 1.2,

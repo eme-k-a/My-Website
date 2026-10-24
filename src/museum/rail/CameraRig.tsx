@@ -30,6 +30,7 @@ import { registerNavProvider, testParams } from '../../app/testHooks';
 import type { ExhibitId, StopId, TrackId } from '../../content/ids';
 import { tokens } from '../../design/tokens';
 import { LAYOUT } from '../../overlay/model';
+import { caseBox, EDGE_THICKNESS, slotMatrix, slotVariant } from '../exhibits/_kit/anatomy';
 import { slotPlacard } from '../exhibits/_kit/placard';
 import { reportCameraTarget } from '../quality/StatsProbe';
 import { aimDolly, createDolly, stepDolly } from './dolly';
@@ -43,6 +44,8 @@ import {
   fovFor,
   framingFor,
   stopWeightAt,
+  titleBottomCorners,
+  titleClearDolly,
   titleTopCorners,
   topTangent,
   viewOffsetFor,
@@ -59,6 +62,7 @@ import {
 } from './parallax';
 import { travelTo } from './navigation';
 import { easeInOutCubic, finishGlide, progress, rig, setWaker, wake } from './progress';
+import type { Vec3 } from './layout';
 import { buildRails, poseAt } from './rail';
 import { railNeedsFrame, rigStep, SETTLE, settledStop } from './settle';
 
@@ -185,6 +189,40 @@ const wingTitleTan = new Map<string, number>(
       return Number.isFinite(tan) ? [[slot.id as string, tan] as const] : [];
     }),
 );
+
+/**
+ * The dialog dolly at each wing exhibit (F-042, framing.ts `titleClearDolly`): the longest move,
+ * up to `dialogDollyM`, that keeps the wall title's last line above the case top (its brass edge
+ * included). Main-aisle exhibits are not listed and keep the full dolly.
+ */
+const wingDolly = new Map<string, number>(
+  LAYOUT.slots
+    .filter((slot) => slot.track !== 'main' && slot.mount === 'plinth')
+    .flatMap((slot) => {
+      const pose = LAYOUT.tracks[slot.track]?.stops.find((s) => s.id === slot.id);
+      if (!pose) return [];
+      const glass = caseBox(slotVariant(slot));
+      const frame = slotMatrix(slot);
+      const topY = glass.center[1] + glass.size[1] / 2 + EDGE_THICKNESS / 2;
+      const tops = [-1, 1].flatMap((sx) =>
+        [-1, 1].map(
+          (sz) =>
+            new Vector3(
+              glass.center[0] + (sx * glass.size[0]) / 2,
+              topY,
+              glass.center[2] + (sz * glass.size[2]) / 2,
+            )
+              .applyMatrix4(frame)
+              .toArray() as Vec3,
+        ),
+      );
+      const bottoms = titleBottomCorners(slotPlacard(LAYOUT, slot));
+      const max = tokens.camera.dialogDollyM;
+      return [[slot.id as string, titleClearDolly(pose.camera, pose.look, bottoms, tops, max)]];
+    }),
+);
+/** The dolly scale of the story being shown (kept while the dolly runs back after a close). */
+let dollyScale = 1;
 
 /**
  * The wing head (the wing chip and the exit control, ProgressRail): its bottom in CSS px, measured
@@ -452,6 +490,11 @@ export function CameraRig() {
     lastForward.copy(forward);
 
     // The dialog dolly: toward the case along the gaze, never closer than 0.5 m to it.
+    // At a wing exhibit it is shortened so the wall title stays whole above the case (F-042).
+    if (state.openId !== null) {
+      const max = tokens.camera.dialogDollyM;
+      dollyScale = max > 0 ? (wingDolly.get(state.openId) ?? max) / max : 1;
+    }
     aimDolly(dolly, state.openId !== null, reduced);
     const dollying = stepDolly(dolly, now);
     camera.position.copy(position);
@@ -459,7 +502,10 @@ export function CameraRig() {
       toCase.subVectors(look, position);
       const room = Math.max(0, toCase.length() - 0.5);
       if (room > 0)
-        camera.position.addScaledVector(toCase.normalize(), Math.min(dolly.value, room));
+        camera.position.addScaledVector(
+          toCase.normalize(),
+          Math.min(dolly.value * dollyScale, room),
+        );
     }
     const lookDistance = camera.position.distanceTo(look);
 

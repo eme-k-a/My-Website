@@ -190,11 +190,11 @@ Gate G4 needs an average of at least 4.0, no dimension below 3.5, and Emeka's si
 
 Emeka said "go" for M4 after G3. Four builders run as separate cloud sessions, each pushing only to its own branch. R0 polls them about every 90 minutes with an "M4 check-in" scheduled message, because child sessions do not report back.
 
-| WP | Scope | Branch |
-|---|---|---|
-| WP-26 | Lighting and atmosphere, F-043, brass at medium, mood notes | `claude/m4-wp-26` |
-| WP-27 | Mobile and onboarding, F-046, sdsj 360 x 640 card | `claude/m4-wp-27` |
-| WP-28 | Asset pass: font subsets, preload, credits, transfer spec | `claude/m4-wp-28` |
-| F-M4a | Exhibit read, grounding and framing: F-040 to F-042, F-044, F-045 | `claude/m4-f-m4a` |
+| WP | Scope | Session | Branch |
+|---|---|---|---|
+| WP-26 | Lighting and atmosphere, F-043, brass at medium, mood notes | session_01Uuq5imcpDHnnu66econpQ6 | `claude/m4-wp-26` |
+| WP-27 | Mobile and onboarding, F-046, sdsj 360 x 640 card | session_01StRh2HFpnS7dr2XHwVqXR4 | `claude/m4-wp-27` |
+| WP-28 | Asset pass: font subsets, preload, credits, transfer spec | session_013MaHaucLVSCbXU8ujtxFy2 | `claude/m4-wp-28` |
+| F-M4a | Exhibit read, grounding and framing: F-040 to F-042, F-044, F-045 | session_01NCDqgD8piiMcgxgg2YWSnS | `claude/m4-f-m4a` |
 
-Session ids are recorded in the next docs commit. Then: merge by cherry-pick, one CI baseline refresh, the G4 review, and Emeka's 10-screenshot sign-off.
+All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refresh, the G4 review, and Emeka's 10-screenshot sign-off.

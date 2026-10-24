@@ -385,8 +385,8 @@ There is no trap: the wing has two stops, the top of the wing track is its first
 - **Symbolizes:** a gamified, collaborative task app where people hold each other accountable; the small crate is the standalone Android build shipped through Expo Application Services.
 - **Object:**
   - Base tray: `walnut` RoundedBox 0.60 x 0.03 x 0.42, center (0, 0.04, 0).
-  - Steps: 5 `ceramic` (bone) tiles, RoundedBox 0.11 x 0.03 x 0.11, radius 0.01. Tile i (0 to 4) centered at x = -0.22 + 0.11 i, y = 0.06 + 0.075 i, z = 0.10 - 0.05 i, each on a `brass` post (cylinder radius 0.004) down to the tray.
-  - Check marks: on each tile top, a check made of two `accentGlow` bars (0.035 and 0.06 long, 0.008 square section, at 45° and -45°), one material instance per tile.
+  - Steps: 5 `ceramic` (bone) tiles, RoundedBox 0.11 x 0.03 x 0.11, radius 0.01. Tile i (0 to 4) centered at x = -0.22 + 0.11 i, y = 0.085 + 0.075 i (raised so tile 0 also stands on a visible post; approved by Emeka 2026-10-24), z = 0.10 - 0.05 i, each on a `brass` post (cylinder radius 0.004) down to the tray.
+  - Check marks: on each tile top, a check made of two `accentGlow` bars (0.035 and 0.06 long, 0.012 square section (thickened so the checks read from the stop camera; approved by Emeka 2026-10-24), at 45° and -45°), one material instance per tile.
   - The team: 3 `brass` spheres radius 0.018, resting together on the top tile (static).
   - Build crate: `walnut` cube 0.09 with `brass` corner strips, at (0.22, 0.10, 0.15), blank.
 - **Motion (one):** the checks light one by one up the stairs, one every 1.6 s (rest 0.1 to lit 1.4 over 0.5 s), all five hold lit for 2 s, then reset together over 1 s. Period 10 s.

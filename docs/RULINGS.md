@@ -124,3 +124,8 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - Move the wing title measurements into a module without font imports, so `placard.ts` and `rail-input` (g) share it.
   - The EXPERIENCE §5.4 rewrite.
 - **Gate G2 passed (Emeka, 2026-10-20):** he approved the slice stills (`review/runs/2026-10-20-g2r3/stills/`) and the preview at CI run 60 (`5ba1b84`). M2 is complete.
+- **M3 decisions (2026-10-21 to 2026-10-24):**
+  - KlarUp's staircase is raised (tile i at y = 0.085 + 0.075 i) and its check bars are 0.012 square. Emeka approved this in the WP-22 session; EXPERIENCE §4.5 is updated.
+  - Brass reads dark at tier medium (finance-tracker coins, klarup crate strips, Verafin cartridges; G3 F-045). This goes to the M4 lighting pass (WP-26, R2 with R7), not to the exhibits.
+  - F-M3a: the draw-call budget counts the arrival frame, including shadow bakes, and every stop is within budget.
+- **Builder sessions:** the seven finished M3 cloud sessions (WP-20 to WP-25 and F-M3) were archived on 2026-10-24. Their branches `claude/m3-*` stay on GitHub.

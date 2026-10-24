@@ -66,8 +66,8 @@ export const materialSpecs = {
     exhibit: true,
     colorToken: 'brassMetal',
     color: c.brassMetal,
-    metalness: 1,
-    roughness: 0.35,
+    metalness: 0.9,
+    roughness: 0.42,
     envMapIntensity: 1,
   },
   frostedGlass: {

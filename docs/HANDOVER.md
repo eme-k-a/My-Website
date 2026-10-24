@@ -207,3 +207,5 @@ All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refre
 
 **G4 review started (14:36 UTC, Emeka said "go"):** R11 runs in session_01EyjuW51kYuRu41kv7GpZNa on `claude/m4-g4r1`, writing `review/runs/2026-10-24-g4r1/` (scorecard, scores, findings, 10 sign-off stills). R0 cherry-picks it, then sends Emeka the stills if G4 passes, or plans a scoped fix round if it does not.
 
+**G4 round 1 (15:40 UTC):** the average is 3.90 against the 4.0 bar. Emeka approved the 10 stills (recorded in ART_DIRECTION §10). The review session is merged and archived. Next: one fix session, F-M4b (brief `docs/wp/F-M4b.md`: F-048, the doors with F-051, F-049, F-050, F-052 and F-053), then G4 round 2. It starts on Emeka's go-ahead.
+

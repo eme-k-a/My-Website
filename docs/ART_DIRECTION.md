@@ -383,4 +383,13 @@ Empty until gate G2 (after WP-19) and gate G4 (after the polish round). Each row
 | Gate | Date | Stop | Viewport and tier | Screenshot path | Approved by | Notes |
 |---|---|---|---|---|---|---|
 | G2 | | | | | | |
-| G4 | | | | | | |
+| G4 | 2026-10-24 | lobby | desktop 1440 x 900, high | `review/runs/2026-10-24-g4r1/stills/01-lobby-desktop.png` | Emeka ("approved", G4 round 1 session) | The arrival: hero, arch, ceiling line and the first lit case. |
+| G4 | 2026-10-24 | lobby | Pixel 7, medium | `review/runs/2026-10-24-g4r1/stills/02-lobby-pixel7.png` | Emeka ("approved", G4 round 1 session) | The phone arrival and recruiter fast path, with the admission ticket. |
+| G4 | 2026-10-24 | verafin | desktop, high | `review/runs/2026-10-24-g4r1/stills/03-verafin-desktop.png` | Emeka ("approved", G4 round 1 session) | The current exhibit; brass reads as brass. |
+| G4 | 2026-10-24 | wailo | desktop, high | `review/runs/2026-10-24-g4r1/stills/04-wailo-desktop.png` | Emeka ("approved", G4 round 1 session) | The best main-aisle stop. |
+| G4 | 2026-10-24 | klarup | desktop, high | `review/runs/2026-10-24-g4r1/stills/05-klarup-desktop.png` | Emeka ("approved", G4 round 1 session) | The Projects wing: glow arch and raised staircase. |
+| G4 | 2026-10-24 | sdsj | desktop, high | `review/runs/2026-10-24-g4r1/stills/06-sdsj-desktop.png` | Emeka ("approved", G4 round 1 session) | The Volunteer wing; replaces mysa, whose left half is still near black (F-052). |
+| G4 | 2026-10-24 | finance-tracker | Pixel 7, medium | `review/runs/2026-10-24-g4r1/stills/07-finance-tracker-pixel7.png` | Emeka ("approved", G4 round 1 session) | A wing stop on the phone after F-039 and WP-27. |
+| G4 | 2026-10-24 | certifications | desktop, high | `review/runs/2026-10-24-g4r1/stills/08-certifications-desktop.png` | Emeka ("approved", G4 round 1 session) | The wall vitrine after F-043: the medals carry the light. |
+| G4 | 2026-10-24 | desk | desktop, high | `review/runs/2026-10-24-g4r1/stills/09-desk-desktop.png` | Emeka ("approved", G4 round 1 session) | The ending: the front desk under one beam. |
+| G4 | 2026-10-24 | wailo (dialog) | desktop, high | `review/runs/2026-10-24-g4r1/stills/10-wailo-dialog-desktop.png` | Emeka ("approved", G4 round 1 session) | A story dialog over the dimmed gallery. |

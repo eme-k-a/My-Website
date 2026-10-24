@@ -1,0 +1,70 @@
+{
+  "wp": "F-039",
+  "role": "R4 Camera + R6 Overlay",
+  "status": "done",
+  "branch": "wp/F-039",
+  "commits": [
+    "096ffe3 fix(F-039): frame phone wing stops from the measured wing head",
+    "<this commit> docs(review): F-039 report"
+  ],
+  "changedFiles": [
+    "src/museum/rail/framing.ts",
+    "src/museum/rail/framing.test.ts",
+    "src/museum/rail/CameraRig.tsx",
+    "tests/e2e/rail-input.spec.ts",
+    "review/reports/F-039.json"
+  ],
+  "previewUrl": null,
+  "productionUrl": null,
+  "approach": "Preferred R4 approach. On portrait, CameraRig measures the wing head (the parent of the exit control: chip plus 'Return to the aisle', ResizeObserver and resize, fallback 140 px) and framing.ts wingPortraitY puts the wall title's top WING_HEAD_CLEARANCE (8 px) under its bottom. The title top is the number's cap line across the widest line, from slotPlacard (the placard the wall draws), as a tangent from the stop pose (topTangent), so the shift is exact for any FOV. The point never rises above the 36% portrait point and never drops below 50%. It blends over the half stop next to each wing exhibit (stopWeightAt), so the wing door stops (F-038) and every main stop keep their framing; desktop is untouched (aspect >= 1).",
+  "acceptance": [
+    {
+      "id": "spec-extended",
+      "criterion": "rail-input (g) 'at each wing stop' runs on pixel7 and in a 360 x 640 portrait context; with the fix disabled the new check fails",
+      "command": "PORT=4176 npx playwright test rail-input --grep 'at each wing stop' --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "The check now reads the live framing: the title boxes are projected with the plain framing and moved by the offset between screenPos(id) (the real projection of the hit-box center) and the same center projected that way, so it does not repeat the fix. Against the unfixed build (0899c19): 2 failed (pixel7 and 360 x 640), desktop passed. pixel7: klarup exit control {16, 95.6, 189.4, 139.6} over the title {181.1, 135.6, 231.2, 180.7}; 360 x 640: klarup exit control over the title {140.2, 130.6, 221.0, 159.5}. With the fix: all three pass."
+    },
+    {
+      "id": "probe",
+      "criterion": "probe-wing-hud.mjs method reports 0 overlapping pixels at all six rows",
+      "command": "node probe-wing-hud.mjs (local copy that also logs the chip, the card top and screenPos) http://localhost:4176 <scratch>",
+      "result": "pass",
+      "evidence": "brassPxInExit before -> after: pixel7 klarup 0 -> 0, finance-tracker 800 -> 0, sdsj 0 -> 0; 360x640 klarup 514 -> 0, finance-tracker 2301 -> 0, sdsj 2290 -> 0. Brass pixels in the wing chip are 0 at all six rows after the fix. The exhibit's screenPos y moves 376.7 -> 383.9 (klarup), 376.7 -> 416.7 (finance-tracker), 378.7 -> 415.8 (sdsj) on Pixel 7, and 287.3 -> 327.8, 287.3 -> 352.9, 288.8 -> 352.2 at 360 x 640. Before numbers reproduce review/runs/2026-10-21-g3r1/probe-wing-hud.json exactly."
+    },
+    {
+      "id": "captures",
+      "criterion": "Re-take the captures at the three wing stops on pixel7 and at 360 x 640 and look at them",
+      "command": "the probe screenshots (probe-<stop>-pixel7.png, probe-<stop>-small.png)",
+      "result": "pass",
+      "evidence": "All six read the number and the organization whole under 'Return to the aisle' with clear ink between: finance-tracker on Pixel 7 reads P2 and PERSONAL FINANCE / TRACKER whole, the case and plinth above the card. sdsj on Pixel 7: V1 and SOFTWARE DEVELOPERS / OF ST. JOHN'S whole, case and round table whole above the card. 360 x 640: klarup (P1 KLARUP) and finance-tracker whole with the case above the card; sdsj reads V1 and both organization lines whole, but its tall card (top y 327) now covers the case floor and the round table's pedestal (see deviations). The captures were taken locally and are not committed (review/runs is outside this brief's globs)."
+    },
+    {
+      "id": "unit",
+      "criterion": "Framing math",
+      "command": "npx vitest run --project unit src/museum/rail/framing.test.ts",
+      "result": "pass",
+      "evidence": "New 'wing framing (F-039)' tests: topTangent matches three.js projection; stopWeightAt; wingPortraitY bounds (never above 0.36, at most 0.5); framingFor applies it on portrait only and blends by weight; at 412 x 839 and 360 x 640 every wing title's top projects at least 148 px (head bottom 140 + 8) through a framed three.js camera."
+    },
+    {
+      "id": "no-regression",
+      "criterion": "npm run verify and npm run build pass; camera, rail-input, wings, dialog and keyboard specs on desktop and pixel7 (F-020, F-036, F-037, F-038, main case framing)",
+      "command": "npm run verify; npm run build; PORT=4176 npx playwright test camera rail-input wings dialog keyboard --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "verify: lint and typecheck clean, 871 unit tests in 77 files pass. build: budgets ok, check-copy ok. Specs: 69 passed, 0 failed in 15.1 min (project-gated tests skipped), including camera (f) desk at pixel7 and 360 x 640 (F-020), rail-input (g) door transom titles on desktop and pixel7 (F-038) and the new wing-stop checks."
+    },
+    {
+      "id": "visual",
+      "criterion": "Visual baselines",
+      "command": "CI update-baselines",
+      "result": "deferred",
+      "evidence": "stop-klarup-pixel7, stop-finance-tracker-pixel7 and stop-sdsj-pixel7 change (the wing framing drops on phones); R0 regenerates them in CI. Desktop wing baselines and the door baselines should not change."
+    }
+  ],
+  "deviations": [
+    "At 360 x 640 sdsj the band between the wing head (bottom 140) and the tall V1 card (top 327) is shorter than the title-to-case-floor span (about 207 px at FOV 68), so the title wins as the brief requires: the title sits 8 px under the head and the card covers the case floor and the round table's pedestal (the table top still shows). Klarup and finance-tracker at 360 x 640 and all three on Pixel 7 keep the whole case above the card. A further fix needs a shorter phone wing card or the compact wing head (R6 alternative); not done here.",
+    "rail-input (g) at the wing stops no longer assumes the framing: it reads the live shift through screenPos. The F-038 door check still projects with the plain framing, which the wing framing leaves unchanged at the doors.",
+    "CameraRig imports slotPlacard from src/museum/exhibits/_kit/placard.ts (read only) so the framing uses the title the wall actually draws."
+  ],
+  "depsRequest": []
+}

@@ -148,7 +148,7 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 96px;
+  width: 112px;
   border-left: 1px dashed var(--border-secondary);
 }
 
@@ -177,7 +177,7 @@
 .stamp {
   composes: label from './ui.module.css';
   overflow: hidden;
-  max-width: 84px;
+  max-width: 100px;
   padding: 2px 5px;
   border: 1px solid currentColor;
   border-radius: var(--radius);

@@ -31,20 +31,11 @@
   color: var(--ink);
 }
 
-.primary:hover {
-  background: var(--brass-hi);
-  border-color: var(--brass-hi);
-}
-
 .secondary {
   composes: control;
   background: transparent;
   border: 1px solid var(--border-secondary);
   color: var(--text);
-}
-
-.secondary:hover {
-  border-color: var(--brass-hi);
 }
 
 /* On paper cards: ink fill, paper label (EXPERIENCE §5.8), focus ring in --paper-ink. */
@@ -55,8 +46,21 @@
   color: var(--paper);
 }
 
-.paperPrimary:hover {
-  background: var(--graphite);
+/* Hover styles only where a pointer can hover: on touch screens a tap left them stuck on (and a
+   test pointer parked over "Return to the aisle" changed the phone canvas shot). */
+@media (hover: hover) {
+  .primary:hover {
+    background: var(--brass-hi);
+    border-color: var(--brass-hi);
+  }
+
+  .secondary:hover {
+    border-color: var(--brass-hi);
+  }
+
+  .paperPrimary:hover {
+    background: var(--graphite);
+  }
 }
 
 .paperPrimary:focus-visible {

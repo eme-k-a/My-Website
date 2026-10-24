@@ -90,8 +90,10 @@
   text-decoration-color: rgba(26, 26, 30, 0.35);
 }
 
-.storyLink:hover {
-  text-decoration-color: currentColor;
+@media (hover: hover) {
+  .storyLink:hover {
+    text-decoration-color: currentColor;
+  }
 }
 
 .role {

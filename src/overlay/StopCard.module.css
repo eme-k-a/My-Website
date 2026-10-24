@@ -76,7 +76,14 @@
   line-height: var(--lh-title);
 }
 
+/*
+ * The artwork title and the door links are 44 px targets (EXPERIENCE §7.8): the padding grows the
+ * link's box and the negative margin gives the space back, so the title line keeps its height.
+ */
 .storyLink {
+  display: inline-block;
+  padding: 10px 0;
+  margin: -10px 0;
   color: inherit;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
@@ -177,6 +184,11 @@
 }
 
 .doorLinks .storyLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding: 0;
+  margin: 0;
   font-size: var(--type-body);
 }
 
@@ -269,7 +281,12 @@
   visibility: hidden;
 }
 
-/* Phones: Medium and Caption are hidden below 480 px (EXPERIENCE §5.8, §9.2). */
+/*
+ * Phones: Medium and Caption are hidden below 480 px (EXPERIENCE §5.8, §9.2). The card stays short
+ * so the case above it is never covered, down to 360 x 640 (G3: the sdsj card met the case floor).
+ * The reserved "Installation in progress" line moves out of the flow, beside "Read the story", so
+ * it costs no height and still never shifts the card.
+ */
 @media (max-width: 479px) {
   .medium,
   .caption {
@@ -277,15 +294,37 @@
   }
 
   .card {
-    padding: 16px 18px;
+    padding: 14px 18px 16px;
+  }
+
+  .numberRow {
+    margin-bottom: 6px;
   }
 
   .title {
     font-size: var(--type-title-phone);
   }
 
+  .role {
+    margin-top: 6px;
+  }
+
   .actions {
     margin-top: 12px;
+  }
+
+  .status {
+    position: absolute;
+    right: 18px;
+    bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    max-width: calc(100% - 210px);
+    min-height: var(--target-min);
+    margin: 0;
+    line-height: 1.2;
+    text-align: right;
   }
 }
 

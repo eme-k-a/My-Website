@@ -70,7 +70,14 @@
   pointer-events: none;
 }
 
+/*
+ * Year ticks sit at the floor strips' progress (EXPERIENCE §6.10). A tick closer than --tick-clear
+ * to a stop dot's center (`--gap`, a fraction of the 60vh line) is nudged away from it until it
+ * clears the 9 px dot, the door stub and its own label's half height (F-046: 2025 crossed the
+ * volunteer-door dot, 2023 the cfia dot).
+ */
 .tick {
+  --tick-clear: 8px;
   position: absolute;
   top: calc(var(--at) * 100%);
   left: 18px;
@@ -78,7 +85,9 @@
   align-items: center;
   gap: 6px;
   padding-left: 12px;
-  transform: translateY(-50%);
+  transform: translateY(
+    calc(-50% + var(--dir, 1) * max(0px, var(--tick-clear) - var(--gap, 1) * 60vh))
+  );
   color: var(--text-2);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
@@ -216,8 +225,14 @@
     display: none;
   }
 
+  /*
+   * Phones and short windows: in a wing, "Return to the aisle" takes the year chip's place in the
+   * HUD row (EXPERIENCE §9.2), level with "PDF" and "Classic", and the wing chip sits under it.
+   * Keeping the head this short leaves the wing framing room for the wall title and the whole case
+   * above the card (F-039, CameraRig measures the head's bottom; G3, sdsj at 360 x 640).
+   */
   :global(html[data-mode='museum']) .rail:not([data-track='main']) {
-    top: calc(max(8px, env(safe-area-inset-top)) + 56px);
+    top: max(8px, env(safe-area-inset-top));
     left: max(16px, env(safe-area-inset-left));
     right: auto;
     display: flex;
@@ -234,6 +249,27 @@
   }
 
   .wingHead {
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+/* Portrait phones: the wing chip goes under the exit control, clear of "PDF" and "Classic". */
+@media (max-width: 639px) {
+  .wingHead {
+    flex-direction: column-reverse;
     align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+/* Narrow phones: the exit control wraps to two lines to fit beside "PDF" and "Classic". */
+@media (max-width: 399px) {
+  .wingHead button {
+    max-width: 132px;
+    line-height: 1.15;
+    text-align: left;
+    white-space: normal;
   }
 }

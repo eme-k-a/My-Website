@@ -205,3 +205,5 @@ All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refre
 
 **M4 build complete (10:12 UTC):** CI run 126 is green at `c0fd2e2`, and its deploy put all of M4 on the preview. Next: the G4 review (R11, as in G3: `review/runs/<date>-g4r1/`, scorecard, `scores.json`, findings), then Emeka signs off 10 screenshots. The review waits on Emeka's go-ahead, because the weekly usage limit is at its warning level (it resets 2026-10-27 02:00 UTC).
 
+**G4 review started (14:36 UTC, Emeka said "go"):** R11 runs in session_01EyjuW51kYuRu41kv7GpZNa on `claude/m4-g4r1`, writing `review/runs/2026-10-24-g4r1/` (scorecard, scores, findings, 10 sign-off stills). R0 cherry-picks it, then sends Emeka the stills if G4 passes, or plans a scoped fix round if it does not.
+

@@ -1,0 +1,77 @@
+{
+  "stop": "wailo",
+  "project": "pixel7",
+  "url": "/?test=1&mode=museum",
+  "viewport": {
+    "width": 412,
+    "height": 839
+  },
+  "stats": {
+    "calls": 24,
+    "triangles": 7668,
+    "geometries": 100,
+    "textures": 29,
+    "programs": 19,
+    "textureMB": 12.416996002197264,
+    "frames": 12,
+    "dpr": 1,
+    "tier": "medium",
+    "track": "main",
+    "mounted": [
+      "verafin",
+      "mysa",
+      "wailo",
+      "cfia",
+      "sdsj",
+      "mun"
+    ],
+    "exhibits": {
+      "verafin": {
+        "triangles": 2732,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "mysa": {
+        "triangles": 4820,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "sdsj": {
+        "triangles": 792,
+        "drawCalls": 9,
+        "inBounds": true
+      },
+      "wailo": {
+        "triangles": 2598,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "cfia": {
+        "triangles": 1116,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "mun": {
+        "triangles": 2676,
+        "drawCalls": 8,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        0.6000047315777634,
+        1.6,
+        -31.20047977900548
+      ],
+      "target": [
+        2.3999999194513317,
+        1.3500000084931831,
+        -34.000000107685814
+      ]
+    },
+    "progress": {
+      "target": 5.000037246722289,
+      "current": 5.000037246722289
+    }
+  }
+}

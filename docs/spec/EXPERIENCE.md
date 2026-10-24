@@ -518,8 +518,8 @@ The kit (`src/museum/exhibits/_kit/`, owned by R3) builds everything in this sec
 
 | Label | Where | Font, cap height |
 |---|---|---|
-| Exhibit number ("01", "P1") | Wall behind the plinth, centered on the plinth z (main aisle: aisle wall at abs(x) 3.49; wings: outer wall at abs(x) 11.49; mun: left wall x -5.99; certifications: above the vitrine). Baseline y 2.75 (wings 2.55) | Instrument Serif, 0.32 m (wings 0.30) |
-| Organization ("NASDAQ VERAFIN") | Same wall, below the number, uppercase, tracking 0.12em. Baseline y 2.40 (wings 2.22) | IBM Plex Sans 500; 0.12 m main aisle (F-G2a), 0.10 m certifications, 0.14 m wings and mun. Max width 3.6 m (wings 3.2 m, mun 2.4 m); wraps at word boundaries |
+| Exhibit number ("01", "P1") | Wall behind the plinth, centered on the plinth z (main aisle: aisle wall at abs(x) 3.49; wings: outer wall at abs(x) 11.49; mun: left wall x -5.99; certifications: above the vitrine). Baseline y 2.75 (wings 2.55). Main-aisle, wing and mun titles move along their wall to where the stop camera's sight line through the slot center meets it (F-022), clamped 0.25 m from the wall ends. Mun's (F-041b) hangs at about z -60.74, near the far end of the Foundations left wall, organization last baseline 3.12, number 0.06 m above the organization, so it reads above the case at the stop and in the dialog | Instrument Serif, 0.32 m (wings 0.30) |
+| Organization ("NASDAQ VERAFIN") | Same wall, below the number, uppercase, tracking 0.12em. Baseline y 2.40 (wings 2.22) | IBM Plex Sans 500; 0.12 m main aisle (F-G2a), 0.10 m certifications, 0.14 m wings, 0.19 m mun (F-041b: about 8.8 m from its stop, so 0.14 m fell under the 14 px floor). Max width 3.6 m (wings 3.2 m, mun 2.4 m); wraps at word boundaries |
 | Room names ("PROJECTS", "VOLUNTEER & LEADERSHIP") | Aisle side of the wall above each door, on the 0.3 m door transom (F-G2a) | IBM Plex Sans 500, 0.10 m, tracking 0.12em |
 | "FOUNDATIONS" | Header beam at z -52, baseline y 4.3 | IBM Plex Sans 500, 0.22 m, tracking 0.12em |
 | "COMMIT HISTORY" | Above the lobby arch, baseline y 4.1 | Instrument Serif, 0.28 m |
@@ -797,14 +797,14 @@ WP-05's unit test asserts at least 4.5:1 for every text pair in this table and i
 | `--fade-cut` | 200 ms |
 
 ### 7.5 Lighting recipe (fixed per tier at boot)
-- **Ambient:** hemisphere light, sky `#1A1C22`, ground `#0B0B0D`, intensity 0.15.
+- **Ambient:** hemisphere light, sky `#1A1C22`, ground `#0B0B0D`, intensity 0.22 (`light.hemiIntensity`; 0.15 until WP-26).
 - **Real spotlights:** 3 on high, 1 on medium and low (§6.8). Angle 0.38 rad, penumbra 0.6, decay 2, `castShadow` false. Starting intensity 40 cd, tuned by R2 in WP-11 and frozen as a token.
 - **Zero shadow maps.**
 - **Baked light pools:** `lightPools.ts` paints a CanvasTexture lightmap for each floor zone. Per target: a radial pool of radius 1.6 m, centered 0.3 m from the plinth toward the aisle center, peak alpha 0.85 in its temperature color, smoothstep falloff. Door thresholds get a smaller pool (radius 1.2 m, alpha 0.35, `light-0`) on the aisle floor so doors invite.
 - **Contact shadows, rendered once:** painted into the same lightmap (plinth footprint, soft edge 0.25 m, darkness 0.55), plus the plinth-top contact shadow (§5.2).
 - **Wall wash:** a shared 256 px "scallop" texture on wall bays behind each target, tinted by its temperature; panel seams every 2 m are baked into it.
-- **Environment:** drei `Environment` with `frames={1}`, resolution 256, built from Lightformers: a ceiling strip (`light-0`, intensity 2, 0.3 x 60 m) along the centerline at y 4.9, two side panels (`light-1`, intensity 0.6), and one lobby panel. No HDRI files.
-- **Fog:** `FogExp2`, `#0B0B0D`, density 0.045. The next case (12 m) is clearly visible; the one after (24 m) is a faint pool.
+- **Environment:** drei `Environment` with `frames={1}`, resolution 256, built from Lightformers: a ceiling strip (`light-0`, intensity 2, 0.3 x 60 m) along the centerline at y 4.9 (unchanged by WP-26), two side panels (`light-1`, intensity 1.2, 40 x 3.2 m, centered at x ±10, y 1.4), and one lobby panel (`light-0`, intensity 1.2, 14 x 3.2 m at z 8, y 1.4). No HDRI files. WP-26 moved the side and lobby panels down to the horizon (they were at y 5 and 2.5, the side panels at intensity 0.6) so brass reflects light instead of a black horizon (G3 F-045). Values live in `LIGHTFORMERS` (`environment/Lighting.tsx`); ART_DIRECTION §4 is the source.
+- **Fog:** `FogExp2`, `#0B0B0D`, density 0.038 (`light.fogDensity`; 0.045 until WP-26). The next case (12 m, about 19% fogged) is clearly visible; the one after (24 m, about 56% fogged) is a faint pool.
 - **Tone mapping:** ACES Filmic, exposure 1.0, until WP-11. In WP-11 R2 captures the lobby, verafin and cfia stops under ACES Filmic and AgX side by side, picks one, and freezes it as the token `render.toneMapping` (`'aces' | 'agx'`, with `render.exposure`) in `src/design/tokens.ts`. Output color space sRGB.
 - **Vignette:** CSS only, a fixed `pointer-events: none` layer over the canvas: `radial-gradient(ellipse at center, transparent 55%, rgba(11,11,13,0.55) 100%)`. No post-processing package.
 - **Tiers:** high = DPR max 2, `MeshReflectorMaterial` floor, 3 spots, beam cones. Medium = DPR max 1.5, env-mapped floor, 1 spot, beam cones. Low = DPR 1, env-mapped floor, 1 spot, no beam cones. Only DPR adapts at runtime.
@@ -814,7 +814,7 @@ Exhibits may use only the first eight rows. Rows marked "kit" are for R3's envir
 
 | Name | Type | Parameters |
 |---|---|---|
-| `brass` | MeshStandardMaterial | color `#B08D57`, metalness 1, roughness 0.35, envMapIntensity 1.0 |
+| `brass` | MeshStandardMaterial | color `#B08D57`, metalness 0.9, roughness 0.42, envMapIntensity 1.0 (WP-26: metalness 1 and roughness 0.35 read dark brown at tier medium, G3 F-045) |
 | `frostedGlass` | MeshPhysicalMaterial | color `#DDE3E4`, roughness 0.55, metalness 0, transmission 0, transparent, opacity 0.55, depthWrite false, envMapIntensity 0.8 |
 | `walnut` | MeshStandardMaterial | color `#4E3322`, roughness 0.55, metalness 0, shared seeded 256 px grain CanvasTexture as map |
 | `ceramic` (matte ceramic, bone) | MeshStandardMaterial | color `#E6E1D8`, roughness 0.85, metalness 0 |

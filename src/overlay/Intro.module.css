@@ -121,8 +121,92 @@
   font-variant-numeric: tabular-nums;
 }
 
-.begin {
+/*
+ * The admission ticket (EXPERIENCE §11.1 item 3), CSS only: the secondary control split into the
+ * admit part and a stub behind a dashed perforation, with a half notch cut at each end of it. The
+ * stub has a fixed width, so the date stamp that fills it after hydration never shifts anything.
+ * On click the stub tears off over 400 ms (transform and opacity only); none under reduced motion.
+ */
+/* Two classes, so the ticket's own box wins over ui.secondary's padding and gap. */
+.fold .begin {
+  align-items: stretch;
+  gap: 0;
   margin: 0;
+  padding: 0;
+}
+
+.admit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+}
+
+.stub {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  border-left: 1px dashed var(--border-secondary);
+}
+
+.stub::before,
+.stub::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--border-secondary);
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.stub::before {
+  top: -6px;
+  clip-path: inset(50% 0 0 0);
+}
+
+.stub::after {
+  bottom: -6px;
+  clip-path: inset(0 0 50% 0);
+}
+
+.stamp {
+  composes: label from './ui.module.css';
+  overflow: hidden;
+  max-width: 84px;
+  padding: 2px 5px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  color: var(--brass-hi);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transform: rotate(-4deg);
+}
+
+.stamp:empty {
+  visibility: hidden;
+}
+
+.begin[data-torn] .stub {
+  animation: tear 400ms var(--ease-out) forwards;
+}
+
+@keyframes tear {
+  to {
+    opacity: 0;
+    transform: translate(10px, 16px) rotate(12deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .begin[data-torn] .stub {
+    animation: none;
+  }
 }
 
 .lead {

@@ -55,11 +55,14 @@ export const TRACE_SEED = 0x3a5e05;
 /** The one motion: one revolution per 40 s, starting from the reduced-motion yaw of 30 degrees. */
 export const TURN = { periodS: 40, restYawDeg: 30 } as const;
 
-/** Scaffold: 0.90 x 0.90 in plan, 5 tiers of 0.20 m from y 0.13, 0.012 m square rods. */
+/**
+ * Scaffold: 0.90 x 0.90 in plan, 5 tiers of 0.20 m from the slot floor (y 0.10, the top of the
+ * kit riser, which spans the scaffold footprint: F-040), 0.012 m square rods.
+ */
 export const SCAFFOLD = {
   span: 0.9,
   tierHeight: 0.2,
-  bottom: 0.13,
+  bottom: 0.1,
   rod: 0.012,
   rodsPerTier: 12,
 } as const;
@@ -197,9 +200,13 @@ export function tierParts(i: number): Part[] {
   // Top rails: two along x (front and back), two along z (left and right); they cover the corners.
   for (const sz of [-1, 1]) out.push({ center: [0, y1, sz * half], size: [span + rod, rod, rod] });
   for (const sx of [-1, 1]) out.push({ center: [sx * half, y1, 0], size: [rod, rod, span + rod] });
-  // X-bracing on the side faces, corner to corner, kept inside the uprights' outer faces.
+  // X-bracing on the side faces, corner to corner, kept inside the tier's height (so the bottom
+  // tier's braces end on the riser top, not in it: F-040) and the uprights' outer faces.
   const angle = Math.atan2(tierHeight, span);
-  const length = Math.hypot(span, tierHeight) - rod;
+  const length = Math.min(
+    (tierHeight - rod * Math.cos(angle)) / Math.sin(angle),
+    (span - rod * Math.sin(angle)) / Math.cos(angle),
+  );
   for (const sx of [-1, 1]) {
     for (const dir of [-1, 1]) {
       out.push({

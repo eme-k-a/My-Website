@@ -1,13 +1,23 @@
 // The HUD header (EXPERIENCE §7.8, §9.2, §10.1): skip link, "Commit History" wordmark, "Resume
 // (PDF)" (primary) and "Classic view" (secondary). Phones show "PDF" and "Classic" and, in museum
-// mode, the 3 px progress bar and the year chip at the camera's position (display only). The
+// mode, the 3 px progress bar and the year chip at the camera's position (display only); in a
+// wing the rail's "Return to the aisle" takes the chip's place (EXPERIENCE §9.2). The
 // desktop progress rail is ProgressRail, after the track in DOM order (EXPERIENCE §10.2).
 import { useEffect, useRef } from 'react';
+import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
 import { content } from '../content/index';
 import { progress } from '../museum/rail/progress';
 import { Icon } from './icons';
-import { chipLabel, CLASSIC_PATH, MAIN_STOPS, PDF_PATH, YEAR_TICKS, yearAt } from './model';
+import {
+  chipLabel,
+  CLASSIC_PATH,
+  MAIN_STOPS,
+  PDF_PATH,
+  wingHeadShown,
+  YEAR_TICKS,
+  yearAt,
+} from './model';
 import { watchRailProgress } from './railProgress';
 import { SkipLink } from './SkipLink';
 import styles from './Hud.module.css';
@@ -43,8 +53,14 @@ function PhoneProgress() {
 }
 
 export function Hud() {
+  // In a wing the rail's wing head ("Return to the aisle") takes the year chip's place on phones.
+  const wing = useMuseum((s) => wingHeadShown(s.track, s.stop));
   return (
-    <header className={styles.hud} data-testid={TEST_IDS.hud}>
+    <header
+      className={styles.hud}
+      data-testid={TEST_IDS.hud}
+      data-wing-head={wing ? '' : undefined}
+    >
       <SkipLink />
       <p className={styles.wordmark}>{content.gallery.title}</p>
       <PhoneProgress />

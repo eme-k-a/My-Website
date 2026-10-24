@@ -9,10 +9,10 @@ import { useEffect, useRef, type CSSProperties } from 'react';
 import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
 import { content } from '../content/index';
-import { doorId, type StopId } from '../content/ids';
+import type { StopId } from '../content/ids';
 import { exitWing, travelTo } from '../museum/rail/navigation';
 import { Icon } from './icons';
-import { cardOf, railLabel, railStops, YEAR_TICKS } from './model';
+import { cardOf, railLabel, railStops, wingHeadShown, YEAR_TICKS } from './model';
 import { watchRailProgress } from './railProgress';
 import styles from './ProgressRail.module.css';
 import ui from './ui.module.css';
@@ -24,6 +24,20 @@ function doorSide(id: StopId): 'left' | 'right' | undefined {
   const card = cardOf(id);
   if (card.kind !== 'door') return undefined;
   return content.wings.find((w) => w.id === card.wing)?.side;
+}
+
+/**
+ * A year tick's place on the line, plus how far it is from the nearest stop dot (F-046): a tick
+ * that falls within reach of a dot is nudged off it in CSS (`.tick`), where the line's height in
+ * px is known. The nudge goes away from the dot, toward the tick's own side.
+ */
+function tickAt(progress: number, last: number): CSSProperties {
+  const d = (progress - Math.round(progress)) / last;
+  return {
+    ...at(progress, last + 1),
+    '--gap': Math.abs(d),
+    '--dir': d < 0 ? -1 : 1,
+  } as CSSProperties;
 }
 
 /** Travel errors (a wing move before WP-09 lands, for example) must never surface as page errors. */
@@ -59,7 +73,7 @@ export function ProgressRail() {
   // and "Return to the aisle") sat on the door's transom title (F-038), so it steps aside: the
   // visitor is at the door, Esc still returns to the aisle and the door card offers Step inside.
   // The control unmounts rather than hiding, so it can never hold focus.
-  const atDoor = wing !== undefined && stop === doorId(wing.id);
+  const atDoor = wing !== undefined && !wingHeadShown(track, stop);
 
   return (
     <nav
@@ -104,7 +118,7 @@ export function ProgressRail() {
             <span
               key={year}
               className={styles.tick}
-              style={at(progress, last + 1)}
+              style={tickAt(progress, last)}
               aria-hidden="true"
             >
               {year}

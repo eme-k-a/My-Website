@@ -103,6 +103,11 @@
   :global(html[data-mode='museum']) .phoneProgress {
     display: inline-flex;
   }
+
+  /* In a wing the rail's wing head sits here instead (ProgressRail.module.css). */
+  .hud[data-wing-head] .year {
+    display: none;
+  }
 }
 
 @media (max-width: 639px) {

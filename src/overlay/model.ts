@@ -116,3 +116,11 @@ export function chipLabel(current: number, track: TrackId): string {
   if (MAIN_STOPS[Math.round(current)] === 'desk') return DESK_CHIP;
   return String(yearAt(current));
 }
+
+/**
+ * Whether the wing head (the wing chip and "Return to the aisle") shows: on a wing track, except
+ * at the door itself (F-038). On phones it takes the year chip's place (EXPERIENCE §9.2).
+ */
+export function wingHeadShown(track: TrackId, stop: StopId): boolean {
+  return track !== 'main' && stop !== doorId(track);
+}

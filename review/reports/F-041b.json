@@ -1,0 +1,73 @@
+{
+  "wp": "F-041b",
+  "role": "R3 (environment and labels); docs under the R0 grant",
+  "status": "done",
+  "branch": "claude/m4-f-041b",
+  "commits": [
+    "edebfac fix(F-041): hang the mun wall title on the stop camera's sight line",
+    "2d90c9a docs(spec): sync the light values WP-26 froze and the mun title position",
+    "(this commit) review(F-041): before/after captures and the F-041b report"
+  ],
+  "changedFiles": [
+    "src/museum/exhibits/_kit/placard.ts (titleAlong: the wide kind follows the sight line; comments)",
+    "src/museum/exhibits/_kit/titleMetrics.ts (TITLE_METRICS.wide and its comment)",
+    "src/museum/exhibits/_kit/placard.test.ts",
+    "src/museum/environment/munTitle.test.ts (new)",
+    "src/museum/environment/Lighting.tsx (one stale comment: side panel intensity)",
+    "docs/spec/EXPERIENCE.md (§5.4, §7.5, §7.6)",
+    "review/runs/2026-10-24-f-041b/*",
+    "review/reports/F-041b.json"
+  ],
+  "items": [
+    {
+      "id": "F-041b",
+      "role": "R3",
+      "change": "placard.ts titleAlong now applies the F-022 sight-line rule to the wide (mun) kind as well; only the wall vitrine keeps its slot z. The stop camera's sight line through the mun slot meets the Foundations left wall (x -5.99) at z -61.12, so the end margin clamps the title center to z -60.74 (it was -57). That is about 8.8 m from the stop, where a 0.14 m organization cap projects 10.8 px on Pixel 7 (412 x 915, the labels.test convention), under the 14 px floor; TITLE_METRICS.wide therefore becomes numberCap 0.32 (unchanged), orgCap 0.19 (14.7 px at 412 x 915 as labels.test measures the floor; 13.5 px at the 412 x 839 browser viewport, where the old 0.14 m title at its old spot measured 13.7 px), orgBottom 3.12, gap 0.06, orgWidth 2.4 (unchanged; still two lines). The 3.12 m last baseline is what clears the case top in the desktop dialog at the full 0.6 m main-aisle dolly (10 px); the 0.06 m gap (as the wings) keeps the number below the phone HUD. Brass title material, slot, camera framing, dolly and every other title are unchanged. The wall wash bay follows the title (lightPlan centers it on the title z), as for every other plinth.",
+      "evidence": "src/museum/environment/munTitle.test.ts projects the number and organization boxes through three.js with the real layout, FOV and framing shift: pixel7 stop (412 x 839) number x 177-197, y 50-81, organization x 132-234, y 67-133, case top 168; 360 x 640 stop number y 38-62, organization x 123-201, y 51-102, case top 128; desktop stop organization y 86-188, case top 242; desktop dialog (panel 806 px, dolly 0.6) number y 27-81, organization x 277-449, y 54-170, case top 182. All inside the viewport, centered over the case span, and at least TITLE_CASE_CLEARANCE_TAN above the case top; a control case rebuilds the old title and shows it off the left edge. labels.test (14 px floor on desktop and Pixel 7) passes. Captures: review/runs/2026-10-24-f-041b/mun-pixel7-before.png and -after.png, mun-desktop-before.png and -after.png, mun-dialog-desktop-before.png and -after.png (720 px, 128 colors).",
+      "experienceEdits": "§5.4: the number row describes the sight-line placement (main aisle, wings and mun) and the mun position, baseline and gap; the organization row gives mun 0.19 m."
+    },
+    {
+      "id": "docs",
+      "role": "R0 grant",
+      "change": "EXPERIENCE §7.5: ambient intensity 0.22 (0.15 until WP-26); Lightformers: ceiling strip unchanged (light-0, intensity 2, 0.3 x 60 m, y 4.9), side panels light-1 intensity 1.2, 40 x 3.2 m at x ±10, y 1.4, lobby panel light-0 intensity 1.2, 14 x 3.2 m at z 8, y 1.4; fog density 0.038 (0.045 until WP-26) with the 19% and 56% fog figures. §7.6: brass metalness 0.9, roughness 0.42. Source: src/design/tokens.ts, LIGHTFORMERS in Lighting.tsx, materials/library.ts and ART_DIRECTION §4 and §5.",
+      "evidence": "Values copied from tokens.light (hemiIntensity 0.22, fogDensity 0.038), LIGHTFORMERS and materialSpecs.brass; library.test pins brass 0.9 / 0.42."
+    }
+  ],
+  "acceptance": [
+    { "id": "A1", "criterion": "npm run verify", "command": "npm run verify", "result": "pass", "evidence": "lint, typecheck, 898 unit tests passed, 3 skipped" },
+    { "id": "A2", "criterion": "npm run build", "command": "npm run build", "result": "pass", "evidence": "content check, client and SSR build, prerender, PDF gate, .tex, budgets ok, check-copy" },
+    { "id": "A3", "criterion": "npm run check:budgets", "command": "npm run check:budgets", "result": "pass", "evidence": "budgets ok" },
+    { "id": "A4", "criterion": "npm run check:glyphs", "command": "npm run check:glyphs", "result": "pass", "evidence": "glyphs ok: 35 labels, 76 code points" },
+    { "id": "A5", "criterion": "F-041 check: the mun title inside the viewport at the mun stop on pixel7 and 360 x 640 and in the desktop dialog, clear of the case top", "command": "npx vitest run --project unit src/museum/environment/munTitle.test.ts", "result": "pass", "evidence": "5 tests (pixel7, 360 x 640 and desktop stops, desktop dialog, old-position control)" },
+    { "id": "A6", "criterion": "environment, exhibits, greybox, rail-input, dialog and wings specs on desktop and pixel7", "command": "npx playwright test tests/e2e/<spec>.spec.ts --project=desktop --project=pixel7 --workers=2 (PORT=4174)", "result": "pass except 3 pre-existing failures", "evidence": "environment 3 passed 1 skipped; greybox 4 passed; wings 14 passed; dialog 29 passed 11 skipped; rail-input 15 passed 9 skipped; exhibits 17 passed 20 skipped 3 failed: 'klarup / finance-tracker / sdsj: reduced motion holds the canvas still' on pixel7. The klarup case fails the same way on the base commit 8b338ef built in a separate worktree, so it is not caused by this change (the wing exhibits, not mun)." }
+  ],
+  "visualBaselinesChanged": [
+    "stop-mun-desktop, stop-mun-pixel7 (the title moves into the frame, above the case)",
+    "dialog-mun-desktop, dialog-mun-pixel7",
+    "any other stop screenshot that shows the far end of the Foundations left wall (none expected: certifications looks at the right wall, desk looks down -z past it)"
+  ],
+  "deviations": [
+    "Mun organization cap height rises from 0.14 m to 0.19 m. The brief asks to keep the F-G2a sizes and the 14 px floor; on the sight line the title is about 8.8 m from the stop, where 0.14 m projects 10.8 px on Pixel 7, so both cannot hold. The floor wins (EXPERIENCE §5.4: never below 14 px); the number keeps 0.32 m. Needs R0 ratification.",
+    "The mun title block sits higher (organization last baseline 3.12 m instead of 2.14 m) and tighter (number gap 0.06 m instead of 0.22 m), so it clears the case top in the desktop dialog without changing the dolly.",
+    "Local Playwright: this container ships Chromium 1243; PLAYWRIGHT_BROWSERS_PATH pointed at a scratch folder whose 1194 entries are symlinks to the 1243 binaries (headless_shell linked to chrome-headless-shell). Nothing installed or committed."
+  ],
+  "openQuestions": [
+    {
+      "question": "Ratify the mun organization cap 0.19 m (from 0.14 m), forced by the 14 px floor at the sight-line position?",
+      "for": "R0",
+      "default": "0.19 m, as shipped here."
+    },
+    {
+      "question": "exhibits.spec 'reduced motion holds the canvas still' fails for klarup, finance-tracker and sdsj on pixel7, also on the base 8b338ef. Route it?",
+      "for": "R0 (R8 or R4)",
+      "default": "Not touched here; check whether CI shows it too. Likely a wing-phone framing or HUD change after the arrival (F-039 measures the wing head on resize), not the exhibits."
+    },
+    {
+      "question": "On Pixel 7 the number's cap top projects at about 50 px, just under the year chip and button row (bottom about 52 px) and left of the PDF button (x 205). Add a mun rail-input (g) style HUD overlap check?",
+      "for": "R8",
+      "default": "Covered by the capture and the unit projection only."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "2026-10-24. Projection numbers came from a three.js probe with the real layout and framing (same math as framing.test and munTitle.test)."
+}

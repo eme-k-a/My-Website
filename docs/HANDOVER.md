@@ -200,3 +200,6 @@ Emeka said "go" for M4 after G3. Four builders run as separate cloud sessions, e
 All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refresh, the G4 review, and Emeka's 10-screenshot sign-off.
 
 **Status (09:00 UTC):** all four builders and the F-041b follow-up (session_01FhEZFpyAr9LGCEt84Lrpmv, `claude/m4-f-041b`) are merged by cherry-pick, and their sessions are archived. CI run 119 failed at three phone wing stops; R0 fixed the cause (hover styles on touch screens, `f4b2f42`) and the next dispatch committed the M4 baselines (`82e10a0`). One more baseline refresh covers the MUN title. **Next:** a normal green run, then the G4 review, which waits on Emeka's go-ahead because the weekly usage limit is at its warning level (it resets 2026-10-27 02:00 UTC).
+
+**Status (09:50 UTC):** CI run 125 committed the MUN baselines (`28f1d57`) after one allowed re-run (F-047 records the two intermittent checks). This push runs the normal CI and redeploys the preview. The M4 build is complete once that run is green; the G4 review still waits on Emeka's go-ahead.
+

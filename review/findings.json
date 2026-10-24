@@ -472,5 +472,20 @@
     "status": "open",
     "round": 1,
     "gate": "G3"
+  },
+  {
+    "id": "F-047",
+    "severity": "P2",
+    "title": "Two e2e checks are intermittent under SwiftShader: quality (b) idle frames and the verafin still-canvas contract",
+    "stop": "lobby (quality b, desktop); verafin (exhibit-contract, pixel7)",
+    "viewport": "desktop and pixel7 (CI, SwiftShader)",
+    "path": "tests/e2e/quality.spec.ts",
+    "evidence": "CI run 125 attempt 1 (a601f91, https://github.com/eme-k-a/My-Website/actions/runs/40080091934): desktop quality (b) saw one frame instead of two within 10 s of the last input (expected > 16, received 16), and pixel7 exhibit-contract verafin saw the canvas change under ?test=1. Both passed in run 122 and in attempt 2 of run 125, with no code change. Locally under 3 workers quality (b) failed 1 of 15 runs on the M4 build and 0 of 6 on the pre-M4 build (7bd904d), with matching frame times (2 to 3 s); exhibit-contract verafin passed 7 of 7.",
+    "expected": "Both checks pass on every CI run with retries 0: either the app guarantees the condition (steady idle frames for 15 s; nothing late, such as a troika label or an exhibit reveal, changes the frozen canvas) or the check waits on a measured signal instead of a fixed window.",
+    "check": "20 local repeats of each under 3 workers with 0 failures, then 3 consecutive green CI runs.",
+    "status": "open",
+    "round": 0,
+    "gate": "G4",
+    "owner": "R8 with R7 (WP-29 or WP-32)"
   }
 ]

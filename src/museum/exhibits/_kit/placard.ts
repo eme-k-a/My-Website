@@ -3,11 +3,12 @@
 // slot (main aisle walls at abs(x) 3.49, wing outer walls at abs(x) 11.49, the Foundations side
 // walls for mun and certifications), so a layout change moves the titles with everything else.
 //
-// - Along the wall: main-aisle and wing titles sit where the stop camera's line of sight through
-//   the slot center meets the wall, so from the stop the title reads right above its case (D2)
-//   instead of beside it, where it ran off the top of the frame and under the HUD (F-022). The
-//   center is clamped so the widest line keeps TITLE_END_MARGIN to the ends of its wall. Mun and
-//   the certifications vitrine keep their slot z.
+// - Along the wall: main-aisle, wing and mun titles sit where the stop camera's line of sight
+//   through the slot center meets the wall, so from the stop the title reads right above its case
+//   (D2) instead of beside it, where it ran off the top of the frame and under the HUD (F-022;
+//   mun F-041b, where it sat 19 to 32 degrees off the view axis). The center is clamped so the
+//   widest line keeps TITLE_END_MARGIN to the ends of its wall. The certifications vitrine keeps
+//   its slot z (its title hangs over the vitrine on the same wall).
 // - Up the wall: the organization is broken into lines here (explicit '\n', so the line count is
 //   known) and stacks upward from its last baseline (`orgBottom`), which sits just above the
 //   case's top edge as seen from the stop; the number sits `gap` above the first line. A wrapped
@@ -102,13 +103,13 @@ function stopPose(layout: Layout, id: StopId): StopPose | undefined {
 /**
  * The title's center along its wall (world z; every slot wall runs along z): where the stop
  * camera's horizontal line of sight through the slot center meets the wall, clamped so a title
- * `halfWidth` wide keeps TITLE_END_MARGIN to both ends of the wall. Mun and the vitrine, and any
- * slot without a stop, keep the slot z.
+ * `halfWidth` wide keeps TITLE_END_MARGIN to both ends of the wall. The vitrine, and any slot
+ * without a stop, keep the slot z.
  */
 export function titleAlong(layout: Layout, slot: Slot, wallX: number, halfWidth: number): number {
   const kind = placardKind(slot);
   const z = slot.position[2];
-  if (kind !== 'main' && kind !== 'wing') return z;
+  if (kind === 'wall') return z;
   const pose = stopPose(layout, slot.id);
   if (!pose) return z;
   const [cx, , cz] = pose.camera;

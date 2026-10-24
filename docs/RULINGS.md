@@ -134,3 +134,10 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - The G3 review round 1 averaged 3.78 (desktop 3.83, Pixel 7 3.72) with no P0. Its only P1, F-039 (the phone wing HUD over the wall titles), is closed by a scoped fix verified by an e2e check (`9e23b8e`), as with F-038.
   - Open P2s go to M4: F-040 to F-044, and sdsj at 360 x 640, where the stop card covers the case floor (a shorter phone card is WP-27 territory). Open P3s also go to M4: F-045 and F-046.
   - Certifications checklist box 6 (F-044) waits for Emeka's certification dates and issuers.
+- **M4 routing (Emeka said "go" for M4, 2026-10-24):** four builder sessions run in parallel, each on its own `claude/m4-*` branch; R0 merges by cherry-pick.
+  - WP-26 (R3 with R2) also takes F-043 (the certifications backing panel), brass at tier medium (see M3 decisions), and the G3 mood notes (the lobby arch interior, the grey beam wedge behind the portrait, mysa's empty left half on desktop). For this milestone, R2's values-only grant covers `src/museum/materials/**` as well as the tokens.
+  - WP-27 (R6) also takes F-046 (rail ticks over stop dots) and sdsj at 360 x 640 (a shorter phone card). The admission ticket stamp uses the frozen test clock under `?test=1`, so visual baselines stay stable.
+  - WP-28 (R7): the 3D (troika) subsets hold printable ASCII plus every code point in `threeDStrings` and `labels3d.ts`, so a plain-ASCII content edit never breaks the glyph check. The DOM subsets are generous, as the brief says.
+  - F-M4a (R5 with R4, R3 and R1; brief `docs/wp/F-M4a.md`): F-040, F-041, F-042, F-044 and F-045. KlarUp stays as Emeka approved it.
+  - F-029 is withdrawn (Safe Sip is gone) and F-039 is marked fixed in `review/findings.json`.
+  - After the merges: one CI baseline refresh, then the G4 review (R11). G4 needs an average of at least 4.0, no dimension below 3.5, and Emeka's sign-off on 10 screenshots.

@@ -185,3 +185,16 @@ Each push to a `claude/m3-*` branch runs CI and deploys an alias preview for tha
 Gate G4 needs an average of at least 4.0, no dimension below 3.5, and Emeka's sign-off on 10 screenshots. Run the builders as separate cloud sessions, a few at a time, and merge by hand with cherry-pick, since workflow integrators can misread the user's turn. The Workflow tool may be switched off; in that case, use background agents in worktrees.
 
 **Usage check-ins:** the 5-hour chain (next at 07:22 UTC) and the daily backup (`trig_01LUJuUEwDgi8NtdCq45PVUp`) are armed at Emeka's request (2026-10-24). They only resume stopped work; they never start a new milestone.
+
+## 12. M4 builder sessions (started 2026-10-24)
+
+Emeka said "go" for M4 after G3. Four builders run as separate cloud sessions, each pushing only to its own branch. R0 polls them about every 90 minutes with an "M4 check-in" scheduled message, because child sessions do not report back.
+
+| WP | Scope | Branch |
+|---|---|---|
+| WP-26 | Lighting and atmosphere, F-043, brass at medium, mood notes | `claude/m4-wp-26` |
+| WP-27 | Mobile and onboarding, F-046, sdsj 360 x 640 card | `claude/m4-wp-27` |
+| WP-28 | Asset pass: font subsets, preload, credits, transfer spec | `claude/m4-wp-28` |
+| F-M4a | Exhibit read, grounding and framing: F-040 to F-042, F-044, F-045 | `claude/m4-f-m4a` |
+
+Session ids are recorded in the next docs commit. Then: merge by cherry-pick, one CI baseline refresh, the G4 review, and Emeka's 10-screenshot sign-off.

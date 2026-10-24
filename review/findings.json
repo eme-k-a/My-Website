@@ -197,7 +197,8 @@
     "round2": {
       "status": "withdrawn",
       "evidence": "The safe-sip exhibit was removed entirely at Emeka's decision (F-035, docs/RULINGS.md \"Safe Sip removal\"); there is nothing left to fix or verify."
-    }
+    },
+    "resolution": "Safe Sip was removed from the site (Emeka, 2026-10-20; F-035)."
   },
   {
     "id": "F-030",
@@ -369,9 +370,10 @@
     "evidence": "review/runs/2026-10-21-g3r1/finance-tracker-pixel7.png (capture, tier medium) and the committed CI baseline tests/e2e/__screenshots__/visual.spec.ts/stop-finance-tracker-pixel7.png: the 'Return to the aisle' control (DOM x 16 to 189, y 96 to 140) is laid over the P2 numeral, text over text. Probe review/runs/2026-10-21-g3r1/probe-wing-hud.mjs (results review/runs/2026-10-21-g3r1/probe-wing-hud.json) counts brass title pixels inside the exit control, inset 3 px: Pixel 7 klarup 0, finance-tracker 800, sdsj 0 (the V of V1 abuts the control border, review/runs/2026-10-21-g3r1/sdsj-pixel7.png); 360x640 klarup 514, finance-tracker 2301, sdsj 2290 (review/runs/2026-10-21-g3r1/probe-*-small.png: the control covers P1, PERSONAL FINANCE and SOFTWARE DEVELOPERS, and the wing chip sits on P2 and V1). Cause: F-M3 lifted the wing title (last baseline 2.14 to 2.20 m) and the portrait framing does not reserve the wing head (chip plus exit control, bottom y 140). rail-input (g) at the wing stops runs on desktop only, so CI did not see it. Rubric P1: a label covered by the HUD, text drawn over text.",
     "expected": "At every wing exhibit stop on Pixel 7 and at 360x640, no wing HUD rect (chip, exit control, rail label) intersects the projected wall title (numeral and organization lines). Fix (R4, framing): on portrait viewports frame wing stops from the measured bottom of the wing head, as F-020 frames the desk from the measured card top, so the title top sits at least 8 px below it; or (R6) a compact wing head on phones (chip and exit on one row, or the exit control moved beside the year chip). Owner R4 with R6.",
     "check": "Extend tests/e2e/rail-input.spec.ts (g) \"at each wing stop\" to the pixel7 project plus a 360x640 context; re-run probe-wing-hud.mjs: brassPxInExit 0 at all six rows; re-capture finance-tracker on pixel7 and read P2 whole.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
-    "gate": "G3"
+    "gate": "G3",
+    "resolution": "Fixed by 9e23b8e (phone wing stops framed from the measured wing head); rail-input (g) on pixel7 and 360 x 640, probe at 0 in all six rows; CI run 102."
   },
   {
     "id": "F-040",

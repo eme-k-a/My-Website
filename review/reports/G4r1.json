@@ -1,0 +1,103 @@
+{
+  "wp": "WP-19",
+  "role": "R11 Experience Reviewer",
+  "status": "done",
+  "branch": "claude/m4-g4r1",
+  "base": "4938da2 (claude/intelligent-sagan-poq45q, M4 merged, CI run 126 green per R0)",
+  "round": "G4 round 1",
+  "commits": [
+    "docs(review): G4 round 1 captures, probes and proposed sign-off stills",
+    "<this commit> docs(review): G4 round 1 scorecard, scores, findings and report"
+  ],
+  "changedFiles": [
+    "review/runs/2026-10-24-g4r1/scorecard.md",
+    "review/runs/2026-10-24-g4r1/scores.json",
+    "review/runs/2026-10-24-g4r1/<stop>-<desktop|pixel7>.json (26 capture stats records)",
+    "review/runs/2026-10-24-g4r1/probe-g4.mjs, probe-g4.json, probe-g4-main.json (Pixel 7 and 360 x 640 HUD and title probe)",
+    "review/runs/2026-10-24-g4r1/stills/*.png and stills/README.md (10 sign-off stills, 1.7 MB, force-added)",
+    "review/runs/2026-10-24-g4r1/evidence/*.png (7 finding crops, 0.5 MB, force-added)",
+    "review/findings.json",
+    "review/reports/G4r1.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Every stop x D1 to D6 x desktop (1440 x 900, high) and Pixel 7 (medium) scored with a path; averages per viewport and per dimension",
+      "command": "PORT=4174 CAPTURE_DIR=review/runs/2026-10-24-g4r1 CAPTURE_DIALOGS=1 CAPTURE_TIER=high npx playwright test --grep @capture --project=desktop; the same without CAPTURE_TIER --project=pixel7",
+      "result": "pass",
+      "evidence": "13 passed on each project, 9 dialogs each. 156 cells with reason and path in scores.json; averages by script, truncated to two decimals."
+    },
+    {
+      "id": "A2",
+      "criterion": "Dialogs reviewed for D2 and D3; 360 x 640 probes of the tight phone stops",
+      "command": "node review/runs/2026-10-24-g4r1/probe-g4.mjs http://localhost:4174 review/runs/2026-10-24-g4r1 (and PROBE_STOPS=verafin,mysa,wailo,cfia,desk PROBE_OUT=probe-g4-main.json)",
+      "result": "pass",
+      "evidence": "18 dialog shots read; probes at lobby, klarup, finance-tracker, sdsj, mun, certifications, verafin, mysa, wailo, cfia and desk on Pixel 7 and 360 x 640."
+    },
+    {
+      "id": "A3",
+      "criterion": "Valid findings; every open finding re-checked with evidence",
+      "command": "node -e \"JSON.parse(require('fs').readFileSync('review/findings.json','utf8')).forEach(f=>{for(const k of ['id','severity','stop','viewport','path','evidence','expected','check','status','round'])if(!(k in f))throw new Error(f.id+' missing '+k)});console.log('findings ok')\"",
+      "result": "pass",
+      "evidence": "findings ok, 33 findings. F-040 to F-046 fixed (field g4r1); F-047 open, not re-checked (CI only). New: F-048 (P1), F-049 to F-051 (P2), F-052 and F-053 (P3)."
+    },
+    {
+      "id": "A4",
+      "criterion": "Gate verdict against G4 and 10 named stills",
+      "command": "review/runs/2026-10-24-g4r1/scorecard.md sections 'Result against gate G4' and 'Sign-off stills'",
+      "result": "pass",
+      "evidence": "Overall 3.90 (desktop 3.92, Pixel 7 3.87) against 4.0: not met. Lowest dimension D6 3.76 (Pixel 7 3.69): no dimension below 3.5. Ten stills in stills/ with a README line each."
+    }
+  ],
+  "scores": {
+    "overall": 3.90,
+    "desktop": 3.92,
+    "pixel7": 3.87,
+    "dimensionsBoth": { "D1": 3.80, "D2": 3.86, "D3": 4.23, "D4": 3.78, "D5": 3.94, "D6": 3.76 },
+    "dimensionsDesktop": { "D1": 3.88, "D2": 3.92, "D3": 4.15, "D4": 3.80, "D5": 3.96, "D6": 3.84 },
+    "dimensionsPixel7": { "D1": 3.73, "D2": 3.80, "D3": 4.30, "D4": 3.76, "D5": 3.92, "D6": 3.69 },
+    "previous": { "round": "G3 round 1", "overall": 3.78, "desktop": 3.83, "pixel7": 3.72 }
+  },
+  "gate": {
+    "G4": "not met in round 1: average 3.90 against 4.0; no dimension below 3.5 (pass); Emeka's sign-off pending",
+    "openP0": 0,
+    "openP1": ["F-048"],
+    "openP2": ["F-047", "F-049", "F-050", "F-051"],
+    "openP3": ["F-052", "F-053"]
+  },
+  "conceptVerdicts": { "cfia": "PASS", "finance-tracker": "PASS", "sdsj": "PASS", "mun": "PASS" },
+  "stills": [
+    "review/runs/2026-10-24-g4r1/stills/01-lobby-desktop.png",
+    "review/runs/2026-10-24-g4r1/stills/02-lobby-pixel7.png",
+    "review/runs/2026-10-24-g4r1/stills/03-verafin-desktop.png",
+    "review/runs/2026-10-24-g4r1/stills/04-wailo-desktop.png",
+    "review/runs/2026-10-24-g4r1/stills/05-klarup-desktop.png",
+    "review/runs/2026-10-24-g4r1/stills/06-sdsj-desktop.png",
+    "review/runs/2026-10-24-g4r1/stills/07-finance-tracker-pixel7.png",
+    "review/runs/2026-10-24-g4r1/stills/08-certifications-desktop.png",
+    "review/runs/2026-10-24-g4r1/stills/09-desk-desktop.png",
+    "review/runs/2026-10-24-g4r1/stills/10-wailo-dialog-desktop.png"
+  ],
+  "deviations": [
+    "Local Playwright: this container ships Chromium 1243; PLAYWRIGHT_BROWSERS_PATH pointed at a scratch folder outside the repo whose 1194 entries link to the 1243 binaries (headless_shell linked to chrome-headless-shell). No install, nothing committed.",
+    "The WP-26 proposed stills folder (review/runs/2026-10-24-wp26/) is not on the integration branch; the stills were recaptured in this round from the same build, following WP-26's list in its report."
+  ],
+  "openQuestions": [
+    {
+      "question": "G4's PLAN text has no 'no open P1' clause. Should F-048 (P1, 360 x 640) block G4 as G2 and G3 P1s did?",
+      "for": "R0",
+      "default": "Treated as blocking the improvement loop's stop rule and reported in the gate table, but the G4 verdict here rests on the 4.0 average, which fails on its own."
+    },
+    {
+      "question": "Is 360 x 640 in G4 scope for scoring?",
+      "for": "R0",
+      "default": "Probed for findings only, as in G3; scores stay desktop and Pixel 7."
+    },
+    {
+      "question": "F-049 asks for a ruling on the MUN title metrics (number cap down, organization cap up) and on measuring labels.test at 412 x 839.",
+      "for": "R0",
+      "default": "Filed as P2 for R3 with R8; no change to the F-041b ratification until R0 rules."
+    }
+  ],
+  "notes": "Overall 3.90 (608.5 / 156; desktop 3.92, Pixel 7 3.87), up from 3.78 like for like. G4 not met: average below 4.0. No dimension below 3.5 (lowest D6 3.76; Pixel 7 D6 3.69). Open P0 0, P1 1 (F-048), P2 4, P3 2. Concept checklists cfia, finance-tracker, sdsj, mun: PASS."
+}

@@ -1,5 +1,6 @@
-// Glyph coverage for 3D text (ARCHITECTURE §8.3): passes on current content, fails for a code
-// point the fonts lack (U+E000, private use), and reads labels3d.ts exports in their fonts.
+// Glyph coverage on the font subsets (ARCHITECTURE §8.3, WP-28 A2): passes on current content,
+// fails for a code point the fonts lack (U+E000, private use), fails with the `npm run fonts` hint
+// for one the source fonts have but the subsets lack, and reads labels3d.ts exports in their fonts.
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,6 +14,7 @@ import {
   formatReport,
   labelsFromModule,
   main,
+  RUN_FONTS_HINT,
   type GlyphLabel,
 } from './check-glyphs';
 
@@ -59,6 +61,51 @@ describe('checkGlyphs', () => {
     try {
       expect(await main({ labels: [probe(PRIVATE_USE)] })).toBe(1);
       expect(error.mock.calls.flat().join('\n')).toMatch(/U\+E000 .* in probe for test/);
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  it('marks a glyph the source font has but the 3D subset lacks as stale, with the fonts hint', async () => {
+    // U+00E9 is in the @fontsource latin face; the 3D subsets hold printable ASCII plus the labels.
+    const report = await checkGlyphs({ labels: [probe('CAF\u00c9')] });
+    expect(report.missing).toEqual([
+      expect.objectContaining({ codePoint: 'U+00C9', font: 'serif', stale: true }),
+    ]);
+    expect(formatReport(report)).toContain(RUN_FONTS_HINT);
+    const absent = await checkGlyphs({ labels: [probe(PRIVATE_USE)] });
+    expect(absent.missing[0]?.stale).toBe(false);
+    expect(formatReport(absent)).not.toContain(RUN_FONTS_HINT);
+  });
+
+  it('keeps every printable ASCII character in both 3D subsets', async () => {
+    const ascii = String.fromCharCode(...Array.from({ length: 95 }, (_, i) => 0x20 + i));
+    const report = await checkGlyphs({ labels: [probe(ascii, ['serif', 'sans'])] });
+    expect(report.missing).toEqual([]);
+  });
+
+  it('finds every DOM code point of the content and UI sources in the woff2 subsets', async () => {
+    const report = await checkGlyphs({ now: OCT_2026 });
+    expect(report.domMissing).toEqual([]);
+  });
+
+  it('fails a DOM text whose code point the source faces have but the subsets lack', async () => {
+    // U+0152 (OE ligature) is in the @fontsource latin range, outside the DOM base set.
+    const report = await checkGlyphs({
+      labels: [],
+      domTexts: [{ text: '\u0152uvre, en dash \u2013, middle dot \u00b7', label: 'probe' }],
+    });
+    expect(report.domMissing.map((m) => [m.codePoint, m.file])).toEqual([
+      ['U+0152', 'instrument-serif-400.woff2'],
+      ['U+0152', 'instrument-serif-400-italic.woff2'],
+      ['U+0152', 'ibm-plex-sans-400.woff2'],
+      ['U+0152', 'ibm-plex-sans-500.woff2'],
+    ]);
+    expect(formatReport(report)).toContain(RUN_FONTS_HINT);
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      expect(await main({ labels: [], domTexts: [{ text: '\u0152', label: 'probe' }] })).toBe(1);
+      expect(error.mock.calls.flat().join('\n')).toContain('npm run fonts');
     } finally {
       error.mockRestore();
     }

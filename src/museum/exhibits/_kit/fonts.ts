@@ -1,18 +1,22 @@
-// The 3D label fonts (ARCHITECTURE §8.3, EXPERIENCE §7.7): the self-hosted .woff files troika
-// reads (it cannot read woff2), imported as URLs so Vite hashes them into /assets/. Every kit and
-// environment <Text> passes one of these as `font`; troika's default would fetch from a CDN.
-// WP-28 swaps both URLs for subset files. scripts/check-glyphs.ts checks the same files.
-import serifWoff from '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff?url';
-import sansWoff from '@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff?url';
+// The 3D label fonts (ARCHITECTURE §8.3, EXPERIENCE §7.7): .woff subsets troika reads (it cannot
+// read woff2), written by `npm run fonts` (scripts/subset-fonts.ts, WP-28) to public/fonts/ and
+// served same-origin. Every kit and environment <Text> passes one of these as `font`; troika's
+// default would fetch from a CDN. scripts/check-glyphs.ts checks the same files.
 import type { ThreeDFont } from '../../../content/selectors';
 
 /** Font URL per 3D font: 'serif' is Instrument Serif 400, 'sans' is IBM Plex Sans 500. */
-export const KIT_FONTS: Readonly<Record<ThreeDFont, string>> = { serif: serifWoff, sans: sansWoff };
+export const KIT_FONTS: Readonly<Record<ThreeDFont, string>> = {
+  serif: '/fonts/instrument-serif-400.woff',
+  sans: '/fonts/ibm-plex-sans-500.woff',
+};
 
-/** The package files behind KIT_FONTS (for the glyph and metric tests). */
+/**
+ * The repo files behind KIT_FONTS (for the glyph and metric tests), relative to this folder so a
+ * kit test's `require.resolve` finds them.
+ */
 export const KIT_FONT_FILES: Readonly<Record<ThreeDFont, string>> = {
-  serif: '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff',
-  sans: '@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff',
+  serif: '../../../../public/fonts/instrument-serif-400.woff',
+  sans: '../../../../public/fonts/ibm-plex-sans-500.woff',
 };
 
 /** troika's unicode fallback points here: a self-hosted, intentionally empty path. */

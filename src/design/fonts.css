@@ -1,21 +1,79 @@
 /*
- * DOM fonts (EXPERIENCE §7.7, ARCHITECTURE §8.3). Self-hosted from npm: Vite hashes the latin
- * .woff2 files into /assets/ (no CDN, CSP is self-only). troika reads the .woff files of the
- * same packages through _kit/fonts.ts, never this file. WP-28 may switch these imports to
- * subsets in public/fonts/ and tunes the fallback metrics below.
+ * DOM fonts (EXPERIENCE §7.7, ARCHITECTURE §8.3). Self-hosted subsets of the @fontsource latin
+ * faces, written by `npm run fonts` (scripts/subset-fonts.ts, WP-28) to public/fonts/ and served
+ * same-origin at /fonts/ (no CDN, CSP is self-only). scripts/prerender.ts preloads the Instrument
+ * Serif 400 and Plex Sans 400 files. troika reads separate .woff subsets through _kit/fonts.ts,
+ * never this file.
  */
-@import '@fontsource/instrument-serif/latin-400.css';
-@import '@fontsource/instrument-serif/latin-400-italic.css';
-@import '@fontsource/ibm-plex-sans/latin-400.css';
-@import '@fontsource/ibm-plex-sans/latin-500.css';
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/instrument-serif-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/instrument-serif-400-italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-500.woff2') format('woff2');
+}
 
 /*
- * Metric-matched fallbacks, so the swap from Georgia or Arial to the web font barely moves the
- * layout (CLS at most 0.02). First-pass values (docs/ART_DIRECTION.md §3): size-adjust is the
- * ratio of average character widths (English letter frequencies plus spaces), measured with
- * fontkit against Gelasio (metric-compatible with Georgia) and Liberation Sans (metric-compatible
- * with Arial); the overrides are the web font's ascent, descent and line gap divided by it.
+ * Metric-matched fallbacks, so the swap from the local face to the web font barely moves the
+ * layout (CLS at most 0.02). size-adjust is the ratio of average character widths (English letter
+ * frequencies plus spaces, docs/ART_DIRECTION.md §3), measured with fontkit; the overrides are the
+ * web font's ascent, descent and line gap divided by it. Georgia is matched through Gelasio and
+ * Arial through Liberation Sans (metric-compatible).
+ *
+ * Linux and Android have no Georgia, so `serif` there is DejaVu Serif (desktop Linux, CI) or Noto
+ * Serif (Android), much wider faces: unadjusted, the h1 wrapped differently at 360 x 640 and the
+ * swap shifted the page by about 0.04 (WP-28). Each serif fallback family is therefore a stack of
+ * faces with the same descriptors. Chromium tries them from the last rule to the first and skips a
+ * face whose local() fonts are all missing, so Georgia (last) wins where it exists, then Noto
+ * Serif, then DejaVu Serif. The italic faces size DejaVu Serif and Noto Serif Italic against
+ * Instrument Serif Italic.
  */
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  font-style: normal;
+  font-weight: 400;
+  src: local('DejaVu Serif'), local('DejaVuSerif');
+  size-adjust: 65.86%;
+  ascent-override: 150.32%;
+  descent-override: 47.07%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Noto Serif'), local('Noto Serif Regular'), local('NotoSerif-Regular');
+  size-adjust: 70.42%;
+  ascent-override: 140.58%;
+  descent-override: 44.02%;
+  line-gap-override: 0%;
+}
+
 @font-face {
   font-family: 'Instrument Serif Fallback';
   font-style: normal;
@@ -24,6 +82,28 @@
   size-adjust: 76.8%;
   ascent-override: 128.91%;
   descent-override: 40.37%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  font-style: italic;
+  font-weight: 400;
+  src: local('DejaVu Serif'), local('DejaVuSerif');
+  size-adjust: 69.5%;
+  ascent-override: 142.45%;
+  descent-override: 44.6%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  font-style: italic;
+  font-weight: 400;
+  src: local('Noto Serif Italic'), local('NotoSerif-Italic');
+  size-adjust: 76.58%;
+  ascent-override: 129.28%;
+  descent-override: 40.48%;
   line-gap-override: 0%;
 }
 

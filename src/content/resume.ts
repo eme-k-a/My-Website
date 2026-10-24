@@ -432,8 +432,9 @@ export const resume = {
   certifications: {
     id: 'certifications',
     kind: 'certifications',
-    // Dates, the Tech Stewardship issuer and verification links are omitted until Emeka supplies
-    // them (CONTENT_DRAFT §7 item 8).
+    // Dates, the Tech Stewardship issuer and verification links are omitted from the items until
+    // Emeka supplies them (CONTENT_DRAFT §7 item 8), so print shows none of them. The exhibit's
+    // story carries the placeholders instead (concept box 6, F-044), and RELEASE=1 blocks on them.
     items: [
       { name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services' },
       { name: 'Tech Stewardship Practice Program' },
@@ -452,6 +453,11 @@ export const resume = {
         {
           type: 'p',
           text: 'The Tech Stewardship Practice Program and Tech Stewardship for the Energy Transition reflect a different commitment: thinking carefully about the impact of the technology I help create, including its role in a changing energy landscape.',
+          draft: true,
+        },
+        {
+          type: 'p',
+          text: 'Issue dates: [placeholder: certification issue dates]. Tech Stewardship issuer: [placeholder: Tech Stewardship issuer].',
           draft: true,
         },
       ],

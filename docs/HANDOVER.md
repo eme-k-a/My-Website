@@ -165,16 +165,23 @@ Then the F-M3 follow-ups listed in RULINGS, the review (G3 needs an average of a
 
 Each push to a `claude/m3-*` branch runs CI and deploys an alias preview for that branch. That is harmless. R0 merges the branches into the integration branch with the batch integrator.
 
-## 11. Paused at Emeka's request (2026-10-21 03:40 UTC)
+## 11. M3 complete, Gate G3 passed (2026-10-24)
 
-Emeka asked to pause when his 5-hour window ended and not to auto-resume, to save weekly usage (the weekly limit resets 2026-10-27 02:00 UTC). Every scheduled check-in is deleted, and no builder session is running. **Do nothing until Emeka says "continue M3".**
+**M3 is complete.** All of it is merged:
+- WP-20 to WP-25, F-M3a (draw calls), F-M3 (follow-ups) and F-039;
+- Emeka's approved KlarUp change: the staircase raised and the checks thickened.
 
-**Where M3 stands (tip `9b54c5c`, pushed):**
-- All of M3 is merged: WP-20 to WP-25, F-M3a (draw calls) and F-M3 (follow-ups). CI run 93 is fully green at `bc1ac35`, with 47 CI baselines.
-- **G3 review round 1** (`review/runs/2026-10-21-g3r1/`): 3.78 overall (desktop 3.83, Pixel 7 3.72). No P0. One P1, **F-039**: on phones the wing HUD ("Return to the aisle") is drawn over the 3D wall title at the wing stops (finance-tracker on Pixel 7; klarup, finance-tracker and sdsj at 360 x 640). The open P2s are F-040 to F-044, and the P3s are F-045 and F-046.
+**Checks:** CI run 102 is green at `71e5f62`, with 47 CI baselines.
 
-**Next steps on "continue M3":**
-1. **Fix F-039 in scope (R4 with R6):** on portrait, frame wing stops from the measured bottom of the wing head, as F-020 does for the desk card, or make the wing head compact on phones. Verify with an e2e check (extend rail-input (g) to pixel7 and 360 x 640) and no new scored round, as with F-038.
-2. **Finish CI:** push, dispatch the baseline refresh (`update-baselines`, `wp: F-039`), then a normal CI run.
-3. **Close the gate:** record G3 as passed, then stop at the M3 boundary for `/compact`, with M4 (polish) next.
+**G3 review:** round 1 averaged 3.78 with no P0. The P1 F-039 is closed. The open P2 and P3 findings (listed in RULINGS) go to M4.
 
+**Housekeeping:** the seven M3 builder sessions are archived.
+
+**Next:** Emeka runs `/compact`, then says "go" for **M4: polish**:
+- WP-26: lighting and atmosphere, including dark brass at tier medium (F-045);
+- WP-27: mobile and onboarding, including the short phone card and F-040 to F-044 where they apply;
+- WP-28: the asset pass.
+
+Gate G4 needs an average of at least 4.0, no dimension below 3.5, and Emeka's sign-off on 10 screenshots. Run the builders as separate cloud sessions, a few at a time, and merge by hand with cherry-pick, since workflow integrators can misread the user's turn. The Workflow tool may be switched off; in that case, use background agents in worktrees.
+
+**Usage check-ins:** the 5-hour chain (next at 07:22 UTC) and the daily backup (`trig_01LUJuUEwDgi8NtdCq45PVUp`) are armed at Emeka's request (2026-10-24). They only resume stopped work; they never start a new milestone.

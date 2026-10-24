@@ -129,3 +129,8 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - Brass reads dark at tier medium (finance-tracker coins, klarup crate strips, Verafin cartridges; G3 F-045). This goes to the M4 lighting pass (WP-26, R2 with R7), not to the exhibits.
   - F-M3a: the draw-call budget counts the arrival frame, including shadow bakes, and every stop is within budget.
 - **Builder sessions:** the seven finished M3 cloud sessions (WP-20 to WP-25 and F-M3) were archived on 2026-10-24. Their branches `claude/m3-*` stay on GitHub.
+- **Gate G3 passed (2026-10-24):**
+  - All of M3 is merged and green: CI run 102 at `71e5f62`, 47 CI baselines.
+  - The G3 review round 1 averaged 3.78 (desktop 3.83, Pixel 7 3.72) with no P0. Its only P1, F-039 (the phone wing HUD over the wall titles), is closed by a scoped fix verified by an e2e check (`9e23b8e`), as with F-038.
+  - Open P2s go to M4: F-040 to F-044, and sdsj at 360 x 640, where the stop card covers the case floor (a shorter phone card is WP-27 territory). Open P3s also go to M4: F-045 and F-046.
+  - Certifications checklist box 6 (F-044) waits for Emeka's certification dates and issuers.

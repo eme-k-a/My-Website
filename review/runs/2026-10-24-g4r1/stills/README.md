@@ -1,4 +1,6 @@
-# Gate G4 sign-off stills (proposed by R11, round 1)
+# Gate G4 sign-off stills (R11, round 1)
+
+**Approved by Emeka on 2026-10-24** ("approved", in the G4 round 1 review session), all ten as listed, with the sdsj swap. R0 records them as the G4 reference stills in `docs/ART_DIRECTION.md` section 10.
 
 Ten screenshots for Emeka's G4 sign-off, from the G4 round 1 capture (`?test=1&mode=museum`, build at the tip of `claude/intelligent-sagan-poq45q`, `4938da2`). Desktop stills are 1440 x 900 downscaled to 1200 px wide; phone stills are Pixel 7 (412 x 839 CSS px) at the device scale. All are 200-color PNGs (1.7 MB in total). Start: WP-26's proposal (`review/reports/WP-26.json`, `proposedG4Stills`); one swap, noted below.
 

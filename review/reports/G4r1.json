@@ -7,7 +7,8 @@
   "round": "G4 round 1",
   "commits": [
     "docs(review): G4 round 1 captures, probes and proposed sign-off stills",
-    "<this commit> docs(review): G4 round 1 scorecard, scores, findings and report"
+    "docs(review): G4 round 1 scorecard, scores, findings and report",
+    "<this commit> docs(review): record Emeka's approval of the G4 stills"
   ],
   "changedFiles": [
     "review/runs/2026-10-24-g4r1/scorecard.md",
@@ -50,22 +51,63 @@
     }
   ],
   "scores": {
-    "overall": 3.90,
+    "overall": 3.9,
     "desktop": 3.92,
     "pixel7": 3.87,
-    "dimensionsBoth": { "D1": 3.80, "D2": 3.86, "D3": 4.23, "D4": 3.78, "D5": 3.94, "D6": 3.76 },
-    "dimensionsDesktop": { "D1": 3.88, "D2": 3.92, "D3": 4.15, "D4": 3.80, "D5": 3.96, "D6": 3.84 },
-    "dimensionsPixel7": { "D1": 3.73, "D2": 3.80, "D3": 4.30, "D4": 3.76, "D5": 3.92, "D6": 3.69 },
-    "previous": { "round": "G3 round 1", "overall": 3.78, "desktop": 3.83, "pixel7": 3.72 }
+    "dimensionsBoth": {
+      "D1": 3.8,
+      "D2": 3.86,
+      "D3": 4.23,
+      "D4": 3.78,
+      "D5": 3.94,
+      "D6": 3.76
+    },
+    "dimensionsDesktop": {
+      "D1": 3.88,
+      "D2": 3.92,
+      "D3": 4.15,
+      "D4": 3.8,
+      "D5": 3.96,
+      "D6": 3.84
+    },
+    "dimensionsPixel7": {
+      "D1": 3.73,
+      "D2": 3.8,
+      "D3": 4.3,
+      "D4": 3.76,
+      "D5": 3.92,
+      "D6": 3.69
+    },
+    "previous": {
+      "round": "G3 round 1",
+      "overall": 3.78,
+      "desktop": 3.83,
+      "pixel7": 3.72
+    }
   },
   "gate": {
-    "G4": "not met in round 1: average 3.90 against 4.0; no dimension below 3.5 (pass); Emeka's sign-off pending",
+    "G4": "not met in round 1: average 3.90 against 4.0; no dimension below 3.5 (pass); Emeka approved the 10 stills on 2026-10-24 (pass)",
     "openP0": 0,
-    "openP1": ["F-048"],
-    "openP2": ["F-047", "F-049", "F-050", "F-051"],
-    "openP3": ["F-052", "F-053"]
+    "openP1": [
+      "F-048"
+    ],
+    "openP2": [
+      "F-047",
+      "F-049",
+      "F-050",
+      "F-051"
+    ],
+    "openP3": [
+      "F-052",
+      "F-053"
+    ]
   },
-  "conceptVerdicts": { "cfia": "PASS", "finance-tracker": "PASS", "sdsj": "PASS", "mun": "PASS" },
+  "conceptVerdicts": {
+    "cfia": "PASS",
+    "finance-tracker": "PASS",
+    "sdsj": "PASS",
+    "mun": "PASS"
+  },
   "stills": [
     "review/runs/2026-10-24-g4r1/stills/01-lobby-desktop.png",
     "review/runs/2026-10-24-g4r1/stills/02-lobby-pixel7.png",
@@ -99,5 +141,11 @@
       "default": "Filed as P2 for R3 with R8; no change to the F-041b ratification until R0 rules."
     }
   ],
-  "notes": "Overall 3.90 (608.5 / 156; desktop 3.92, Pixel 7 3.87), up from 3.78 like for like. G4 not met: average below 4.0. No dimension below 3.5 (lowest D6 3.76; Pixel 7 D6 3.69). Open P0 0, P1 1 (F-048), P2 4, P3 2. Concept checklists cfia, finance-tracker, sdsj, mun: PASS."
+  "notes": "Overall 3.90 (608.5 / 156; desktop 3.92, Pixel 7 3.87), up from 3.78 like for like. G4 not met: average below 4.0. No dimension below 3.5 (lowest D6 3.76; Pixel 7 D6 3.69). Open P0 0, P1 1 (F-048), P2 4, P3 2. Concept checklists cfia, finance-tracker, sdsj, mun: PASS.",
+  "stillsApproval": {
+    "by": "Emeka",
+    "date": "2026-10-24",
+    "verdict": "approved",
+    "note": "All ten as listed in review/runs/2026-10-24-g4r1/stills/README.md. ART_DIRECTION section 10 is not R11's file; R0 to record them there."
+  }
 }

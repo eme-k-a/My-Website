@@ -9,6 +9,8 @@
 // - dist/resume/index.html: the classic resume, linking the hashed `classic` CSS from
 //   dist/.vite/manifest.json, with no script at all;
 // - dist/404.html: the 404 page with the gallery CSS, `noindex`, and no script at all.
+// The gallery and exhibit pages also get the font preloads in <!--preload--> (WP-28 under a grant:
+// the Instrument Serif 400 face of the h1, the LCP element, and the Plex Sans 400 body face).
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -64,10 +66,25 @@ function fill(html: string, marker: string, value: string): string {
 
 const GALLERY_BODY = '<body data-page="gallery">';
 
+export const PRELOAD_MARKER = '<!--preload-->';
+/** The DOM font subsets every gallery shell preloads (EXPERIENCE §7.7; src/design/fonts.css). */
+export const PRELOAD_FONTS = [
+  '/fonts/instrument-serif-400.woff2',
+  '/fonts/ibm-plex-sans-400.woff2',
+] as const;
+
+/** One `<link rel="preload">` per font; `crossorigin` because fonts are fetched in CORS mode. */
+export function preloadTags(): string {
+  return PRELOAD_FONTS.map(
+    (href) => `<link rel="preload" as="font" type="font/woff2" crossorigin href="${href}" />`,
+  ).join('\n    ');
+}
+
 /** The gallery page from the Vite template. The template's dev-only <title> gives way to head tags. */
 export function galleryPage(template: string, entry: EntryServer): string {
   let html = template.replace(/[ \t]*<title>[^<]*<\/title>\n?/, '');
   html = fill(html, MARKERS.head, entry.headTags('gallery'));
+  html = fill(html, PRELOAD_MARKER, preloadTags());
   html = fill(html, MARKERS.app, entry.renderApp('/'));
   return fill(html, MARKERS.story, '');
 }
@@ -78,6 +95,7 @@ export function exhibitPage(template: string, entry: EntryServer, id: string): s
   if (!html.includes(GALLERY_BODY)) throw new Error(`dist/index.html has no ${GALLERY_BODY}`);
   html = html.replace(GALLERY_BODY, '<body data-page="exhibit">');
   html = fill(html, MARKERS.head, entry.headTags({ kind: 'exhibit', id }));
+  html = fill(html, PRELOAD_MARKER, preloadTags());
   html = fill(html, MARKERS.app, entry.renderApp(`/exhibit/${id}/`));
   html = fill(html, MARKERS.story, entry.renderStory(id));
   const inline = html.match(/<script(?![^>]*\bsrc=)(?![^>]*type="application\/ld\+json")[^>]*>/gi);

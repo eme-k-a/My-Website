@@ -11,7 +11,12 @@ import { testParams } from '../app/testHooks';
 import { TEST_IDS } from '../app/testIds';
 import { tokens } from '../design/tokens';
 import { galleryLayout, poseRotation } from './environment/gallery';
-import { shouldRemeasureStage, stageStyle, type ViewportSize } from './environment/stage';
+import {
+  shouldRemeasureStage,
+  stageStyle,
+  vignetteStyle,
+  type ViewportSize,
+} from './environment/stage';
 import { MaterialsProvider } from './materials';
 import { ContextLossHandler } from './quality/contextLoss';
 import { FrameDriver } from './quality/FrameDriver';
@@ -104,6 +109,7 @@ export default function MuseumCanvas() {
           </Suspense>
         </MaterialsProvider>
       </Canvas>
+      <div style={vignetteStyle()} data-vignette="" />
     </div>
   );
 }

@@ -203,3 +203,5 @@ All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refre
 
 **Status (09:50 UTC):** CI run 125 committed the MUN baselines (`28f1d57`) after one allowed re-run (F-047 records the two intermittent checks). This push runs the normal CI and redeploys the preview. The M4 build is complete once that run is green; the G4 review still waits on Emeka's go-ahead.
 
+**M4 build complete (10:12 UTC):** CI run 126 is green at `c0fd2e2`, and its deploy put all of M4 on the preview. Next: the G4 review (R11, as in G3: `review/runs/<date>-g4r1/`, scorecard, `scores.json`, findings), then Emeka signs off 10 screenshots. The review waits on Emeka's go-ahead, because the weekly usage limit is at its warning level (it resets 2026-10-27 02:00 UTC).
+

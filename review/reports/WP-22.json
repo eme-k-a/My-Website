@@ -6,7 +6,8 @@
   "commits": [
     "ad9c055 feat(exhibit-klarup): the climb",
     "d380b18 feat(exhibit-finance-tracker): the balance",
-    "471adf5 docs(concepts): klarup and finance-tracker verdicts"
+    "471adf5 docs(concepts): klarup and finance-tracker verdicts",
+    "dd6be00 fix(exhibit-klarup): raise the staircase and thicken the checks"
   ],
   "changedFiles": [
     "src/museum/exhibits/klarup/index.ts",
@@ -25,23 +26,37 @@
   ],
   "measurements": {
     "klarup": {
-      "triangles": 3036,
-      "trianglesByPart": "tray 556, tiles 5 x 236, posts 4 x 16, check bars 10 x 12, beads 3 x 352, crate 12, strips 4 x 12",
+      "triangles": 3052,
+      "trianglesByPart": "tray 556, tiles 5 x 236, posts 5 x 16, check bars 10 x 12, beads 3 x 352, crate 12, strips 4 x 12",
       "drawCalls": 20,
       "inBounds": true,
-      "budgetDeclared": { "triangles": 4000, "drawCalls": 20, "textureMB": 0 },
-      "chunkGzipKB": 1.75
+      "budgetDeclared": {
+        "triangles": 4000,
+        "drawCalls": 20,
+        "textureMB": 0
+      },
+      "chunkGzipKB": 1.73
     },
     "finance-tracker": {
       "triangles": 7468,
       "trianglesByPart": "tray 556, coins 3 x 24 x 96 (all instances always drawn, so this is the maximum-count figure)",
       "drawCalls": 4,
       "inBounds": true,
-      "budgetDeclared": { "triangles": 8000, "drawCalls": 6, "textureMB": 0 },
+      "budgetDeclared": {
+        "triangles": 8000,
+        "drawCalls": 6,
+        "textureMB": 0
+      },
       "chunkGzipKB": 1.41
     },
-    "museumChunkGzipKB": { "before": null, "after": 319.11 },
-    "stopTotalsAtFinanceTracker": { "calls": 17, "triangles": 11596 }
+    "museumChunkGzipKB": {
+      "before": null,
+      "after": 319.11
+    },
+    "stopTotalsAtFinanceTracker": {
+      "calls": 17,
+      "triangles": 11596
+    }
   },
   "evidencePaths": {
     "desktop": "out/wp22/klarup-desktop.png, out/wp22/finance-tracker-desktop.png",
@@ -63,14 +78,14 @@
       "criterion": "Exhibit chunk at most 40 KB gzip",
       "command": "npm run build && npm run check:budgets",
       "result": "pass",
-      "evidence": "exhibits/klarup 1.75 KB, exhibits/finance-tracker 1.41 KB gzip; entry 94.83, museum 319.11; budgets ok; check:glyphs ok (35 labels)"
+      "evidence": "exhibits/klarup 1.73 KB, exhibits/finance-tracker 1.41 KB gzip; entry 94.83, museum 319.11; budgets ok; check:glyphs ok (35 labels)"
     },
     {
       "id": "A3",
       "criterion": "exhibit-contract.spec.ts: inBounds, triangles <= 20000, click opens the dialog, Esc returns focus, deterministic frames; desktop and pixel7",
       "command": "npx playwright test tests/e2e/exhibit-contract.spec.ts --grep \"klarup|finance-tracker\" --project=desktop --project=pixel7 --workers=2",
       "result": "pass",
-      "evidence": "4 passed (1.0 min): klarup { triangles 3036, drawCalls 20, inBounds true }, finance-tracker { triangles 7468, drawCalls 4, inBounds true } on both projects, focus returns to open-<id>"
+      "evidence": "4 passed (1.0 min): klarup { triangles 3036, drawCalls 20, inBounds true }, finance-tracker { triangles 7468, drawCalls 4, inBounds true } on both projects, focus returns to open-<id>; klarup re-run after the 2026-10-24 change: 2 passed, { triangles 3052, drawCalls 20, inBounds true } on both projects"
     },
     {
       "id": "A4",
@@ -87,7 +102,8 @@
     "npm run check:copy: ok; no U+2014 in any WP-22 file; no visual baselines committed"
   ],
   "deviations": [
-    "klarup tile 0: EXPERIENCE §4.5 centers it at y 0.06, so its underside (0.045) is 1 cm inside the tray (top 0.055). Built as specified: tile 0 is seated in the tray and has no post (a post would have negative length); tiles 1 to 4 stand on posts. R2 passed 'Every tile is supported by a brass post; nothing floats' on the 'nothing floats' intent and recorded this.",
+    "klarup staircase: raised 2.5 cm above EXPERIENCE §4.5 (tile i at y 0.085 + 0.075 i), approved by Emeka 2026-10-24. The spec's y 0.06 put tile 0's underside 1 cm inside the tray; now all five tiles stand on brass posts (tile 0's is 1.5 cm). EXPERIENCE §4.5 needs the matching R0 text change.",
+    "klarup check bars: 0.012 square instead of the spec's 0.008, approved by Emeka 2026-10-24, so the flat checks read from the near-level stop camera; still flat on the tile tops, no tilt, glow levels unchanged (0.1 to 1.4). EXPERIENCE §4.5 needs the matching R0 text change.",
     "klarup beads: they rest in a touching row along the back of the top tile, with the check moved toward the tile front (vertex 0.042 in front of center), because a triangle of three 0.018 beads and the check do not both fit on a 0.11 tile without overlapping.",
     "klarup clock phase: the 10 s cycle is offset so clock 0 sits at the start of the 2 s all-lit hold. That makes the ?test=1 freeze and the reduced-motion pin the spec's all-lit pose without a special case, and an idle stop or resume never jumps.",
     "finance-tracker: each stack InstancedMesh always draws 24 instances and collapses absent coins to zero scale at the stack top, so stats() always reports the maximum-count triangles (7,468) as A3 asks."
@@ -99,24 +115,19 @@
   ],
   "openQuestions": [
     {
-      "question": "klarup tile 0 sits 1 cm inside the tray at the spec's y 0.06. Keep it seated (current build), or raise the staircase (for example y = 0.085 + 0.075 i) so every tile stands on a visible post? Raising it changes EXPERIENCE §4.5 coordinates.",
+      "question": "Update EXPERIENCE §4.5 to match the approved klarup changes: tile i at y = 0.085 + 0.075 i (every tile on a post) and check bars 0.012 square.",
       "for": "R0",
-      "default": "Built exactly as specified, tile 0 seated, noted in the README and the checklist."
+      "default": "Built with the approved values; the spec text is R0's to change."
     },
     {
-      "question": "The klarup checks lie flat on the tile tops as specified, so at the near-level stop camera they read as thin teal lines. Should the G3 polish tilt them or raise their glow, or is the restrained read intended?",
-      "for": "R0 and R2",
-      "default": "Left as specified; logged as polish in the klarup verdict notes."
+      "question": "Under medium-tier lighting brass reads dark brown: the finance-tracker brass stack is close in value to graphite, and klarup's crate strips and Verafin's cartridges read dark too. Please route a check of brass at these stops to R7/R2 for the G3 lighting pass; exhibits cannot fix it with library materials only.",
+      "for": "R0, then R7 and R2",
+      "default": "Logged as polish in both verdict notes; no exhibit change."
     },
     {
-      "question": "Under medium-tier lighting the brass coin stack reads dark brown, close in value to the graphite stack. A lighting or brass-material question for the G3 polish, not something the exhibit can change with library materials only.",
-      "for": "R0 and R2",
-      "default": "Logged as polish in the finance-tracker verdict notes."
-    },
-    {
-      "question": "The R2 checklist pass ran in this builder session, as in WP-12. Should R11 confirm both verdicts independently at G3?",
-      "for": "R0",
-      "default": "Verdicts PASS committed with one evidence line per box and the session noted."
+      "question": "The R2 verdicts were signed in this builder session. Please have R11 confirm both klarup and finance-tracker verdicts independently at G3 (approved by Emeka 2026-10-24).",
+      "for": "R0, then R11",
+      "default": "Verdicts stay PASS with one evidence line per box."
     }
   ],
   "depsRequest": []

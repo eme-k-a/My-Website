@@ -34,10 +34,10 @@ Build `d380b18` (WP-22), `?test=1&mode=museum`, captured with the `@capture` spe
 
 1. Thumbnail `out/wp22/klarup-thumb.png`: one silhouette on the walnut tray, five light ceramic steps climbing left to right on thin posts with the beads catching light on the top step; the small dark crate reads as part of the base, not a second object.
 2. No flame, fire, particles or additive effect anywhere in `Climb.tsx`; the three beads are one static InstancedMesh written once (`useInstances`), and the motion probe shows no changed pixel at the beads beyond the check glow below them.
-3. Tiles 1 to 4 each stand on a brass post from the tray top (y 0.055) to the tile underside (`postFor`, unit-tested in `climb.test.ts`). Tile 0 is centered at y 0.06 as specified, so it is seated 1 cm into the tray (top 2 cm proud) and rests on it with no post; nothing floats (`out/wp22/klarup-desktop.png`). The deviation from a literal post under tile 0 is recorded for R0 in `review/reports/WP-22.json`.
+3. All five tiles stand on a brass post from the tray top (y 0.055) to the tile underside (`postFor`, unit-tested in `climb.test.ts`); the shortest, under tile 0, is 1.5 cm. The staircase is raised 2.5 cm above the EXPERIENCE §4.5 coordinates (approved by Emeka 2026-10-24), because the spec's y 0.06 sank tile 0 into the tray. Nothing floats (`out/wp22/klarup-desktop.png`).
 4. No phone shape, screen, app UI or texture in the component; the crate is a plain walnut cube with four brass corner strips, no text or mark.
 5. Only the five check materials change (`glowAt`, rest 0.1 to lit 1.4, 1.6 s apart up the stairs, 2 s hold, 1 s reset, period 10 s, unit-tested). Motion probe with `&idle=1`: every changed pixel lies in the staircase box (canvas x 811 to 951, y 439 to 531 at 1440 x 900), and the changed area shrinks up the stairs as the checks relight in order. Reduced motion with `&idle=1`: 0 changed pixels over 4 s. Manifest `motion: 'slow'`.
-6. `stats().exhibits.klarup` on desktop and pixel7: `inBounds: true`, 3,036 triangles (budget 4,000, limit 20,000), 20 draw calls; analytic box x -0.300 to 0.300, y 0.025 to 0.411, z -0.210 to 0.210.
+6. `stats().exhibits.klarup` on desktop and pixel7: `inBounds: true`, 3,052 triangles (budget 4,000, limit 20,000), 20 draw calls; analytic box x -0.300 to 0.300, y 0.025 to 0.436, z -0.210 to 0.210.
 7. `Climb.tsx` uses `useMaterial` for walnut, ceramic and brass and one `useMaterialInstance('accentGlow')` per check; nothing else.
 
 ## Verdict
@@ -48,5 +48,5 @@ Build `d380b18` (WP-22), `?test=1&mode=museum`, captured with the `@capture` spe
 | Date | 2026-10-20 |
 | Screenshot path | `out/wp22/klarup-desktop.png`, `out/wp22/klarup-pixel7.png` (tier medium) |
 | Thumbnail path (320 px grayscale) | `out/wp22/klarup-thumb.png` |
-| Notes | Every box passes. Polish for the G3 rubric (not checklist failures): the checks lie flat on the tile tops as specified, so at the near-level stop camera they read as thin teal lines; the crate's brass strips read dark under medium-tier lighting. The review ran in the WP-22 builder session (builder and R2 roles in one session, as in WP-12); R0 may ask R11 to confirm at G3. |
+| Notes | Every box passes. Re-reviewed 2026-10-24 after the approved changes (staircase raised 2.5 cm, check bars 0.012 square): the checks now read as teal strokes on every step at the stop. Polish for the G3 rubric (not a checklist failure): the crate's brass strips read dark under medium-tier lighting. The review ran in the WP-22 builder session (builder and R2 roles in one session, as in WP-12); R0 may ask R11 to confirm at G3. |
 | Signed | R2 (Art Director), WP-22 |

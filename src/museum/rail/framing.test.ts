@@ -1,5 +1,6 @@
 import { PerspectiveCamera, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
+import { content } from '../../content/index';
 import { tokens } from '../../design/tokens';
 import { END_WALL } from '../environment/labels3d';
 import { DESK_TOP_Y } from '../environment/lightPlan';
@@ -18,8 +19,16 @@ import {
   fovFor,
   framingFor,
   MIN_LEFT_AREA,
+  stopWeightAt,
+  titleTopCorners,
+  topTangent,
   viewOffsetFor,
+  WING_HEAD_BOTTOM,
+  WING_HEAD_CLEARANCE,
+  wingPortraitY,
 } from './framing';
+import { slotPlacard } from '../exhibits/_kit/placard';
+import { computeLayout } from './layout';
 
 /** Where a world point lands on screen (fractions from the top left) through `camera`. */
 function screenOf(camera: PerspectiveCamera, point: Vector3): { x: number; y: number } {
@@ -241,5 +250,86 @@ describe('lobby framing (F-032)', () => {
       12,
     );
     expect(framingFor(1440 / 900, null, 0, DESK_PORTRAIT_Y, 1)).toEqual({ x: 0.62, y: 0.5 });
+  });
+});
+
+describe('wing framing (F-039)', () => {
+  const layout = computeLayout(content, new Date());
+  const wingSlots = layout.slots.filter((s) => s.track !== 'main' && s.mount === 'plinth');
+  const base = tokens.camera.framingPortraitY;
+
+  it('measures the tangent three.js projects', () => {
+    const camera = new PerspectiveCamera(68, 0.5, 0.1, 90);
+    camera.position.set(5.6, 1.6, -30);
+    camera.lookAt(new Vector3(9, 1.35, -31));
+    const points: [number, number, number][] = [
+      [11.5, 2.9, -32],
+      [11.5, 2.9, -29.5],
+    ];
+    const tan = topTangent([5.6, 1.6, -30], [9, 1.35, -31], points);
+    const k = 1 / (2 * Math.tan((68 * Math.PI) / 360));
+    const top = Math.min(...points.map((p) => screenOf(camera, new Vector3(...p)).y));
+    expect(0.5 - tan * k).toBeCloseTo(top, 6);
+  });
+
+  it('weights the nearest stop, gone half a stop away', () => {
+    const ids = ['projects-door', 'klarup', 'finance-tracker'];
+    expect(stopWeightAt(ids, 1)).toEqual({ id: 'klarup', weight: 1 });
+    expect(stopWeightAt(ids, 1.5).weight).toBe(0);
+    expect(stopWeightAt(ids, 1.25).weight).toBeCloseTo(0.5, 6);
+    expect(stopWeightAt(ids, Number.NaN).weight).toBe(0);
+    expect(stopWeightAt(ids, 9).id).toBe('finance-tracker');
+  });
+
+  it('never frames above the portrait point and drops at most to half the height', () => {
+    expect(wingPortraitY(839, 140, 68, -1)).toBe(base);
+    expect(wingPortraitY(640, 140, 68, 5)).toBe(0.5);
+    expect(wingPortraitY(0, 140, 68, 0.3)).toBe(base);
+  });
+
+  it('applies on portrait only, blended by the stop weight', () => {
+    expect(framingFor(1440 / 900, null, 0, DESK_PORTRAIT_Y, 0, 1, 0.45)).toEqual({
+      x: 0.62,
+      y: 0.5,
+    });
+    expect(framingFor(412 / 839, null, 0, DESK_PORTRAIT_Y, 0, 1, 0.45).y).toBe(0.45);
+    expect(framingFor(412 / 839, null, 0, DESK_PORTRAIT_Y, 0, 0.5, 0.46).y).toBeCloseTo(
+      (base + 0.46) / 2,
+      9,
+    );
+    expect(framingFor(412 / 839, null, 0, DESK_PORTRAIT_Y, 0, 0, 0.46).y).toBe(base);
+  });
+
+  it.each([
+    [412, 839],
+    [360, 640],
+  ])('keeps every wing title %i x %i under the wing head', (width, height) => {
+    expect(wingSlots.length).toBeGreaterThanOrEqual(3);
+    const aspect = width / height;
+    const fov = fovFor(aspect);
+    for (const slot of wingSlots) {
+      const pose = layout.tracks[slot.track]!.stops.find((s) => s.id === slot.id)!;
+      const corners = titleTopCorners(slotPlacard(layout, slot));
+      const y = wingPortraitY(
+        height,
+        WING_HEAD_BOTTOM,
+        fov,
+        topTangent(pose.camera, pose.look, corners),
+      );
+      const camera = new PerspectiveCamera(fov, aspect, 0.1, 90);
+      camera.position.set(...pose.camera);
+      camera.lookAt(new Vector3(...pose.look));
+      applyFraming(
+        camera,
+        fov,
+        viewOffsetFor(framingFor(aspect, null, 0, DESK_PORTRAIT_Y, 0, 1, y)),
+        width,
+        height,
+      );
+      const top = Math.min(...corners.map((c) => screenOf(camera, new Vector3(...c)).y * height));
+      expect(top, slot.id).toBeGreaterThanOrEqual(WING_HEAD_BOTTOM + WING_HEAD_CLEARANCE - 1e-6);
+      // The look-at point (the case) stays in the upper half, above the phone card.
+      expect(y, slot.id).toBeLessThanOrEqual(0.5);
+    }
   });
 });

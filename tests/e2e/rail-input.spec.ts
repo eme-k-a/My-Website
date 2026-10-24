@@ -5,8 +5,8 @@
 // through its intro before the next swipe lands exactly on the next stop; (d) no non-passive
 // wheel or touch listener; (e) walking every main stop writes no history: the HUD dots here, the
 // keys in (f); (f) ArrowDown and PageDown each visit every main stop in order and back, writing no
-// history; (g) at the wing stops on desktop no rail text (stop label, wing chip, exit control)
-// overlaps the stop's own 3D wall title (F-036); and at each door reached on the wing track (Step
+// history; (g) at the wing stops on desktop, Pixel 7 and 360 x 640 no rail text (stop label, wing
+// chip, exit control) overlaps the stop's own 3D wall title (F-036, F-039); and at each door reached on the wing track (Step
 // inside, then ArrowUp once) no visible rail or HUD rect covers the door's transom title, on
 // desktop and pixel7 (F-038).
 import type { Page } from '@playwright/test';
@@ -26,6 +26,7 @@ import {
   TITLE_END_MARGIN,
   TITLE_METRICS,
 } from '../../src/museum/exhibits/_kit/titleMetrics';
+import { hitBox, PLINTH_SIZE } from '../../src/museum/exhibits/_kit/anatomy';
 import { computeLayout, DOOR_H, DOOR_W } from '../../src/museum/rail/layout';
 import { expect, test } from './fixtures';
 import {
@@ -420,9 +421,23 @@ interface WallBox {
   y: [number, number];
 }
 
-/** The screen rects (CSS px) of a wing stop's wall title, framed as CameraRig frames the stop. */
+/**
+ * The screen rects (CSS px) of a wing stop's wall title, as the live camera draws them (F-039):
+ * projected with the plain framing, then moved by however far the live framing moves the stop's
+ * hit-box center from there (`screenPos`, the real projection). A framing shift moves every point
+ * on screen by the same amount, so this reads the real portrait wing framing without repeating it.
+ */
 async function wallTitleRects(page: Page, id: ExhibitId): Promise<Rect[]> {
-  return projectWallBoxes(page, wingTitleBoxes(id));
+  const slot = LAYOUT.slots.find((s) => s.id === id)!;
+  const center = hitBox('standard').center;
+  const hit = new Vector3(
+    slot.position[0] + center[0],
+    slot.position[1] + PLINTH_SIZE.standard[1] + center[1],
+    slot.position[2] + center[2],
+  );
+  const live = await page.evaluate((stop) => window.__MUSEUM__!.screenPos(stop), id);
+  expect(live, `${id}: screenPos`).not.toBeNull();
+  return projectWallBoxes(page, wingTitleBoxes(id), { world: hit, screen: live! });
 }
 
 /**
@@ -443,8 +458,15 @@ function transomTitleBox(door: StopId): WallBox {
   };
 }
 
-/** Projects wall boxes through the live camera, framed as CameraRig frames it, to CSS px rects. */
-async function projectWallBoxes(page: Page, boxes: WallBox[]): Promise<Rect[]> {
+/**
+ * Projects wall boxes through the live camera pose with the plain framing, to CSS px rects. With
+ * an `anchor` (a world point and where the page draws it), the rects move by the anchor's offset.
+ */
+async function projectWallBoxes(
+  page: Page,
+  boxes: WallBox[],
+  anchor?: { world: Vector3; screen: { x: number; y: number } },
+): Promise<Rect[]> {
   const { width, height } = page.viewportSize()!;
   const aspect = width / height;
   const { position, target } = (await stats(page)).camera;
@@ -453,14 +475,21 @@ async function projectWallBoxes(page: Page, boxes: WallBox[]): Promise<Rect[]> {
   camera.lookAt(new Vector3(...target));
   applyFraming(camera, fovFor(aspect), viewOffsetFor(framingFor(aspect)), width, height);
   camera.updateMatrixWorld();
+  let dx = 0;
+  let dy = 0;
+  if (anchor) {
+    const a = anchor.world.clone().project(camera);
+    dx = anchor.screen.x - ((a.x + 1) / 2) * width;
+    dy = anchor.screen.y - ((1 - a.y) / 2) * height;
+  }
   return boxes.map(({ wallX, z, y }) => {
     const xs: number[] = [];
     const ys: number[] = [];
     for (const zz of z)
       for (const yy of y) {
         const p = new Vector3(wallX, yy, zz).project(camera);
-        xs.push(((p.x + 1) / 2) * width);
-        ys.push(((1 - p.y) / 2) * height);
+        xs.push(((p.x + 1) / 2) * width + dx);
+        ys.push(((1 - p.y) / 2) * height + dy);
       }
     return {
       left: Math.min(...xs) - MARGIN_PX,
@@ -543,33 +572,53 @@ async function hudRects(page: Page): Promise<(Rect & { text: string })[]> {
 const overlaps = (a: Rect, b: Rect) =>
   a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
+/**
+ * (g), F-036 and F-039: at every wing exhibit stop the rail text (the stop label when shown, the
+ * wing chip, the exit control) stays off the stop's own wall title (number and organization).
+ */
+async function expectRailClearOfWingTitles(page: Page): Promise<void> {
+  await openGallery(page);
+  const wingStops = content.wings.flatMap((w) => w.items as ExhibitId[]);
+  expect(wingStops).toEqual(expect.arrayContaining(['sdsj', 'klarup', 'finance-tracker']));
+  for (const id of wingStops) {
+    await goToStop(page, id);
+    const titles = await wallTitleRects(page, id);
+    // The title is in the frame (F-022) and below the HUD, so the check is not vacuous.
+    for (const t of titles) {
+      expect(t.top, `${id} title top`).toBeGreaterThan(0);
+      expect(t.right, `${id} title right`).toBeLessThan(page.viewportSize()!.width);
+    }
+    const texts = await railTextRects(page);
+    expect(texts.length, `${id}: the wing chip and the exit control show`).toBeGreaterThanOrEqual(
+      2,
+    );
+    for (const text of texts)
+      for (const title of titles)
+        expect(
+          overlaps(text, title),
+          `${id}: rail text '${text.text}' ${JSON.stringify(text)} over the title ${JSON.stringify(title)}`,
+        ).toBe(false);
+  }
+}
+
 test.describe('rail and wall titles (F-036)', () => {
   test.describe.configure({ timeout: 120_000 });
 
   test('(g) at each wing stop no rail text overlaps the 3D wall title', async ({ page }) => {
-    only('desktop');
-    await openGallery(page);
-    const wingStops = content.wings.flatMap((w) => w.items as ExhibitId[]);
-    expect(wingStops).toEqual(expect.arrayContaining(['sdsj', 'klarup', 'finance-tracker']));
-    for (const id of wingStops) {
-      await goToStop(page, id);
-      const titles = await wallTitleRects(page, id);
-      // The title is in the frame (F-022) and below the HUD, so the check is not vacuous.
-      for (const t of titles) {
-        expect(t.top, `${id} title top`).toBeGreaterThan(0);
-        expect(t.right, `${id} title right`).toBeLessThan(page.viewportSize()!.width);
-      }
-      const texts = await railTextRects(page);
-      expect(texts.length, `${id}: the wing chip and the exit control show`).toBeGreaterThanOrEqual(
-        2,
-      );
-      for (const text of texts)
-        for (const title of titles)
-          expect(
-            overlaps(text, title),
-            `${id}: rail text '${text.text}' ${JSON.stringify(text)} over the title ${JSON.stringify(title)}`,
-          ).toBe(false);
-    }
+    test.skip(!['desktop', 'pixel7'].includes(project()), 'desktop and pixel7 only');
+    await expectRailClearOfWingTitles(page);
+  });
+
+  // F-039: the smallest portrait phone, where the wing head reached furthest into the title.
+  test.describe('360 x 640', () => {
+    test.use({ viewport: { width: 360, height: 640 } });
+
+    test('(g) 360 x 640: at each wing stop no rail text overlaps the 3D wall title', async ({
+      page,
+    }) => {
+      only('pixel7');
+      await expectRailClearOfWingTitles(page);
+    });
   });
 
   // F-038: Step inside at a door, then one ArrowUp back: the page rests on the door section of

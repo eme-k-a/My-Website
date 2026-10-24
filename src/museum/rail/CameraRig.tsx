@@ -30,6 +30,7 @@ import { registerNavProvider, testParams } from '../../app/testHooks';
 import type { ExhibitId, StopId, TrackId } from '../../content/ids';
 import { tokens } from '../../design/tokens';
 import { LAYOUT } from '../../overlay/model';
+import { slotPlacard } from '../exhibits/_kit/placard';
 import { reportCameraTarget } from '../quality/StatsProbe';
 import { aimDolly, createDolly, stepDolly } from './dolly';
 import { fadeCut } from './fade';
@@ -41,7 +42,12 @@ import {
   lobbyWeightAt,
   fovFor,
   framingFor,
+  stopWeightAt,
+  titleTopCorners,
+  topTangent,
   viewOffsetFor,
+  WING_HEAD_BOTTOM,
+  wingPortraitY,
 } from './framing';
 import { gazeAt } from './gaze';
 import {
@@ -165,6 +171,50 @@ function deskFramingY(height: number, fov: number): number {
   return deskPortraitY({ height, top: deskBand.hud, bottom: height - deskBand.rise }, fov);
 }
 
+/**
+ * Each wing exhibit's wall-title top seen from its stop (F-039, framing.ts `topTangent`), from the
+ * placard Placard.tsx draws there.
+ */
+const wingTitleTan = new Map<string, number>(
+  LAYOUT.slots
+    .filter((slot) => slot.track !== 'main' && slot.mount === 'plinth')
+    .flatMap((slot) => {
+      const pose = LAYOUT.tracks[slot.track]?.stops.find((s) => s.id === slot.id);
+      if (!pose) return [];
+      const tan = topTangent(pose.camera, pose.look, titleTopCorners(slotPlacard(LAYOUT, slot)));
+      return Number.isFinite(tan) ? [[slot.id as string, tan] as const] : [];
+    }),
+);
+
+/**
+ * The wing head (the wing chip and the exit control, ProgressRail): its bottom in CSS px, measured
+ * when it mounts and whenever it resizes, for the portrait wing framing (F-039).
+ */
+const wingHead = { el: null as HTMLElement | null, bottom: 0 };
+let wingHeadSizes: ResizeObserver | null = null;
+
+/** Re-measures the mounted wing head; true when its bottom changed. */
+function measureWingHead(): boolean {
+  const before = wingHead.bottom;
+  wingHead.bottom = wingHead.el?.isConnected ? wingHead.el.getBoundingClientRect().bottom : 0;
+  return before !== wingHead.bottom;
+}
+
+/** The wing head's bottom, finding it again after it remounts; WING_HEAD_BOTTOM until it shows. */
+function wingHeadBottom(onResize: () => void): number {
+  if (!wingHead.el?.isConnected) {
+    const exit = document.querySelector<HTMLElement>(`[data-testid="${TEST_IDS.exitWing}"]`);
+    wingHead.el = exit?.parentElement ?? null;
+    wingHeadSizes?.disconnect();
+    if (wingHead.el && typeof ResizeObserver !== 'undefined') {
+      wingHeadSizes ??= new ResizeObserver(onResize);
+      wingHeadSizes.observe(wingHead.el);
+    }
+    measureWingHead();
+  }
+  return wingHead.bottom > 0 ? wingHead.bottom : WING_HEAD_BOTTOM;
+}
+
 /** Forgets the damping velocity (after a jump or a glide, the walk starts from rest). */
 function resetVelocity(): void {
   (progress as { __damp?: unknown }).__damp = undefined;
@@ -279,6 +329,9 @@ export function CameraRig() {
   const get = useThree((s) => s.get);
   const invalidate = useThree((s) => s.invalidate);
   const [test] = useState(() => testParams(window.location.search).test);
+  const onWingHeadResize = () => {
+    if (measureWingHead()) invalidate();
+  };
 
   useEffect(() => {
     rig.attached = true;
@@ -323,7 +376,8 @@ export function CameraRig() {
     // The desk band (F-020): the phone desk card changes height with the width and the fonts.
     measureDeskBand();
     const remeasure = () => {
-      if (measureDeskBand()) invalidate();
+      const desk = measureDeskBand();
+      if (measureWingHead() || desk) invalidate();
     };
     const sizes = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(remeasure);
     const { card, slot, hud } = deskElements();
@@ -332,6 +386,9 @@ export function CameraRig() {
     invalidate();
     return () => {
       sizes?.disconnect();
+      wingHeadSizes?.disconnect();
+      wingHeadSizes = null;
+      wingHead.el = null;
       window.removeEventListener('resize', remeasure);
       rig.attached = false;
       finishGlide();
@@ -452,8 +509,16 @@ export function CameraRig() {
       const lobby = lobbyWeightAt(ids, p);
       const fov = fovFor(aspect);
       const deskY = desk > 0 ? deskFramingY(size.height, fov) : DESK_PORTRAIT_Y;
+      // A wing exhibit on a portrait screen: keep the wall title under the wing head (F-039).
+      const near = aspect < 1 ? stopWeightAt(ids, p) : { id: undefined, weight: 0 };
+      const tan = near.id === undefined ? undefined : wingTitleTan.get(near.id);
+      const wing = tan === undefined ? 0 : near.weight;
+      const wingY =
+        tan === undefined || wing === 0
+          ? tokens.camera.framingPortraitY
+          : wingPortraitY(size.height, wingHeadBottom(onWingHeadResize), fov, tan);
       const goal = viewOffsetFor(
-        framingFor(aspect, panelLeft(state.openId, size.width), desk, deskY, lobby),
+        framingFor(aspect, panelLeft(state.openId, size.width), desk, deskY, lobby, wing, wingY),
       );
       // A jump places the camera at once, so its framing lands at once too (the lobby's portrait
       // framing must not still be easing out at the first exhibit, F-032).

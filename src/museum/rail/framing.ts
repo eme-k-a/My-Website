@@ -18,12 +18,20 @@
 //   (name, links, "Begin the walk", the welcome line) fills the top 60% of a phone's first
 //   viewport, so the arch, the first case and the warm pool are framed into the free band under
 //   it, and the h1 sits over plain ink. It blends out over the first half of the walk to the
-//   first exhibit (`lobbyWeightAt`), so every exhibit keeps the 36% framing.
+//   first exhibit (`lobbyWeightAt`), so every main exhibit keeps the 36% framing.
+// - portrait at a wing exhibit: 50% of the width, `wingPortraitY` of the height (F-039). The
+//   wing head (the wing chip and "Return to the aisle") sits under the HUD, and the wing wall
+//   titles hang high on the end wall, so at 36% a phone draws the head over the title. CameraRig
+//   measures the head's bottom, and the framing point drops just enough that the top of the wall
+//   title lands WING_HEAD_CLEARANCE px under it (never above the 36% point, at most 50%). When
+//   the band is too short for the title and the whole case, the title wins: text over text is
+//   worse than the case floor meeting the card. It blends in over the half stop next to the
+//   exhibit (`stopWeightAt`), so the door stops keep their framing (F-038).
 // Vertical FOV is 50 at aspect >= 1, 68 at aspect <= 0.6, linear in between. CameraRig damps shift
 // changes over `tokens.motion.framingSmoothS` (0.4 s). Pure math: three.js only as a type.
 import type { PerspectiveCamera } from 'three';
 import { tokens } from '../../design/tokens';
-import { DESK_CAM_DZ, DESK_DZ, DESK_LOOK_Y, DESK_ROOM_LENGTH, EYE_Y } from './layout';
+import { DESK_CAM_DZ, DESK_DZ, DESK_LOOK_Y, DESK_ROOM_LENGTH, EYE_Y, type Vec3 } from './layout';
 
 /** A point on screen as fractions of the viewport, from the top left. */
 export interface ScreenPoint {
@@ -133,6 +141,98 @@ export function lobbyWeightAt(ids: readonly string[], p: number): number {
   return 1 - smooth(0, 0.5, Math.abs(p - at));
 }
 
+/**
+ * The stop nearest to progress `p` on a track whose stop ids are `ids`, and how far its own
+ * framing applies: 1 at the stop, 0 half a stop away (smoothstep), as for the desk.
+ */
+export function stopWeightAt(
+  ids: readonly string[],
+  p: number,
+): { id: string | undefined; weight: number } {
+  if (!Number.isFinite(p) || ids.length === 0) return { id: undefined, weight: 0 };
+  const at = Math.min(ids.length - 1, Math.max(0, Math.round(p)));
+  return { id: ids[at], weight: 1 - smooth(0, 0.5, Math.abs(p - at)) };
+}
+
+/** The top of a wing wall title keeps at least this many CSS px under the wing head (F-039). */
+export const WING_HEAD_CLEARANCE = 8;
+/**
+ * The wing head's bottom in CSS px until CameraRig has measured it: the HUD, the wing chip and
+ * the 44 px exit control on a phone (y 140 on Pixel 7 and at 360 x 640).
+ */
+export const WING_HEAD_BOTTOM = 140;
+/** The wing framing point never drops below this fraction of the height. */
+const WING_Y_MAX = 0.5;
+
+/**
+ * How far above the view axis the highest of `points` is seen from a camera at `camera` looking
+ * at `look` (no roll), as a tangent: projected, it sits tangent / (2 tan(fov / 2)) of the height
+ * above the framing point, whatever the shift.
+ */
+export function topTangent(camera: Vec3, look: Vec3, points: readonly Vec3[]): number {
+  const f = look.map((v, i) => v - camera[i]!) as Vec3;
+  const fl = Math.hypot(...f);
+  if (!(fl > 0)) return Number.NaN;
+  for (let i = 0; i < 3; i++) f[i] = f[i]! / fl;
+  // right = forward x world up, up = right x forward.
+  const r: Vec3 = [-f[2], 0, f[0]];
+  const rl = Math.hypot(...r);
+  if (!(rl > 0)) return Number.NaN;
+  const u: Vec3 = [
+    (r[1] * f[2] - r[2] * f[1]) / rl,
+    (r[2] * f[0] - r[0] * f[2]) / rl,
+    (r[0] * f[1] - r[1] * f[0]) / rl,
+  ];
+  let top = -Infinity;
+  for (const point of points) {
+    const v = point.map((c, i) => c - camera[i]!);
+    const depth = v[0]! * f[0] + v[1]! * f[1] + v[2]! * f[2];
+    if (!(depth > 0)) continue;
+    top = Math.max(top, (v[0]! * u[0] + v[1]! * u[1] + v[2]! * u[2]) / depth);
+  }
+  return Number.isFinite(top) ? top : Number.NaN;
+}
+
+/** The parts of a wall title (exhibits/_kit/placard.ts `PlacardSpec`) that bound its top. */
+export interface TitleTop {
+  /** Bottom center of the title on its wall; every slot wall runs along z. */
+  position: Vec3;
+  /** Width of the widest line, meters. */
+  width: number;
+  /** The exhibit number, the title's top line. */
+  number: { baselineY: number; capHeight: number };
+}
+
+/** The two ends of a wall title's top edge (the number's cap line, as wide as the widest line). */
+export function titleTopCorners(title: TitleTop): Vec3[] {
+  const [x, , z] = title.position;
+  const y = title.number.baselineY + title.number.capHeight;
+  const half = title.width / 2;
+  return [
+    [x, y, z - half],
+    [x, y, z + half],
+  ];
+}
+
+/**
+ * The portrait framing height at a wing exhibit (F-039): the framing point that puts the wall
+ * title's top (`tan`, from `topTangent`) WING_HEAD_CLEARANCE px under the measured bottom of the
+ * wing head (`headBottom`, CSS px, in a canvas `height` px tall). Never above the normal portrait
+ * point (where the title already clears the head, nothing moves), at most 0.5.
+ */
+export function wingPortraitY(
+  height: number,
+  headBottom: number,
+  fov: number,
+  tan: number,
+): number {
+  const base = tokens.camera.framingPortraitY;
+  if (!(height > 0) || !Number.isFinite(tan) || !Number.isFinite(headBottom)) return base;
+  const k = 1 / (2 * Math.tan((fov * Math.PI) / 360));
+  const y = (headBottom + WING_HEAD_CLEARANCE) / height + tan * k;
+  return Math.min(WING_Y_MAX, Math.max(base, y));
+}
+
 /** Vertical field of view in degrees for a viewport aspect (width / height). */
 export function fovFor(aspect: number): number {
   const { fovDesktop, fovPortrait, portraitAspect } = tokens.camera;
@@ -148,7 +248,8 @@ export function fovFor(aspect: number): number {
  * leaves no area to frame into and keeps the normal framing. `desk` is `deskWeightAt` (portrait
  * only; desktop frames the desk like every other stop), and `deskY` the portrait framing height
  * at the desk (`deskPortraitY` of the measured band, or the DESK_PORTRAIT_Y fallback). `lobby`
- * is `lobbyWeightAt` (portrait only).
+ * is `lobbyWeightAt` (portrait only). `wing` is the `stopWeightAt` weight of a wing exhibit and
+ * `wingY` its `wingPortraitY` (portrait only, F-039).
  */
 export function framingFor(
   aspect: number,
@@ -156,6 +257,8 @@ export function framingFor(
   desk = 0,
   deskY = DESK_PORTRAIT_Y,
   lobby = 0,
+  wing = 0,
+  wingY: number = tokens.camera.framingPortraitY,
 ): ScreenPoint {
   if (!(aspect < 1)) {
     if (panelLeft !== null && panelLeft >= MIN_LEFT_AREA && panelLeft < 1) {
@@ -166,8 +269,10 @@ export function framingFor(
   const w = Math.min(1, Math.max(0, desk));
   const l = Math.min(1, Math.max(0, lobby));
   const base = tokens.camera.framingPortraitY;
+  const g = Math.min(1, Math.max(0, wing));
   const y = l > 0 ? base + (LOBBY_PORTRAIT_Y - base) * l : base;
-  return { x: 0.5, y: w > 0 ? y + (deskY - y) * w : y };
+  const yDesk = w > 0 ? y + (deskY - y) * w : y;
+  return { x: 0.5, y: g > 0 ? yDesk + (wingY - yDesk) * g : yDesk };
 }
 
 /**

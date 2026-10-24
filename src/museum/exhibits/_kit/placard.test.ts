@@ -61,13 +61,12 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
       // Text +Z turned into the room: right walls face -X, left walls +X.
       expect(Math.sin(spec.rotationY), id).toBeCloseTo(x > 0 ? -1 : 1, 6);
     }
-    // Mun and the vitrine keep their slot z.
-    expect(specOf('mun').position[2]).toBeCloseTo(-57, 6);
+    // The vitrine keeps its slot z; mun's title moved onto the sight line (F-041b).
     expect(specOf('certifications').position[2]).toBeCloseTo(-57, 6);
   });
 
-  it("centers main and wing titles on the stop camera's sight line through the slot", () => {
-    for (const slot of plinthSlots) {
+  it("centers main, wing and mun titles on the stop camera's sight line through the slot", () => {
+    for (const slot of layout.slots.filter((s) => s.mount === 'plinth')) {
       const spec = specOf(slot.id);
       const room = roomOfSlot(layout, slot);
       const [cx, , cz] = poseOf(slot).camera;
@@ -81,6 +80,11 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
     }
     // Main-aisle titles are not clamped: verafin's hangs 1.7 m past its plinth (z -10).
     expect(specOf('verafin').position[2]).toBeCloseTo(-7.2 - (2.8 * 2.89) / 1.8, 6);
+    // Mun's sight line meets the left wall at z -61.12, 0.88 m from the corner, so the end margin
+    // holds the title 3.7 m past its plinth (F-041b).
+    const mun = specOf('mun');
+    expect(mun.position[2]).toBeCloseTo(-62 + TITLE_END_MARGIN + mun.width / 2, 6);
+    expect(mun.position[2]).toBeLessThan(-60.5);
   });
 
   it('keeps every title inside its wall and clear of the door openings', () => {
@@ -119,9 +123,12 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
     // The last line sits at 2.20 m (F-027) whatever the line count; the first one a line step higher.
     expect(wing.organization.baselineY - step).toBeCloseTo(2.2, 9);
     expect(wing.number.baselineY).toBeCloseTo(wing.organization.baselineY + 0.14 + 0.06, 9);
+    // Mun (F-041b): 0.19 m caps from 8.8 m away, the last line at 3.12 m, the number 0.06 m up.
     const mun = specOf('mun');
-    expect(mun.organization).toMatchObject({ capHeight: 0.14, text: 'MEMORIAL\nUNIVERSITY' });
-    expect(mun.number.baselineY).toBeCloseTo(2.75, 2);
+    expect(mun.organization).toMatchObject({ capHeight: 0.19, text: 'MEMORIAL\nUNIVERSITY' });
+    const munStep = ORGANIZATION_LINE_HEIGHT * mun.organization.fontSize;
+    expect(mun.organization.baselineY - munStep).toBeCloseTo(3.12, 9);
+    expect(mun.number.baselineY).toBeCloseTo(mun.organization.baselineY + 0.19 + 0.06, 9);
     const cert = specOf('certifications');
     expect(cert.organization).toMatchObject({ capHeight: 0.1, baselineY: 2.4, lines: 1 });
     expect(cert.number.baselineY).toBeGreaterThan(1.6 + 0.425);

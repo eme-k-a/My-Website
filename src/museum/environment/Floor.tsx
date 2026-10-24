@@ -108,7 +108,7 @@ function StandardFloor({ zones }: { zones: Zone[] }) {
 export function Floor({ layout }: { layout: Layout }) {
   const tier = useMuseum((s) => s.tier);
   const plan = useMemo(() => lightPlan(tier), [tier]);
-  const lightmaps = useMemo(() => createFloorLightmaps(layout), [layout]);
+  const lightmaps = useMemo(() => createFloorLightmaps(layout, tier), [layout, tier]);
   useEffect(() => () => lightmaps.forEach((t) => t.dispose()), [lightmaps]);
   const zones = useMemo<Zone[]>(
     () =>

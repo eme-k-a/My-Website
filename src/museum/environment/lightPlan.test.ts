@@ -48,8 +48,13 @@ describe('light plan per tier (EXPERIENCE §7.5, ART_DIRECTION §4)', () => {
   it('uses the recipe values and turns beams off only on low', () => {
     for (const tier of ['low', 'medium', 'high'] as const) {
       const plan = lightPlan(tier);
-      expect(plan.hemisphere).toEqual({ sky: '#1A1C22', ground: '#0B0B0D', intensity: 0.15 });
-      expect(plan.fog).toEqual({ color: '#0B0B0D', density: 0.045 });
+      // Intensity and density are R2's frozen WP-26 tokens (ART_DIRECTION §4).
+      expect(plan.hemisphere).toEqual({
+        sky: '#1A1C22',
+        ground: '#0B0B0D',
+        intensity: tokens.light.hemiIntensity,
+      });
+      expect(plan.fog).toEqual({ color: '#0B0B0D', density: tokens.light.fogDensity });
       for (const spot of plan.spots) {
         expect(spot.angle).toBe(0.38);
         expect(spot.penumbra).toBe(0.6);

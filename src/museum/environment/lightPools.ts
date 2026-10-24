@@ -17,8 +17,11 @@ import { CanvasTexture, ClampToEdgeWrapping, Matrix4, RepeatWrapping, SRGBColorS
 import { tokens } from '../../design/tokens';
 import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
 import { rng } from '../exhibits/_kit/noise';
+import { doorId } from '../../content/ids';
+import type { QualityTier } from '../exhibits/_kit/types';
 import { AISLE_HALF, ARCH_Z, type Layout, type Room } from '../rail/layout';
 import { lightTargets, rampColor, WASH_BAY_WIDTH, type TargetId, type WashBay } from './lightPlan';
+import { stopRecipe } from './lightRecipe';
 import type { SeamLine } from './shell';
 
 const light = tokens.light;
@@ -47,7 +50,7 @@ export const FLOOR_LIGHTMAP_INTENSITY = { standard: 32, reflector: 64 } as const
 
 /** Wall wash tile: side in px, base level, and the lightMapIntensity of the `wall` material. */
 export const WALL_WASH_SIZE = 256;
-export const WALL_WASH_BASE = 0.04;
+export const WALL_WASH_BASE = 0.06;
 export const WALL_WASH_INTENSITY = 40;
 /** Shell faces sample the wash at this v: base level and seams only, no scallop. */
 export const WALL_WASH_PLAIN_V = 0.03;
@@ -77,14 +80,14 @@ export interface FloorPaint {
   contacts: ContactSpec[];
 }
 
-/** Everything painted into the floor lightmaps, in world [x, z]. */
-export function floorPaint(layout: Layout): FloorPaint {
+/** Everything painted into the floor lightmaps, in world [x, z], at the tier's recipe. */
+export function floorPaint(layout: Layout, tier: QualityTier = 'high'): FloorPaint {
   const pools: PoolSpec[] = lightTargets(layout).map((t) => ({
     kind: 'pool',
     for: t.id,
     center: [...t.pool],
     radius: light.poolRadius,
-    alpha: light.poolAlpha,
+    alpha: stopRecipe(t.stop, tier).pool,
     color: t.color,
   }));
   for (const door of layout.doors) {
@@ -94,7 +97,7 @@ export function floorPaint(layout: Layout): FloorPaint {
       for: `${door.wing}-door`,
       center: [s * (AISLE_HALF - DOOR_POOL_INSET), door.z],
       radius: light.doorPoolRadius,
-      alpha: light.doorPoolAlpha,
+      alpha: stopRecipe(doorId(door.wing), tier).pool,
       color: rampColor(0),
     });
   }
@@ -283,8 +286,12 @@ export function paintZone(
 }
 
 /** Every floor zone of the layout, painted (seed = 1 + the room's index). */
-export function paintFloorZones(layout: Layout, pxPerM = POOL_PX_PER_M): ZoneRaster[] {
-  const paint = floorPaint(layout);
+export function paintFloorZones(
+  layout: Layout,
+  pxPerM = POOL_PX_PER_M,
+  tier: QualityTier = 'high',
+): ZoneRaster[] {
+  const paint = floorPaint(layout, tier);
   return layout.rooms.map((room, i) => paintZone(room, paint, 1 + i, pxPerM));
 }
 
@@ -361,6 +368,8 @@ export interface WashPlacement {
   for: TargetId;
   bay: WashBay;
   color: string;
+  /** The recipe's wash strength (lightRecipe.ts): multiplies the bay's tint. */
+  strength: number;
 }
 
 export interface WashLayout {
@@ -376,7 +385,7 @@ const mod = (a: number, n: number) => ((a % n) + n) % n;
  * are seamless, so they need no grid; the first bay on a wall line still sets that line's seam
  * phase, so the seams of a wall keep their 2 m rhythm around its first bay.
  */
-export function washLayout(layout: Layout): WashLayout {
+export function washLayout(layout: Layout, tier: QualityTier = 'high'): WashLayout {
   const seams: SeamLine[] = [];
   const bays: WashPlacement[] = [];
   for (const target of lightTargets(layout)) {
@@ -385,7 +394,12 @@ export function washLayout(layout: Layout): WashLayout {
       const phase = mod(bay.center - WASH_BAY_WIDTH / 2, WASH_BAY_WIDTH);
       seams.push({ axis: bay.axis, at: bay.at, phase });
     }
-    bays.push({ for: target.id, bay, color: target.color });
+    bays.push({
+      for: target.id,
+      bay,
+      color: target.color,
+      strength: stopRecipe(target.stop, tier).wash,
+    });
   }
   return { bays, seams };
 }
@@ -424,9 +438,12 @@ function asLightmap(texture: CanvasTexture, name: string): CanvasTexture {
 }
 
 /** One floor lightmap CanvasTexture per room (lightMap.channel 0, the plane's own UVs). */
-export function createFloorLightmaps(layout: Layout): Map<Room['id'], CanvasTexture> {
+export function createFloorLightmaps(
+  layout: Layout,
+  tier: QualityTier = 'high',
+): Map<Room['id'], CanvasTexture> {
   const out = new Map<Room['id'], CanvasTexture>();
-  for (const zone of paintFloorZones(layout)) {
+  for (const zone of paintFloorZones(layout, POOL_PX_PER_M, tier)) {
     const texture = new CanvasTexture(canvasFrom(zone.width, zone.height, zone.data));
     out.set(zone.room, asLightmap(texture, `floorPools-${zone.room}`));
   }

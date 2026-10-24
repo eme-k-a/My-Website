@@ -2,8 +2,8 @@
 // public/fonts/ from the @fontsource latin faces with subset-font (harfbuzz):
 // - DOM (woff2): Instrument Serif 400 and 400 italic, IBM Plex Sans 400 and 500. Generous: every
 //   content string, every character of the UI sources (overlay, classic, app, seo, content,
-//   index.html, credits.html), printable ASCII, the Latin-1 letters and signs, the en dash, the
-//   middle dot, curly quotes and the ellipsis.
+//   index.html), printable ASCII, the Latin-1 letters and signs, the en dash, the middle dot,
+//   curly quotes and the ellipsis. public/credits.html uses system fonts and is not scanned.
 // - 3D (woff, troika cannot read woff2): Instrument Serif 400 and IBM Plex Sans 500. Printable
 //   ASCII (and U+FFFD, see below) plus every code point of `threeDStrings` and `labels3d.ts` in
 //   that font (R0 ruling for M4: a plain-ASCII content edit never breaks the glyph check).
@@ -93,7 +93,6 @@ export const UI_SOURCES: readonly string[] = [
   'src/seo',
   'src/entry-server.tsx',
   'index.html',
-  'public/credits.html',
 ];
 
 const range = (from: number, to: number) =>

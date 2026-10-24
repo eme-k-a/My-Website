@@ -20,6 +20,9 @@ import {
   framingFor,
   MIN_LEFT_AREA,
   stopWeightAt,
+  TITLE_CASE_CLEARANCE_TAN,
+  titleBottomCorners,
+  titleClearDolly,
   titleTopCorners,
   topTangent,
   viewOffsetFor,
@@ -27,6 +30,7 @@ import {
   WING_HEAD_CLEARANCE,
   wingPortraitY,
 } from './framing';
+import { caseBox, EDGE_THICKNESS, slotMatrix, slotVariant } from '../exhibits/_kit/anatomy';
 import { slotPlacard } from '../exhibits/_kit/placard';
 import { computeLayout } from './layout';
 
@@ -332,4 +336,90 @@ describe('wing framing (F-039)', () => {
       expect(y, slot.id).toBeLessThanOrEqual(0.5);
     }
   });
+});
+
+describe('wing dialog dolly (F-042)', () => {
+  const layout = computeLayout(content, new Date());
+  const wingSlots = layout.slots.filter((s) => s.track !== 'main' && s.mount === 'plinth');
+  const max = tokens.camera.dialogDollyM;
+  const width = 1440;
+  const height = 900;
+  const aspect = width / height;
+  /** The story panel's left edge on a 1440 px desktop (the measured value in the captures). */
+  const panelLeft = 806 / 1440;
+
+  function caseTops(slot: (typeof wingSlots)[number]): [number, number, number][] {
+    const glass = caseBox(slotVariant(slot));
+    const frame = slotMatrix(slot);
+    const y = glass.center[1] + glass.size[1] / 2 + EDGE_THICKNESS / 2;
+    return [-1, 1].flatMap((sx) =>
+      [-1, 1].map(
+        (sz) =>
+          new Vector3(
+            glass.center[0] + (sx * glass.size[0]) / 2,
+            y,
+            glass.center[2] + (sz * glass.size[2]) / 2,
+          )
+            .applyMatrix4(frame)
+            .toArray() as [number, number, number],
+      ),
+    );
+  }
+
+  /** Title bottom and case top in screen px (from the top) with the dialog open, dolly `d`. */
+  function dialogPose(slot: (typeof wingSlots)[number], d: number) {
+    const pose = layout.tracks[slot.track]!.stops.find((s) => s.id === slot.id)!;
+    const cam = new Vector3(...pose.camera);
+    const look = new Vector3(...pose.look);
+    cam.addScaledVector(look.clone().sub(cam).normalize(), d);
+    const fov = fovFor(aspect);
+    const camera = new PerspectiveCamera(fov, aspect, 0.1, 90);
+    camera.position.copy(cam);
+    camera.lookAt(look);
+    applyFraming(camera, fov, viewOffsetFor(framingFor(aspect, panelLeft)), width, height);
+    const ys = (ps: [number, number, number][]) =>
+      ps.map((p) => screenOf(camera, new Vector3(...p)).y * height);
+    return {
+      titleBottom: Math.max(...ys(titleBottomCorners(slotPlacard(layout, slot)))),
+      caseTop: Math.min(...ys(caseTops(slot))),
+    };
+  }
+
+  it('finds the title bottom at the last organization baseline', () => {
+    const corners = titleBottomCorners({
+      position: [-11.49, 0, -18],
+      width: 2,
+      organization: { baselineY: 2.45, fontSize: 0.2, lineHeight: 1.25, lines: 2 },
+    });
+    expect(corners).toEqual([
+      [-11.49, 2.2, -19],
+      [-11.49, 2.2, -17],
+    ]);
+  });
+
+  it('keeps the full dolly when it clears and none when the stop itself does not', () => {
+    const tops: [number, number, number][] = [[0, 1.85, -3]];
+    expect(titleClearDolly([0, 1.6, 0], [0, 1.35, -3], [[0, 3, -6]], tops, max)).toBe(max);
+    expect(titleClearDolly([0, 1.6, 0], [0, 1.35, -3], [[0, 1.7, -6]], tops, max)).toBe(0);
+  });
+
+  it.each(['klarup', 'finance-tracker', 'sdsj'])(
+    'keeps the whole %s title above the case top in the desktop dialog',
+    (id) => {
+      const slot = wingSlots.find((s) => s.id === id)!;
+      const pose = layout.tracks[slot.track]!.stops.find((s) => s.id === id)!;
+      const bottoms = titleBottomCorners(slotPlacard(layout, slot));
+      const d = titleClearDolly(pose.camera, pose.look, bottoms, caseTops(slot), max);
+      // The dolly still moves in, but less than the full 0.6 m, which cut the last line.
+      expect(d).toBeGreaterThan(0.1);
+      expect(d).toBeLessThan(max);
+      const full = dialogPose(slot, max);
+      expect(full.titleBottom, `${id} at the full dolly`).toBeGreaterThan(full.caseTop);
+      const fixed = dialogPose(slot, d);
+      const k = height / (2 * Math.tan((fovFor(aspect) * Math.PI) / 360));
+      expect(fixed.caseTop - fixed.titleBottom).toBeGreaterThanOrEqual(
+        TITLE_CASE_CLEARANCE_TAN * k * 0.9,
+      );
+    },
+  );
 });

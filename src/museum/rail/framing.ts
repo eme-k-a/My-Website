@@ -214,6 +214,102 @@ export function titleTopCorners(title: TitleTop): Vec3[] {
   ];
 }
 
+/** The parts of a wall title that bound its bottom: the organization's last baseline. */
+export interface TitleBottom {
+  position: Vec3;
+  width: number;
+  organization: { baselineY: number; fontSize: number; lineHeight?: number; lines?: number };
+}
+
+/** The two ends of a wall title's bottom edge (the last organization baseline, widest line). */
+export function titleBottomCorners(title: TitleBottom): Vec3[] {
+  const [x, , z] = title.position;
+  const { baselineY, fontSize, lineHeight = 1.25, lines = 1 } = title.organization;
+  const y = baselineY - (lines - 1) * fontSize * lineHeight;
+  const half = title.width / 2;
+  return [
+    [x, y, z - half],
+    [x, y, z + half],
+  ];
+}
+
+/**
+ * Vertical tangents of `points` relative to the view axis of a camera at `camera` looking at
+ * `look` (no roll), as [lowest, highest]; points behind the camera are skipped.
+ */
+export function verticalTangents(
+  camera: Vec3,
+  look: Vec3,
+  points: readonly Vec3[],
+): [number, number] {
+  const f = look.map((v, i) => v - camera[i]!) as Vec3;
+  const fl = Math.hypot(...f);
+  if (!(fl > 0)) return [Number.NaN, Number.NaN];
+  for (let i = 0; i < 3; i++) f[i] = f[i]! / fl;
+  const r: Vec3 = [-f[2], 0, f[0]];
+  const rl = Math.hypot(...r);
+  if (!(rl > 0)) return [Number.NaN, Number.NaN];
+  const u: Vec3 = [
+    (r[1] * f[2] - r[2] * f[1]) / rl,
+    (r[2] * f[0] - r[0] * f[2]) / rl,
+    (r[0] * f[1] - r[1] * f[0]) / rl,
+  ];
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const point of points) {
+    const v = point.map((c, i) => c - camera[i]!);
+    const depth = v[0]! * f[0] + v[1]! * f[1] + v[2]! * f[2];
+    if (!(depth > 0)) continue;
+    const t = (v[0]! * u[0] + v[1]! * u[1] + v[2]! * u[2]) / depth;
+    lo = Math.min(lo, t);
+    hi = Math.max(hi, t);
+  }
+  return Number.isFinite(lo) ? [lo, hi] : [Number.NaN, Number.NaN];
+}
+
+/**
+ * The wall title's bottom keeps at least this tangent above the case top in the dialog pose
+ * (F-042): about 10 CSS px on a 900 px tall desktop view (FOV 50).
+ */
+export const TITLE_CASE_CLEARANCE_TAN = 0.01;
+
+/**
+ * The dialog dolly at a wing exhibit (F-042): the longest move toward the slot center, up to
+ * `max`, at which the wall title's bottom (`titleBottoms`) still projects TITLE_CASE_CLEARANCE_TAN
+ * above the case top (`caseTops`, its top corners). The dolly runs along the gaze, so the shift
+ * moves both equally and only the parallax between the near case and the far wall matters; the
+ * gap shrinks as the camera closes in, so a bisection finds the limit. 0 when even the stop pose
+ * does not clear (the dolly then never makes it worse).
+ */
+export function titleClearDolly(
+  camera: Vec3,
+  look: Vec3,
+  titleBottoms: readonly Vec3[],
+  caseTops: readonly Vec3[],
+  max: number,
+): number {
+  const dir = look.map((v, i) => v - camera[i]!) as Vec3;
+  const length = Math.hypot(...dir);
+  if (!(length > 0) || !(max > 0)) return 0;
+  const at = (d: number): Vec3 => camera.map((c, i) => c + (dir[i]! / length) * d) as Vec3;
+  const clears = (d: number) => {
+    const pos = at(d);
+    const [titleLow] = verticalTangents(pos, look, titleBottoms);
+    const [, caseHigh] = verticalTangents(pos, look, caseTops);
+    return titleLow - caseHigh >= TITLE_CASE_CLEARANCE_TAN;
+  };
+  if (clears(max)) return max;
+  if (!clears(0)) return 0;
+  let lo = 0;
+  let hi = max;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (clears(mid)) lo = mid;
+    else hi = mid;
+  }
+  return lo;
+}
+
 /**
  * The portrait framing height at a wing exhibit (F-039): the framing point that puts the wall
  * title's top (`tan`, from `topTangent`) WING_HEAD_CLEARANCE px under the measured bottom of the

@@ -52,22 +52,22 @@ function inFootprint(p: Vector3, i: number, margin = 0): boolean {
 }
 
 describe('klarup geometry (EXPERIENCE §4.5)', () => {
-  it('places the five tiles on the spec staircase', () => {
+  it('places the five tiles on the staircase, raised 2.5 cm off the spec', () => {
     expect(TRAY_TOP).toBeCloseTo(0.055, 9);
-    expect(tileCenter(0)).toEqual([-0.22, 0.06, 0.1]);
+    const first = tileCenter(0);
+    expect(first[0]).toBeCloseTo(-0.22, 9);
+    expect(first[1]).toBeCloseTo(0.085, 9);
+    expect(first[2]).toBeCloseTo(0.1, 9);
     const top = tileCenter(4);
     expect(top[0]).toBeCloseTo(0.22, 9);
-    expect(top[1]).toBeCloseTo(0.36, 9);
+    expect(top[1]).toBeCloseTo(0.385, 9);
     expect(top[2]).toBeCloseTo(-0.1, 9);
   });
 
-  it('supports every tile: tile 0 is seated in the tray, tiles 1 to 4 stand on brass posts', () => {
-    expect(tileBottom(0)).toBeLessThan(TRAY_TOP);
-    expect(tileTop(0)).toBeGreaterThan(TRAY_TOP);
-    expect(postFor(0)).toBeNull();
-    for (const i of [1, 2, 3, 4]) {
-      const post = postFor(i)!;
-      expect(post).not.toBeNull();
+  it('stands every tile on a visible brass post from the tray', () => {
+    for (const i of TILES) {
+      const post = postFor(i);
+      expect(post.height).toBeGreaterThanOrEqual(0.015 - 1e-9);
       expect(post.center[1] - post.height / 2).toBeCloseTo(TRAY_TOP, 9);
       expect(post.center[1] + post.height / 2).toBeCloseTo(tileBottom(i), 9);
       expect(post.center[0]).toBeCloseTo(tileCenter(i)[0], 9);

@@ -34,7 +34,7 @@ import {
 } from './climb';
 
 const TILES = Array.from({ length: TILE.count }, (_, i) => i);
-const POSTS = TILES.map(postFor).filter((p) => p !== null);
+const POSTS = TILES.map(postFor);
 const BEADS = beadCenters();
 const STRIPS = stripCenters();
 

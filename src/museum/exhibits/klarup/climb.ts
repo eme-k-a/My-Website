@@ -25,9 +25,15 @@ export const TILE = {
   bevelSegments: 1,
 } as const;
 
-/** Tile `i` (0 to 4): its center, per EXPERIENCE §4.5. */
+/**
+ * Tile `i` (0 to 4): its center. EXPERIENCE §4.5 gives y = 0.06 + 0.075 i, which sinks tile 0 a
+ * centimeter into the tray; the staircase is raised 2.5 cm (approved 2026-10-24, pending the R0
+ * spec update) so every tile, tile 0 included, stands on a visible post.
+ */
+export const TILE_LIFT = 0.025;
+
 export function tileCenter(i: number): Vec3 {
-  return [-0.22 + 0.11 * i, 0.06 + 0.075 * i, 0.1 - 0.05 * i];
+  return [-0.22 + 0.11 * i, 0.06 + TILE_LIFT + 0.075 * i, 0.1 - 0.05 * i];
 }
 
 export function tileTop(i: number): number {
@@ -41,14 +47,9 @@ export function tileBottom(i: number): number {
 /** Brass posts from the tray top up to each tile's underside. */
 export const POST = { radius: 0.004, segments: 8 } as const;
 
-/**
- * The post under tile `i`, or null when the tile already rests on the tray. Tile 0 is centered at
- * y 0.06, so its underside (0.045) sits 1 cm into the tray (top 0.055): it is seated in the tray
- * and needs no post. Tiles 1 to 4 each get one, centered under the tile.
- */
-export function postFor(i: number): { center: Vec3; height: number } | null {
+/** The post under tile `i`, centered under the tile, from the tray top to its underside. */
+export function postFor(i: number): { center: Vec3; height: number } {
   const height = tileBottom(i) - TRAY_TOP;
-  if (height <= 0) return null;
   const [x, , z] = tileCenter(i);
   return { center: [x, TRAY_TOP + height / 2, z], height };
 }
@@ -57,7 +58,9 @@ export function postFor(i: number): { center: Vec3; height: number } | null {
 export const CHECK = {
   short: 0.035,
   long: 0.06,
-  section: 0.008,
+  /** EXPERIENCE §4.5 says 0.008; 0.012 so the flat check reads from the stop camera (approved
+   *  2026-10-24, pending the R0 spec update). */
+  section: 0.012,
   /** The check's vertex, from the tile center: near the front edge, so the beads fit behind it. */
   vertex: { x: -0.009, z: 0.042 },
 } as const;

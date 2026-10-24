@@ -17,20 +17,20 @@ Standard slot (EXPERIENCE §5.3), local meters, origin at the plinth top center,
 | Part              | Material                            | Placement                                                                                                                           |
 | ----------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Base tray         | `walnut`                            | RoundedBox 0.60 x 0.03 x 0.42, radius 0.008, center (0, 0.04, 0); top at y 0.055                                                    |
-| Tiles (5)         | `ceramic`                           | RoundedBox 0.11 x 0.03 x 0.11, radius 0.01; tile i at (-0.22 + 0.11 i, 0.06 + 0.075 i, 0.10 - 0.05 i)                               |
-| Posts (4)         | `brass`                             | open cylinder r 0.004, 8 segments, from the tray top to the underside of tiles 1 to 4, one InstancedMesh                            |
-| Checks (5)        | `accentGlow`, one instance per tile | two bars 0.035 and 0.06 long, 0.008 square, at -45 and +45 degrees, flat on each tile top; vertex 0.042 in front of the tile center |
+| Tiles (5)         | `ceramic`                           | RoundedBox 0.11 x 0.03 x 0.11, radius 0.01; tile i at (-0.22 + 0.11 i, 0.085 + 0.075 i, 0.10 - 0.05 i)                              |
+| Posts (5)         | `brass`                             | open cylinder r 0.004, 8 segments, from the tray top to each tile's underside (tile 0: 1.5 cm), one InstancedMesh                   |
+| Checks (5)        | `accentGlow`, one instance per tile | two bars 0.035 and 0.06 long, 0.012 square, at -45 and +45 degrees, flat on each tile top; vertex 0.042 in front of the tile center |
 | Team (3 beads)    | `brass`                             | spheres r 0.018 in a touching row along the back of the top tile, behind its check (static), one InstancedMesh                      |
 | Build crate       | `walnut`                            | cube 0.09 at (0.22, 0.10, 0.15), blank                                                                                              |
 | Corner strips (4) | `brass`                             | 0.01 x 0.09 x 0.01 along the crate's vertical edges, 2 mm proud, one InstancedMesh                                                  |
 
-Tile 0 is centered at y 0.06 as specified, so its underside (0.045) sits 1 cm into the tray: it is seated in the tray (top 2 cm proud) and has no post. Tiles 1 to 4 stand on posts. Recorded in `review/reports/WP-22.json` for R0.
+Two approved departures from EXPERIENCE §4.5 (Emeka, 2026-10-24; the spec text waits on R0): the staircase is raised 2.5 cm (the spec's y 0.06 + 0.075 i sank tile 0 a centimeter into the tray), so every tile stands on a visible post; and the check bars are 0.012 square instead of 0.008, so the flat checks read from the stop camera.
 
-Measured under `?test=1` (`stats().exhibits.klarup`): `inBounds: true`, 3,036 triangles, 20 draw calls. Overall box (analytic): x -0.300 to 0.300, y 0.025 to 0.411, z -0.210 to 0.210.
+Measured under `?test=1` (`stats().exhibits.klarup`): `inBounds: true`, 3,052 triangles, 20 draw calls. Overall box (analytic): x -0.300 to 0.300, y 0.025 to 0.436, z -0.210 to 0.210.
 
 ## Budget
 
-`index.ts`: 4,000 triangles, 20 draw calls, 0 MB textures. Actual: 3,036 triangles (tray 556, tiles 5 x 236, posts 4 x 16, check bars 10 x 12, beads 3 x 352, crate 12, strips 4 x 12), 20 draw calls. Lazy chunk `Climb`: 1.75 KB gzip of the 40 KB limit.
+`index.ts`: 4,000 triangles, 20 draw calls, 0 MB textures. Actual: 3,052 triangles (tray 556, tiles 5 x 236, posts 5 x 16, check bars 10 x 12, beads 3 x 352, crate 12, strips 4 x 12), 20 draw calls. Lazy chunk `Climb`: 1.73 KB gzip of the 40 KB limit.
 
 ## Materials
 

@@ -213,3 +213,5 @@ All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refre
 
 **F-M4b started (2026-10-27 02:03 UTC, after the weekly reset):** session_019vLPzjbphHPaHjpeWyeYqn on `claude/m4-f-m4b`, from `bc36379`. Then: merge, a baseline refresh, a green run, and G4 round 2 as a new R11 session on `claude/m4-g4r2`. The 5-hour chain had lapsed on 2026-10-25 (a worker restart came before the next booking; nothing was running), and it is re-armed.
 
+**G4 round 2 started (2026-10-27 04:30 UTC):** F-M4b is merged (archived session). CI run 142's quality (b) failure was fixed in the test (F-047, `e7b202d`), and run 144 committed the F-M4b baselines (`86d8dc8`). R11 round 2 runs in session_019vLPzo3MvoSuATWmcafpYW on `claude/m4-g4r2`. A normal run is deploying the preview.
+

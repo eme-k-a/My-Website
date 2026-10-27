@@ -32,6 +32,7 @@ import { tokens } from '../../design/tokens';
 import { LAYOUT } from '../../overlay/model';
 import { caseBox, EDGE_THICKNESS, slotMatrix, slotVariant } from '../exhibits/_kit/anatomy';
 import { slotPlacard } from '../exhibits/_kit/placard';
+import { SERIF_NUMBER_ADVANCE } from '../exhibits/_kit/titleMetrics';
 import { reportCameraTarget } from '../quality/StatsProbe';
 import { aimDolly, createDolly, stepDolly } from './dolly';
 import { fadeCut } from './fade';
@@ -43,6 +44,8 @@ import {
   lobbyWeightAt,
   fovFor,
   framingFor,
+  HUD_ROW_BOTTOM,
+  numberTopCorners,
   stopWeightAt,
   titleBottomCorners,
   titleClearDolly,
@@ -176,16 +179,23 @@ function deskFramingY(height: number, fov: number): number {
 }
 
 /**
- * Each wing exhibit's wall-title top seen from its stop (F-039, framing.ts `topTangent`), from the
- * placard Placard.tsx draws there.
+ * Each exhibit's wall-title top seen from its stop (F-039 for the wing exhibits, F-048 for the
+ * main aisle; framing.ts `topTangent`), from the placard Placard.tsx draws there.
  */
-const wingTitleTan = new Map<string, number>(
+const titleTan = new Map<string, number>(
   LAYOUT.slots
-    .filter((slot) => slot.track !== 'main' && slot.mount === 'plinth')
+    .filter((slot) => slot.mount === 'plinth' || slot.mount === 'wall')
     .flatMap((slot) => {
       const pose = LAYOUT.tracks[slot.track]?.stops.find((s) => s.id === slot.id);
       if (!pose) return [];
-      const tan = topTangent(pose.camera, pose.look, titleTopCorners(slotPlacard(LAYOUT, slot)));
+      const spec = slotPlacard(LAYOUT, slot);
+      // Main-aisle titles are framed from the number's own top (F-048); the wing exhibits keep
+      // the widest-line bound F-039 was tuned with.
+      const corners =
+        slot.track === 'main'
+          ? numberTopCorners(spec, SERIF_NUMBER_ADVANCE)
+          : titleTopCorners(spec);
+      const tan = topTangent(pose.camera, pose.look, corners);
       return Number.isFinite(tan) ? [[slot.id as string, tan] as const] : [];
     }),
 );
@@ -251,6 +261,26 @@ function wingHeadBottom(onResize: () => void): number {
     measureWingHead();
   }
   return wingHead.bottom > 0 ? wingHead.bottom : WING_HEAD_BOTTOM;
+}
+
+/**
+ * The bottom of the HUD's top row in CSS px (its lowest visible control), measured when the rig
+ * mounts and whenever the HUD resizes, for the portrait framing of main-aisle exhibits (F-048).
+ */
+const hudRow = { bottom: 0 };
+
+/** Re-measures the HUD's top row; true when its bottom changed. */
+function measureHudRow(): boolean {
+  const before = hudRow.bottom;
+  const hud = document.querySelector<HTMLElement>(`[data-testid="${TEST_IDS.hud}"]`);
+  let bottom = 0;
+  for (const el of hud?.querySelectorAll<HTMLElement>(':scope > *') ?? []) {
+    const r = el.getBoundingClientRect();
+    // The skip link waits above the viewport until it is focused.
+    if (r.height > 0 && r.top >= 0) bottom = Math.max(bottom, r.bottom);
+  }
+  hudRow.bottom = bottom;
+  return before !== hudRow.bottom;
 }
 
 /** Forgets the damping velocity (after a jump or a glide, the walk starts from rest). */
@@ -413,9 +443,11 @@ export function CameraRig() {
     });
     // The desk band (F-020): the phone desk card changes height with the width and the fonts.
     measureDeskBand();
+    measureHudRow();
     const remeasure = () => {
       const desk = measureDeskBand();
-      if (measureWingHead() || desk) invalidate();
+      const row = measureHudRow();
+      if (measureWingHead() || desk || row) invalidate();
     };
     const sizes = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(remeasure);
     const { card, slot, hud } = deskElements();
@@ -555,14 +587,21 @@ export function CameraRig() {
       const lobby = lobbyWeightAt(ids, p);
       const fov = fovFor(aspect);
       const deskY = desk > 0 ? deskFramingY(size.height, fov) : DESK_PORTRAIT_Y;
-      // A wing exhibit on a portrait screen: keep the wall title under the wing head (F-039).
+      // An exhibit on a portrait screen: keep the wall title under the wing head in a wing
+      // (F-039) and under the HUD's top row in the main aisle (F-048).
       const near = aspect < 1 ? stopWeightAt(ids, p) : { id: undefined, weight: 0 };
-      const tan = near.id === undefined ? undefined : wingTitleTan.get(near.id);
+      const tan = near.id === undefined ? undefined : titleTan.get(near.id);
       const wing = tan === undefined ? 0 : near.weight;
+      const head =
+        (held?.track ?? progress.track) === 'main'
+          ? hudRow.bottom > 0
+            ? hudRow.bottom
+            : HUD_ROW_BOTTOM
+          : wingHeadBottom(onWingHeadResize);
       const wingY =
         tan === undefined || wing === 0
           ? tokens.camera.framingPortraitY
-          : wingPortraitY(size.height, wingHeadBottom(onWingHeadResize), fov, tan);
+          : wingPortraitY(size.height, head, fov, tan);
       const goal = viewOffsetFor(
         framingFor(aspect, panelLeft(state.openId, size.width), desk, deskY, lobby, wing, wingY),
       );

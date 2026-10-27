@@ -19,14 +19,17 @@
 //   viewport, so the arch, the first case and the warm pool are framed into the free band under
 //   it, and the h1 sits over plain ink. It blends out over the first half of the walk to the
 //   first exhibit (`lobbyWeightAt`), so every main exhibit keeps the 36% framing.
-// - portrait at a wing exhibit: 50% of the width, `wingPortraitY` of the height (F-039). The
-//   wing head (the wing chip and "Return to the aisle") sits under the HUD, and the wing wall
-//   titles hang high on the end wall, so at 36% a phone draws the head over the title. CameraRig
-//   measures the head's bottom, and the framing point drops just enough that the top of the wall
-//   title lands WING_HEAD_CLEARANCE px under it (never above the 36% point, at most 50%). When
-//   the band is too short for the title and the whole case, the title wins: text over text is
-//   worse than the case floor meeting the card. It blends in over the half stop next to the
-//   exhibit (`stopWeightAt`), so the door stops keep their framing (F-038).
+// - portrait at an exhibit: 50% of the width, `wingPortraitY` of the height (F-039 for the wing
+//   exhibits, F-048 for the main aisle). The wing head (the wing chip and "Return to the aisle")
+//   sits under the HUD, and the wing wall titles hang high on the end wall, so at 36% a phone
+//   draws the head over the title; on a small phone (360 x 640) the HUD's top row reaches the
+//   number of the tall main-aisle titles (mun, certifications, cfia) the same way. CameraRig
+//   measures the bottom of the wing head (wing exhibits) or of the HUD's top row (main-aisle
+//   exhibits), and the framing point drops just enough that the top of the wall title lands
+//   WING_HEAD_CLEARANCE px under it (never above the 36% point, at most 50%). When the band is
+//   too short for the title and the whole case, the title wins: text over text is worse than the
+//   case floor meeting the card. It blends in over the half stop next to the exhibit
+//   (`stopWeightAt`), so the door stops keep their framing (F-038).
 // Vertical FOV is 50 at aspect >= 1, 68 at aspect <= 0.6, linear in between. CameraRig damps shift
 // changes over `tokens.motion.framingSmoothS` (0.4 s). Pure math: three.js only as a type.
 import type { PerspectiveCamera } from 'three';
@@ -161,6 +164,11 @@ export const WING_HEAD_CLEARANCE = 8;
  * the 44 px exit control on a phone (y 140 on Pixel 7 and at 360 x 640).
  */
 export const WING_HEAD_BOTTOM = 140;
+/**
+ * The bottom of the HUD's top row (its controls, not the header's own bottom padding) in CSS px
+ * until CameraRig has measured it: 8 px of inset plus the 44 px controls (F-048).
+ */
+export const HUD_ROW_BOTTOM = 52;
 /** The wing framing point never drops below this fraction of the height. */
 const WING_Y_MAX = 0.5;
 
@@ -208,6 +216,35 @@ export function titleTopCorners(title: TitleTop): Vec3[] {
   const [x, , z] = title.position;
   const y = title.number.baselineY + title.number.capHeight;
   const half = title.width / 2;
+  return [
+    [x, y, z - half],
+    [x, y, z + half],
+  ];
+}
+
+/**
+ * How far a serif numeral's round tops (0, 6, 8, 9) rise above its cap line, as a share of the
+ * cap height (F-048: the certifications 06 measured about 1 px over the cap line at 360 x 640).
+ */
+export const NUMBER_OVERSHOOT = 0.04;
+
+/**
+ * The two ends of a wall title's number top: the number's own cap line plus NUMBER_OVERSHOOT,
+ * as wide as the number (`advance` em per character, titleMetrics SERIF_NUMBER_ADVANCE). Tighter
+ * than `titleTopCorners`, whose ends take the widest organization line: on a wall seen at an
+ * angle the far end of that line projects higher than the number ever reaches (F-048).
+ */
+export function numberTopCorners(
+  title: {
+    position: Vec3;
+    number: { text: string; fontSize: number; baselineY: number; capHeight: number };
+  },
+  advance: number,
+): Vec3[] {
+  const [x, , z] = title.position;
+  const { text, fontSize, baselineY, capHeight } = title.number;
+  const y = baselineY + capHeight * (1 + NUMBER_OVERSHOOT);
+  const half = (text.length * fontSize * advance) / 2;
   return [
     [x, y, z - half],
     [x, y, z + half],
@@ -311,10 +348,10 @@ export function titleClearDolly(
 }
 
 /**
- * The portrait framing height at a wing exhibit (F-039): the framing point that puts the wall
+ * The portrait framing height at an exhibit (F-039, F-048): the framing point that puts the wall
  * title's top (`tan`, from `topTangent`) WING_HEAD_CLEARANCE px under the measured bottom of the
- * wing head (`headBottom`, CSS px, in a canvas `height` px tall). Never above the normal portrait
- * point (where the title already clears the head, nothing moves), at most 0.5.
+ * wing head or the HUD's top row (`headBottom`, CSS px, in a canvas `height` px tall). Never above
+ * the normal portrait point (where the title already clears the head, nothing moves), at most 0.5.
  */
 export function wingPortraitY(
   height: number,
@@ -344,8 +381,8 @@ export function fovFor(aspect: number): number {
  * leaves no area to frame into and keeps the normal framing. `desk` is `deskWeightAt` (portrait
  * only; desktop frames the desk like every other stop), and `deskY` the portrait framing height
  * at the desk (`deskPortraitY` of the measured band, or the DESK_PORTRAIT_Y fallback). `lobby`
- * is `lobbyWeightAt` (portrait only). `wing` is the `stopWeightAt` weight of a wing exhibit and
- * `wingY` its `wingPortraitY` (portrait only, F-039).
+ * is `lobbyWeightAt` (portrait only). `wing` is the `stopWeightAt` weight of an exhibit and
+ * `wingY` its `wingPortraitY` (portrait only, F-039 and F-048).
  */
 export function framingFor(
   aspect: number,

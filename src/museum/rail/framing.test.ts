@@ -18,7 +18,10 @@ import {
   END_WALL_TOP_Y,
   fovFor,
   framingFor,
+  HUD_ROW_BOTTOM,
   MIN_LEFT_AREA,
+  NUMBER_OVERSHOOT,
+  numberTopCorners,
   stopWeightAt,
   TITLE_CASE_CLEARANCE_TAN,
   titleBottomCorners,
@@ -32,6 +35,7 @@ import {
 } from './framing';
 import { caseBox, EDGE_THICKNESS, slotMatrix, slotVariant } from '../exhibits/_kit/anatomy';
 import { slotPlacard } from '../exhibits/_kit/placard';
+import { SERIF_NUMBER_ADVANCE } from '../exhibits/_kit/titleMetrics';
 import { computeLayout } from './layout';
 
 /** Where a world point lands on screen (fractions from the top left) through `camera`. */
@@ -334,6 +338,66 @@ describe('wing framing (F-039)', () => {
       expect(top, slot.id).toBeGreaterThanOrEqual(WING_HEAD_BOTTOM + WING_HEAD_CLEARANCE - 1e-6);
       // The look-at point (the case) stays in the upper half, above the phone card.
       expect(y, slot.id).toBeLessThanOrEqual(0.5);
+    }
+  });
+});
+
+describe('main-aisle portrait framing (F-048)', () => {
+  const layout = computeLayout(content, new Date());
+  const mainSlots = layout.slots.filter((s) => s.track === 'main');
+  const base = tokens.camera.framingPortraitY;
+
+  it('takes the number top from its own width and overshoot, inside the widest-line bound', () => {
+    const spec = slotPlacard(
+      layout,
+      mainSlots.find((s) => s.id === 'cfia')!,
+    );
+    const [a, b] = numberTopCorners(spec, SERIF_NUMBER_ADVANCE);
+    const [wa, wb] = titleTopCorners(spec);
+    expect(a![1]).toBeCloseTo(
+      spec.number.baselineY + spec.number.capHeight * (1 + NUMBER_OVERSHOOT),
+      9,
+    );
+    expect(b![2]! - a![2]!).toBeCloseTo(
+      spec.number.text.length * spec.number.fontSize * SERIF_NUMBER_ADVANCE,
+      9,
+    );
+    expect(b![2]! - a![2]!).toBeLessThan(wb![2]! - wa![2]!);
+  });
+
+  it.each([
+    [412, 839],
+    [360, 640],
+  ])('keeps every main-aisle title %i x %i under the HUD row', (width, height) => {
+    expect(mainSlots.map((s) => s.id)).toEqual(
+      expect.arrayContaining(['verafin', 'cfia', 'mun', 'certifications']),
+    );
+    const aspect = width / height;
+    const fov = fovFor(aspect);
+    for (const slot of mainSlots) {
+      const pose = layout.tracks.main.stops.find((s) => s.id === slot.id)!;
+      const corners = numberTopCorners(slotPlacard(layout, slot), SERIF_NUMBER_ADVANCE);
+      const y = wingPortraitY(
+        height,
+        HUD_ROW_BOTTOM,
+        fov,
+        topTangent(pose.camera, pose.look, corners),
+      );
+      const camera = new PerspectiveCamera(fov, aspect, 0.1, 90);
+      camera.position.set(...pose.camera);
+      camera.lookAt(new Vector3(...pose.look));
+      applyFraming(
+        camera,
+        fov,
+        viewOffsetFor(framingFor(aspect, null, 0, DESK_PORTRAIT_Y, 0, 1, y)),
+        width,
+        height,
+      );
+      const top = Math.min(...corners.map((c) => screenOf(camera, new Vector3(...c)).y * height));
+      expect(top, slot.id).toBeGreaterThanOrEqual(HUD_ROW_BOTTOM + WING_HEAD_CLEARANCE - 1e-6);
+      // Only as far down as the title needs: the case stays in the upper half, above the card.
+      expect(y, slot.id).toBeGreaterThanOrEqual(base);
+      expect(y, slot.id).toBeLessThan(0.45);
     }
   });
 });

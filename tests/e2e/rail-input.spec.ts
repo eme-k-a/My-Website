@@ -6,7 +6,9 @@
 // wheel or touch listener; (e) walking every main stop writes no history: the HUD dots here, the
 // keys in (f); (f) ArrowDown and PageDown each visit every main stop in order and back, writing no
 // history; (g) at the wing stops on desktop, Pixel 7 and 360 x 640 no rail text (stop label, wing
-// chip, exit control) overlaps the stop's own 3D wall title (F-036, F-039); and at each door reached on the wing track (Step
+// chip, exit control) overlaps the stop's own 3D wall title (F-036, F-039); at the main-aisle
+// exhibit stops on Pixel 7 and 360 x 640 the wall title sits at least 8 px under the HUD's top
+// row (F-048); and at each door reached on the wing track (Step
 // inside, then ArrowUp once) no visible rail or HUD rect covers the door's transom title, on
 // desktop and pixel7 (F-038).
 import type { Page } from '@playwright/test';
@@ -26,7 +28,13 @@ import {
   TITLE_END_MARGIN,
   TITLE_METRICS,
 } from '../../src/museum/exhibits/_kit/titleMetrics';
-import { hitBox, PLINTH_SIZE } from '../../src/museum/exhibits/_kit/anatomy';
+import {
+  hitBox,
+  PLINTH_SIZE,
+  slotMatrix,
+  slotVariant,
+} from '../../src/museum/exhibits/_kit/anatomy';
+import { slotPlacard } from '../../src/museum/exhibits/_kit/placard';
 import { computeLayout, DOOR_H, DOOR_W } from '../../src/museum/rail/layout';
 import { expect, test } from './fixtures';
 import {
@@ -601,6 +609,86 @@ async function expectRailClearOfWingTitles(page: Page): Promise<void> {
   }
 }
 
+/** The bottom of the HUD's top row: its lowest visible control (the skip link waits above). */
+async function hudRowBottom(page: Page): Promise<number> {
+  return page.evaluate((hud) => {
+    let bottom = 0;
+    for (const el of document.querySelectorAll(`[data-testid="${hud}"] > *`)) {
+      const r = el.getBoundingClientRect();
+      if (r.height > 0 && r.top >= 0) bottom = Math.max(bottom, r.bottom);
+    }
+    return bottom;
+  }, TEST_IDS.hud);
+}
+
+/**
+ * A main-aisle exhibit's wall title (exhibits/_kit/placard.ts, what Placard.tsx draws) as world
+ * boxes: the number (its own advance estimate, baseline to cap line) and the organization (the
+ * widest line, from under the last baseline to the first cap line).
+ */
+function mainTitleBoxes(id: ExhibitId): { number: WallBox; organization: WallBox } {
+  const spec = slotPlacard(
+    LAYOUT,
+    LAYOUT.slots.find((s) => s.id === id)!,
+  );
+  const [wallX, , z] = spec.position;
+  const { number, organization: org } = spec;
+  const numberHalf = (number.text.length * number.fontSize * SERIF_NUMBER_ADVANCE) / 2;
+  const last = org.baselineY - ((org.lines ?? 1) - 1) * org.fontSize * (org.lineHeight ?? 1.25);
+  return {
+    number: {
+      wallX,
+      z: [z - numberHalf, z + numberHalf],
+      y: [number.baselineY, number.baselineY + number.capHeight],
+    },
+    organization: {
+      wallX,
+      z: [z - spec.width / 2, z + spec.width / 2],
+      y: [last - 0.05, org.baselineY + org.capHeight],
+    },
+  };
+}
+
+/**
+ * F-048: at every main-aisle exhibit stop the wall title's number top sits at least 8 px under
+ * the HUD's top row, and no HUD rect overlaps the number or the organization. The boxes are
+ * projected through the live camera, moved by the live framing (`screenPos` of the hit box).
+ */
+async function expectTitlesClearOfHudRow(page: Page): Promise<void> {
+  await openGallery(page);
+  const stops = MAIN.filter((s) => LAYOUT.slots.some((slot) => slot.id === s)) as ExhibitId[];
+  expect(stops).toEqual(expect.arrayContaining(['verafin', 'cfia', 'mun', 'certifications']));
+  for (const id of stops) {
+    await goToStop(page, id);
+    const slot = LAYOUT.slots.find((s) => s.id === id)!;
+    const hit = new Vector3(...hitBox(slotVariant(slot)).center).applyMatrix4(slotMatrix(slot));
+    const live = await page.evaluate((stop) => window.__MUSEUM__!.screenPos(stop), id);
+    expect(live, `${id}: screenPos`).not.toBeNull();
+    const { number, organization } = mainTitleBoxes(id);
+    const [num, org] = await projectWallBoxes(page, [number, organization], {
+      world: hit,
+      screen: live!,
+    });
+    const row = await hudRowBottom(page);
+    expect(row, 'the HUD row is measured').toBeGreaterThan(0);
+    // projectWallBoxes pads every rect by MARGIN_PX; the gap is taken from the bare title top.
+    const gap = num!.top + MARGIN_PX - row;
+    expect(
+      gap,
+      `${id}: number top ${num!.top + MARGIN_PX} under the HUD row ${row}`,
+    ).toBeGreaterThanOrEqual(8);
+    expect(org!.bottom, `${id}: organization inside the frame`).toBeLessThan(
+      page.viewportSize()!.height,
+    );
+    for (const rect of await hudRects(page))
+      for (const title of [num!, org!])
+        expect(
+          overlaps(rect, title),
+          `${id}: HUD '${rect.text}' ${JSON.stringify(rect)} over the title ${JSON.stringify(title)}`,
+        ).toBe(false);
+  }
+}
+
 test.describe('rail and wall titles (F-036)', () => {
   test.describe.configure({ timeout: 120_000 });
 
@@ -619,6 +707,21 @@ test.describe('rail and wall titles (F-036)', () => {
       only('pixel7');
       await expectRailClearOfWingTitles(page);
     });
+
+    test('(g) 360 x 640: at each main-aisle exhibit stop the wall title clears the HUD row by 8 px', async ({
+      page,
+    }) => {
+      only('pixel7');
+      await expectTitlesClearOfHudRow(page);
+    });
+  });
+
+  // F-048: the HUD's top row against the tall main-aisle titles (mun, certifications, cfia).
+  test('(g) at each main-aisle exhibit stop the wall title clears the HUD row by 8 px', async ({
+    page,
+  }) => {
+    only('pixel7');
+    await expectTitlesClearOfHudRow(page);
   });
 
   // F-038: Step inside at a door, then one ArrowUp back: the page rests on the door section of

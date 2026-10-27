@@ -237,3 +237,6 @@ When G4 round 2 passes, R0:
    - his GitHub handle;
    - an approval pass on all first-person copy.
 6. After the merges: a baseline refresh if any screenshots changed, a green run, then the G5 checks: `RELEASE=1 npm run check:copy` (after Emeka's facts), Lighthouse at least 0.95 for accessibility and SEO, and Emeka's phone checklist.
+
+**G4 round 2 (2026-10-27 04:51 UTC):** 3.94, with no P0 or P1 open. The session is merged (`8404187`) and archived. M5 is held: Emeka chooses between accepting G4 (R0's recommendation, with a parallel polish session) and a third, final G4 round.
+

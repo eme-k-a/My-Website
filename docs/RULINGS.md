@@ -164,3 +164,8 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - WP-31 (R9, SEO and sharing): `src/seo/**`, `src/entry-server.tsx`, `scripts/prerender.ts`, `scripts/postbuild.ts`, `scripts/gen-og*`, `public/og/**` and the icons.
   - WP-32 (R8): `tests/**` and `playwright.config.ts`, except the spec files granted to WP-29 and WP-30, plus only the new `e2e-xbrowser` job in `ci.yml`. It also takes F-047's remaining check. The phone checklist is for Emeka to run before release.
   - Gate G5 also needs `RELEASE=1 npm run check:copy` to pass, which means no drafts or placeholders. That needs Emeka's facts (certification dates and issuers, KlarUp and Finance Tracker roles and dates, the MUN start date, target roles, his GitHub handle) and his approval of all first-person copy. R0 asks him for these when M5 starts.
+- **G4 review round 2 (2026-10-27, `review/runs/2026-10-27-g4r2/`):** the average is 3.94 (desktop 3.98, Pixel 7 3.91), 8 points short of 4.0. No P0 or P1 is open. The lowest dimension is D6 at 3.76 (3.69 on Pixel 7). Emeka's approved stills hold; three show only small changes.
+  - Fixed: F-048 to F-051 and F-053. F-052 is open at verafin only.
+  - New: F-054 (P2, the rail label on the volunteer door's jamb on desktop), F-055 and F-056 (P3).
+  - The remaining gap is in story clarity at the doors, phone mood, and object read. These are taste dimensions, scored on SwiftShader captures.
+  - One round is left in M4 (the cap is 3). R0 recommends a taste call by Emeka: accept G4 at 3.94 and start M5 now, with the polish items (F-052, F-054, F-056, a door story beat, warm far pools on the phone) as one parallel polish session; the M7 monthly review re-scores them. M5 stays held until Emeka chooses.

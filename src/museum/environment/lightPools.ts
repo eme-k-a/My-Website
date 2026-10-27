@@ -17,7 +17,7 @@ import { CanvasTexture, ClampToEdgeWrapping, Matrix4, RepeatWrapping, SRGBColorS
 import { tokens } from '../../design/tokens';
 import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
 import { rng } from '../exhibits/_kit/noise';
-import { doorId } from '../../content/ids';
+import { doorId, type StopId } from '../../content/ids';
 import type { QualityTier } from '../exhibits/_kit/types';
 import { AISLE_HALF, ARCH_Z, type Layout, type Room } from '../rail/layout';
 import { lightTargets, rampColor, WASH_BAY_WIDTH, type TargetId, type WashBay } from './lightPlan';
@@ -372,8 +372,19 @@ export interface WashPlacement {
   strength: number;
 }
 
+/** A side bay: beside a title bay (an exhibit target) or beside a door's opening (F-052). */
+export interface SideBay {
+  /** The stop whose frame it fills: an exhibit, or a door. */
+  for: StopId;
+  bay: WashBay;
+  color: string;
+  strength: number;
+}
+
 export interface WashLayout {
   bays: WashPlacement[];
+  /** The dim side bays (lightRecipe.ts `side`), drawn in the bays' mesh after them. */
+  sides: SideBay[];
   /** One per wall line that carries a bay: the shell's seams on it follow the bays' grid. */
   seams: SeamLine[];
 }
@@ -401,7 +412,95 @@ export function washLayout(layout: Layout, tier: QualityTier = 'high'): WashLayo
       strength: stopRecipe(target.stop, tier).wash,
     });
   }
-  return { bays, seams };
+  return { bays, seams, sides: sideBays(layout, tier, bays) };
+}
+
+/**
+ * Width of a side bay (trimmed to the free wall, never under WASH_BAY_WIDTH) and its gap to the
+ * bay, door lining or wall end beside it, meters. Wide enough that the scallop's arc spans the
+ * wall the frame shows, seen at a grazing angle from the stop.
+ */
+export const SIDE_BAY_WIDTH = 5;
+export const SIDE_BAY_GAP = 0.1;
+/** A door's brass lining reaches this far past its opening (trim.ts reveals). */
+const DOOR_LINING = 0.04;
+
+interface Span {
+  at: number;
+  lo: number;
+  hi: number;
+}
+
+/**
+ * The side bays (F-052, the door composition): for each stop whose recipe has a `side` strength,
+ * one bay on the same aisle wall as its title bay (or its door), right beside it, on the side
+ * that the stop's desktop frame shows left of the case. The stop camera stands in the aisle and
+ * looks across at its wall, so the frame's left runs down the aisle (-z) on the right wall and up
+ * it (+z) on the left wall. The bay is SIDE_BAY_WIDTH wide, trimmed so it keeps SIDE_BAY_GAP to
+ * every other bay, door lining and the aisle's ends on its wall (planes never overlap); a gap
+ * under WASH_BAY_WIDTH gets none.
+ */
+function sideBays(layout: Layout, tier: QualityTier, bays: WashPlacement[]): SideBay[] {
+  const aisle = layout.rooms.find((r) => r.id === 'aisle');
+  if (!aisle) return [];
+  const out: SideBay[] = [];
+  const doors = layout.doors.map((d) => {
+    const s = d.side === 'left' ? -1 : 1;
+    const half = d.width / 2 + DOOR_LINING;
+    return { stop: doorId(d.wing), s, at: s * AISLE_HALF, lo: d.z - half, hi: d.z + half };
+  });
+  const taken: Span[] = [
+    ...bays
+      .filter((b) => b.bay.axis === 'z')
+      .map((b) => ({
+        at: b.bay.at,
+        lo: b.bay.center - b.bay.width / 2,
+        hi: b.bay.center + b.bay.width / 2,
+      })),
+    ...doors,
+  ];
+  const place = (stop: StopId, s: number, edge: Span, color: string) => {
+    const strength = stopRecipe(stop, tier).side;
+    if (!(strength > 0)) return;
+    const at = s * AISLE_HALF;
+    const others = [...taken, ...out.map((o) => spanOf(o.bay))].filter(
+      (t) => Math.abs(t.at - at) < 1e-6,
+    );
+    // The frame's left: down the aisle on the right wall, up it on the left wall.
+    let lo: number;
+    let hi: number;
+    if (s > 0) {
+      hi = edge.lo - SIDE_BAY_GAP;
+      const stop = Math.max(aisle.min[1], ...others.filter((t) => t.hi <= hi).map((t) => t.hi));
+      lo = Math.max(hi - SIDE_BAY_WIDTH, stop + SIDE_BAY_GAP);
+    } else {
+      lo = edge.hi + SIDE_BAY_GAP;
+      const stop = Math.min(aisle.max[1], ...others.filter((t) => t.lo >= lo).map((t) => t.lo));
+      hi = Math.min(lo + SIDE_BAY_WIDTH, stop - SIDE_BAY_GAP);
+    }
+    if (hi - lo < WASH_BAY_WIDTH) return;
+    const bay: WashBay = {
+      axis: 'z',
+      at,
+      center: (lo + hi) / 2,
+      width: hi - lo,
+      normal: [-s, 0],
+      height: aisle.ceiling,
+    };
+    out.push({ for: stop, bay, color, strength });
+  };
+  for (const target of lightTargets(layout)) {
+    const { wash } = target;
+    if (wash.axis !== 'z' || Math.abs(Math.abs(wash.at) - AISLE_HALF) > 1e-6) continue;
+    place(target.stop, Math.sign(wash.at), spanOf(wash), target.color);
+  }
+  for (const door of doors) place(door.stop, door.s, door, rampColor(0));
+  return out;
+}
+
+/** A z-axis bay's extent along its wall. */
+function spanOf(bay: WashBay): Span {
+  return { at: bay.at, lo: bay.center - bay.width / 2, hi: bay.center + bay.width / 2 };
 }
 
 /** The unit-plane matrix of a bay: `bay.width` wide, floor to ceiling, facing into the room. */

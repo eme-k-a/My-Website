@@ -4,7 +4,8 @@ import { content } from '../../content/index';
 import { tokens } from '../../design/tokens';
 import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
 import { slotPlacard } from '../exhibits/_kit/placard';
-import { ARCH_Z, computeLayout, type Room } from '../rail/layout';
+import { AISLE_HALF, ARCH_Z, computeLayout, type Room } from '../rail/layout';
+import { stopRecipe, TIER_LIFT } from './lightRecipe';
 import { lightTargets, rampColor, WASH_BAY_WIDTH, WASH_TITLE_PAD } from './lightPlan';
 import {
   ARCH_POOL,
@@ -12,6 +13,8 @@ import {
   MAX_LIGHTMAP_SIZE,
   paintFloorZones,
   paintZone,
+  SIDE_BAY_GAP,
+  SIDE_BAY_WIDTH,
   WALL_WASH_BASE,
   WALL_WASH_PLAIN_V,
   WALL_WASH_SIZE,
@@ -233,5 +236,77 @@ describe('wall wash (EXPERIENCE §7.5)', () => {
     expect(center.x).toBeLessThan(3.5);
     expect(center.x).toBeGreaterThan(3.49);
     expect(center.y).toBeCloseTo(verafin.bay.height / 2, 6);
+  });
+});
+
+describe('side bays (F-052, the door composition)', () => {
+  const { bays, sides } = washLayout(layout);
+  const aisle = room('aisle');
+  const spans = (at: number) => [
+    ...bays
+      .filter((b) => b.bay.axis === 'z' && Math.abs(b.bay.at - at) < 1e-6)
+      .map((b) => [b.bay.center - b.bay.width / 2, b.bay.center + b.bay.width / 2] as const),
+    ...layout.doors
+      .filter((d) => (d.side === 'left' ? -1 : 1) * 3.5 === at)
+      .map((d) => [d.z - d.width / 2 - 0.04, d.z + d.width / 2 + 0.04] as const),
+  ];
+
+  it('hangs one side bay per stop whose recipe has one: verafin, mysa, cfia and both doors', () => {
+    expect(sides.map((s) => s.for).sort()).toEqual(
+      ['cfia', 'mysa', 'projects-door', 'verafin', 'volunteer-door'].sort(),
+    );
+    for (const side of sides) {
+      expect(side.strength, side.for).toBe(stopRecipe(side.for, 'high').side);
+      expect(side.strength, side.for).toBeGreaterThan(0);
+    }
+    expect(washLayout(layout, 'medium').sides[0]!.strength).toBeCloseTo(
+      sides[0]!.strength * TIER_LIFT.medium.wash,
+      9,
+    );
+  });
+
+  it('puts each on its aisle wall, beside its bay or door, on the frame-left side', () => {
+    for (const side of sides) {
+      const { bay } = side;
+      const s = Math.sign(bay.at);
+      expect(Math.abs(bay.at), side.for).toBeCloseTo(AISLE_HALF, 9);
+      expect(bay.normal, side.for).toEqual([-s, 0]);
+      expect(bay.width, side.for).toBeGreaterThanOrEqual(WASH_BAY_WIDTH);
+      expect(bay.width, side.for).toBeLessThanOrEqual(SIDE_BAY_WIDTH + 1e-9);
+      const door = layout.doors.find((d) => `${d.wing}-door` === side.for);
+      const owner = door
+        ? ([door.z - door.width / 2 - 0.04, door.z + door.width / 2 + 0.04] as const)
+        : (() => {
+            const b = bays.find((x) => x.for === side.for)!.bay;
+            return [b.center - b.width / 2, b.center + b.width / 2] as const;
+          })();
+      const [lo, hi] = [bay.center - bay.width / 2, bay.center + bay.width / 2];
+      // The right wall's frame-left is down the aisle (-z); the left wall's is up it (+z).
+      if (s > 0) expect(hi, side.for).toBeCloseTo(owner[0] - SIDE_BAY_GAP, 9);
+      else expect(lo, side.for).toBeCloseTo(owner[1] + SIDE_BAY_GAP, 9);
+      expect(lo, side.for).toBeGreaterThanOrEqual(aisle.min[1]);
+      expect(hi, side.for).toBeLessThanOrEqual(aisle.max[1]);
+    }
+  });
+
+  it('never overlaps another bay, side bay or door opening on its wall', () => {
+    for (const side of sides) {
+      const [lo, hi] = [side.bay.center - side.bay.width / 2, side.bay.center + side.bay.width / 2];
+      const others = [
+        ...spans(side.bay.at),
+        ...sides
+          .filter((o) => o !== side && o.bay.at === side.bay.at)
+          .map((o) => [o.bay.center - o.bay.width / 2, o.bay.center + o.bay.width / 2] as const),
+      ];
+      for (const [a, b] of others)
+        expect(lo < b && a < hi, `${side.for} [${lo}, ${hi}]`).toBe(false);
+    }
+  });
+
+  it('carries its target color, or the door pool color at a door', () => {
+    const colors = new Map(lightTargets(layout).map((t) => [t.id as string, t.color]));
+    for (const side of sides) {
+      expect(side.color, side.for).toBe(colors.get(side.for) ?? rampColor(0));
+    }
   });
 });

@@ -17,7 +17,16 @@ import { TEST_IDS } from '../../src/app/testIds';
 import { doorId, type ExhibitId, type StopId } from '../../src/content/ids';
 import { content } from '../../src/content/index';
 import { entryById, exhibitNumber, mainTrack, wallLabelOf } from '../../src/content/selectors';
-import { applyFraming, fovFor, framingFor, viewOffsetFor } from '../../src/museum/rail/framing';
+import {
+  applyFraming,
+  doorCorners,
+  doorFov,
+  doorPortraitX,
+  fovFor,
+  framingFor,
+  horizontalTangents,
+  viewOffsetFor,
+} from '../../src/museum/rail/framing';
 import { DOOR_TRANSOM, labelPlacements } from '../../src/museum/environment/labels3d';
 import {
   CAP_HEIGHT_RATIO,
@@ -467,21 +476,43 @@ function transomTitleBox(door: StopId): WallBox {
 }
 
 /**
- * Projects wall boxes through the live camera pose with the plain framing, to CSS px rects. With
+ * The lens CameraRig uses at a door stop (F-051): the desktop door FOV and framing height, or on
+ * portrait the framing x that centers the doorway.
+ */
+function doorLens(page: Page, door: StopId): { fov: number; point: { x: number; y: number } } {
+  const { width, height } = page.viewportSize()!;
+  const aspect = width / height;
+  const fov = doorFov(aspect, 1);
+  const spec = LAYOUT.doors.find((d) => doorId(d.wing) === door)!;
+  const pose = LAYOUT.tracks.main.stops.find((s) => s.id === door)!;
+  const span = horizontalTangents(
+    pose.camera,
+    pose.look,
+    doorCorners(spec.side, spec.z, spec.width, DOOR_H),
+  );
+  const x = aspect < 1 ? doorPortraitX(aspect, fov, span) : 0.5;
+  const point = framingFor(aspect, null, 0, undefined, 0, 0, undefined, 1, x);
+  return { fov, point };
+}
+
+/**
+ * Projects wall boxes through the live camera pose with the plain framing (or `lens`), to CSS px rects. With
  * an `anchor` (a world point and where the page draws it), the rects move by the anchor's offset.
  */
 async function projectWallBoxes(
   page: Page,
   boxes: WallBox[],
   anchor?: { world: Vector3; screen: { x: number; y: number } },
+  lens?: { fov: number; point: { x: number; y: number } },
 ): Promise<Rect[]> {
   const { width, height } = page.viewportSize()!;
   const aspect = width / height;
   const { position, target } = (await stats(page)).camera;
-  const camera = new PerspectiveCamera(fovFor(aspect), aspect, 0.1, 90);
+  const fov = lens?.fov ?? fovFor(aspect);
+  const camera = new PerspectiveCamera(fov, aspect, 0.1, 90);
   camera.position.set(...position);
   camera.lookAt(new Vector3(...target));
-  applyFraming(camera, fovFor(aspect), viewOffsetFor(framingFor(aspect)), width, height);
+  applyFraming(camera, fov, viewOffsetFor(lens?.point ?? framingFor(aspect)), width, height);
   camera.updateMatrixWorld();
   let dx = 0;
   let dy = 0;
@@ -751,7 +782,12 @@ test.describe('rail and wall titles (F-036)', () => {
       expect(await page.evaluate(() => window.__MUSEUM__!.stats().track), `${wing.id}: track`).toBe(
         wing.id,
       );
-      const [title] = await projectWallBoxes(page, [transomTitleBox(door)]);
+      const [title] = await projectWallBoxes(
+        page,
+        [transomTitleBox(door)],
+        undefined,
+        doorLens(page, door),
+      );
       // The title is in the frame, so the check is not vacuous.
       expect(title!.top, `${door} title top`).toBeGreaterThan(0);
       expect(title!.bottom, `${door} title bottom`).toBeLessThan(page.viewportSize()!.height);

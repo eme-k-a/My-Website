@@ -215,3 +215,25 @@ All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refre
 
 **G4 round 2 started (2026-10-27 04:30 UTC):** F-M4b is merged (archived session). CI run 142's quality (b) failure was fixed in the test (F-047, `e7b202d`), and run 144 committed the F-M4b baselines (`86d8dc8`). R11 round 2 runs in session_019vLPzo3MvoSuATWmcafpYW on `claude/m4-g4r2`. A normal run is deploying the preview.
 
+
+## 13. M5 launch (prepared 2026-10-27; Emeka's go is given in advance)
+
+When G4 round 2 passes, R0:
+1. Records "Gate G4 passed, M4 complete" in RULINGS, and marks task 21 complete.
+2. Creates four cloud sessions (`create_session`, source `claude/intelligent-sagan-poq45q`, tag `commit-history:M5`), one each for WP-29, WP-30, WP-31 and WP-32, with `outcome_branch` `claude/m5-wp-29` to `claude/m5-wp-32`.
+3. Prompts them in the same shape as the M4 builder prompts:
+   - Read CLAUDE.md, then `docs/wp/packs/WP-xx.md`, then RULINGS from "M3 decisions" on, including "M5 routing".
+   - List the other three sessions' paths as off limits, per the routing.
+   - Setup: `npm ci`; Playwright `--workers=2` on PORT 4174 to 4177; the Chromium 1243 symlink workaround if needed.
+   - Rules: no em dashes, no invented facts, no budget raises, baselines from CI only.
+   - Push after each finished item, only to the session's own branch; never tags or PRs.
+   - Done means the brief's acceptance, `review/reports/WP-xx.json`, and a final message under 400 words.
+4. Records the session ids below, and arms a check-in about 90 minutes later.
+5. Sends Emeka one message: M4 is complete (with the score and the preview link), and M5 has started. It also asks for the G5 facts:
+   - certification dates and issuers;
+   - KlarUp and Finance Tracker roles and dates;
+   - the MUN start date;
+   - target roles;
+   - his GitHub handle;
+   - an approval pass on all first-person copy.
+6. After the merges: a baseline refresh if any screenshots changed, a green run, then the G5 checks: `RELEASE=1 npm run check:copy` (after Emeka's facts), Lighthouse at least 0.95 for accessibility and SEO, and Emeka's phone checklist.

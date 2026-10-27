@@ -211,3 +211,5 @@ All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refre
 
 **Paused (Emeka, 2026-10-24 16:40 UTC, "wait"):** the F-M4b fix round starts after the weekly reset, by a scheduled task at 2026-10-27 02:02 UTC (`trig_013ocREzx7Vvv6HKuoiPf6pf`). The 5-hour usage chain and the daily backup stay armed but never start it early. After F-M4b: merge, a baseline refresh, a green run, then G4 round 2.
 
+**F-M4b started (2026-10-27 02:03 UTC, after the weekly reset):** session_019vLPzjbphHPaHjpeWyeYqn on `claude/m4-f-m4b`, from `bc36379`. Then: merge, a baseline refresh, a green run, and G4 round 2 as a new R11 session on `claude/m4-g4r2`. The 5-hour chain had lapsed on 2026-10-25 (a worker restart came before the next booking; nothing was running), and it is re-armed.
+

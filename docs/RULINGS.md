@@ -156,3 +156,4 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - The MUN number cap is 0.26 m and its organization cap 0.20 m (14.28 px).
   - Side-bay washes are recorded in ART_DIRECTION §4.
   - The CI visual step changes on 27 stop and dialog shots; a baseline refresh follows, then G4 round 2.
+- **CI run 142 (F-M4b baseline dispatch):** desktop quality (b) failed a second time, so R0 treated it as real (F-047 ruling). The root cause is in the test, not the app. Under SwiftShader with parallel workers, the first frame after an input arrives 2.2 to 7.5 s late, on the pre-M4 build as on the M4 one, and two frames did not always fit the 10 s window. The poll now runs until 1 s before the idle stop (`a fix(F-047) commit`). The pixel7 verafin still-canvas check stays open as intermittent.

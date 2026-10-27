@@ -53,6 +53,7 @@ import {
   titleBottomCorners,
   titleClearDolly,
   titleTopCorners,
+  topClearDolly,
   topTangent,
   viewOffsetFor,
   WING_HEAD_BOTTOM,
@@ -207,7 +208,8 @@ const titleTan = new Map<string, number>(
 /**
  * The dialog dolly at each wing exhibit (F-042, framing.ts `titleClearDolly`): the longest move,
  * up to `dialogDollyM`, that keeps the wall title's last line above the case top (its brass edge
- * included). Main-aisle exhibits are not listed and keep the full dolly.
+ * included); and at the wall vitrine (F-050, `topClearDolly`) the longest that keeps its number
+ * under the top edge. The other main-aisle exhibits are not listed and keep the full dolly.
  */
 const wingDolly = new Map<string, number>(
   LAYOUT.slots
@@ -235,6 +237,19 @@ const wingDolly = new Map<string, number>(
       return [[slot.id as string, titleClearDolly(pose.camera, pose.look, bottoms, tops, max)]];
     }),
 );
+// The wall vitrine (F-050): its title stands highest (06 over CERTIFICATIONS), and at the full
+// dolly the number left the top of the desktop dialog view; the dolly stops while the number is
+// still under the HUD wordmark.
+for (const slot of LAYOUT.slots.filter((s) => s.mount === 'wall')) {
+  const pose = LAYOUT.tracks.main.stops.find((s) => s.id === slot.id);
+  if (!pose) continue;
+  const tops = numberTopCorners(slotPlacard(LAYOUT, slot), SERIF_NUMBER_ADVANCE);
+  const max = tokens.camera.dialogDollyM;
+  wingDolly.set(
+    slot.id,
+    topClearDolly(pose.camera, pose.look, tops, tokens.camera.fovDesktop, max),
+  );
+}
 /**
  * Each wing door's projected span seen from its stop (F-051, framing.ts `horizontalTangents` of
  * `doorCorners`), for the portrait door framing.

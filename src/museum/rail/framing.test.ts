@@ -34,6 +34,8 @@ import {
   titleBottomCorners,
   titleClearDolly,
   titleTopCorners,
+  TITLE_TOP_CLEARANCE,
+  topClearDolly,
   topTangent,
   viewOffsetFor,
   WING_HEAD_BOTTOM,
@@ -471,6 +473,38 @@ describe('door framing (F-051)', () => {
       expect(Math.min(...xs), door.wing).toBeGreaterThan(left);
       expect(Math.max(...xs), door.wing).toBeLessThan(right);
     }
+  });
+});
+
+describe('vitrine dialog dolly (F-050)', () => {
+  const layout = computeLayout(content, new Date());
+  const slot = layout.slots.find((s) => s.mount === 'wall')!;
+  const pose = layout.tracks.main.stops.find((s) => s.id === slot.id)!;
+  const tops = numberTopCorners(slotPlacard(layout, slot), SERIF_NUMBER_ADVANCE);
+  const max = tokens.camera.dialogDollyM;
+  const [width, height] = [1440, 900];
+
+  /** The number top's y in CSS px in the desktop dialog (panel at 806 px) after a dolly of `d`. */
+  function numberTop(d: number): number {
+    const eye = new Vector3(...pose.camera);
+    const look = new Vector3(...pose.look);
+    eye.addScaledVector(look.clone().sub(eye).normalize(), d);
+    const camera = new PerspectiveCamera(50, width / height, 0.1, 90);
+    camera.position.copy(eye);
+    camera.lookAt(look);
+    applyFraming(camera, 50, viewOffsetFor(framingFor(width / height, 806 / width)), width, height);
+    return Math.min(...tops.map((c) => screenOf(camera, new Vector3(...c)).y * height));
+  }
+
+  it('stops the dolly while the 06 stays under the top edge and the HUD wordmark', () => {
+    expect(slot.id).toBe('certifications');
+    const d = topClearDolly(pose.camera, pose.look, tops, 50, max);
+    expect(d).toBeGreaterThanOrEqual(0);
+    expect(d).toBeLessThan(max);
+    // The full dolly cut the number at the top edge (G4 round 1).
+    expect(numberTop(max)).toBeLessThan(0);
+    expect(numberTop(d)).toBeGreaterThanOrEqual(TITLE_TOP_CLEARANCE * height - 1e-6);
+    expect(numberTop(d + 0.05)).toBeLessThan(TITLE_TOP_CLEARANCE * height);
   });
 });
 

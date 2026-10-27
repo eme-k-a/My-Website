@@ -361,6 +361,48 @@ export function titleClearDolly(
 }
 
 /**
+ * In the desktop dialog the wall title's top keeps at least this share of the height under the
+ * top edge (F-050): 65 px on a 900 px tall view, under the HUD wordmark that stays while the story
+ * is open.
+ */
+export const TITLE_TOP_CLEARANCE = 0.072;
+
+/**
+ * The dialog dolly at the wall vitrine (F-050): the longest move toward the slot center, up to
+ * `max`, at which the title's top (`tops`, e.g. `numberTopCorners`) still projects at least
+ * TITLE_TOP_CLEARANCE of the height under the top edge, for a view of vertical FOV `fov` whose
+ * framing point sits at mid-height (the desktop dialog framing). The number rises on screen as
+ * the camera closes in, so a bisection finds the limit; 0 when even the stop pose does not clear.
+ */
+export function topClearDolly(
+  camera: Vec3,
+  look: Vec3,
+  tops: readonly Vec3[],
+  fov: number,
+  max: number,
+): number {
+  const dir = look.map((v, i) => v - camera[i]!) as Vec3;
+  const length = Math.hypot(...dir);
+  if (!(length > 0) || !(max > 0)) return 0;
+  const k = 1 / (2 * Math.tan((fov * Math.PI) / 360));
+  const limit = (0.5 - TITLE_TOP_CLEARANCE) / k;
+  const clears = (d: number) => {
+    const pos = camera.map((c, i) => c + (dir[i]! / length) * d) as Vec3;
+    return topTangent(pos, look, tops) <= limit;
+  };
+  if (clears(max)) return max;
+  if (!clears(0)) return 0;
+  let lo = 0;
+  let hi = max;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (clears(mid)) lo = mid;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/**
  * The portrait framing height at an exhibit (F-039, F-048): the framing point that puts the wall
  * title's top (`tan`, from `topTangent`) WING_HEAD_CLEARANCE px under the measured bottom of the
  * wing head or the HUD's top row (`headBottom`, CSS px, in a canvas `height` px tall). Never above

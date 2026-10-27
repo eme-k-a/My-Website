@@ -19,10 +19,33 @@
   gap: 12px;
   transform: translateY(-50%);
   pointer-events: none;
+  /* An ink halo under the year and end labels, so a bright pixel behind never meets a glyph. */
+  --rail-halo: 0 0 2px var(--ink), 0 0 4px var(--ink);
 }
 
 .rail button {
   pointer-events: auto;
+}
+
+/*
+ * A soft ink scrim behind the desktop rail column (F-053): at cfia the lit MUN case stood right
+ * under the rail and its brass lines ran through the year labels and dots. The scrim fades out
+ * at every edge, so over the dark gallery it is invisible and over a lit object it only holds the
+ * rail's text off it. Phones keep their own wing head, which has solid chips.
+ */
+@media (min-width: 1024px) and (min-height: 560px) {
+  :global(html[data-mode='museum']) .rail::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: -48px -12px -48px -32px;
+    background: radial-gradient(
+      farthest-side,
+      rgba(11, 11, 13, 0.78) 62%,
+      rgba(11, 11, 13, 0) 100%
+    );
+    pointer-events: none;
+  }
 }
 
 /*
@@ -38,6 +61,7 @@
   composes: label from './ui.module.css';
   padding-left: 4px;
   color: var(--text-2);
+  text-shadow: var(--rail-halo);
 }
 
 .line {
@@ -92,6 +116,7 @@
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  text-shadow: var(--rail-halo);
 }
 
 .tick::before {

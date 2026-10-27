@@ -30,11 +30,24 @@
 //   too short for the title and the whole case, the title wins: text over text is worse than the
 //   case floor meeting the card. It blends in over the half stop next to the exhibit
 //   (`stopWeightAt`), so the door stops keep their framing (F-038).
+// - at a wing door (F-051): on desktop the FOV tightens to DOOR_FOV_DESKTOP around the normal
+//   framing point (moved to DOOR_DESKTOP_X, DOOR_DESKTOP_Y), so the doorway, its transom title and the room's
+//   glow fill the picture; on
+//   portrait the framing x centers the doorway's projected span (`doorPortraitX`), so neither
+//   jamb is cut by the edge. Both blend in over the half stop next to the door (`stopWeightAt`).
 // Vertical FOV is 50 at aspect >= 1, 68 at aspect <= 0.6, linear in between. CameraRig damps shift
 // changes over `tokens.motion.framingSmoothS` (0.4 s). Pure math: three.js only as a type.
 import type { PerspectiveCamera } from 'three';
 import { tokens } from '../../design/tokens';
-import { DESK_CAM_DZ, DESK_DZ, DESK_LOOK_Y, DESK_ROOM_LENGTH, EYE_Y, type Vec3 } from './layout';
+import {
+  AISLE_HALF,
+  DESK_CAM_DZ,
+  DESK_DZ,
+  DESK_LOOK_Y,
+  DESK_ROOM_LENGTH,
+  EYE_Y,
+  type Vec3,
+} from './layout';
 
 /** A point on screen as fractions of the viewport, from the top left. */
 export interface ScreenPoint {
@@ -366,6 +379,107 @@ export function wingPortraitY(
   return Math.min(WING_Y_MAX, Math.max(base, y));
 }
 
+/**
+ * Horizontal tangents of `points` relative to the view axis of a camera at `camera` looking at
+ * `look` (no roll), as [leftmost, rightmost] (right is positive); points behind are skipped.
+ */
+export function horizontalTangents(
+  camera: Vec3,
+  look: Vec3,
+  points: readonly Vec3[],
+): [number, number] {
+  const f = look.map((v, i) => v - camera[i]!) as Vec3;
+  const fl = Math.hypot(...f);
+  if (!(fl > 0)) return [Number.NaN, Number.NaN];
+  for (let i = 0; i < 3; i++) f[i] = f[i]! / fl;
+  const r: Vec3 = [-f[2], 0, f[0]];
+  const rl = Math.hypot(...r);
+  if (!(rl > 0)) return [Number.NaN, Number.NaN];
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const point of points) {
+    const v = point.map((c, i) => c - camera[i]!);
+    const depth = v[0]! * f[0] + v[1]! * f[1] + v[2]! * f[2];
+    if (!(depth > 0)) continue;
+    const t = (v[0]! * r[0] + v[2]! * r[2]) / rl / depth;
+    lo = Math.min(lo, t);
+    hi = Math.max(hi, t);
+  }
+  return Number.isFinite(lo) ? [lo, hi] : [Number.NaN, Number.NaN];
+}
+
+/**
+ * Vertical FOV at a wing door stop on desktop (the door composition, F-051). The door stop looks
+ * at its doorway obliquely from the aisle, so at the aisle FOV (50) the doorway fills only the
+ * middle of the frame: the left third showed the dark aisle ahead and the next case cut by the
+ * edge (wailo at the volunteer door). A tighter lens around the framing point lets the doorway,
+ * its transom title and the room's glow fill the picture and moves the neighbour out of frame.
+ */
+export const DOOR_FOV_DESKTOP = 44;
+/**
+ * The desktop framing height at a wing door: a little under the middle, so the larger transom
+ * title keeps its headroom under the HUD's Resume and Classic buttons (the door's foot is out of
+ * frame either way).
+ */
+export const DOOR_DESKTOP_Y = 0.57;
+/**
+ * The desktop framing x at a wing door: a little left of the aisle's 62%, so the larger doorway
+ * and the room title behind it stay clear of the rail's stop label at the right.
+ */
+export const DOOR_DESKTOP_X = 0.58;
+/** The portrait door framing never moves the doorway's center past these fractions of the width. */
+const DOOR_X_MIN = 0.38;
+const DOOR_X_MAX = 0.62;
+
+/** The lining face width and the depth the reveal shows from the aisle, meters. */
+const DOOR_LINING = 0.04;
+const DOOR_REVEAL = 0.2;
+
+/** The corners of a wing door's opening with its brass lining, seen from the aisle. */
+export function doorCorners(
+  side: 'left' | 'right',
+  z: number,
+  width: number,
+  height: number,
+): Vec3[] {
+  const s = side === 'left' ? -1 : 1;
+  // The lining's 4 cm face and the reveal's depth into the wall, read from the aisle.
+  const half = width / 2 + DOOR_LINING;
+  return [AISLE_HALF, AISLE_HALF + DOOR_REVEAL].flatMap((x) =>
+    [z - half, z + half].flatMap((zz) =>
+      [0, height + DOOR_LINING].map((y) => [s * x, y, zz] as Vec3),
+    ),
+  );
+}
+
+/**
+ * The portrait framing x at a wing door (F-051): the doorway's projected span (`span`, from
+ * `horizontalTangents` of `doorCorners`) is centered in the width, so neither jamb is cut by the
+ * edge of a phone (the projects door lost its left jamb, the volunteer door its right one).
+ */
+export function doorPortraitX(
+  aspect: number,
+  fov: number,
+  span: readonly [number, number],
+): number {
+  const [lo, hi] = span;
+  if (!(aspect > 0) || !Number.isFinite(lo) || !Number.isFinite(hi)) return 0.5;
+  const kx = 1 / (2 * Math.tan((fov * Math.PI) / 360) * aspect);
+  const x = 0.5 - ((lo + hi) / 2) * kx;
+  return Math.min(DOOR_X_MAX, Math.max(DOOR_X_MIN, x));
+}
+
+/**
+ * The vertical FOV at progress weight `door` of a wing door stop (`stopWeightAt`): desktop blends
+ * from the aisle FOV to DOOR_FOV_DESKTOP; portrait keeps `fovFor`.
+ */
+export function doorFov(aspect: number, door: number): number {
+  const fov = fovFor(aspect);
+  const w = Math.min(1, Math.max(0, door));
+  if (aspect < 1 || !(w > 0)) return fov;
+  return fov + (DOOR_FOV_DESKTOP - fov) * w;
+}
+
 /** Vertical field of view in degrees for a viewport aspect (width / height). */
 export function fovFor(aspect: number): number {
   const { fovDesktop, fovPortrait, portraitAspect } = tokens.camera;
@@ -382,7 +496,8 @@ export function fovFor(aspect: number): number {
  * only; desktop frames the desk like every other stop), and `deskY` the portrait framing height
  * at the desk (`deskPortraitY` of the measured band, or the DESK_PORTRAIT_Y fallback). `lobby`
  * is `lobbyWeightAt` (portrait only). `wing` is the `stopWeightAt` weight of an exhibit and
- * `wingY` its `wingPortraitY` (portrait only, F-039 and F-048).
+ * `wingY` its `wingPortraitY` (portrait only, F-039 and F-048). `door` is the `stopWeightAt`
+ * weight of a wing door and `doorX` its `doorPortraitX` (portrait; on desktop the door lowers the point, F-051).
  */
 export function framingFor(
   aspect: number,
@@ -392,12 +507,16 @@ export function framingFor(
   lobby = 0,
   wing = 0,
   wingY: number = tokens.camera.framingPortraitY,
+  door = 0,
+  doorX = 0.5,
 ): ScreenPoint {
+  const d = Math.min(1, Math.max(0, door));
   if (!(aspect < 1)) {
     if (panelLeft !== null && panelLeft >= MIN_LEFT_AREA && panelLeft < 1) {
       return { x: panelLeft / 2, y: 0.5 };
     }
-    return { x: tokens.camera.framingDesktopX, y: 0.5 };
+    const x = tokens.camera.framingDesktopX;
+    return { x: x + (DOOR_DESKTOP_X - x) * d, y: 0.5 + (DOOR_DESKTOP_Y - 0.5) * d };
   }
   const w = Math.min(1, Math.max(0, desk));
   const l = Math.min(1, Math.max(0, lobby));
@@ -405,7 +524,7 @@ export function framingFor(
   const g = Math.min(1, Math.max(0, wing));
   const y = l > 0 ? base + (LOBBY_PORTRAIT_Y - base) * l : base;
   const yDesk = w > 0 ? y + (deskY - y) * w : y;
-  return { x: 0.5, y: g > 0 ? yDesk + (wingY - yDesk) * g : yDesk };
+  return { x: 0.5 + (doorX - 0.5) * d, y: g > 0 ? yDesk + (wingY - yDesk) * g : yDesk };
 }
 
 /**

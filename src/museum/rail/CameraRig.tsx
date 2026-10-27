@@ -27,7 +27,7 @@ import {
 import { useMuseum } from '../../app/store';
 import { TEST_IDS } from '../../app/testIds';
 import { registerNavProvider, testParams } from '../../app/testHooks';
-import type { ExhibitId, StopId, TrackId } from '../../content/ids';
+import { doorId, type ExhibitId, type StopId, type TrackId } from '../../content/ids';
 import { tokens } from '../../design/tokens';
 import { LAYOUT } from '../../overlay/model';
 import { caseBox, EDGE_THICKNESS, slotMatrix, slotVariant } from '../exhibits/_kit/anatomy';
@@ -41,8 +41,11 @@ import {
   DESK_PORTRAIT_Y,
   deskPortraitY,
   deskWeightAt,
+  doorCorners,
+  doorFov,
+  doorPortraitX,
+  horizontalTangents,
   lobbyWeightAt,
-  fovFor,
   framingFor,
   HUD_ROW_BOTTOM,
   numberTopCorners,
@@ -66,6 +69,7 @@ import {
 import { travelTo } from './navigation';
 import { easeInOutCubic, finishGlide, progress, rig, setWaker, wake } from './progress';
 import type { Vec3 } from './layout';
+import { DOOR_H } from './layout';
 import { buildRails, poseAt } from './rail';
 import { railNeedsFrame, rigStep, SETTLE, settledStop } from './settle';
 
@@ -231,6 +235,20 @@ const wingDolly = new Map<string, number>(
       return [[slot.id as string, titleClearDolly(pose.camera, pose.look, bottoms, tops, max)]];
     }),
 );
+/**
+ * Each wing door's projected span seen from its stop (F-051, framing.ts `horizontalTangents` of
+ * `doorCorners`), for the portrait door framing.
+ */
+const doorSpan = new Map<string, [number, number]>(
+  LAYOUT.doors.flatMap((door) => {
+    const id = doorId(door.wing);
+    const pose = LAYOUT.tracks.main.stops.find((s) => s.id === id);
+    if (!pose) return [];
+    const corners = doorCorners(door.side, door.z, door.width, DOOR_H);
+    return [[id as string, horizontalTangents(pose.camera, pose.look, corners)] as const];
+  }),
+);
+
 /** The dolly scale of the story being shown (kept while the dolly runs back after a close). */
 let dollyScale = 1;
 
@@ -585,12 +603,14 @@ export function CameraRig() {
       const ids = railIds.get(held?.track ?? progress.track) ?? [];
       const desk = deskWeightAt(ids, p);
       const lobby = lobbyWeightAt(ids, p);
-      const fov = fovFor(aspect);
+      const near = stopWeightAt(ids, p);
+      const span = near.id === undefined ? undefined : doorSpan.get(near.id);
+      const door = span === undefined ? 0 : near.weight;
+      const fov = doorFov(aspect, door);
       const deskY = desk > 0 ? deskFramingY(size.height, fov) : DESK_PORTRAIT_Y;
       // An exhibit on a portrait screen: keep the wall title under the wing head in a wing
       // (F-039) and under the HUD's top row in the main aisle (F-048).
-      const near = aspect < 1 ? stopWeightAt(ids, p) : { id: undefined, weight: 0 };
-      const tan = near.id === undefined ? undefined : titleTan.get(near.id);
+      const tan = aspect >= 1 || near.id === undefined ? undefined : titleTan.get(near.id);
       const wing = tan === undefined ? 0 : near.weight;
       const head =
         (held?.track ?? progress.track) === 'main'
@@ -602,8 +622,20 @@ export function CameraRig() {
         tan === undefined || wing === 0
           ? tokens.camera.framingPortraitY
           : wingPortraitY(size.height, head, fov, tan);
+      // A wing door: the doorway centered on a portrait screen (F-051).
+      const doorX = span === undefined || aspect >= 1 ? 0.5 : doorPortraitX(aspect, fov, span);
       const goal = viewOffsetFor(
-        framingFor(aspect, panelLeft(state.openId, size.width), desk, deskY, lobby, wing, wingY),
+        framingFor(
+          aspect,
+          panelLeft(state.openId, size.width),
+          desk,
+          deskY,
+          lobby,
+          wing,
+          wingY,
+          door,
+          doorX,
+        ),
       );
       // A jump places the camera at once, so its framing lands at once too (the lobby's portrait
       // framing must not still be easing out at the first exhibit, F-032).

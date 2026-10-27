@@ -12,12 +12,19 @@ import {
   DESK_PORTRAIT_Y,
   deskPortraitY,
   deskWeightAt,
+  doorCorners,
+  DOOR_DESKTOP_X,
+  DOOR_DESKTOP_Y,
+  doorFov,
+  DOOR_FOV_DESKTOP,
+  doorPortraitX,
   lobbyWeightAt,
   LOBBY_PORTRAIT_Y,
   END_WALL_TOP_TAN,
   END_WALL_TOP_Y,
   fovFor,
   framingFor,
+  horizontalTangents,
   HUD_ROW_BOTTOM,
   MIN_LEFT_AREA,
   NUMBER_OVERSHOOT,
@@ -36,7 +43,7 @@ import {
 import { caseBox, EDGE_THICKNESS, slotMatrix, slotVariant } from '../exhibits/_kit/anatomy';
 import { slotPlacard } from '../exhibits/_kit/placard';
 import { SERIF_NUMBER_ADVANCE } from '../exhibits/_kit/titleMetrics';
-import { computeLayout } from './layout';
+import { computeLayout, DOOR_H } from './layout';
 
 /** Where a world point lands on screen (fractions from the top left) through `camera`. */
 function screenOf(camera: PerspectiveCamera, point: Vector3): { x: number; y: number } {
@@ -398,6 +405,71 @@ describe('main-aisle portrait framing (F-048)', () => {
       // Only as far down as the title needs: the case stays in the upper half, above the card.
       expect(y, slot.id).toBeGreaterThanOrEqual(base);
       expect(y, slot.id).toBeLessThan(0.45);
+    }
+  });
+});
+
+describe('door framing (F-051)', () => {
+  const layout = computeLayout(content, new Date());
+
+  it('tightens the desktop lens and moves the point only at a door, blended by its weight', () => {
+    expect(doorFov(1440 / 900, 1)).toBe(DOOR_FOV_DESKTOP);
+    expect(doorFov(1440 / 900, 0)).toBe(fovFor(1440 / 900));
+    expect(doorFov(1440 / 900, 0.5)).toBeCloseTo((DOOR_FOV_DESKTOP + fovFor(1.6)) / 2, 9);
+    expect(doorFov(412 / 839, 1)).toBe(fovFor(412 / 839));
+    const at = (door: number) =>
+      framingFor(1440 / 900, null, 0, DESK_PORTRAIT_Y, 0, 0, undefined, door, 0.3);
+    expect(at(1)).toEqual({ x: DOOR_DESKTOP_X, y: DOOR_DESKTOP_Y });
+    expect(at(0)).toEqual({ x: tokens.camera.framingDesktopX, y: 0.5 });
+    // The dialog framing wins on desktop.
+    expect(framingFor(1.6, 800 / 1440, 0, DESK_PORTRAIT_Y, 0, 0, undefined, 1, 0.3).y).toBe(0.5);
+    const portrait = framingFor(412 / 839, null, 0, DESK_PORTRAIT_Y, 0, 0, undefined, 1, 0.44);
+    expect(portrait).toEqual({ x: 0.44, y: tokens.camera.framingPortraitY });
+  });
+
+  it('measures the horizontal tangent three.js projects', () => {
+    const camera = new PerspectiveCamera(50, 1.6, 0.1, 90);
+    camera.position.set(0, 1.6, -26.2);
+    camera.lookAt(new Vector3(3.5, 1.5, -28));
+    const points: [number, number, number][] = [
+      [3.5, 0, -29.2],
+      [3.5, 2.8, -26.8],
+    ];
+    const [lo, hi] = horizontalTangents([0, 1.6, -26.2], [3.5, 1.5, -28], points);
+    const k = 1 / (2 * Math.tan((50 * Math.PI) / 360) * 1.6);
+    const xs = points.map((p) => screenOf(camera, new Vector3(...p)).x);
+    expect(0.5 + lo * k).toBeCloseTo(Math.min(...xs), 6);
+    expect(0.5 + hi * k).toBeCloseTo(Math.max(...xs), 6);
+  });
+
+  // Phones: inside the edges; desktop: right of the stop card column (its right edge at 446)
+  // and left of the rail's stop labels (from x 1240).
+  it.each([
+    [412, 839, 16, 396],
+    [360, 640, 16, 344],
+    [1440, 900, 446, 1240],
+  ])('shows every doorway whole at %i x %i, between x %i and %i', (width, height, left, right) => {
+    expect(layout.doors.length).toBe(2);
+    const aspect = width / height;
+    const fov = doorFov(aspect, 1);
+    for (const door of layout.doors) {
+      const pose = layout.tracks.main.stops.find((s) => s.id === `${door.wing}-door`)!;
+      const corners = doorCorners(door.side, door.z, door.width, DOOR_H);
+      const span = horizontalTangents(pose.camera, pose.look, corners);
+      const x = aspect < 1 ? doorPortraitX(aspect, fov, span) : 0.5;
+      const camera = new PerspectiveCamera(fov, aspect, 0.1, 90);
+      camera.position.set(...pose.camera);
+      camera.lookAt(new Vector3(...pose.look));
+      applyFraming(
+        camera,
+        fov,
+        viewOffsetFor(framingFor(aspect, null, 0, DESK_PORTRAIT_Y, 0, 0, undefined, 1, x)),
+        width,
+        height,
+      );
+      const xs = corners.map((c) => screenOf(camera, new Vector3(...c)).x * width);
+      expect(Math.min(...xs), door.wing).toBeGreaterThan(left);
+      expect(Math.max(...xs), door.wing).toBeLessThan(right);
     }
   });
 });

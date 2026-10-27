@@ -117,11 +117,16 @@ test.describe('quality', () => {
     await page.mouse.move(320, 310);
     const lastInput = Date.now();
     const atInput = await frames(page);
-    // Idle motion keeps the canvas rendering for a while. Under SwiftShader in CI a frame of the
-    // full desktop view takes 1 to 2 s (run 27 saw no frame at all in a 2 s window), so wait for
-    // two frames, well inside the 15 s idle window.
+    // Idle motion keeps the canvas rendering for a while. Under SwiftShader a frame of the full
+    // desktop view takes 1 to 3 s, and the first frame after the input lands later: 2.2 to 7.5 s
+    // with three local workers, on the pre-M4 build (7bd904d) as on the M4 one, so CI runs 125
+    // and 142 each saw only one frame in a 10 s window (F-047). Wait for two frames anywhere in
+    // the idle window, stopping 1 s short of the idle stop so they are idle frames.
     await expect
-      .poll(() => frames(page), { timeout: 10_000, message: 'idle motion renders frames' })
+      .poll(() => frames(page), {
+        timeout: IDLE_STOP_MS - 1_000,
+        message: 'idle motion renders frames',
+      })
       .toBeGreaterThan(atInput + 1);
     const running = await frames(page);
     const frameMs = (Date.now() - lastInput) / (running - atInput);

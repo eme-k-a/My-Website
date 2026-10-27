@@ -494,7 +494,12 @@
     "round": 0,
     "gate": "G4",
     "owner": "R8 with R7 (WP-29 or WP-32)",
-    "g4r1": "Not re-checked: CI intermittency under SwiftShader is outside this visual review; R0 reports CI run 126 green. No local repeat run in this round."
+    "g4r1": "Not re-checked: CI intermittency under SwiftShader is outside this visual review; R0 reports CI run 126 green. No local repeat run in this round.",
+    "quality_b": {
+      "status": "fixed",
+      "resolution": "CI run 142 failed quality (b) a second time, so R0 root-caused it. Under SwiftShader with parallel workers the first frame after the input lands 2.2 to 7.5 s late, on the pre-M4 build (7bd904d: 4.5 to 6.4 s) as on the M4 build, and later frames come about every 2 s. The 10 s window for two frames was too tight; the poll now uses the idle window minus 1 s (14 s), so it still only counts idle frames. 6 of 6 local repeats pass under 3 workers."
+    },
+    "note": "quality (b) is fixed (see quality_b). The pixel7 exhibit-contract verafin still-canvas check stays open as intermittent."
   },
   {
     "id": "F-048",

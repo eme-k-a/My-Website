@@ -49,20 +49,23 @@ export interface TitleSpec {
 }
 
 /**
- * Per kind. Main aisle: the organization cap is 0.12 m (EXPERIENCE §5.4 allows raising it), so
- * it keeps 14 CSS px on a Pixel 7 from the stop now that the title hangs farther along the wall.
+ * Per kind. Main aisle: the organization cap is 0.125 m (EXPERIENCE §5.4 allows raising it), so
+ * it keeps 14 CSS px on a Pixel 7 (412 x 839, the browser's viewport; 0.12 m gave 13.7 to 13.8 px
+ * there, F-049) from the stop now that the title hangs farther along the wall.
  * Wings: the block sits low (last baseline 2.20 m, a little over the case edge seen from the
  * stop, F-027), so on phones it stays under the wing HUD. Mun (F-041b): its title hangs on the
  * stop camera's sight line through the case, at the far end of the Foundations left wall, about
- * 8.8 m from the stop, so the organization cap grows to 0.19 m to keep 14 CSS px on a Pixel 7.
- * The block sits high (last baseline 3.12 m) so it clears the case top in the desktop dialog at
- * the full dolly, and tight (gap 0.06 m, as the wings) so the number stays under the phone HUD.
+ * 8.8 m from the stop, so the organization cap grows to 0.20 m to keep 14 CSS px on a Pixel 7
+ * (412 x 839; 0.19 m gave 13.5 px there, F-049), and the number gives up the room (0.26 m cap, it
+ * still reads at over 18 px) so the block's top does not rise toward the phone HUD. The block
+ * sits high (last baseline 3.12 m) so it clears the case top in the desktop dialog at the full
+ * dolly, and tight (gap 0.06 m, as the wings) so the number stays under the phone HUD.
  * The vitrine keeps its EXPERIENCE §5.4 heights.
  */
 export const TITLE_METRICS: Readonly<Record<PlacardKind, TitleSpec>> = {
-  main: { numberCap: 0.32, orgCap: 0.12, orgBottom: 2.32, gap: 0.2, orgWidth: 2.6 },
+  main: { numberCap: 0.32, orgCap: 0.125, orgBottom: 2.32, gap: 0.2, orgWidth: 2.6 },
   wing: { numberCap: 0.3, orgCap: 0.14, orgBottom: 2.2, gap: 0.06, orgWidth: 2.9 },
-  wide: { numberCap: 0.32, orgCap: 0.19, orgBottom: 3.12, gap: 0.06, orgWidth: 2.4 },
+  wide: { numberCap: 0.26, orgCap: 0.2, orgBottom: 3.12, gap: 0.06, orgWidth: 2.4 },
   wall: { numberCap: 0.32, orgCap: 0.1, orgBottom: 2.4, gap: 0.25, orgWidth: 3.6 },
 };
 

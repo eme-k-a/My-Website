@@ -1,6 +1,7 @@
 // Label legibility (EXPERIENCE §5.4; R0 ruling in the WP-11 brief): from each label's stop camera,
 // the projected cap height cap / (2 d tan(fov / 2)) * viewport height is at least 14 CSS px on the
-// desktop (1440 x 900, FOV 50) and on a Pixel 7 in portrait (412 x 915 CSS px, FOV 68). The year
+// desktop (1440 x 900, FOV 50) and on a Pixel 7 in portrait (412 x 839 CSS px, the browser's
+// viewport under its address bar, FOV 68; F-049, it was 412 x 915, the full screen). The year
 // numerals are decorative and exempt. Checked as projection math, not as an e2e.
 import { describe, expect, it } from 'vitest';
 import type { StopId } from '../../content/ids';
@@ -29,7 +30,7 @@ const layout = computeLayout(content, NOW);
 
 const VIEWPORTS: Viewport[] = [
   { name: 'desktop', width: 1440, height: 900, fov: tokens.camera.fovDesktop },
-  { name: 'pixel7', width: 412, height: 915, fov: tokens.camera.fovPortrait },
+  { name: 'pixel7', width: 412, height: 839, fov: tokens.camera.fovPortrait },
 ];
 
 function poseOf(l: Layout, id: StopId): StopPose {

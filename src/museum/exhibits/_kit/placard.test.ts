@@ -109,13 +109,13 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
     expect(main.number).toMatchObject({ font: 'serif', capHeight: 0.32 });
     expect(main.organization).toMatchObject({
       font: 'sans',
-      capHeight: 0.12,
+      capHeight: 0.125,
       baselineY: 2.32,
       lines: 1,
       letterSpacing: ORGANIZATION_TRACKING,
       lineHeight: ORGANIZATION_LINE_HEIGHT,
     });
-    expect(main.number.baselineY).toBeCloseTo(2.32 + 0.12 + 0.2, 9);
+    expect(main.number.baselineY).toBeCloseTo(2.32 + 0.125 + 0.2, 9);
     const wing = specOf('sdsj');
     expect(wing.organization.text).toBe("SOFTWARE DEVELOPERS\nOF ST. JOHN'S");
     expect(wing.organization).toMatchObject({ capHeight: 0.14, lines: 2 });
@@ -123,12 +123,14 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
     // The last line sits at 2.20 m (F-027) whatever the line count; the first one a line step higher.
     expect(wing.organization.baselineY - step).toBeCloseTo(2.2, 9);
     expect(wing.number.baselineY).toBeCloseTo(wing.organization.baselineY + 0.14 + 0.06, 9);
-    // Mun (F-041b): 0.19 m caps from 8.8 m away, the last line at 3.12 m, the number 0.06 m up.
+    // Mun (F-041b, F-049): 0.20 m caps from 8.8 m away under a 0.26 m number, the last line at
+    // 3.12 m, the number 0.06 m up.
     const mun = specOf('mun');
-    expect(mun.organization).toMatchObject({ capHeight: 0.19, text: 'MEMORIAL\nUNIVERSITY' });
+    expect(mun.organization).toMatchObject({ capHeight: 0.2, text: 'MEMORIAL\nUNIVERSITY' });
+    expect(mun.number).toMatchObject({ capHeight: 0.26 });
     const munStep = ORGANIZATION_LINE_HEIGHT * mun.organization.fontSize;
     expect(mun.organization.baselineY - munStep).toBeCloseTo(3.12, 9);
-    expect(mun.number.baselineY).toBeCloseTo(mun.organization.baselineY + 0.19 + 0.06, 9);
+    expect(mun.number.baselineY).toBeCloseTo(mun.organization.baselineY + 0.2 + 0.06, 9);
     const cert = specOf('certifications');
     expect(cert.organization).toMatchObject({ capHeight: 0.1, baselineY: 2.4, lines: 1 });
     expect(cert.number.baselineY).toBeGreaterThan(1.6 + 0.425);
@@ -154,7 +156,7 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
   it('sizes troika text by em so the cap height comes out right', () => {
     const spec = specOf('verafin');
     expect(spec.number.fontSize * CAP_HEIGHT_RATIO.serif).toBeCloseTo(0.32, 9);
-    expect(spec.organization.fontSize * CAP_HEIGHT_RATIO.sans).toBeCloseTo(0.12, 9);
+    expect(spec.organization.fontSize * CAP_HEIGHT_RATIO.sans).toBeCloseTo(0.125, 9);
   });
 
   it('carries the computed number and the uppercase wall label, broken into lines', () => {

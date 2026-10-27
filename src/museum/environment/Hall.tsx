@@ -22,6 +22,7 @@ import {
   WALL_WASH_PLAIN_V,
   washLayout,
   washMatrix,
+  type SideBay,
   type WashPlacement,
 } from './lightPools';
 import { applyWashUVs, ceilingSlotGeometry, shellGeometry } from './shell';
@@ -38,7 +39,7 @@ function fillWallWash(wall: MeshStandardMaterial, wash: Texture): () => void {
 }
 
 /** Writes the bays' matrices and temperature colors into the instanced mesh. */
-function fillBays(mesh: InstancedMesh, bays: WashPlacement[]): void {
+function fillBays(mesh: InstancedMesh, bays: readonly (WashPlacement | SideBay)[]): void {
   const color = new Color();
   bays.forEach((b, i) => {
     mesh.setMatrixAt(i, washMatrix(b.bay));
@@ -62,7 +63,11 @@ function bayMaterial(wall: MeshStandardMaterial, wash: Texture): MeshStandardMat
 function WashBays({ layout }: { layout: Layout }) {
   const library = useMaterialLibrary();
   const tier = useMuseum((s) => s.tier);
-  const { bays } = useMemo(() => washLayout(layout, tier), [layout, tier]);
+  // The title bays, then the dim side bays (F-052): one tile, one mesh.
+  const bays = useMemo(() => {
+    const wash = washLayout(layout, tier);
+    return [...wash.bays, ...wash.sides];
+  }, [layout, tier]);
   const plane = useMemo(() => new PlaneGeometry(1, 1), []);
   const [wash] = useState(createBayWash);
   useEffect(() => () => wash.dispose(), [wash]);

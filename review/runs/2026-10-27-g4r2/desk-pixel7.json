@@ -1,0 +1,53 @@
+{
+  "stop": "desk",
+  "project": "pixel7",
+  "url": "/?test=1&mode=museum",
+  "viewport": {
+    "width": 412,
+    "height": 839
+  },
+  "stats": {
+    "calls": 16,
+    "triangles": 5944,
+    "geometries": 71,
+    "textures": 21,
+    "programs": 19,
+    "textureMB": 11.166996002197264,
+    "frames": 11,
+    "dpr": 1,
+    "tier": "medium",
+    "track": "main",
+    "mounted": [
+      "mun",
+      "certifications"
+    ],
+    "exhibits": {
+      "mun": {
+        "triangles": 2676,
+        "drawCalls": 8,
+        "inBounds": true
+      },
+      "certifications": {
+        "triangles": 3924,
+        "drawCalls": 7,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        0,
+        1.6,
+        -64
+      ],
+      "target": [
+        0,
+        1.1,
+        -67.5
+      ]
+    },
+    "progress": {
+      "target": 9,
+      "current": 9
+    }
+  }
+}

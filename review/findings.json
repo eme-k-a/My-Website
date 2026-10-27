@@ -499,7 +499,8 @@
       "status": "fixed",
       "resolution": "CI run 142 failed quality (b) a second time, so R0 root-caused it. Under SwiftShader with parallel workers the first frame after the input lands 2.2 to 7.5 s late, on the pre-M4 build (7bd904d: 4.5 to 6.4 s) as on the M4 build, and later frames come about every 2 s. The 10 s window for two frames was too tight; the poll now uses the idle window minus 1 s (14 s), so it still only counts idle frames. 6 of 6 local repeats pass under 3 workers."
     },
-    "note": "quality (b) is fixed (see quality_b). The pixel7 exhibit-contract verafin still-canvas check stays open as intermittent."
+    "note": "quality (b) is fixed (see quality_b). The pixel7 exhibit-contract verafin still-canvas check stays open as intermittent.",
+    "g4r2": "Not re-checked in this visual review. Per R0: quality (b) is fixed in the test (CI run 142 root cause), and the pixel7 verafin still-canvas check stays open as intermittent. CI run 144 green per R0."
   },
   {
     "id": "F-048",
@@ -511,9 +512,10 @@
     "evidence": "Probe review/runs/2026-10-24-g4r1/probe-g4.mjs (results review/runs/2026-10-24-g4r1/probe-g4.json and probe-g4-main.json, shots probe-<stop>-small.png): the HUD top row ends at y 52 at every stop. At 360 x 640 the MUN 05 is drawn behind the PDF button, only its foot shows below it (review/runs/2026-10-24-g4r1/evidence/mun-360x640-top.png; munTitle.test puts the number at y 38 to 62, inside the viewport but under the HUD, which the test does not check); the top of the certifications 06 is cut by the PDF button (review/runs/2026-10-24-g4r1/evidence/certifications-360x640-top.png); the cfia 04 top is 0.6 px below the row and touches the PDF button (review/runs/2026-10-24-g4r1/evidence/cfia-360x640-top.png). Verafin, mysa and wailo clear it by 16 px, the wing stops by 37 to 56 px. On Pixel 7 412 x 839 the same three are tight but clear: mun 0.9 px, certifications 7 px, cfia 11.6 px. Rubric P1: a label covered by the HUD (the same class as F-039, which closed for the wing stops only).",
     "expected": "At every exhibit stop on 412 x 839 and 360 x 640 the wall title (number and organization) sits at least 8 px below the measured bottom of the HUD top row and inside the viewport. Fix (R4 with R6): extend the F-039 rule (frame from the measured head bottom, wingPortraitY) to main-aisle exhibit stops on portrait, so the framing point drops until the title top clears the HUD by 8 px, or lower the MUN, certifications and cfia title blocks for portrait (R3). Owner R4 (framing) with R3 for title metrics.",
     "check": "A rail-input (g)-style rect check at every exhibit stop on pixel7 and a 360x640 context (title box against the HUD row, gap of at least 8 px); re-run probe-g4.mjs with PROBE_STOPS=verafin,mysa,wailo,cfia,mun,certifications: titleGapBelowHud of at least 8 in every row; re-capture mun at 360x640 and read 05 whole.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
-    "gate": "G4"
+    "gate": "G4",
+    "g4r2": "Probe review/runs/2026-10-27-g4r2/probe-g4.json and probe-g4-main.json: titleGapBelowHud at 360 x 640 is verafin 15.8, mysa 16.2, wailo 15.8, cfia 11.2, mun 10.9, certifications 8.95 (06 included; read against review/runs/2026-10-27-g4r2/evidence/certifications-360x640-top.png), so every main-aisle title top is at least 8 px under the HUD row (was 0.6, under and under). Pixel 7: 37.1, 37.5, 36.7, 12.7, 12.4, 9.3. Crops review/runs/2026-10-27-g4r2/evidence/mun-360x640-top.png, cfia-360x640-top.png. Cases stay above the card at both sizes."
   },
   {
     "id": "F-049",
@@ -525,9 +527,10 @@
     "evidence": "F-041b sizes the organization cap (0.19 m) against labels.test, which measures Pixel 7 at 412 x 915 (src/museum/environment/labels.test.ts line 32); the browser viewport is 412 x 839, where F-041b itself computes 13.5 px. Glyph boxes in review/runs/2026-10-24-g4r1/probe-g4.json (mun, pixel7) give letter heights of 14.1 to 17.9 px on slanted glyphs, about 12.6 to 15 px of cap once the slant is removed, smallest at the far end of MEMORIAL; the title also renders soft (review/runs/2026-10-24-g4r1/evidence/mun-pixel7-top.png). The 05 top is at y 52.9 against the HUD row bottom at 52.0 (0.9 px), left of the PDF button by about 8 px, so it touches but does not intersect. EXPERIENCE 5.4: never below 14 px. Not P1: the title is legible and the card carries the institution.",
     "expected": "On Pixel 7 412 x 839 the MUN organization cap is at least 14 CSS px along the whole line, and the title top is at least 8 px below the HUD row. Suggested (R3, R0 ruling on the cap): measure labels.test at 412 x 839 (the device viewport) instead of 412 x 915, then take the room from the number rather than the top (number cap 0.32 to about 0.26 m, organization cap 0.19 to about 0.20 m, same last baseline), or let the F-048 framing fix lower the block. Owner R3 with R8 for labels.test.",
     "check": "labels.test with a 412 x 839 Pixel 7 row passes the 14 px floor for the mun title; probe-g4.mjs mun pixel7 titleGapBelowHud of at least 8.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
-    "gate": "G4"
+    "gate": "G4",
+    "g4r2": "Pixel 7: the MUN 05 top is 12.35 px under the HUD row (0.9 in round 1); labels.test now measures 412 x 839 and the organization cap is 14.28 px (R0 ratified 0.26 / 0.20 m); rendered glyph boxes min 14.1, median 16.4 px (review/runs/2026-10-27-g4r2/probe-g4.json); review/runs/2026-10-27-g4r2/evidence/mun-pixel7-412.png. The smaller 05 is a new P3 (F-056)."
   },
   {
     "id": "F-050",
@@ -539,9 +542,10 @@
     "evidence": "review/runs/2026-10-24-g4r1/certifications-dialog-desktop.png and the crop review/runs/2026-10-24-g4r1/evidence/certifications-dialog-desktop-top.png: with the story open the camera dolly lifts the vitrine so the 06 numeral starts above y 0; its top bowls are cut. At the stop the numeral is whole (y 72 to 158, review/runs/2026-10-24-g4r1/certifications-desktop.png). F-M4a's titleClearDolly limits the dolly for the wing exhibits only; the wall vitrine keeps the full 0.6 m main-aisle dolly, and its title stands higher (06 above CERTIFICATIONS) than any other exhibit's.",
     "expected": "With the dialog open at certifications the wall title is whole inside the viewport (or framed out entirely). Fix (R4): add certifications to the titleClearDolly map with a top-edge clearance (or a smaller dolly for the vitrine). Owner R4.",
     "check": "Re-capture the certifications dialog on desktop (CAPTURE_DIALOGS=1, CAPTURE_STOPS=certifications) and read 06 whole; a unit check in framing.test that the 06 top projects inside the viewport at the dialog dolly.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
-    "gate": "G4"
+    "gate": "G4",
+    "g4r2": "review/runs/2026-10-27-g4r2/certifications-dialog-desktop.png and review/runs/2026-10-27-g4r2/evidence/certifications-dialog-desktop-top.png: 06 and CERTIFICATIONS whole, the 06 top well under the viewport edge."
   },
   {
     "id": "F-051",
@@ -553,9 +557,10 @@
     "evidence": "review/runs/2026-10-24-g4r1/volunteer-door-desktop.png: at x 0 to 20 the wailo case, its plinth and title fragments (3, LO) are cut by the left edge beside the card; projects-door shows no neighbour. Listed in G3 top problems (5) and not filed then; unchanged since. It keeps volunteer-door the lowest stop (3.54).",
     "expected": "At the volunteer door the frame either clears the neighbouring case or shows it whole enough to read as a case (no partial title glyphs at the edge). Fix (R4): yaw the door pose a few degrees toward the door, or (R3) dim the off-axis neighbour at the door stops.",
     "check": "Re-capture volunteer-door on desktop: no brass title glyphs in the leftmost 60 px.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
-    "gate": "G4"
+    "gate": "G4",
+    "g4r2": "review/runs/2026-10-27-g4r2/volunteer-door-desktop.png: 0 brass pixels in the leftmost 60 px (339 before per F-M4b), no wailo case or title fragment; both doors' jambs whole on Pixel 7 (review/runs/2026-10-27-g4r2/evidence/volunteer-door-pixel7-412.png, projects-door-pixel7-412.png). A residual on the right side is filed as F-054."
   },
   {
     "id": "F-052",
@@ -569,7 +574,8 @@
     "check": "Taste call at the G4 polish round: left-half sample within the wall-wash family.",
     "status": "open",
     "round": 1,
-    "gate": "G4"
+    "gate": "G4",
+    "g4r2": "Fixed at mysa (x 300, y 300: rgb 26, 21, 21, was 8, 7, 9), cfia (24, 15, 10), projects-door (19, 17, 18) and volunteer-door (31, 28, 30). Not at verafin: (300, 300) is still rgb(11, 11, 13); the side bay lands between the aisle and the case as a dim grey arch, and the left half remains the dark far aisle with no pool ahead (review/runs/2026-10-27-g4r2/evidence/verafin-left-desktop.png). Verafin desktop D1 stays 3.5. Narrowed to verafin; P3, a taste call."
   },
   {
     "id": "F-053",
@@ -581,8 +587,51 @@
     "evidence": "review/runs/2026-10-24-g4r1/cfia-desktop.png: the MUN case (x 1255 to 1415, y 350 to 500) sits directly under the rail, so the 2025 and 2024 labels and three stop dots are drawn over lit brass lines. Legible, but busy; no other stop puts a lit object under the rail.",
     "expected": "Idea: a soft scrim behind the rail column (as the HUD has), or frame cfia so the neighbour sits left of x 1300.",
     "check": "Re-capture cfia desktop: no lit brass under the rail labels.",
-    "status": "open",
+    "status": "fixed",
     "round": 1,
+    "gate": "G4",
+    "g4r2": "review/runs/2026-10-27-g4r2/evidence/cfia-rail-desktop.png: the MUN case under the rail is dimmed by the ink scrim and the 2025 to 2023 labels read clean; lit brass edges are still faintly visible under the 2025 label, which is within the idea's intent."
+  },
+  {
+    "id": "F-054",
+    "severity": "P2",
+    "title": "Volunteer door (desktop): the active rail label sits on the right door jamb",
+    "stop": "volunteer-door",
+    "viewport": "desktop 1440x900, tier high",
+    "path": "src/museum/rail/framing.ts",
+    "evidence": "review/runs/2026-10-27-g4r2/volunteer-door-desktop.png and review/runs/2026-10-27-g4r2/evidence/volunteer-door-rail-desktop.png: after F-051 the door frame's right jamb runs at about x 1160 to 1180, under the active rail label 'Volunteer & Leadership wing' (x 1128 to 1322, y 405 to 435), so the label is drawn over the lit brass jamb, and the room title SOFTWARE DEVELOPERS ends about 13 px from the label. F-M4b's framing.test bounds the doorway by the rail year labels (x 1240), not by the active label's left edge. projects-door is clear (right jamb about x 1095, its label starts at x 1223).",
+    "expected": "At the volunteer door on desktop, the door frame and the room title end at least 16 px left of the active rail label. Fix (R4): bound DOOR_DESKTOP_X (or the door FOV) by the measured left edge of the active rail label instead of the year-label column, or nudge the volunteer pose 1 to 2 degrees toward the door.",
+    "check": "Re-capture volunteer-door desktop: no brass jamb or title pixels inside the active rail label's rect plus 16 px; framing.test's door bound uses the active label's left edge.",
+    "status": "open",
+    "round": 2,
+    "gate": "G4"
+  },
+  {
+    "id": "F-055",
+    "severity": "P3",
+    "title": "Small phones: wall titles render 11 to 13 px at 360 x 640",
+    "stop": "all exhibit stops and doors",
+    "viewport": "360x640 portrait (Pixel 7 UA), tier medium",
+    "path": "src/museum/environment/labels.test.ts",
+    "evidence": "review/runs/2026-10-27-g4r2/probe-g4.json and probe-g4-main.json, 'small' rows: median glyph box heights of the wall titles are 11.4 to 13.3 px (klarup 11.4, finance-tracker 11.8, sdsj 11.8, mun 12.6, certifications 13.3, verafin 12.6, wailo 11.8, cfia 12.2); on Pixel 7 the same titles are 15.2 to 17.1 px. EXPERIENCE 5.4 sets the 14 px floor on Pixel 7 only, so this is in spec; the card repeats every title in the DOM. Unchanged in kind since round 1 (mun small median 12.2 then).",
+    "expected": "Idea for R0: either record that the 14 px floor is a Pixel 7 rule and small phones rely on the DOM card, or add a 360 x 640 row to labels.test with a lower floor (for example 11 px).",
+    "check": "An R0 ruling in RULINGS.md, or a 360 x 640 row in labels.test.",
+    "status": "open",
+    "round": 2,
+    "gate": "G4"
+  },
+  {
+    "id": "F-056",
+    "severity": "P3",
+    "title": "MUN: the 05 numeral now reads smaller than its organization line",
+    "stop": "mun",
+    "viewport": "desktop and pixel7",
+    "path": "src/museum/exhibits/_kit/titleMetrics.ts",
+    "evidence": "review/runs/2026-10-27-g4r2/mun-desktop.png and review/runs/2026-10-27-g4r2/evidence/mun-pixel7-412.png: after F-049 (number cap 0.26 m, organization 0.20 m) the 05 is about the height of two organization letters and thinner, so MEMORIAL UNIVERSITY dominates; at every other stop the numeral leads (verafin, mysa, wailo, cfia, certifications). Legible, and R0 ratified the caps.",
+    "expected": "Idea for R3 and R0: a heavier or slightly larger 05 within the same block height (for example 0.28 m with the organization line spacing tightened), so the hierarchy matches the other stops.",
+    "check": "Re-capture mun desktop and Pixel 7: the numeral reads as the lead line; labels.test and the F-048 HUD gap (at least 8 px) still pass.",
+    "status": "open",
+    "round": 2,
     "gate": "G4"
   }
 ]

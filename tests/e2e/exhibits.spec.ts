@@ -10,7 +10,7 @@ import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
 import { EXHIBIT_IDS, type ExhibitId } from '../../src/content/ids';
 import { expect, test } from './fixtures';
-import { goToStop, museumCanvas, museumUrl, stats, waitForMuseum } from './helpers';
+import { canvasPixels, goToStop, museumUrl, stats, waitForMuseum } from './helpers';
 
 const INSTALLING = 'Installation in progress';
 /**
@@ -33,7 +33,8 @@ const MOTION_WITHIN_FRAMES = 120;
 /** CI frames take up to 3 s on desktop (F-M2); a Pixel 7 frame is cheaper. 120 at 1.5 s. */
 const MOTION_TIMEOUT_MS = 180_000;
 
-const canvasShot = (page: Page) => museumCanvas(page).screenshot();
+/** At the drawing-buffer resolution, so compositor rounding never reads as motion (F-047). */
+const canvasShot = canvasPixels;
 
 /**
  * A small pointer move away from the exhibit: input that keeps FrameDriver's 15 s idle stop

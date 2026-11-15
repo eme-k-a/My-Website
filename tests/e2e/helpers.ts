@@ -71,6 +71,67 @@ export async function screenPosOf(
 /** The museum canvas (the R3F canvas is the only one outside `?debug`). */
 export const museumCanvas = (page: Page): Locator => page.locator('canvas').first();
 
+/** Width and height from a PNG's IHDR chunk. */
+const pngSize = (png: Buffer) => ({ width: png.readUInt32BE(16), height: png.readUInt32BE(20) });
+
+/**
+ * The museum canvas as a PNG at its drawing-buffer resolution, for byte-exact stillness and motion
+ * checks (F-047). A plain `screenshot()` captures at the device pixel ratio, so on Pixel 7 (2.625)
+ * the compositor upscales the 412 x 839 buffer (DPR 1 under ?test=1) and re-rasters the CSS
+ * vignette over it; both vary by 1 in 255 between composited frames while the WebGL output is
+ * unchanged (WP-32 measured 114k pixels in the vignette ring, and 3 to 8 pixels elsewhere, with
+ * the camera and the frame count still). `scale: 'css'` captures one pixel per buffer pixel; the
+ * size check proves no rendered pixel is dropped.
+ */
+export async function canvasPixels(page: Page): Promise<Buffer> {
+  const canvas = museumCanvas(page);
+  const buffer = await canvas.evaluate((el) => {
+    const c = el as HTMLCanvasElement;
+    return { width: c.width, height: c.height };
+  });
+  const png = await canvas.screenshot({ scale: 'css' });
+  expect(pngSize(png), 'the capture holds every drawing-buffer pixel 1:1').toEqual(buffer);
+  return png;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Cross-browser DOM projects (WP-32, ARCHITECTURE §13.2): Firefox and WebKit, @dom tests only, CI only
+
+/** The projects playwright.config.ts defines only when CI is set. */
+export const XBROWSER_PROJECTS: readonly string[] = ['firefox-dom', 'webkit-dom'];
+
+/** True in `firefox-dom` and `webkit-dom`. */
+export const isXbrowser = (): boolean => XBROWSER_PROJECTS.includes(test.info().project.name);
+
+/**
+ * Makes every page of the context report no WebGL at all, before any page script runs: the
+ * cross-browser stand-in for the Chromium-only `--disable-3d-apis` of the no-webgl project, so the
+ * boot script takes its no-WebGL2 row (ARCHITECTURE §5.3 row 3) in Firefox and WebKit too.
+ */
+export async function withoutWebgl(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const getContext = HTMLCanvasElement.prototype.getContext;
+    const WEBGL = new Set(['webgl', 'webgl2', 'experimental-webgl']);
+    HTMLCanvasElement.prototype.getContext = function (
+      this: HTMLCanvasElement,
+      kind: string,
+      ...rest: unknown[]
+    ) {
+      if (WEBGL.has(kind)) return null;
+      return (getContext as (...args: unknown[]) => RenderingContext | null).call(
+        this,
+        kind,
+        ...rest,
+      );
+    } as typeof HTMLCanvasElement.prototype.getContext;
+  });
+}
+
+/** Whether this browser creates a WebGL2 context at all (Firefox and WebKit headless may not). */
+export async function hasWebgl2(page: Page): Promise<boolean> {
+  return page.evaluate(() => document.createElement('canvas').getContext('webgl2') !== null);
+}
+
 // ---------------------------------------------------------------------------------------------
 // Visual baselines (ARCHITECTURE §13.6)
 

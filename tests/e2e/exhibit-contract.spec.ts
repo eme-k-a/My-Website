@@ -9,7 +9,7 @@ import { EXHIBIT_IDS, type ExhibitId } from '../../src/content/ids';
 import { content } from '../../src/content/index';
 import { entryById } from '../../src/content/selectors';
 import { expect, test } from './fixtures';
-import { goToStop, museumCanvas, museumUrl, screenPosOf, stats, waitForMuseum } from './helpers';
+import { canvasPixels, goToStop, museumUrl, screenPosOf, stats, waitForMuseum } from './helpers';
 
 const EXHIBITS_DIR = fileURLToPath(new URL('../../src/museum/exhibits/', import.meta.url));
 const BUILT: ExhibitId[] = EXHIBIT_IDS.filter((id) => existsSync(`${EXHIBITS_DIR}${id}/index.ts`));
@@ -41,10 +41,10 @@ test.describe('exhibit contract', { tag: '@exhibit' }, () => {
       expect(own?.triangles, 'triangle budget').toBeLessThanOrEqual(MAX_TRIANGLES);
       expect(s.mounted).toContain(id);
 
-      const canvas = museumCanvas(page);
-      const first = await canvas.screenshot();
+      // At the drawing-buffer resolution: device-scale captures vary with the compositor (F-047).
+      const first = await canvasPixels(page);
       await page.waitForTimeout(STILLNESS_MS);
-      const second = await canvas.screenshot();
+      const second = await canvasPixels(page);
       expect(second.equals(first), 'canvas is still under ?test=1 (frozen clock)').toBe(true);
 
       const pos = await screenPosOf(page, id);

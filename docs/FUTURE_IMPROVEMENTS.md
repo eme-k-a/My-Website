@@ -20,6 +20,7 @@ Last updated: 2026-11-15.
 | The inner case is small at the phone doors | G4 round 2 (D6) | F-M5p found only 3% to gain without cutting the jambs. |
 | Only the desk top shows above the desk card on short phones | F-060 follow-up | A larger gap pushes the end-wall title under the top buttons at 360 x 640. Options: a more compact desk card, or a smaller end-wall title on phones. |
 | Dialog "Older" and "Newer" buttons: the spoken name differs from the visible label | F-057 (P3, R6 with R8) | WCAG 2.5.3 advisory. |
+| Firefox: one navigation per cross-browser run never finishes loading | F-061 (P3, R8) | Advisory job only. Needs the Playwright trace from the run's artifact (download it locally or in a session that can reach GitHub's artifact storage). |
 | One source for render budgets and vitals | WP-29 request (R8) | Drop the repeated assertions from `environment.spec.ts` and `fast-path.spec.ts`. |
 | Lighthouse full-page screenshot setting | WP-29 request (R10) | Move `disableFullPageScreenshot` from the CI flag into `lighthouserc.cjs`. |
 

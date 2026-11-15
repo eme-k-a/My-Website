@@ -705,5 +705,20 @@
     "gate": "G5",
     "owner": "R4",
     "verified": "Emeka re-checked on his iPhone on 2026-11-15: \"approved. phone looks good\"."
+  },
+  {
+    "id": "F-061",
+    "severity": "P3",
+    "title": "Firefox (advisory cross-browser job): one navigation per run never fires load within 60 s",
+    "stop": "varies (/resume/ on a70f302, / on e7bb21f)",
+    "viewport": "firefox-dom (CI only)",
+    "path": "tests/e2e (firefox-dom project) or scripts/serve-dist.ts",
+    "evidence": "PR 1 CI on a70f302 and e7bb21f: one Firefox page.goto per run times out waiting for 'load', a different test each time; the other Firefox navigations in the same run pass; Chromium and WebKit never show it. The Playwright trace is in the run's test-results-xbrowser artifact, which R0 could not download from the cloud session (proxy).",
+    "expected": "Every Firefox navigation fires load, or the trace names the request that never completes.",
+    "check": "Three green e2e-xbrowser runs in a row.",
+    "status": "open",
+    "round": 0,
+    "gate": "M7",
+    "owner": "R8"
   }
 ]

@@ -1,0 +1,145 @@
+{
+  "wp": "WP-29",
+  "role": "R7 Performance Engineer",
+  "status": "partial",
+  "branch": "claude/m5-wp-29",
+  "base": "df5a730 (claude/intelligent-sagan-poq45q)",
+  "commits": [
+    "9505a6b feat(perf): check-budgets requires all nine exhibit chunks and keeps debug out of totals",
+    "0567d65 test(perf): render budgets per stop and tier",
+    "7d287ed test(perf): vitals and lighthouse precheck",
+    "00fc150 ci: make lighthouse blocking with museum precheck",
+    "037e257 ci: skip the lighthouse full-page screenshot that timed out under SwiftShader",
+    "(this commit) docs(review): WP-29 report"
+  ],
+  "changedFiles": [
+    "scripts/check-budgets.ts",
+    "scripts/check-budgets.test.ts",
+    "tests/e2e/budgets.spec.ts",
+    "tests/e2e/vitals.spec.ts",
+    "tests/e2e/lh-precheck.spec.ts",
+    ".github/workflows/ci.yml (lighthouse job only)",
+    "review/reports/WP-29.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Bundle budgets: entry <= 110 KB, museum <= 350 KB, each of 9 exhibit chunks <= 40 KB gzip",
+      "command": "npm run build && npm run check:budgets",
+      "result": "pass",
+      "evidence": "entry 95.70, museum 323.89, certifications 1.93, cfia 1.68, finance-tracker 1.48, klarup 1.75, mun 2.25, mysa 2.46, sdsj 1.74, verafin 2.05, wailo 3.68, debug 86.53 (reported only). A missing EXHIBIT_IDS chunk is now a failed row; ?debug chunks never count toward entry, museum or exhibit totals and a static import of src/museum/debug/ is flagged. 19 unit tests."
+    },
+    {
+      "id": "A2",
+      "criterion": "Render budgets per stop and tier",
+      "command": "npx playwright test tests/e2e/budgets.spec.ts --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "Max over all 14 stops. desktop high: calls 109/150, triangles 30469/500000, textureMB 12.67/64. desktop medium: 54/80, 15296, 12.67. pixel7 medium: 49/80, 12226/150000, 12.67/40. Per-exhibit peak 7480/20000 (finance-tracker). All limits read from perf/budgets.json. CI run 160: e2e shards green."
+    },
+    {
+      "id": "A3",
+      "criterion": "Transfer <= 1.2 MB and 4 MB",
+      "command": "npx playwright test tests/e2e/transfer.spec.ts --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "desktop and pixel7: 0.565 MB at wailo, 0.566 MB full walk (js 434.2 KB, woff2 79.6, woff 26.1, webp 26.3, css 7.4)."
+    },
+    {
+      "id": "A4",
+      "criterion": "Vitals: LCP element h1, CLS <= 0.02",
+      "command": "npx playwright test tests/e2e/vitals.spec.ts --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "desktop: LCP h1 at 588 ms, CLS 0.0005. pixel7: LCP h1 at 952 ms, CLS 0. ready 10847 ms desktop and 9523 ms pixel7 under SwiftShader, over readyMs (3000/5000): recorded as warning annotations, not failures (readyMs.level warn)."
+    },
+    {
+      "id": "A5",
+      "criterion": "Lighthouse scores the museum",
+      "command": "npx playwright test tests/e2e/lh-precheck.spec.ts --project=desktop",
+      "result": "pass",
+      "evidence": "Launches Chromium with lighthouserc chromeFlags (Playwright's own --enable-unsafe-swiftshader default removed), at Lighthouse's mobile 412x823 and desktop 1350x940 screens, on every museum URL of both configs: data-mode museum, same pathname (no /resume/ redirect), __MUSEUM__.ready true, no page errors. A config test pins the URLs, ?test=1&mode=museum and the SwiftShader flags. Caveat: this container's Chromium 1243 has WebGL even without the flag, so the negative case could not be shown locally; CI's 1194 is where the flag matters."
+    },
+    {
+      "id": "A6",
+      "criterion": "Lighthouse error-level assertions pass; the job is blocking and green",
+      "command": "CHROME_PATH=/opt/pw-browsers/chromium npm run lh; CI lighthouse job",
+      "result": "fail",
+      "evidence": "Job is blocking (no continue-on-error; precheck before lhci). Mobile LCP fails the 2500 ms error on / (3854, 3865, 3869 ms) and /exhibit/verafin/ (3877 to 3941 ms); every other error assertion passes (a11y 1, SEO 1, CLS 0.0002; /resume/ perf 1, a11y 1, SEO 1, best practices 0.96). Desktop passes all errors (perf 0.67/0.66 and TBT 2674/3069 ms are warnings). CI run 160: lighthouse job red, desktop step green with warnings (TBT about 1050 ms). Cause and a measured fix are in openQuestions (MuseumGate, WP-30 paths). No assertion was loosened."
+    }
+  ],
+  "measurements": {
+    "lighthouseLocalMobile": {
+      "/?test=1&mode=museum": {
+        "lcpMs": 3854,
+        "fcpMs": 2693,
+        "observedLcpMs": 536,
+        "cls": 0.0002,
+        "performance": 0.45,
+        "accessibility": 1,
+        "seo": 1,
+        "bestPractices": 0.96
+      },
+      "/exhibit/verafin/?test=1&mode=museum": {
+        "lcpMs": 3878,
+        "performance": 0.49
+      },
+      "/resume/": {
+        "lcpMs": 1353,
+        "performance": 1,
+        "accessibility": 1,
+        "seo": 1,
+        "bestPractices": 0.96
+      }
+    },
+    "lighthouseLocalMobileWithMuseumGatePatch": {
+      "/?test=1&mode=museum": {
+        "lcpMs": 2027,
+        "fcpMs": 1700
+      },
+      "/exhibit/verafin/?test=1&mode=museum": {
+        "lcpMs": 2081,
+        "fcpMs": 1763
+      },
+      "/resume/": {
+        "lcpMs": 1356
+      }
+    },
+    "lighthouseLocalDesktop": {
+      "/": {
+        "performance": 0.67,
+        "tbtMs": 2674
+      },
+      "/exhibit/verafin/": {
+        "performance": 0.66,
+        "tbtMs": 3069
+      },
+      "errors": "none"
+    }
+  },
+  "openQuestions": [
+    {
+      "question": "Mobile Lighthouse LCP on / and the exhibit page is about 3.86 s (gate 2.5 s) although the observed h1 paint is 0.42 to 0.54 s. Lantern counts every request that starts before the observed LCP, and src/overlay/MuseumGate.tsx starts the museum import (MuseumCanvas 86 KB plus the three.js chunk 240 KB) before the hero paints: immediately after hydration under ?test=1, and after load plus idle otherwise (load fires before first paint on a fast server; measured on /?mode=museum too, 3848 ms). Request for the MuseumGate owner (src/overlay/**, WP-30 this milestone): start the import only after the first contentful paint, document.fonts.ready and one frame, on both paths. With the patch below applied locally and rebuilt, mobile LCP was 2027 ms (/) and 2081 ms (exhibit page), and the museum chunk was requested after the LCP. The patch is a sketch: its 3 s fallback timer and the paint observer should also be cleared in the effect cleanup. Patch:\ndiff --git a/src/overlay/MuseumGate.tsx b/src/overlay/MuseumGate.tsx\nindex bcb4e76..8ac19ed 100644\n--- a/src/overlay/MuseumGate.tsx\n+++ b/src/overlay/MuseumGate.tsx\n@@ -36,6 +36,29 @@ const MuseumCanvas = lazy(() =>\n const START_EVENTS = ['scroll', 'pointerdown', 'keydown'] as const;\n const IDLE_TIMEOUT_MS = 2000;\n \n+/** Calls `then` once the first contentful paint has happened (at most 3 s later without one). */\n+function afterFirstPaint(then: () => void): void {\n+  let called = false;\n+  const once = () => {\n+    if (called) return;\n+    called = true;\n+    // The web fonts repaint the hero (often the LCP entry): wait for them and one more frame.\n+    const fonts = document.fonts ? document.fonts.ready : Promise.resolve();\n+    void fonts.then(() => requestAnimationFrame(() => window.setTimeout(then, 0)));\n+  };\n+  if (performance.getEntriesByName('first-contentful-paint').length > 0) return once();\n+  try {\n+    const observer = new PerformanceObserver(() => {\n+      observer.disconnect();\n+      once();\n+    });\n+    observer.observe({ type: 'paint', buffered: true });\n+  } catch {\n+    // No paint timing: fall through to the timeout.\n+  }\n+  window.setTimeout(once, 3000);\n+}\n+\n /** Resolves the trigger once: load plus idle, a first interaction, or ?test=1. */\n function useStartSignal(): boolean {\n   const [start, setStart] = useState(false);\n@@ -64,14 +87,19 @@ function useStartSignal(): boolean {\n     }\n     if (testParams(window.location.search).test) {\n       // Immediately, but after hydration has committed (the prerender rendered no museum).\n-      timer = window.setTimeout(go, 0);\n+      afterFirstPaint(() => {\n+        timer = window.setTimeout(go, 0);\n+      });\n       return cleanup;\n     }\n     for (const type of START_EVENTS) {\n       window.addEventListener(type, go, { passive: true, once: true });\n     }\n-    if (document.readyState === 'complete') afterLoad();\n-    else window.addEventListener('load', afterLoad, { once: true });\n+    afterFirstPaint(() => {\n+      if (done) return;\n+      if (document.readyState === 'complete') afterLoad();\n+      else window.addEventListener('load', afterLoad, { once: true });\n+    });\n     return cleanup;\n   }, []);\n   return start;\n",
+      "for": "R0",
+      "default": "Not applied (forbidden path). The lighthouse job stays blocking and red on mobile LCP until it lands; the assertion is unchanged."
+    },
+    {
+      "question": "Render budgets now live in tests/e2e/budgets.spec.ts (adds per-exhibit triangles and an every-exhibit-reported check). environment.spec.ts (R8) repeats the same draw-call, triangle and texture assertions and the transfer check (also in transfer.spec.ts). Keep budgets.spec.ts as the single source; R8 (WP-32) should drop the budget and transfer assertions from environment.spec.ts and keep only its out/wp11 review captures. Likewise vitals.spec.ts covers fast-path.spec.ts's 'LCP on desktop' and 'layout shift' tests; fast-path keeps the phone-size LCP checks.",
+      "for": "R8",
+      "default": "No change to R8 files."
+    },
+    {
+      "question": "npm run lh (package.json, R10) still produces the full-page screenshot; CI now passes --collect.settings.disableFullPageScreenshot=true because the desktop run died with a Page.captureScreenshot protocol timeout in CI run 152. R10 may move the setting into lighthouserc.cjs settings (outside my 'assertions and URLs only' grant).",
+      "for": "R10",
+      "default": "CLI flag in the lighthouse job only."
+    },
+    {
+      "question": "lh-precheck.spec.ts also runs in the desktop-rest e2e shard (about 50 s); its config test runs on every project. Harmless, but R8 may exclude it from the e2e shards.",
+      "for": "R8",
+      "default": "Left in rest shards (a spec no rule names falls into rest by design)."
+    }
+  ],
+  "depsRequest": [],
+  "ciRunUrls": [
+    "https://github.com/eme-k-a/My-Website/actions/runs/43683013204",
+    "https://github.com/eme-k-a/My-Website/actions/runs/43684041062"
+  ],
+  "notes": "Not done here (candidates from the M4 merge notes, outside my paths): scripts/credits.ts and a Cache-Control rule for /fonts/* (postbuild.ts is WP-31's this milestone). The mobile 30 fps floor stays Emeka's manual G5 check. Locally Chromium 1243 was symlinked under 1194 names in the scratchpad; nothing about it is committed."
+}

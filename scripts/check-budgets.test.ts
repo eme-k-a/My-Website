@@ -18,6 +18,7 @@ import {
   type BundleBudgets,
   type Manifest,
 } from './check-budgets';
+import { EXHIBIT_IDS } from '../src/content/ids';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const run = promisify(execFile);
@@ -99,6 +100,9 @@ const FULL: Manifest = {
   '_leva.js': { file: 'assets/leva.js', name: 'leva' },
 };
 
+/** The exhibits FULL holds a chunk for. */
+const FULL_IDS = ['verafin', 'mysa'];
+
 const fullContents = () => ({
   'assets/main.js': noise(3000),
   'assets/react.js': noise(5000),
@@ -132,7 +136,7 @@ describe('staticClosure', () => {
 describe('measureBundles', () => {
   it('sums level-9 gzip sizes per budget row', async () => {
     await writeDist(FULL, fullContents());
-    const report = await measureBundles(dist, FULL, BUDGETS);
+    const report = await measureBundles(dist, FULL, BUDGETS, FULL_IDS);
     const byName = Object.fromEntries(report.rows.map((r) => [r.name, r]));
 
     expect(byName.entry?.kb).toBe(kb(sum('assets/main.js', 'assets/react.js', 'assets/shared.js')));
@@ -153,7 +157,7 @@ describe('measureBundles', () => {
   it('skips the museum and exhibit rows with a note before those chunks exist', async () => {
     const manifest: Manifest = { 'index.html': { file: 'assets/main.js', isEntry: true } };
     await writeDist(manifest, { 'assets/main.js': noise(2000) });
-    const report = await measureBundles(dist, manifest, BUDGETS);
+    const report = await measureBundles(dist, manifest, BUDGETS, []);
     expect(report.ok).toBe(true);
     expect(report.rows.find((r) => r.name === 'museum')).toMatchObject({
       kb: null,
@@ -166,9 +170,48 @@ describe('measureBundles', () => {
   it('fails a row over its limit', async () => {
     await writeDist(FULL, fullContents());
     const tight = { ...BUDGETS, exhibitChunkGzipKB: 1 };
-    const report = await measureBundles(dist, FULL, tight);
+    const report = await measureBundles(dist, FULL, tight, FULL_IDS);
     expect(report.rows.find((r) => r.name === 'exhibits/verafin')?.ok).toBe(false);
     expect(report.rows.find((r) => r.name === 'exhibits/mysa')?.ok).toBe(false);
+    expect(report.ok).toBe(false);
+  });
+
+  it('reports a failed row for every expected exhibit without a chunk (WP-29)', async () => {
+    await writeDist(FULL, fullContents());
+    const report = await measureBundles(dist, FULL, BUDGETS, ['verafin', 'mysa', 'wailo']);
+    expect(report.rows.find((r) => r.name === 'exhibits/wailo')).toMatchObject({
+      kb: null,
+      ok: false,
+      note: expect.stringMatching(/^missing/),
+    });
+    expect(report.ok).toBe(false);
+  });
+
+  it('checks every id of EXHIBIT_IDS by default', async () => {
+    await writeDist(FULL, fullContents());
+    const report = await measureBundles(dist, FULL, BUDGETS);
+    const exhibitRows = report.rows.filter((r) => r.name.startsWith('exhibits/'));
+    expect(exhibitRows.map((r) => r.name.slice('exhibits/'.length)).sort()).toEqual(
+      [...EXHIBIT_IDS].sort(),
+    );
+    expect(exhibitRows.filter((r) => !r.ok)).toHaveLength(EXHIBIT_IDS.length - FULL_IDS.length);
+  });
+
+  it('never counts a debug chunk toward the entry or museum totals', async () => {
+    const manifest: Manifest = structuredClone(FULL);
+    manifest['index.html']!.imports = ['_react.js', 'src/museum/debug/Debug.tsx'];
+    manifest['src/museum/MuseumCanvas.tsx']!.imports = ['_react.js', '_three.js', '_leva.js'];
+    await writeDist(manifest, fullContents());
+    const report = await measureBundles(dist, manifest, BUDGETS, FULL_IDS);
+    const byName = Object.fromEntries(report.rows.map((r) => [r.name, r]));
+    expect(byName.entry?.kb).toBe(kb(sum('assets/main.js', 'assets/react.js', 'assets/shared.js')));
+    expect(byName.museum?.kb).toBe(kb(sum('assets/MuseumCanvas.js', 'assets/three.js')));
+    // The static import itself still fails the check.
+    expect(report.forbidden).toEqual([
+      'entry: chunk assets/Debug.js is the ?debug code (src/museum/debug/Debug.tsx)',
+      expect.stringMatching(/^entry: .*debug-only package/),
+      expect.stringMatching(/^entry: assets\/leva\.js contains leva code/),
+    ]);
     expect(report.ok).toBe(false);
   });
 
@@ -177,7 +220,7 @@ describe('measureBundles', () => {
     contents['assets/react.js'] += 'x.defines.muiPerf=1;';
     contents['assets/three.js'] += 'const s=/ServerSideRendering|^Deno\\//.test(ua);';
     await writeDist(FULL, contents);
-    const report = await measureBundles(dist, FULL, BUDGETS);
+    const report = await measureBundles(dist, FULL, BUDGETS, FULL_IDS);
     expect(report.ok).toBe(false);
     expect(report.forbidden).toEqual([
       expect.stringMatching(/^entry: assets\/react\.js contains r3f-perf code/),
@@ -190,7 +233,7 @@ describe('measureBundles', () => {
     contents['assets/main.js'] += 'const r=new WebGLRenderer({antialias:!0});';
     contents['assets/shared.js'] += 'e.__r3f.root=n;var t="troika-text";';
     await writeDist(FULL, contents);
-    const report = await measureBundles(dist, FULL, BUDGETS);
+    const report = await measureBundles(dist, FULL, BUDGETS, FULL_IDS);
     expect(report.ok).toBe(false);
     expect(report.forbidden).toEqual([
       'entry: assets/main.js contains three.js code ("WebGLRenderer")',
@@ -204,7 +247,7 @@ describe('measureBundles', () => {
     contents['assets/three.js'] += THREE_FINGERPRINTS.map(({ needle }) => needle).join(';');
     contents['assets/MuseumCanvas.js'] += 'e.__r3f.root=n;';
     await writeDist(FULL, contents);
-    const report = await measureBundles(dist, FULL, BUDGETS);
+    const report = await measureBundles(dist, FULL, BUDGETS, FULL_IDS);
     expect(report.forbidden).toEqual([]);
     expect(report.ok).toBe(true);
   });
@@ -214,7 +257,7 @@ describe('measureBundles', () => {
       const contents = fullContents();
       contents['assets/react.js'] += needle;
       await writeDist(FULL, contents);
-      const { forbidden } = await measureBundles(dist, FULL, BUDGETS);
+      const { forbidden } = await measureBundles(dist, FULL, BUDGETS, FULL_IDS);
       expect(forbidden).toEqual([`entry: assets/react.js contains ${what} code ("${needle}")`]);
     }
   });
@@ -225,7 +268,7 @@ describe('measureBundles', () => {
       '_leva.esm-abc.js': { file: 'assets/leva.esm-abc.js', name: 'leva.esm' },
     };
     await writeDist(manifest, { 'assets/main.js': 'a', 'assets/leva.esm-abc.js': 'b' });
-    const report = await measureBundles(dist, manifest, BUDGETS);
+    const report = await measureBundles(dist, manifest, BUDGETS, []);
     expect(report.forbidden).toEqual([expect.stringMatching(/debug-only package/)]);
   });
 });
@@ -258,9 +301,9 @@ describe('checkBudgets', () => {
     await writeDist(FULL, fullContents());
     const budgets = join(dist, 'budgets.json');
     await writeFile(budgets, JSON.stringify({ bundles: BUDGETS }));
-    expect(await checkBudgets({ dist, budgets })).toBe(0);
+    expect(await checkBudgets({ dist, budgets, exhibits: FULL_IDS })).toBe(0);
     await writeFile(budgets, JSON.stringify({ bundles: { ...BUDGETS, entryJsGzipKB: 1 } }));
-    expect(await checkBudgets({ dist, budgets })).toBe(1);
+    expect(await checkBudgets({ dist, budgets, exhibits: FULL_IDS })).toBe(1);
   });
 
   it('returns 1 when the entry chunk holds three.js code', async () => {
@@ -271,7 +314,7 @@ describe('checkBudgets', () => {
     await writeDist(FULL, contents);
     const budgets = join(dist, 'budgets.json');
     await writeFile(budgets, JSON.stringify({ bundles: BUDGETS }));
-    expect(await checkBudgets({ dist, budgets })).toBe(1);
+    expect(await checkBudgets({ dist, budgets, exhibits: FULL_IDS })).toBe(1);
     expect(error).toHaveBeenCalledWith(
       'check-budgets: entry: assets/main.js contains three.js shader code ("#include <common>")',
     );

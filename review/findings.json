@@ -684,7 +684,8 @@
     "resolution": "R0 for R4: gazeAt blends F_a to F_b directly on wing tracks between two cases; the door-to-first-case walk keeps the forward look. EXPERIENCE §6.3 updated.",
     "round": 0,
     "gate": "G5",
-    "owner": "R4"
+    "owner": "R4",
+    "verified": "Emeka re-checked on his iPhone on 2026-11-15: \"approved. phone looks good\"."
   },
   {
     "id": "F-060",
@@ -697,9 +698,10 @@
     "expected": "The desk sits above the card on iOS with the toolbars showing or hidden.",
     "check": "The band reads the card top from the slot's top (scroll and toolbar independent); framing.test unchanged and passing; Emeka re-checks on his iPhone.",
     "status": "fixed",
-    "resolution": "R0 for R4: measureDeskBand stores the card top relative to its slot, so the band no longer depends on the 100lvh canvas height. DESK_CARD_CLEARANCE stays 16 px (36 px pushed the end-wall line under the HUD at 360 x 640). Chromium output is unchanged (lvh = svh there), so no baselines change. Awaits Emeka's re-check on iOS.",
+    "resolution": "R0 for R4: measureDeskBand stores the card top relative to its slot, so the band no longer depends on the 100lvh canvas height. DESK_CARD_CLEARANCE stays 16 px (36 px pushed the end-wall line under the HUD at 360 x 640). Chromium output is unchanged (lvh = svh there), so no baselines change.",
     "round": 0,
     "gate": "G5",
-    "owner": "R4"
+    "owner": "R4",
+    "verified": "Emeka re-checked on his iPhone on 2026-11-15: \"approved. phone looks good\"."
   }
 ]

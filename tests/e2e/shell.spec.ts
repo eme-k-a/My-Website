@@ -99,15 +99,17 @@ test.describe('app shell', { tag: '@smoke' }, () => {
   });
 
   test(
-    '/resume/ is the classic view with zero scripts',
+    '/resume/ is the classic view with zero executable scripts',
     { tag: '@dom' },
     async ({ page, request }) => {
       const raw = await request.get('/resume/');
       expect(raw.status()).toBe(200);
-      expect(await raw.text()).not.toMatch(/<script\b/i);
+      // The JSON-LD Person block (WP-31, ARCHITECTURE §11.3) is data, not code: only scripts that
+      // run are banned (prerender.ts and headers.ts also reject any inline script that runs).
+      expect(await raw.text()).not.toMatch(/<script\b(?![^>]*type="application\/ld\+json")/i);
       await page.goto('/resume/');
       await expect(page.getByTestId(TEST_IDS.classicView)).toBeVisible();
-      await expect(page.locator('script')).toHaveCount(0);
+      await expect(page.locator('script:not([type="application/ld+json"])')).toHaveCount(0);
       await expect(page.locator('html')).toHaveAttribute('lang', 'en-CA');
       await expect(page.getByTestId(TEST_IDS.classicView)).toContainText('Nasdaq Verafin');
       // Banners show only as the :target of /resume/#why-<reason>.

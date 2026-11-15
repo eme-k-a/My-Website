@@ -119,6 +119,27 @@ describe('gazeAt on the real rail', () => {
     expect(Math.abs(down[0] - mid.position[0])).toBeLessThan(1);
   });
 
+  it('turns straight from case to case inside a wing, never down the wing first', () => {
+    // Emeka, 2026-11-15: KlarUp to Finance Tracker looked at the wing's end wall mid-walk.
+    const wing = rails.projects;
+    const k = wing.stops.findIndex((s) => s.id === 'klarup');
+    expect(wing.stops[k + 1]!.id).toBe('finance-tracker');
+    const fa = v(wing.stops[k]!.look);
+    const fb = v(wing.stops[k + 1]!.look);
+    for (let j = 0; j <= 20; j++) {
+      const f = j / 20;
+      close(
+        gazeArrayAt(wing, k + f),
+        fa
+          .clone()
+          .lerp(fb, smoothstep(0, 1, f))
+          .toArray(),
+      );
+    }
+    // The door-to-first-case walk still looks ahead into the room.
+    close(gazeArrayAt(wing, 0.4), forwardPoint(wing, 0.4, new Vector3()).toArray());
+  });
+
   it('is the stop look-at at every whole stop on every track', () => {
     for (const rail of Object.values(rails)) {
       rail.stops.forEach((stop, k) => close(gazeArrayAt(rail, k), stop.look, 12));

@@ -649,7 +649,7 @@ For the segment between consecutive stops a and b, with fraction f in [0, 1], st
 - 0.35 < f < 0.5: look = Fw
 - f ≥ 0.5: look = lerp(Fw, F_b, smoothstep(0.5, 1, f))
 
-The camera therefore looks down the aisle while walking and turns about 30° toward each case as it arrives.
+The camera therefore looks down the aisle while walking and turns about 30° toward each case as it arrives. Inside a wing, between two of its cases, the look turns straight from case to case (look = lerp(F_a, F_b, smoothstep(0, 1, f))): that walk is under 3 m and the point 6 m ahead is the wing's end wall (R0, 2026-11-15).
 
 **Pointer parallax** (fine pointers only): ±1.5° yaw and ±1° pitch from the pointer position, damped 0.4 s. Off under reduced motion, under `?test=1`, on coarse pointers and while the dialog is open.
 

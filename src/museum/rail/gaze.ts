@@ -5,7 +5,9 @@
 // - 0.35 < f < 0.5: Fw
 // - f >= 0.5: lerp(Fw, F_b, smoothstep(0.5, 1, f))
 // So the camera looks down the aisle while walking and turns about 30 degrees toward each case as it
-// arrives. "Ahead" is the direction of increasing progress (the walk from the lobby toward the
+// arrives. Inside a wing, between two of its cases, the gaze turns straight from case to case
+// (lerp(F_a, F_b, smoothstep(0, 1, f))): that walk is under 3 m and the point 6 m ahead is the
+// wing's end wall, so the forward glance looked away from the case first (Emeka, 2026-11-15). "Ahead" is the direction of increasing progress (the walk from the lobby toward the
 // desk), so the gaze is a pure function of progress: scrolling back rewinds the same turn.
 // CameraRig damps the camera toward this point with `easing.dampLookAt` (`gazeSmoothTime`).
 // Museum chunk only (imports three.js).
@@ -76,6 +78,8 @@ export function gazeAt(rail: Rail, p: number, out: Vector3): Vector3 {
   if (f === 1) return out.set(...rail.stops[i + 1]!.look);
   fa.set(...rail.stops[i]!.look);
   fb.set(...rail.stops[i + 1]!.look);
+  // Wing tracks: stop 0 is the door, so i >= 1 is a walk between two of the wing's cases.
+  if (rail.track !== 'main' && i >= 1) return out.lerpVectors(fa, fb, smoothstep(0, 1, f));
   forwardPoint(rail, p, fw);
   return blendGaze(fa, fw, fb, f, out);
 }

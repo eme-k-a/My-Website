@@ -123,17 +123,17 @@ describe('wall titles (EXPERIENCE §5.4, F-022, F-027)', () => {
     // The last line sits at 2.20 m (F-027) whatever the line count; the first one a line step higher.
     expect(wing.organization.baselineY - step).toBeCloseTo(2.2, 9);
     expect(wing.number.baselineY).toBeCloseTo(wing.organization.baselineY + 0.14 + 0.06, 9);
-    // Mun (F-041b, F-049, F-056): 0.20 m caps from 8.8 m away under a 0.30 m number that leads
-    // again, the two lines at 1.1 em, the last line at 3.12 m, the number 0.06 m up.
+    // Mun (F-041b, F-049, F-056): 0.20 m caps from 8.8 m away under a 0.33 m number that leads
+    // again, the two lines at 1 em, the last line at 3.12 m, the number 0.06 m up.
     const mun = specOf('mun');
     expect(mun.organization).toMatchObject({
       capHeight: 0.2,
       text: 'MEMORIAL\nUNIVERSITY',
-      lineHeight: 1.1,
+      lineHeight: 1,
     });
-    expect(mun.number).toMatchObject({ capHeight: 0.3 });
-    expect(mun.number.capHeight).toBeGreaterThan(1.4 * mun.organization.capHeight);
-    const munStep = 1.1 * mun.organization.fontSize;
+    expect(mun.number).toMatchObject({ capHeight: 0.33 });
+    expect(mun.number.capHeight).toBeGreaterThan(1.6 * mun.organization.capHeight);
+    const munStep = 1 * mun.organization.fontSize;
     expect(mun.organization.baselineY - munStep).toBeCloseTo(3.12, 9);
     expect(mun.number.baselineY).toBeCloseTo(mun.organization.baselineY + 0.2 + 0.06, 9);
     // The block's top (the number's cap line) stays where F-049 put it, within 1 cm, so the 05

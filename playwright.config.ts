@@ -43,8 +43,10 @@ export const SHARDS: Record<string, Record<string, RegExp | 'rest'>> = {
   // nine-exhibit idle and reduced-motion checks (561 s of test time in CI run 84) and every
   // Pixel 7 visual case. Run 84 jobs: desktop-dialog 4.7 min, pixel7-landscape about 3.5 min of
   // test time.
+  // WP-32 put the twenty-loop walk here: one test of about 6 minutes locally (18 s a loop), on
+  // the lightest desktop shard (4.7 min in run 84), where the second worker keeps the rest moving.
   'desktop-dialog': {
-    desktop: spec('dialog', 'exhibits', 'exhibit-contract', 'greybox', 'no-placeholders'),
+    desktop: spec('dialog', 'exhibits', 'exhibit-contract', 'greybox', 'no-placeholders', 'loops'),
     'pixel7-landscape': 'rest',
   },
   'desktop-rest': { desktop: 'rest', 'no-webgl': 'rest' },

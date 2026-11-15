@@ -173,3 +173,12 @@ Authoritative together with `docs/PLAN.md` sections 1 to 9. The `docs/PLAN.md` "
   - F-M5p (R4, R3 and R2 for light values; brief `docs/wp/F-M5p.md`) carries the G4 polish: F-054, warm far pools on the phone stops, F-052 at verafin, a door story beat, larger phone door cases, F-056 and F-055's test row. It owns `src/museum/rail/framing.ts` and its tests, `src/museum/environment/**`, light values in `src/design/tokens.*`, `src/museum/exhibits/_kit/titleMetrics.ts` and `placard.ts`, and ART_DIRECTION §4. It edits nothing the four M5 sessions own, and no `tests/**`. It is not a gate: the M7 monthly review re-scores it.
   - F-055: the 14 px wall-title floor (EXPERIENCE §5.4) is a Pixel 7 rule. At 360 x 640 the titles may render smaller, because the DOM card repeats every title; labels.test gains a 360 x 640 row with an 11 px floor so they cannot fall below today's 11.4 px.
   - F-047's open half (pixel7 exhibit-contract verafin still canvas) goes to WP-32, as routed.
+- **Emeka's G5 facts (2026-11-15, answered interactively in the R0 session):**
+  - Target roles: "new-grad software engineering roles" (desk line).
+  - GitHub: https://github.com/eme-k-a is his; show it on the site and on the PDF and `.tex` (this replaces the G0 "no GitHub on the PDF yet").
+  - MUN start: left off; only the expected graduation shows.
+  - Tech Stewardship issuer: Engineering Change Lab, on both Tech Stewardship credentials.
+  - Certification dates: left off for all three; the placeholder paragraph goes.
+  - KlarUp: role "Solo Developer", no dates.
+  - Personal Finance Tracker: a school team project. Role "Team Project (School)", no dates. Story paragraph 1 opens "As part of a school team project, I helped build this full-stack personal finance tracker on the MERN stack...", and the gallery bullet reads "Co-built a full-stack personal finance tracker as a school team project using the MERN stack...".
+  - First-person copy approved as written: the lobby welcome, the desk, Verafin, Mysa, Wailo, CFIA (including "methodical" and the "Remote Support" tag), KlarUp and Finance Tracker (with the team wording). Still to review: SDSJ, MUN and Certifications (the round was interrupted by a worker restart).

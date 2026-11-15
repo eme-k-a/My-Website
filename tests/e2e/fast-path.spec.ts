@@ -57,10 +57,17 @@ async function expectInsideFirstViewport(page: Page, size: { width: number; heig
   expect(await page.evaluate(() => window.scrollY).catch(() => 0)).toBe(0);
 }
 
-/** The museum chunk is blocked on purpose: acknowledge exactly the errors that causes. */
+/**
+ * The museum chunk is blocked on purpose: acknowledge exactly the errors that causes, in each
+ * browser's wording (F-058: the cross-browser job failed on WebKit's and Firefox's wording, not
+ * on layout). Chromium: the failed resource and "Failed to fetch dynamically imported module";
+ * WebKit: "Importing a module script failed."; Firefox: "error loading dynamically imported module".
+ */
 function acknowledgeBlockedChunk(guards: Guards) {
   guards.acknowledge('console', /Failed to load resource: net::ERR_FAILED/);
   guards.acknowledge('console', /Failed to fetch dynamically imported module: .*MuseumCanvas/);
+  guards.acknowledge('console', /TypeError: Importing a module script failed\./);
+  guards.acknowledge('console', /error loading dynamically imported module: .*MuseumCanvas/);
 }
 
 /** The element of the latest largest-contentful-paint entry, after fonts and two frames. */

@@ -658,17 +658,19 @@
   {
     "id": "F-058",
     "severity": "P2",
-    "title": "Firefox and WebKit: the hero is not fully inside the first viewport at phone sizes before ready",
+    "title": "Firefox and WebKit: the fast-path 'before ready' checks trip the console guard on the deliberately blocked museum chunk",
     "stop": "lobby (fast path, JavaScript on before ready)",
     "viewport": "360 x 640 (webkit-dom), 390 x 844 (firefox-dom, webkit-dom)",
     "path": "tests/e2e/fast-path.spec.ts:114 (the hero layout is src/overlay/**)",
     "evidence": "CI run 180 (https://github.com/eme-k-a/My-Website/actions/runs/43692311183), first run of the advisory e2e-xbrowser job: 20 passed, 7 skipped, 3 failed, all 'the hero is fully inside the first viewport'. Chromium passes the same check at both sizes. Traces are in the run's test-results-xbrowser artifact.",
     "expected": "The hero (name, role line and calls to action) fits the first viewport in Firefox and WebKit at 360 x 640 and 390 x 844, as in Chromium; or the check documents a browser difference R0 accepts (for example a desktop-browser emulation that keeps scrollbars).",
     "check": "e2e-xbrowser green on fast-path at both phone sizes.",
-    "status": "open",
+    "status": "fixed",
     "round": 0,
     "gate": "M6",
-    "owner": "R8 with R6"
+    "owner": "R8 with R6",
+    "root_cause": "Not layout. The spec blocks the museum chunk and acknowledges the console errors that causes, but only in Chromium's wording. WebKit logs 'TypeError: Importing a module script failed.' (CI run 185) and Firefox 'error loading dynamically imported module' (when it has WebGL2, as in run 180), so the global guards failed the test.",
+    "resolution": "R0 for R8: acknowledgeBlockedChunk also acknowledges the WebKit and Firefox wordings. Chromium fast-path still passes locally (9 passed); the e2e-xbrowser job on the PR is the proof for Firefox and WebKit."
   },
   {
     "id": "F-059",

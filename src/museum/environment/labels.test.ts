@@ -9,6 +9,7 @@ import { content } from '../../content/index';
 import { threeDStrings } from '../../content/selectors';
 import { tokens } from '../../design/tokens';
 import { slotPlacard } from '../exhibits/_kit/placard';
+import { fovFor } from '../rail/framing';
 import { computeLayout, DOOR_H, type Layout, type StopPose, type Vec3 } from '../rail/layout';
 import {
   COMMIT_HISTORY,
@@ -27,6 +28,13 @@ import {
 
 const NOW = new Date('2026-10-15T00:00:00Z');
 const layout = computeLayout(content, NOW);
+
+/**
+ * The 360 x 640 floor (F-055): R0's 11 px rendered floor, as projected cap height. Today's
+ * smallest projected cap there is 10.90 px (CANADIAN FOOD INSPECTION AGENCY, KLARUP, MEMORIAL
+ * UNIVERSITY), rendered as 11.4 px or more.
+ */
+const SMALL_PHONE_MIN_CAP_PX = 10.85;
 
 const VIEWPORTS: Viewport[] = [
   { name: 'desktop', width: 1440, height: 900, fov: tokens.camera.fovDesktop },
@@ -114,6 +122,20 @@ describe('3D label legibility (EXPERIENCE §5.4)', () => {
       for (const r of report(checks, viewport)) {
         expect(r.px, `${r.name} on ${r.viewport}`).toBeGreaterThanOrEqual(MIN_CAP_PX);
       }
+    }
+  });
+
+  // F-055 (R0, "G4 passed"): the 14 px floor is a Pixel 7 rule; small phones rely on the DOM card,
+  // but must not regress. R0 ruled an 11 px floor against the rendered glyph boxes of G4 round 2
+  // (11.4 to 13.3 px median at 360 x 640). This projection math reads the same titles' caps at
+  // 10.90 to 11.14 px (glyph boxes run a little taller than the cap), so the row pins today's
+  // projected minimum: SMALL_PHONE_MIN_CAP_PX.
+  it('keeps every wall title and room label at 360 x 640 at or above the small-phone floor', () => {
+    const small: Viewport = { name: '360x640', width: 360, height: 640, fov: fovFor(360 / 640) };
+    expect(small.fov).toBe(tokens.camera.fovPortrait);
+    const checks = [...placardChecks(layout), ...environmentChecks(layout)];
+    for (const r of report(checks, small)) {
+      expect(r.px, `${r.name} on ${r.viewport}`).toBeGreaterThanOrEqual(SMALL_PHONE_MIN_CAP_PX);
     }
   });
 

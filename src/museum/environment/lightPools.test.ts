@@ -310,3 +310,49 @@ describe('side bays (F-052, the door composition)', () => {
     }
   });
 });
+
+describe('far bays and their floor pools (F-M5p, phone mood)', () => {
+  const { bays, sides, fars } = washLayout(layout);
+  const span = (b: { center: number; width: number }) =>
+    [b.center - b.width / 2, b.center + b.width / 2] as const;
+
+  it('hangs a far bay for verafin, mysa and the volunteer door, none at wailo', () => {
+    expect(fars.map((f) => f.for).sort()).toEqual(['mysa', 'verafin', 'volunteer-door']);
+    for (const far of fars) {
+      expect(far.strength, far.for).toBe(stopRecipe(far.for, 'high').far);
+      expect(Math.abs(far.bay.at), far.for).toBeCloseTo(AISLE_HALF, 9);
+      expect(far.bay.width, far.for).toBeGreaterThanOrEqual(WASH_BAY_WIDTH);
+    }
+    expect(stopRecipe('wailo', 'medium').far).toBe(0);
+  });
+
+  it('puts each far bay on the other side of its owner from its side bay, overlapping nothing', () => {
+    for (const far of fars) {
+      const side = sides.find((s) => s.for === far.for)!;
+      const owner = bays.find((b) => b.for === far.for)?.bay;
+      const door = layout.doors.find((d) => `${d.wing}-door` === far.for);
+      const mid = owner ? owner.center : door!.z;
+      expect(Math.sign(far.bay.center - mid), far.for).toBe(-Math.sign(side.bay.center - mid));
+      const [lo, hi] = span(far.bay);
+      const others = [...bays, ...sides, ...fars]
+        .filter((o) => o.bay !== far.bay && o.bay.axis === 'z' && o.bay.at === far.bay.at)
+        .map((o) => span(o.bay));
+      for (const d of layout.doors.filter((d) => (d.side === 'left' ? -1 : 1) * 3.5 === far.bay.at))
+        others.push([d.z - d.width / 2 - 0.04, d.z + d.width / 2 + 0.04]);
+      for (const [a, b] of others) expect(lo < b && a < hi, far.for).toBe(false);
+    }
+  });
+
+  it('paints one soft floor pool in front of every side and far bay, on the aisle floor', () => {
+    const pools = floorPaint(layout).pools.filter((p) => p.kind === 'far');
+    expect(pools.length).toBe(sides.length + fars.length);
+    const aisle = room('aisle');
+    for (const pool of pools) {
+      expect(Math.abs(pool.center[0]), pool.for).toBeLessThan(AISLE_HALF);
+      expect(pool.center[1], pool.for).toBeGreaterThan(aisle.min[1]);
+      expect(pool.center[1], pool.for).toBeLessThan(aisle.max[1]);
+      expect(pool.alpha, pool.for).toBeGreaterThan(0);
+      expect(pool.alpha, pool.for).toBeLessThanOrEqual(0.55);
+    }
+  });
+});

@@ -1,0 +1,98 @@
+{
+  "wp": "WP-31",
+  "role": "R9 Accessibility & SEO",
+  "status": "done",
+  "branch": "claude/m5-wp-31",
+  "base": "df5a730 (claude/intelligent-sagan-poq45q)",
+  "commits": [
+    "6ba6c15 feat(seo): json-ld person, sitemap and robots",
+    "9aff66e feat(seo): open graph cards per exhibit and favicon set",
+    "18acc10 fix(seo): spell the em dash check as an escape in gen-og.test.ts"
+  ],
+  "changedFiles": [
+    "src/seo/jsonLd.ts",
+    "src/seo/jsonLd.test.ts",
+    "src/seo/sitemap.ts",
+    "src/seo/sitemap.test.ts",
+    "src/seo/meta.ts (favicon links on every page, JSON-LD on / and /resume/)",
+    "src/seo/meta.test.ts",
+    "src/seo/ogCards.ts",
+    "src/seo/OgCard.tsx",
+    "src/entry-server.tsx (jsonLd, renderSitemap, renderRobots)",
+    "scripts/prerender.ts (sitemap.xml, robots.txt; the zero-JS check allows an ld+json data block)",
+    "scripts/gen-og.ts",
+    "scripts/gen-og.test.ts",
+    "public/og/*.png (11) and public/og/manifest.json",
+    "public/favicon.svg",
+    "public/favicon-32.png",
+    "public/apple-touch-icon.png",
+    "review/reports/WP-31.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Lighthouse SEO at least 0.95 on /, /resume/ and an exhibit page",
+      "command": "CHROME_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome npm run lh (mobile), then npx lhci autorun --config=lighthouserc.desktop.cjs",
+      "result": "pass",
+      "evidence": "SEO 1.00 on all 9 mobile and all 9 desktop runs (/?test=1&mode=museum, /exhibit/verafin/?test=1&mode=museum, /resume/). Accessibility 1.00 on all mobile runs. The desktop config passes every assertion. The mobile config fails only largest-contentful-paint on / and /exhibit/verafin/ (3.83 to 3.92 s simulated, SwiftShader; /resume/ 1.35 s); the unchanged base df5a730 measures the same (3.83 to 3.89 s, /resume/ 1.35 s) and fails the same assertion, so it is not caused by this WP. That is WP-29's gate, not SEO."
+    },
+    {
+      "id": "A2",
+      "criterion": "Exhibit pages readable without JS and uniquely titled",
+      "command": "npx playwright test tests/e2e/dialog.spec.ts tests/e2e/shell.spec.ts --project=desktop --workers=2; grep -ho '<meta property=\"og:title\" content=\"[^\"]*\"' dist/exhibit/*/index.html | sort | uniq -d",
+      "result": "pass",
+      "evidence": "dialog.spec (including the JS-off story pages) passes; uniq -d prints nothing; meta.test asserts unique <title> and og:title. shell.spec: 1 failure, '/resume/ is the classic view with zero scripts', caused by the required JSON-LD block (see requests)."
+    },
+    {
+      "id": "A3",
+      "criterion": "JSON-LD correctness",
+      "command": "npx vitest run --project unit src/seo",
+      "result": "pass",
+      "evidence": "jsonLd.test: no email or telephone key, no phone pattern, no email address, worksFor and jobTitle present at 2026-10-15 and absent at 2027-01-05, every field from content, the block parses and contains no '<'. meta.test: ld+json on / and /resume/ only."
+    },
+    {
+      "id": "A4",
+      "criterion": "Sitemap and robots",
+      "command": "cat dist/robots.txt; grep -c '<loc>' dist/sitemap.xml",
+      "result": "pass",
+      "evidence": "robots.txt: 'User-agent: *', 'Allow: /', 'Sitemap: https://emeka-nduka-nwagbo.netlify.app/sitemap.xml'. 11 <loc> entries: /, /resume/ and the 9 exhibit pages, lastmod = build date, no PDF, no 404. The brief's '12' predates the Safe Sip removal (9 exhibits + 2 = 11); see openQuestions."
+    },
+    {
+      "id": "A5",
+      "criterion": "OG images: one per exhibit plus home and resume, 1200 x 630, manifest fresh",
+      "command": "npm run og && ls public/og/ | wc -l; npx vitest run --project unit scripts/gen-og.test.ts",
+      "result": "pass",
+      "evidence": "11 PNGs plus manifest.json (12 files), every PNG 1200 x 630 (sharp metadata), manifest hashes equal the current content. Palette PNGs, 308 KB in total. 7 tests, including the icons (favicon.svg in step with the generator, 32 px and 180 px PNGs, no web manifest)."
+    }
+  ],
+  "measurements": {
+    "lighthouseSeo": {
+      "mobile": { "gallery": 1.0, "exhibitVerafin": 1.0, "resume": 1.0 },
+      "desktop": { "gallery": 1.0, "exhibitVerafin": 1.0, "resume": 1.0 }
+    },
+    "lighthouseLcpMs": {
+      "mobile": { "gallery": [3880, 3871, 3828], "exhibitVerafin": [3921, 3889, 3878], "resume": [1356, 1358, 1352] },
+      "desktop": { "gallery": [807, 798, 791], "exhibitVerafin": [809, 791, 808], "resume": [326, 326, 326] }
+    },
+    "ogImagesKB": 308,
+    "verify": "npm run verify: 83 files, 931 passed, 3 skipped",
+    "build": "npm run build: pass (budgets ok, check-copy ok)"
+  },
+  "openQuestions": [
+    "Monogram letters for Emeka: favicon.svg shows 'EN' (the preferred name's initial and the family name's initial, read from content) in Instrument Serif outlines, brass on ink with a brass hairline. It stands in for [placeholder: monogram letters, R2 proposes, Emeka approves]. To change it, edit monogramLetters() in scripts/gen-og.ts and run npm run og.",
+    "Count: the brief's A4 and A5 say 12 <loc> entries and 12 PNGs, but its own text lists the 9 exhibit pages plus / and /resume/ (11). 12 was right before Safe Sip was removed. 11 is delivered; please confirm.",
+    "OG card copy reuses site strings only (stopCards, heroLines, displayName). Cards for exhibits with exhibit.draft: true show their draft titles; once copy changes, the manifest test fails until npm run og is rerun. The home and resume cards use heroLines, which change on 2027-01-01 (Most recently: ...) and in May 2027 (no 'expected'); the build fails on those dates for the content reasons in CLAUDE.md anyway, and npm run og is part of that update.",
+    "The cards leave out durations and the ON VIEW NOW pill so they do not go stale each month."
+  ],
+  "requests": [
+    "WP-32 / R0: tests/e2e/shell.spec.ts '/resume/ is the classic view with zero scripts' (lines 99 and 102) asserts no <script> element at all, so it fails now that /resume/ carries the JSON-LD Person required by this brief and ARCHITECTURE §11.3. Proposed: count only executable scripts, e.g. expect(text).not.toMatch(/<script\\b(?![^>]*type=\"application\\/ld\\+json\")/i) and page.locator('script:not([type=\"application/ld+json\"])') toHaveCount(0). Executable-script safety is still enforced by scripts/prerender.ts and scripts/headers.ts.",
+    "WP-32 (optional): an e2e check that /sitemap.xml and /robots.txt are served, and that /og/<id>.png answers 200 for each og:image URL."
+  ],
+  "depsRequest": [],
+  "ciRunUrls": [],
+  "notes": [
+    "JSON-LD is a type=application/ld+json data block with '<' escaped as \\u003c; scripts/headers.ts already ignores it for the CSP hash. scripts/prerender.ts's zero-JS check on /resume/ and 404 now rejects only executable scripts.",
+    "gen-og embeds the @fontsource woff2 files as data URIs and aborts every request in the page; it fails if a font did not load. The favicon letters are glyph outlines (fontkit), so the SVG needs no font.",
+    "Local Chromium is revision 1243; a scratch PLAYWRIGHT_BROWSERS_PATH outside the repo mapped the 1194 names. Nothing about it is committed."
+  ]
+}

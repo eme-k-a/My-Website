@@ -11,6 +11,11 @@
 // which put most of the desktop walks into one job; these slices are sized from the per-test
 // durations of CI run 35 (desktop rail-input alone is 827 s of test time). Unset (local runs),
 // every project runs everything.
+//
+// Cross-browser (WP-32, ARCHITECTURE §13.2 and §14.1): `firefox-dom` and `webkit-dom` run only the
+// @dom tests (DOM, classic and no-WebGL checks, never WebGL screenshots) and exist only when CI is
+// set, because Firefox and WebKit are installed only by the non-blocking `e2e-xbrowser` job. No
+// shard names them, so the sharded e2e jobs never launch either browser.
 import { defineConfig, devices, type PlaywrightTestProject } from '@playwright/test';
 
 const PORT = process.env.PORT ?? '4173';
@@ -101,6 +106,14 @@ const PROJECTS: PlaywrightTestProject[] = [
   },
 ];
 
+/** WP-32: CI only (the browsers are not installed locally); see the header. */
+const XBROWSER_PROJECTS: PlaywrightTestProject[] = process.env.CI
+  ? [
+      { name: 'firefox-dom', grep: /@dom/, use: { ...devices['Desktop Firefox'] } },
+      { name: 'webkit-dom', grep: /@dom/, use: { ...devices['Desktop Safari'] } },
+    ]
+  : [];
+
 export default defineConfig({
   testDir: 'tests/e2e',
   forbidOnly: !!process.env.CI,
@@ -127,5 +140,7 @@ export default defineConfig({
           reuseExistingServer: !process.env.CI,
         },
       }),
-  projects: PROJECTS.map(sharded).filter((p): p is PlaywrightTestProject => p !== null),
+  projects: [...PROJECTS, ...XBROWSER_PROJECTS]
+    .map(sharded)
+    .filter((p): p is PlaywrightTestProject => p !== null),
 });

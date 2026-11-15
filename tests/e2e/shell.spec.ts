@@ -6,8 +6,8 @@
 // - no-webgl project: / lands on /resume/#why-no-webgl2 with the banner and the classic content.
 // - @a11y: axe (wcag2a, wcag2aa, wcag21aa, wcag22aa) finds 0 violations on /resume/ (light and
 //   dark), /404.html, / at the lobby and at a door stop, and the no-WebGL landing.
-// - @dom (WP-17): the checks that need no WebGL (classic view, 404, CSP, the desk card's links)
-//   run in Firefox and WebKit too in WP-32.
+// - @dom (WP-17): the checks that need no WebGL (classic view, 404, CSP, the desk card's links,
+//   the no-WebGL landing) run in Firefox and WebKit too (WP-32, CI only).
 // - @smoke (WP-18 A5, WP-17): a deploy preview (a host with "--") sends X-Robots-Tag: noindex,
 //   production and the local server do not.
 import { createHash } from 'node:crypto';
@@ -17,7 +17,7 @@ import { PDF_PATH } from '../../src/app/routes';
 import { TEST_IDS } from '../../src/app/testIds';
 import { content } from '../../src/content/index';
 import { expect, test, type Guards } from './fixtures';
-import { goToStop, museumUrl, waitForMuseum } from './helpers';
+import { goToStop, isXbrowser, museumUrl, waitForMuseum, withoutWebgl } from './helpers';
 
 /** Every museum URL carries ?test=1 (CLAUDE.md); &mode=museum keeps it off the classic path. */
 const MUSEUM_URL = '/?test=1&mode=museum';
@@ -28,6 +28,14 @@ const project = () => test.info().project.name;
 const onlyMuseumProjects = () =>
   test.skip(!MUSEUM_PROJECTS.includes(project()), 'Needs WebGL2 (the museum path)');
 const onlyNoWebgl = () => test.skip(project() !== 'no-webgl', 'The no-webgl project only');
+/**
+ * The no-WebGL landing: the no-webgl project (Chromium with --disable-3d-apis), and Firefox and
+ * WebKit with WebGL hidden from the page (WP-32), since neither takes that Chromium switch.
+ */
+async function noWebglPage(page: Page) {
+  test.skip(project() !== 'no-webgl' && !isXbrowser(), 'no-webgl, firefox-dom and webkit-dom');
+  if (isXbrowser()) await withoutWebgl(page);
+}
 
 /** The browser logs the 404 document response itself as a console error; nothing else may. */
 /**
@@ -163,7 +171,7 @@ test.describe('no-WebGL fallback', { tag: '@dom' }, () => {
   test('/ lands on /resume/#why-no-webgl2 with the banner and the classic content', async ({
     page,
   }) => {
-    onlyNoWebgl();
+    await noWebglPage(page);
     await page.goto('/');
     await page.waitForURL('**/resume/#why-no-webgl2');
     const url = new URL(page.url());
@@ -179,7 +187,7 @@ test.describe('no-WebGL fallback', { tag: '@dom' }, () => {
   });
 
   test('asking for the museum still lands on the classic resume', async ({ page }) => {
-    onlyNoWebgl();
+    await noWebglPage(page);
     await page.goto(MUSEUM_URL);
     await page.waitForURL('**/resume/#why-no-webgl2');
     await expect(page.locator('#why-no-webgl2')).toBeVisible();

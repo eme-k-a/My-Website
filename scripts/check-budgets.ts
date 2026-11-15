@@ -7,8 +7,11 @@
 // - museum: the src/museum/MuseumCanvas.tsx dynamic entry plus static imports not in the entry
 //   set (skipped with a note until the museum chunk exists);
 // - exhibits/<id>: each src/museum/exhibits/<id>/ dynamic entry plus the static imports only it
-//   uses;
-// - debug: the ?debug chunk is reported, never budgeted.
+//   uses; every id of src/content/ids.ts EXHIBIT_IDS must have its row (WP-29), so an exhibit
+//   whose chunk went missing fails instead of dropping out of the table;
+// - debug: the ?debug chunk is reported, never budgeted. Debug-only chunks never count toward
+//   the entry, museum or exhibit totals: a static import of one is a failure of its own (below),
+//   not a size row.
 // It also fails when leva, r3f-perf or leva's private zustand 3 copy reaches the entry or museum
 // chunk (PLAN Addendum, R0 rulings after WP-01), and when three.js, React Three Fiber, drei or
 // troika code reaches the entry chunk (ruling R-M1-2: the entry may import only the small pure
@@ -17,6 +20,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
+import { EXHIBIT_IDS } from '../src/content/ids';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const DEFAULT_DIST = join(ROOT, 'dist');
@@ -79,6 +83,12 @@ export const DEBUG_FINGERPRINTS: ReadonlyArray<{ what: string; needle: string }>
 ];
 const DEBUG_PACKAGE = /(^|[/_])(leva|r3f-perf)([/._-]|$)/;
 
+/** A chunk of the ?debug code or of a debug-only package (leva, r3f-perf). */
+export function isDebugChunk(key: string, chunk: ManifestChunk): boolean {
+  if ((chunk.src ?? key).startsWith(DEBUG_PREFIX)) return true;
+  return [key, chunk.name ?? '', chunk.src ?? '', chunk.file].some((f) => DEBUG_PACKAGE.test(f));
+}
+
 /**
  * Strings that survive minification in three.js, React Three Fiber and troika (checked in a
  * minified Vite build of three, @react-three/fiber, @react-three/drei and troika-three-text; none
@@ -133,6 +143,9 @@ async function forbiddenCode(
   const found: string[] = [];
   for (const key of keys) {
     const chunk = manifest[key]!;
+    if ((chunk.src ?? key).startsWith(DEBUG_PREFIX)) {
+      found.push(`${label}: chunk ${chunk.file} is the ?debug code (${chunk.src ?? key})`);
+    }
     for (const field of [key, chunk.name ?? '', chunk.src ?? '', chunk.file]) {
       if (DEBUG_PACKAGE.test(field)) {
         found.push(`${label}: chunk ${chunk.file} comes from a debug-only package (${field})`);
@@ -172,18 +185,25 @@ const row = (name: string, bytes: number, limit: number): BudgetRow => ({
   ok: bytes <= limit * 1000,
 });
 
-/** Measures every bundle budget of an existing dist/ against `budgets`. */
+/**
+ * Measures every bundle budget of an existing dist/ against `budgets`. `expectedExhibits` are the
+ * exhibit ids that must each have a chunk (default: every id of EXHIBIT_IDS); a missing one is a
+ * failed row.
+ */
 export async function measureBundles(
   dist: string,
   manifest: Manifest,
   budgets: BundleBudgets,
+  expectedExhibits: readonly string[] = EXHIBIT_IDS,
 ): Promise<BudgetReport> {
   const rows: BudgetRow[] = [];
   const forbidden: string[] = [];
+  const counted = (keys: Iterable<string>) =>
+    [...keys].filter((k) => !isDebugChunk(k, manifest[k]!));
 
   if (!manifest[ENTRY_KEY]) throw new Error(`manifest: no "${ENTRY_KEY}" entry chunk`);
   const entry = staticClosure(manifest, ENTRY_KEY);
-  rows.push(row('entry', await gzipBytes(dist, manifest, entry), budgets.entryJsGzipKB));
+  rows.push(row('entry', await gzipBytes(dist, manifest, counted(entry)), budgets.entryJsGzipKB));
   forbidden.push(
     ...(await forbiddenCode(dist, manifest, entry, 'entry', [
       ...DEBUG_FINGERPRINTS,
@@ -194,7 +214,9 @@ export async function measureBundles(
   const museum = new Set<string>();
   if (manifest[MUSEUM_KEY]) {
     for (const key of staticClosure(manifest, MUSEUM_KEY)) if (!entry.has(key)) museum.add(key);
-    rows.push(row('museum', await gzipBytes(dist, manifest, museum), budgets.museumChunkGzipKB));
+    rows.push(
+      row('museum', await gzipBytes(dist, manifest, counted(museum)), budgets.museumChunkGzipKB),
+    );
     forbidden.push(...(await forbiddenCode(dist, manifest, museum, 'museum')));
   } else {
     rows.push({
@@ -226,10 +248,24 @@ export async function measureBundles(
       [...closures].every(([other, set]) => other === id || !set.has(k)),
     );
     rows.push(
-      row(`exhibits/${id}`, await gzipBytes(dist, manifest, exclusive), budgets.exhibitChunkGzipKB),
+      row(
+        `exhibits/${id}`,
+        await gzipBytes(dist, manifest, counted(exclusive)),
+        budgets.exhibitChunkGzipKB,
+      ),
     );
   }
-  if (exhibitRoots.size === 0) {
+  for (const id of expectedExhibits) {
+    if (closures.has(id)) continue;
+    rows.push({
+      name: `exhibits/${id}`,
+      kb: null,
+      limit: budgets.exhibitChunkGzipKB,
+      ok: false,
+      note: `missing: no src/museum/exhibits/${id}/ dynamic entry in the manifest`,
+    });
+  }
+  if (exhibitRoots.size === 0 && expectedExhibits.length === 0) {
     rows.push({
       name: 'exhibits/*',
       kb: null,
@@ -282,6 +318,8 @@ export function formatTable(rows: BudgetRow[]): string {
 export interface CheckBudgetsOptions {
   dist?: string;
   budgets?: string;
+  /** Exhibit ids that must each have a chunk row; default EXHIBIT_IDS. */
+  exhibits?: readonly string[];
 }
 
 /** Runs the check, prints the table and returns the exit code (0 ok, 1 breach or error). */
@@ -298,7 +336,12 @@ export async function checkBudgets(options: CheckBudgetsOptions = {}): Promise<n
     } catch {
       throw new Error(`${manifestFile} is missing: run npm run build first`);
     }
-    report = await measureBundles(dist, JSON.parse(manifestText) as Manifest, budgets);
+    report = await measureBundles(
+      dist,
+      JSON.parse(manifestText) as Manifest,
+      budgets,
+      options.exhibits ?? EXHIBIT_IDS,
+    );
   } catch (error) {
     console.error(`check-budgets: ${error instanceof Error ? error.message : String(error)}`);
     return 1;
@@ -306,7 +349,12 @@ export async function checkBudgets(options: CheckBudgetsOptions = {}): Promise<n
   console.log(formatTable(report.rows));
   for (const line of report.forbidden) console.error(`check-budgets: ${line}`);
   for (const r of report.rows) {
-    if (!r.ok) console.error(`check-budgets: ${r.name} is ${r.kb} KB gzip, over ${r.limit} KB`);
+    if (r.ok) continue;
+    console.error(
+      r.kb === null
+        ? `check-budgets: ${r.name}: ${r.note ?? 'not measured'}`
+        : `check-budgets: ${r.name} is ${r.kb} KB gzip, over ${r.limit} KB`,
+    );
   }
   console.log(report.ok ? 'budgets ok' : 'budgets FAILED');
   return report.ok ? 0 : 1;

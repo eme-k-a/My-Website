@@ -9,7 +9,7 @@
     "b8e2f21 fix(F-056): let the MUN 05 lead its title again",
     "2b6339d fix(F-055): add a 360 x 640 row to the label legibility test",
     "6b41469 fix(F-056): give the MUN 05 a clearer lead (0.33 m, 1 em lines)",
-    "(this commit) review(F-M5p): report and before/after captures"
+    "133f435 review(F-M5p): report and before/after captures"
   ],
   "changedFiles": [
     "src/museum/rail/framing.ts",
@@ -76,7 +76,7 @@
     "build": "pass (budgets ok, check-copy ok)",
     "checkBudgets": "pass, unchanged",
     "checkGlyphs": "pass",
-    "e2e": "rail-input, wings, dialog, environment, greybox, exhibits, mobile and quality on desktop and pixel7: 107 passed, 65 skipped (tags and projects), 0 failed, on the build with the 0.30 m MUN number; rail-input, mobile and exhibits re-run on the final 0.33 m build: see notes",
+    "e2e": "rail-input, wings, dialog, environment, greybox, exhibits, mobile and quality on desktop and pixel7: 107 passed, 65 skipped (tags and projects), 0 failed (build with the 0.30 m MUN number). Re-run of rail-input, mobile and exhibits on the final 0.33 m build: 46 passed, 42 skipped, 0 failed.",
     "browsers": "Chromium 1243 mapped under the 1194 names in a scratch PLAYWRIGHT_BROWSERS_PATH outside the repo; nothing installed or committed"
   },
   "visualBaselinesChanged": {

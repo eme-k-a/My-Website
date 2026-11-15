@@ -1,0 +1,86 @@
+{
+  "wp": "WP-30",
+  "role": "R9 (Accessibility & SEO)",
+  "status": "done",
+  "branch": "claude/m5-wp-30",
+  "commits": [
+    "8e7598f fix(a11y): semantics and labels",
+    "8ff2e09 test(a11y): keyboard walk and axe across states"
+  ],
+  "changedFiles": [
+    "src/overlay/LiveRegion.tsx",
+    "tests/e2e/a11y.spec.ts",
+    "tests/e2e/keyboard.spec.ts",
+    "review/reports/WP-30.json"
+  ],
+  "audit": [
+    { "item": "lang", "rule": "EXPERIENCE §10.1", "result": "pass", "evidence": "lang=\"en-CA\" on index.html and every prerendered page (/, /resume/, /404.html, /exhibit/*/)" },
+    { "item": "Landmarks", "rule": "EXPERIENCE §10.1", "result": "pass", "evidence": "one header (skip link, wordmark, Resume PDF, Classic view), one main (#track), nav aria-label=\"Exhibits\" (the rail; hidden with display:none on phones by design, EXPERIENCE §9.2)" },
+    { "item": "Headings", "rule": "EXPERIENCE §10.1", "result": "pass", "evidence": "one h1 (hero, lobby section); exactly one h2 in every other stop section; dialog h2 plus h3 sections" },
+    { "item": "Real buttons and links", "rule": "EXPERIENCE §10.1", "result": "pass", "evidence": "Read the story: button with aria-haspopup=\"dialog\" for all 9 exhibits; Step inside and Return to the aisle are buttons; door-card wing stories are links to /exhibit/<id>/" },
+    { "item": "Rail state", "rule": "EXPERIENCE §10.1", "result": "pass", "evidence": "exactly one aria-current=\"step\", follows the stop (checked at lobby and mysa)" },
+    { "item": "Canvas", "rule": "EXPERIENCE §10.1", "result": "pass", "evidence": "the stage wrapper is aria-hidden=\"true\"; the canvas has no tabindex; every meaning is in DOM cards and the dialog's \"The object\"" },
+    { "item": "Accessible names", "rule": "EXPERIENCE §8.4", "result": "pass", "evidence": "aria snapshots: icons and kbd hints are aria-hidden and stay out of names; long/short HUD labels resolve to one name per viewport; the ticket stamp is outside the Begin name; dialog named by its title" },
+    { "item": "Visible focus", "rule": "EXPERIENCE §10.2, §7.8", "result": "pass", "evidence": "every one of the 39 desktop Tab stops shows a 2 px solid :focus-visible outline (brass on ink, ink on paper)" },
+    { "item": "Targets", "rule": "EXPERIENCE §10.4", "result": "pass", "evidence": "every focusable control in #app is at least 44 x 44 CSS px on desktop and Pixel 7 (a11y.spec)" },
+    { "item": "Positive tabindex", "rule": "brief Forbidden", "result": "pass", "evidence": "none in the DOM (a11y.spec); the only tabindex is 0 on the dialog's scroll region" },
+    { "item": "Live region", "rule": "EXPERIENCE §10.3", "result": "fixed", "evidence": "one aria-live=\"polite\" region; added aria-atomic=\"true\" so each arrival is read as a whole sentence" },
+    { "item": "No flashing", "rule": "EXPERIENCE §10.4", "result": "pass", "evidence": "no DOM animation flashes; the Wailo glow ramp follows the R0 ruling (0.4 to 1.6 to 0.4 over at least 1.0 s), unchanged here" },
+    { "item": "Hover-only content", "rule": "EXPERIENCE §10.4", "result": "pass", "evidence": "the wing rail label shown on hover also shows on focus and is the button's name; hover styles sit under (hover: hover)" }
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Keyboard-only spec reaches every story in catalogue order with correct focus return",
+      "command": "npx playwright test tests/e2e/keyboard.spec.ts tests/e2e/camera.spec.ts --project=desktop",
+      "result": "pass",
+      "evidence": "9 passed: catalogue walk (verafin, klarup, finance-tracker, mysa, sdsj, wailo, cfia, mun, certifications), full Tab order, both doors (Enter in, Esc out, focus on Step inside), wing story focus return"
+    },
+    {
+      "id": "A2",
+      "criterion": "axe 0 violations everywhere listed",
+      "command": "npm run a11y",
+      "result": "pass",
+      "evidence": "60 passed, 0 failed (others skip by project): lobby, door, inside a wing, desk, reduced-motion chip, open dialog desktop and Pixel 7, cold /exhibit/verafin/, /exhibit/mysa/ and / with JS off, /resume/ light and dark, /404.html, no-WebGL path"
+    },
+    {
+      "id": "A3",
+      "criterion": "No announcement for wheel; one per keyboard arrival",
+      "command": "npx playwright test tests/e2e/camera.spec.ts --project=desktop",
+      "result": "pass",
+      "evidence": "WP-15 live-region test passes unchanged: wheel walk to wailo records [], three ArrowDown arrivals record three announcements"
+    },
+    {
+      "id": "A4",
+      "criterion": "Lighthouse accessibility at least 0.95 on /, the exhibit page and /resume/",
+      "command": "npm run lh (and lhci autorun --config=lighthouserc.desktop.cjs)",
+      "result": "pass",
+      "evidence": "accessibility 1.00 on all 3 URLs x 3 runs, mobile and desktop. The mobile run exits 1 on largest-contentful-paint only (about 3.85 s on / and the exhibit page under local SwiftShader), which is WP-29's area; CI lighthouse job is the authority"
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "Label in name (WCAG 2.5.3, advisory, axe does not flag it): the dialog Newer/Older buttons show \"Older The Climb, KlarUp\" but are named \"Older exhibit: The Climb, KlarUp\". Speech input still works because the name starts with the visible word, but an exact match would be \"Older: The Climb, KlarUp\". dialog.spec.ts (WP-32) pins the current name, so I left it.",
+      "for": "R0",
+      "default": "unchanged; if wanted, R6 changes the aria-label in ExhibitDialog.tsx and R8 updates dialog.spec.ts line 142 in the same commit"
+    },
+    {
+      "question": "The dialog marks its scroller as role=\"region\" labelled by the story title (same name as the dialog), and StoryBody's sections (Medium, The work, Curator's note, The object) are also named regions, so each open story adds five region landmarks. Not a violation; landmark lists are noisier than needed.",
+      "for": "R0",
+      "default": "unchanged (StoryBody is shared with the static story page that WP-31 owns); a later R6 pass could drop aria-labelledby from those sections"
+    },
+    {
+      "question": "Phones have no Exhibits nav landmark, because the rail is display:none under 1024 px (EXPERIENCE §9.2 3 px bar). Stops stay reachable by Tab through the cards, so this is by design.",
+      "for": "R0",
+      "default": "accepted as designed; a11y.spec checks the nav role on desktop only and its attributes everywhere"
+    },
+    {
+      "question": "Mobile Lighthouse LCP is about 3.85 s on / and /exhibit/verafin/ locally under SwiftShader (limit 2500 ms), so the mobile lhci run exits 1. Not an accessibility issue.",
+      "for": "R0",
+      "default": "reported for WP-29; nothing changed here"
+    }
+  ],
+  "requests": [],
+  "depsRequest": [],
+  "notes": "a11y.spec.ts is a new file, so under E2E_SHARD it runs in the desktop-rest, pixel7 and pixel7-landscape 'rest' slices with no config change. Some of its states repeat checks in shell.spec and dialog.spec on purpose, so the audit reads from one file; WP-32 may remove the duplicates there. Local runs used a scratch PLAYWRIGHT_BROWSERS_PATH that maps the 1194 folder names to the container's 1243 browsers (nothing committed). No visual baselines touched; no budget, copy or styling changed."
+}

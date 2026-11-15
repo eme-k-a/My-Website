@@ -220,7 +220,7 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
     const drafts = exhibitCards(cards)
       .filter((c) => c.draft)
       .map((c) => c.id);
-    expect(drafts).toEqual(['mun', 'certifications']);
+    expect(drafts).toEqual([]);
   });
 
   it('builds door cards from the wing content', () => {

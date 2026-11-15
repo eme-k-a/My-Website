@@ -343,17 +343,14 @@ export const resume = {
           {
             type: 'p',
             text: "Since July 2024, I have served as President of Software Developers of St. John's. The heart of the role is our recurring monthly mini-hackathons, which unite developers, designers, and founders to collaborate on projects and foster an active, cross-functional tech community.",
-            draft: true,
           },
           {
             type: 'p',
             text: 'I love bringing those groups together, because each brings a perspective the others need. Leading the community has sharpened how I organize, how I communicate, and how I make room for other people to build.',
-            draft: true,
           },
         ],
         object: {
           text: 'Six laptops face each other around a round table, their screens lighting in turn: monthly mini-hackathons where developers, designers and founders build together.',
-          draft: true,
         },
         tags: [
           'Leadership',
@@ -384,17 +381,14 @@ export const resume = {
           {
             type: 'p',
             text: "Every exhibit in this gallery rests on the same foundation: my Bachelor of Engineering in Computer Engineering at Memorial University of Newfoundland in St. John's, where I expect to graduate in May 2027.",
-            draft: true,
           },
           {
             type: 'p',
             text: 'My studies have grounded me in algorithms, data structures, and the basics of compilers and operating systems. My co-op terms at Wailo, Mysa, and Nasdaq Verafin let me test those ideas against real products, and I treat the degree and the work as one continuous education.',
-            draft: true,
           },
         ],
         object: {
           text: 'A silicon die stands inside a brass scaffold. Each brass tier is a year of study still ahead; the tiers already taken down remain as glass outlines. The degree is expected in May 2027.',
-          draft: true,
         },
         tags: [
           'Computer Engineering',
@@ -403,9 +397,8 @@ export const resume = {
           'Operating Systems',
           'Compilers',
         ],
-        // R0 ruling (WP-03 brief): an exhibit is draft when its copy goes beyond the resume. Here
-        // the caption frames the degree and the tags attribute skills to coursework.
-        draft: true,
+        // The caption and the coursework tags go beyond the resume; Emeka approved them on
+        // 2026-11-15 (G5).
       },
     },
   ],
@@ -427,22 +420,18 @@ export const resume = {
         {
           type: 'p',
           text: 'This case holds three credentials. The AWS Certified Cloud Practitioner certification reflects my grounding in cloud fundamentals, knowledge I have put to work with services like AWS Cognito.',
-          draft: true,
         },
         {
           type: 'p',
           text: 'The Tech Stewardship Practice Program and Tech Stewardship for the Energy Transition reflect a different commitment: thinking carefully about the impact of the technology I help create, including its role in a changing energy landscape.',
-          draft: true,
         },
       ],
       object: {
         text: 'Three brass medallions hang in a wall cabinet: a cloud for AWS Certified Cloud Practitioner, a compass rose for the Tech Stewardship Practice Program, and a turbine for Tech Stewardship for the Energy Transition.',
-        draft: true,
       },
       tags: ['AWS', 'Cloud', 'Tech Stewardship', 'Energy Transition', 'Responsible Technology'],
-      // R0 ruling (WP-03 brief): an exhibit is draft when its copy goes beyond the resume. Here
-      // "responsible technology" characterizes the Tech Stewardship programs.
-      draft: true,
+      // "Responsible technology" characterizes the Tech Stewardship programs; Emeka approved it on
+      // 2026-11-15 (G5).
     },
   },
   skills: [

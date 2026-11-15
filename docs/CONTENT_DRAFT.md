@@ -582,7 +582,7 @@ Strings marked "content" go into `resume.ts`. Strings marked "UI" are owned by R
 
 None of these block M0 or M1. Each default applies until he answers; answers update this file first, then `resume.ts`.
 
-**Answered 2026-11-15 (G5, RULINGS "Emeka's G5 facts"):** item 5: `eme-k-a` is his, on the site and the PDF; item 6: KlarUp role "Solo Developer", no dates; item 7: Finance Tracker was a school team project, role "Team Project (School)", no dates, tagline kept; item 8: Tech Stewardship issuer "Engineering Change Lab", no dates or links; item 9: MUN start left off; item 13: "new-grad software engineering roles". First-person copy approved for the lobby, the desk, Verafin, Mysa, Wailo, CFIA, KlarUp and Finance Tracker; SDSJ, MUN and Certifications are still to review.
+**Answered 2026-11-15 (G5, RULINGS "Emeka's G5 facts"):** item 5: `eme-k-a` is his, on the site and the PDF; item 6: KlarUp role "Solo Developer", no dates; item 7: Finance Tracker was a school team project, role "Team Project (School)", no dates, tagline kept; item 8: Tech Stewardship issuer "Engineering Change Lab", no dates or links; item 9: MUN start left off; item 13: "new-grad software engineering roles". All first-person copy is approved (the lobby, the desk and every exhibit), and the favicon monogram stays "EN".
 
 | # | Question | Default used meanwhile |
 |---|---|---|

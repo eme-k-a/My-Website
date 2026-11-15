@@ -182,9 +182,9 @@ describe('bullets and flags', () => {
     expect(priority3).toEqual(['mysa.b4', 'wailo.b2', 'finance-tracker.b1', 'sdsj.b1']);
   });
 
-  // Emeka's G5 copy pass (2026-11-15, RULINGS): approved copy carries no draft flag; the entries he
-  // has not reviewed yet keep every story block and object as draft.
-  const UNREVIEWED = new Set(['sdsj', 'mun', 'certifications']);
+  // Emeka's G5 copy pass (2026-11-15, RULINGS): he approved every first-person line, so no copy
+  // carries a draft flag. New copy starts as draft again (CONTENT_DRAFT transcription rules).
+  const UNREVIEWED = new Set<string>();
 
   it('first-person copy is draft exactly where Emeka has not approved it yet', () => {
     const copies: [string, Copy | { draft: boolean }][] = [

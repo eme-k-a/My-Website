@@ -16,6 +16,7 @@ Personal website of Chukwuemeka (Emeka) Nduka-Nwagbo: a 3D modern-gallery aisle 
 | `docs/wp/WP-xx.md` | Your brief: goal, inputs, owned globs, forbidden paths, commands, acceptance, `report.json` output |
 | `docs/RULINGS.md`, `docs/wp/packs/` | Consolidated binding R0 rulings; per-WP context packs (brief + rulings + only the spec sections it cites): read `docs/wp/packs/WP-xx.md` first |
 | `docs/CONTENT_UPDATE.md` | Content update runbook and dated checklist (written in WP-35) |
+| `docs/FUTURE_IMPROVEMENTS.md` | Post-launch backlog: Emeka's requested changes (new KlarUp and Verafin objects) and review items deferred past G4 and G5. R0 keeps it current |
 
 ## Stack (exact pins in ARCHITECTURE §1)
 

@@ -51,7 +51,7 @@ describe('public/og (npm run og)', () => {
       const html = ogDocument(card, '');
       expect(html).not.toMatch(/https?:\/\/(?!www\.w3\.org)/);
       expect(html).not.toMatch(/\b\d{3}[-. ]\d{3}[-. ]\d{4}\b/);
-      expect(html.includes('—')).toBe(false);
+      expect(html.includes('\u2014')).toBe(false);
       expect(html).toContain(card.title.replace(/&/g, '&amp;'));
     }
   });

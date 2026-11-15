@@ -171,9 +171,9 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
     expect(rows).toEqual([
       // prettier-ignore
       ['No. 01', 'verafin', 'The Reporting Engine', 'Software Development Co-op Student', "Nasdaq Verafin, St. John's, NL / Hybrid", 'Sep 2026 - Dec 2026', '4 months', 'ON VIEW NOW'],
-      ['No. P1', 'klarup', 'The Climb', null, 'KlarUp, Project', null, null, null],
+      ['No. P1', 'klarup', 'The Climb', 'Solo Developer', 'KlarUp, Project', null, null, null],
       // prettier-ignore
-      ['No. P2', 'finance-tracker', 'The Balance', null, 'Personal Finance Tracker, Project', null, null, null],
+      ['No. P2', 'finance-tracker', 'The Balance', 'Team Project (School)', 'Personal Finance Tracker, Project', null, null, null],
       // prettier-ignore
       ['No. 02', 'mysa', 'Warm Start', 'Full Stack Software Developer (Co-op)', "Mysa, St. John's, NL", 'Jan 2026 - May 2026', '5 months', null],
       // prettier-ignore
@@ -216,11 +216,11 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
     for (const c of exhibitCards(cards)) expect(c.medium.length).toBeLessThanOrEqual(4);
   });
 
-  it('carries the exhibit draft flag', () => {
+  it('carries the exhibit draft flag (only exhibits Emeka has not approved yet)', () => {
     const drafts = exhibitCards(cards)
       .filter((c) => c.draft)
       .map((c) => c.id);
-    expect(drafts).toContain('verafin');
+    expect(drafts).toEqual(['mun', 'certifications']);
   });
 
   it('builds door cards from the wing content', () => {
@@ -430,7 +430,7 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
     expect(model.keywords).toEqual(content.skills.flatMap((s) => s.items));
   });
 
-  it('has a public header of email, LinkedIn, the site host and location', () => {
+  it('has a public header of email, LinkedIn, GitHub, the site host and location', () => {
     expect(model.name).toBe('Chukwuemeka Nduka-Nwagbo');
     expect(model.contact).toEqual([
       { kind: 'email', text: 'cndukanwagbo@mun.ca', href: 'mailto:cndukanwagbo@mun.ca' },
@@ -439,6 +439,7 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
         text: 'linkedin.com/in/emekanduka',
         href: 'https://linkedin.com/in/emekanduka',
       },
+      { kind: 'github', text: 'github.com/eme-k-a', href: 'https://github.com/eme-k-a' },
       {
         kind: 'site',
         text: 'emeka-nduka-nwagbo.netlify.app',
@@ -455,6 +456,7 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
     expect(printModel(c, { now: OCT_2026 }).contact.map((i) => i.kind)).toEqual([
       'email',
       'linkedin',
+      'github',
       'location',
     ]);
   });
@@ -465,6 +467,7 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
     expect(printModel(c, { now: OCT_2026 }).contact.map((i) => i.text)).toEqual([
       'cndukanwagbo@mun.ca',
       'linkedin.com/in/emekanduka',
+      'github.com/eme-k-a',
       'emeka.netlify.app',
       "St. John's, NL",
     ]);

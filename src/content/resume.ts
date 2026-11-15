@@ -20,6 +20,7 @@ export const resume = {
     preferredName: 'Emeka',
     email: 'cndukanwagbo@mun.ca',
     linkedin: 'https://linkedin.com/in/emekanduka',
+    // Confirmed by Emeka on 2026-11-15: on the site, the PDF and the .tex.
     github: 'https://github.com/eme-k-a',
     location: "St. John's, NL",
     phoneInPublicPdf: false,
@@ -31,15 +32,13 @@ export const resume = {
       headline: 'Welcome. Walk through my work.',
       intro: {
         text: "I'm Emeka, a Computer Engineering student at Memorial University of Newfoundland who builds software across mobile, web, and data. The first exhibit is my most recent work, and every step down the aisle takes you further into my past.",
-        draft: true,
       },
       hint: 'Scroll, swipe, or use the arrow keys to walk. Open any exhibit to read its full story.',
     },
     desk: {
       headline: "You've reached the beginning.",
       body: {
-        text: "Thanks for walking through. I'm finishing my B.Eng in Computer Engineering in May 2027 and I'm open to [placeholder: target roles]. If something here sparked an idea, I'd love to hear from you.",
-        draft: true,
+        text: "Thanks for walking through. I'm finishing my B.Eng in Computer Engineering in May 2027 and I'm open to new-grad software engineering roles. If something here sparked an idea, I'd love to hear from you.",
       },
       footnote: 'New exhibits are installed as the collection grows.',
     },
@@ -86,22 +85,17 @@ export const resume = {
           {
             type: 'p',
             text: 'This is where my story stands today. Since September 2026, I have been a Software Development Co-op Student at Nasdaq Verafin, working on software that supports fraud detection and anti-money laundering. My work sits on the data side of the product: data platform features, data reporting features that turn platform data into accurate, readable reports, and reporting plugins built from modular, reusable components.',
-            draft: true,
           },
           {
             type: 'p',
             text: 'In a domain like this, data has to be accurate and clear before it can be useful, and that is the standard I hold my work to. This exhibit is still being installed, so check back after December.',
-            draft: true,
           },
         ],
         object: {
           text: 'A frosted glass column feeds a six-by-six grid of bars that refreshes like a report. Three brass cartridges docked in the column are the plugins that extend it.',
-          draft: true,
         },
         tags: ['Data Platforms', 'Data Reporting', 'Reporting Plugins'],
-        // PLAN Addendum (R0 rulings after WP-00): Verafin starts as a draft exhibit, and so does any
-        // exhibit whose copy goes beyond the resume (R0 ruling in the WP-03 brief).
-        draft: true,
+        // Started as a draft exhibit (PLAN Addendum); Emeka approved its copy on 2026-11-15 (G5).
       },
     },
     {
@@ -145,17 +139,14 @@ export const resume = {
           {
             type: 'p',
             text: 'At Mysa, I was a Full Stack Software Developer co-op from January to May 2026. I built end-to-end Detox CI/CD pipelines for iOS and Android that automated dev and production store releases and reduced manual QA overhead. I led the Single Sign-On integration with a major utility partner for demand response enrollment, using Keycloak and OAuth 2.0 and resolving token exchange bottlenecks for secure access across mobile and web.',
-            draft: true,
           },
           {
             type: 'p',
             text: 'I also built and deployed a responsive web app with AWS Cognito authentication, used telemetry and logs to troubleshoot runtime failures, and improved our internal support tooling with smarter search classifications and Pylon bug-report metadata.',
-            draft: true,
           },
         ],
         object: {
           text: 'A ring dial on a wall unit lights four segments in turn (build, end-to-end tests, dev release, store release) as the release pipeline warms up. At its foot, a brass key passes through a ring: the single sign-on token exchange.',
-          draft: true,
         },
         tags: ['Detox', 'CI/CD', 'Keycloak', 'OAuth 2.0', 'AWS Cognito', 'iOS', 'Android'],
       },
@@ -194,17 +185,14 @@ export const resume = {
           {
             type: 'p',
             text: 'Wailo was my first developer co-op: from May to August 2025, I worked remotely as a Front End Developer for the Calgary company. I developed and optimized core user-facing features in React Native, including account management, chat, and password recovery with deep link integration, and I built and deployed a responsive landing page to improve product visibility and user acquisition.',
-            draft: true,
           },
           {
             type: 'p',
             text: 'As the app headed for its Apple App Store release, I took on QA testing and bug fixes to improve performance and usability. It taught me what it takes to carry a feature all the way to a public release.',
-            draft: true,
           },
         ],
         object: {
           text: 'A phone leans back on its stand while a glowing link arcs into it from an envelope, and the screen answers with a reset card: password recovery through a deep link. The blank brass tag marks the App Store release.',
-          draft: true,
         },
         tags: ['React Native', 'Deep Linking', 'QA Testing', 'App Store Release', 'Landing Page'],
       },
@@ -233,22 +221,18 @@ export const resume = {
           {
             type: 'p',
             text: 'This is the oldest work in the collection, and where my career began. From December 2022 to August 2024, I worked remotely as an IT Support Technician intern for the Canadian Food Inspection Agency (Ottawa, ON). I provided technical support and troubleshooting for hardware and software issues across a distributed team, managing and resolving tickets in Assyst and ServiceNow in a high-volume support environment.',
-            draft: true,
           },
           {
             type: 'p',
             text: 'Long before I wrote production code, this role taught me to diagnose problems methodically and to communicate clearly with the people who rely on technology to do their jobs.',
-            draft: true,
           },
         ],
         object: {
           text: 'Paper tickets settle one by one onto a brass desk spindle, each stamped in its corner: steady, methodical support for a distributed team.',
-          draft: true,
         },
         tags: ['ServiceNow', 'Assyst', 'Technical Support', 'Troubleshooting', 'Remote Support'],
-        // R0 ruling (WP-03 brief): an exhibit is draft when its copy goes beyond the resume. Here
-        // the object text ("methodical") and the "Remote Support" tag do.
-        draft: true,
+        // The object text ("methodical") and the "Remote Support" tag go beyond the resume; Emeka
+        // approved them on 2026-11-15 (G5).
       },
     },
   ],
@@ -258,7 +242,8 @@ export const resume = {
       kind: 'project',
       name: 'KlarUp',
       tagline: 'Collaborative Productivity App',
-      // role and dates are omitted until Emeka supplies them (CONTENT_DRAFT §7 item 6).
+      // Emeka, 2026-11-15: a solo project; he left the dates off (CONTENT_DRAFT §7 item 6).
+      role: 'Solo Developer',
       stack: ['React Native', 'Python', 'Expo'],
       tense: 'past',
       bullets: [
@@ -281,17 +266,14 @@ export const resume = {
           {
             type: 'p',
             text: 'KlarUp is a gamified, cross-platform task management app that I engineered with React Native and a Python API. The idea is that tasks are easier to finish when people hold each other accountable, so I built collaborative features that add accountability and social motivation to everyday productivity.',
-            draft: true,
           },
           {
             type: 'p',
             text: 'I also architected its production release pipeline on Expo Application Services (EAS), securely injecting environment variables to generate untethered, standalone Android APKs. KlarUp taught me that a release process deserves as much design as the features it ships.',
-            draft: true,
           },
         ],
         object: {
           text: 'Five tiles climb like a staircase and tick themselves off one by one, while three brass beads wait together on the top step: accountability as a team sport. The small crate at the base is the standalone Android build.',
-          draft: true,
         },
         tags: ['React Native', 'Python', 'Expo EAS', 'Android', 'Gamification'],
       },
@@ -302,13 +284,14 @@ export const resume = {
       name: 'Personal Finance Tracker',
       // Required by the schema; the resume has none (G5 sign-off, CONTENT_DRAFT §7 item 7).
       tagline: 'Full-Stack Web App',
-      // role and dates are omitted until Emeka supplies them (CONTENT_DRAFT §7 item 7).
+      // Emeka, 2026-11-15: a school team project; he left the dates off (CONTENT_DRAFT §7 item 7).
+      role: 'Team Project (School)',
       stack: ['MERN', 'ChatGPT API'],
       tense: 'past',
       // PLAN §1 trim 6: in the gallery only, so every bullet is print: false.
       bullets: [
         {
-          text: 'Built a full-stack personal finance tracker using the MERN stack to manage income, expenses, and budgets, with ChatGPT API integration for real-time financial health analysis and personalized recommendations.',
+          text: 'Co-built a full-stack personal finance tracker as a school team project using the MERN stack to manage income, expenses, and budgets, with ChatGPT API integration for real-time financial health analysis and personalized recommendations.',
           print: false,
           priority: 3,
         },
@@ -320,18 +303,15 @@ export const resume = {
         story: [
           {
             type: 'p',
-            text: 'I built this full-stack personal finance tracker on the MERN stack (MongoDB, Express, React, and Node.js) to manage income, expenses, and budgets in one place. What makes it more than a ledger is the ChatGPT API integration, which analyzes financial health in real time and offers personalized recommendations.',
-            draft: true,
+            text: 'As part of a school team project, I helped build this full-stack personal finance tracker on the MERN stack (MongoDB, Express, React, and Node.js) to manage income, expenses, and budgets in one place. What makes it more than a ledger is the ChatGPT API integration, which analyzes financial health in real time and offers personalized recommendations.',
           },
           {
             type: 'p',
             text: 'The project gave me end-to-end practice connecting a database, an API, and a React interface, and an early look at how language models can turn raw numbers into practical guidance.',
-            draft: true,
           },
         ],
         object: {
           text: 'Three coin stacks, income in brass, expenses in graphite and the budget in frosted glass, rise and fall but always stay in balance.',
-          draft: true,
         },
         tags: ['React', 'Node.js', 'MongoDB', 'ChatGPT API', 'Express'],
       },
@@ -394,7 +374,7 @@ export const resume = {
       shortInstitution: 'MUN',
       shortDegree: 'B.Eng Computer Engineering',
       location: { city: "St. John's", region: 'NL' },
-      // start is omitted until Emeka supplies it (CONTENT_DRAFT §7 item 9); no duration shows.
+      // Emeka left the start off on 2026-11-15 (CONTENT_DRAFT §7 item 9); no duration shows.
       graduation: '2027-05',
       exhibit: {
         title: 'Work in Progress',
@@ -432,13 +412,12 @@ export const resume = {
   certifications: {
     id: 'certifications',
     kind: 'certifications',
-    // Dates, the Tech Stewardship issuer and verification links are omitted from the items until
-    // Emeka supplies them (CONTENT_DRAFT §7 item 8), so print shows none of them. The exhibit's
-    // story carries the placeholders instead (concept box 6, F-044), and RELEASE=1 blocks on them.
+    // Emeka, 2026-11-15 (CONTENT_DRAFT §7 item 8): the Tech Stewardship issuer is Engineering
+    // Change Lab; issue dates and verification links stay off, so the F-044 placeholder is gone.
     items: [
       { name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services' },
-      { name: 'Tech Stewardship Practice Program' },
-      { name: 'Tech Stewardship for the Energy Transition' },
+      { name: 'Tech Stewardship Practice Program', issuer: 'Engineering Change Lab' },
+      { name: 'Tech Stewardship for the Energy Transition', issuer: 'Engineering Change Lab' },
     ],
     exhibit: {
       title: 'The Medal Cabinet',
@@ -453,11 +432,6 @@ export const resume = {
         {
           type: 'p',
           text: 'The Tech Stewardship Practice Program and Tech Stewardship for the Energy Transition reflect a different commitment: thinking carefully about the impact of the technology I help create, including its role in a changing energy landscape.',
-          draft: true,
-        },
-        {
-          type: 'p',
-          text: 'Issue dates: [placeholder: certification issue dates]. Tech Stewardship issuer: [placeholder: Tech Stewardship issuer].',
           draft: true,
         },
       ],

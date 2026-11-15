@@ -191,7 +191,7 @@ Priority: 1 keep, 2 normal, 3 trim first. Characters are counted without the bul
 | `cfia.b1` | "Resolved high-volume hardware and software tickets for a distributed team in Assyst and ServiceNow." | true | 1 | false | 99 |
 | `klarup.b1` | "Engineered a gamified, cross-platform task management application using React Native and a Python API, integrating collaborative features to drive user accountability and social motivation." | true | 1 | false | 189 |
 | `klarup.b2` | "Architected the production release pipeline using Expo Application Services (EAS), securely injecting environment variables to generate untethered, standalone APKs for Android." | true | 2 | false | 176 |
-| `finance-tracker.b1` | "Built a full-stack personal finance tracker using the MERN stack to manage income, expenses, and budgets, with ChatGPT API integration for real-time financial health analysis and personalized recommendations." | **false** | 3 | false | 208 |
+| `finance-tracker.b1` | "Co-built a full-stack personal finance tracker as a school team project using the MERN stack to manage income, expenses, and budgets, with ChatGPT API integration for real-time financial health analysis and personalized recommendations." | **false** | 3 | false | 208 |
 | `sdsj.b1` | "Spearhead recurring monthly mini-hackathons, uniting developers, designers, and founders to collaborate on projects and foster an active, cross-functional tech community." | true | 3 | false | 170 |
 
 Notes:
@@ -429,7 +429,7 @@ Arrays in `resume.ts`, in this order:
 | `exhibit.object` | "Three coin stacks, income in brass, expenses in graphite and the budget in frosted glass, rise and fall but always stay in balance." (`draft: true`) |
 
 **Story** (78 words):
-1. `p`, draft: "I built this full-stack personal finance tracker on the MERN stack (MongoDB, Express, React, and Node.js) to manage income, expenses, and budgets in one place. What makes it more than a ledger is the ChatGPT API integration, which analyzes financial health in real time and offers personalized recommendations."
+1. `p` (approved 2026-11-15): "As part of a school team project, I helped build this full-stack personal finance tracker on the MERN stack (MongoDB, Express, React, and Node.js) to manage income, expenses, and budgets in one place. What makes it more than a ledger is the ChatGPT API integration, which analyzes financial health in real time and offers personalized recommendations."
 2. `p`, draft: "The project gave me end-to-end practice connecting a database, an API, and a React interface, and an early look at how language models can turn raw numbers into practical guidance."
 
 ### 5.7 (removed)
@@ -549,7 +549,7 @@ Strings marked "content" go into `resume.ts`. Strings marked "UI" are owned by R
 
 ### 6.3 Desk and exit (`gallery.desk`, content; no phone anywhere)
 - `headline`: "You've reached the beginning."
-- `body` (`draft: true`): "Thanks for walking through. I'm finishing my B.Eng in Computer Engineering in May 2027 and I'm open to [placeholder: target roles]. If something here sparked an idea, I'd love to hear from you."
+- `body` (approved by Emeka 2026-11-15): "Thanks for walking through. I'm finishing my B.Eng in Computer Engineering in May 2027 and I'm open to new-grad software engineering roles. If something here sparked an idea, I'd love to hear from you."
   - If Emeka has not named target roles by G5, use this fallback instead (still `draft: true` until he approves): "Thanks for walking through. I'm finishing my B.Eng in Computer Engineering in May 2027. If something here sparked an idea, I'd love to hear from you."
 - `footnote`: "New exhibits are installed as the collection grows."
 - Buttons (UI): "Email me" (`mailto:cndukanwagbo@mun.ca`), "Connect on LinkedIn" (`https://linkedin.com/in/emekanduka`), "Take home the catalogue (PDF)" (`/resume.pdf`), "Browse code on GitHub" (`https://github.com/eme-k-a`, [confirm handle]), "Walk the aisle again".
@@ -581,6 +581,8 @@ Strings marked "content" go into `resume.ts`. Strings marked "UI" are owned by R
 ## 7. Facts still needed from Emeka
 
 None of these block M0 or M1. Each default applies until he answers; answers update this file first, then `resume.ts`.
+
+**Answered 2026-11-15 (G5, RULINGS "Emeka's G5 facts"):** item 5: `eme-k-a` is his, on the site and the PDF; item 6: KlarUp role "Solo Developer", no dates; item 7: Finance Tracker was a school team project, role "Team Project (School)", no dates, tagline kept; item 8: Tech Stewardship issuer "Engineering Change Lab", no dates or links; item 9: MUN start left off; item 13: "new-grad software engineering roles". First-person copy approved for the lobby, the desk, Verafin, Mysa, Wailo, CFIA, KlarUp and Finance Tracker; SDSJ, MUN and Certifications are still to review.
 
 | # | Question | Default used meanwhile |
 |---|---|---|

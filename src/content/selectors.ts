@@ -462,7 +462,7 @@ export interface PrintDates {
 
 /** One item of the contact row under the name, in print order. */
 export interface PrintContactItem {
-  kind: 'phone' | 'email' | 'linkedin' | 'site' | 'location';
+  kind: 'phone' | 'email' | 'linkedin' | 'github' | 'site' | 'location';
   text: string;
   href?: string;
 }
@@ -571,6 +571,10 @@ function printContact(c: Content, phone: string | undefined): PrintContactItem[]
     text: linkedinDisplay(c.contact.linkedin),
     href: c.contact.linkedin,
   });
+  // Emeka put GitHub on the PDF on 2026-11-15 (CONTENT_DRAFT §7 item 5): "github.com/eme-k-a".
+  if (c.contact.github !== undefined) {
+    items.push({ kind: 'github', text: linkedinDisplay(c.contact.github), href: c.contact.github });
+  }
   const host = printSiteHost(c.meta.siteUrl);
   if (host !== undefined) items.push({ kind: 'site', text: host, href: c.meta.siteUrl });
   items.push({ kind: 'location', text: c.contact.location });

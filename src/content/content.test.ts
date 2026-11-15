@@ -158,8 +158,8 @@ describe('bullets and flags', () => {
     expect(verafin.bullets.every((b) => b.print)).toBe(true);
   });
 
-  it('verafin is a draft exhibit (PLAN Addendum)', () => {
-    expect(work('verafin').exhibit.draft).toBe(true);
+  it('verafin started as a draft exhibit (PLAN Addendum) and Emeka approved it at G5', () => {
+    expect(work('verafin').exhibit.draft ?? false).toBe(false);
   });
 
   it('no resume bullet is draft after G0', () => {
@@ -182,7 +182,11 @@ describe('bullets and flags', () => {
     expect(priority3).toEqual(['mysa.b4', 'wailo.b2', 'finance-tracker.b1', 'sdsj.b1']);
   });
 
-  it('every story block, object, curator note, takeaway, lobby intro and desk body is draft', () => {
+  // Emeka's G5 copy pass (2026-11-15, RULINGS): approved copy carries no draft flag; the entries he
+  // has not reviewed yet keep every story block and object as draft.
+  const UNREVIEWED = new Set(['sdsj', 'mun', 'certifications']);
+
+  it('first-person copy is draft exactly where Emeka has not approved it yet', () => {
     const copies: [string, Copy | { draft: boolean }][] = [
       ['gallery.lobby.intro', content.gallery.lobby.intro],
       ['gallery.desk.body', content.gallery.desk.body],
@@ -193,17 +197,25 @@ describe('bullets and flags', () => {
       if (e.exhibit.curatorNote) copies.push([`${e.id}.curatorNote`, e.exhibit.curatorNote]);
       if (e.exhibit.takeaway) copies.push([`${e.id}.takeaway`, e.exhibit.takeaway]);
     }
-    expect(copies.filter(([, c]) => !c.draft).map(([path]) => path)).toEqual([]);
+    const expected = copies
+      .filter(([path]) => UNREVIEWED.has(path.split('.')[0] ?? ''))
+      .map(([path]) => path);
+    expect(copies.filter(([, c]) => c.draft).map(([path]) => path)).toEqual(expected);
   });
 
-  it('the desk body keeps the target-roles placeholder until Emeka names them', () => {
-    expect(content.gallery.desk.body.text).toContain('[placeholder: target roles]');
+  it('the desk body names the target roles Emeka chose', () => {
+    expect(content.gallery.desk.body.text).toContain('new-grad software engineering roles');
+    expect(content.gallery.desk.body.text).not.toContain('[placeholder');
   });
 });
 
 describe('tense', () => {
-  const PAST_IRREGULAR = new Set(['Built', 'Led']);
-  const isPastVerb = (word: string) => word.endsWith('ed') || PAST_IRREGULAR.has(word);
+  const PAST_IRREGULAR = new Set(['built', 'led']);
+  // A prefixed verb is judged by its last part: "Co-built" is past like "Built".
+  const isPastVerb = (word: string) => {
+    const verb = (word.split('-').pop() ?? '').toLowerCase();
+    return verb.endsWith('ed') || PAST_IRREGULAR.has(verb);
+  };
 
   it('ongoing roles are present tense and finished roles past tense', () => {
     for (const e of [...content.experiences, ...content.volunteer]) {

@@ -85,6 +85,13 @@ body {
 
 .pr-contact {
   margin-top: 1pt;
+  /* Five items since GitHub joined the row (2026-11-15): 9.5pt keeps them on one line. */
+  font-size: 9.5pt;
+}
+
+/* An item never breaks inside ("St. / John's"); a row that is still too long wraps between items. */
+.pr-contact > span {
+  white-space: nowrap;
 }
 
 /* Section headings: uppercase with letter-spacing (never synthesized small caps) and a full rule. */

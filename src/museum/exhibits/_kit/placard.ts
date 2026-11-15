@@ -138,7 +138,8 @@ export function placardSpec(
   const t = TITLE_METRICS[kind];
   const orgSize = fontSizeForCap('sans', t.orgCap);
   const lines = breakLines(texts.organization, orgSize, ORGANIZATION_TRACKING, t.orgWidth);
-  const lineStep = ORGANIZATION_LINE_HEIGHT * orgSize;
+  const lineHeight = t.lineHeight ?? ORGANIZATION_LINE_HEIGHT;
+  const lineStep = lineHeight * orgSize;
   const orgFirst = t.orgBottom + (lines.length - 1) * lineStep;
   const numberSize = fontSizeForCap('serif', t.numberCap);
   const halfWidth =
@@ -166,7 +167,7 @@ export function placardSpec(
       fontSize: orgSize,
       baselineY: orgFirst,
       letterSpacing: ORGANIZATION_TRACKING,
-      lineHeight: ORGANIZATION_LINE_HEIGHT,
+      lineHeight,
       lines: lines.length,
     },
   };

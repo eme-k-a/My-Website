@@ -46,6 +46,8 @@ export interface TitleSpec {
   gap: number;
   /** Break width of the organization, meters. */
   orgWidth: number;
+  /** Organization line height in em when not ORGANIZATION_LINE_HEIGHT (the MUN title, F-056). */
+  lineHeight?: number;
 }
 
 /**
@@ -56,8 +58,10 @@ export interface TitleSpec {
  * stop, F-027), so on phones it stays under the wing HUD. Mun (F-041b): its title hangs on the
  * stop camera's sight line through the case, at the far end of the Foundations left wall, about
  * 8.8 m from the stop, so the organization cap grows to 0.20 m to keep 14 CSS px on a Pixel 7
- * (412 x 839; 0.19 m gave 13.5 px there, F-049), and the number gives up the room (0.26 m cap, it
- * still reads at over 18 px) so the block's top does not rise toward the phone HUD. The block
+ * (412 x 839; 0.19 m gave 13.5 px there, F-049). F-056: at a 0.26 m cap the 05 read smaller than
+ * MEMORIAL UNIVERSITY, the reverse of every other stop, so the number leads again at 0.30 m and
+ * the organization's two lines close up to a 1.1 em line height (caps only, no descenders), which
+ * gives back the same 0.04 m: the block's top stays where it was, under the phone HUD. The block
  * sits high (last baseline 3.12 m) so it clears the case top in the desktop dialog at the full
  * dolly, and tight (gap 0.06 m, as the wings) so the number stays under the phone HUD.
  * The vitrine keeps its EXPERIENCE §5.4 heights.
@@ -65,7 +69,14 @@ export interface TitleSpec {
 export const TITLE_METRICS: Readonly<Record<PlacardKind, TitleSpec>> = {
   main: { numberCap: 0.32, orgCap: 0.125, orgBottom: 2.32, gap: 0.2, orgWidth: 2.6 },
   wing: { numberCap: 0.3, orgCap: 0.14, orgBottom: 2.2, gap: 0.06, orgWidth: 2.9 },
-  wide: { numberCap: 0.26, orgCap: 0.2, orgBottom: 3.12, gap: 0.06, orgWidth: 2.4 },
+  wide: {
+    numberCap: 0.3,
+    orgCap: 0.2,
+    orgBottom: 3.12,
+    gap: 0.06,
+    orgWidth: 2.4,
+    lineHeight: 1.1,
+  },
   wall: { numberCap: 0.32, orgCap: 0.1, orgBottom: 2.4, gap: 0.25, orgWidth: 3.6 },
 };
 

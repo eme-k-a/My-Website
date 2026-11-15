@@ -201,8 +201,9 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    # Advisory until WP-29 adds the museum-mode precheck spec and makes this job blocking.
-    continue-on-error: true
+    # Blocking (WP-29). The precheck proves Lighthouse scores the museum, not the classic
+    # fallback; then the error-level assertions of lighthouserc*.cjs gate the job. SwiftShader
+    # performance on / and the exhibit page stays a warning there (ARCHITECTURE §13.8).
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -226,13 +227,17 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Point Lighthouse at the Playwright Chromium
         run: echo "CHROME_PATH=$(node -p "require('@playwright/test').chromium.executablePath()")" >> "$GITHUB_ENV"
-      # The same two runs as npm run lh, as separate steps so desktop still runs when mobile
-      # fails. Both stay continue-on-error while the job is advisory (until WP-29).
+      # With the lhci chromeFlags and URLs: each museum URL boots in museum mode and reaches
+      # `ready`. If not, lhci would score the classic page, so the job stops here.
+      - name: Lighthouse precheck (the museum is what gets scored)
+        run: npx playwright test tests/e2e/lh-precheck.spec.ts --project=desktop --trace off
+      # The same two runs as npm run lh, as separate steps so desktop still runs (and reports)
+      # when mobile fails; either failure fails the job.
       - name: Lighthouse CI (mobile)
-        continue-on-error: true
+        id: lh-mobile
         run: npx lhci autorun --config=lighthouserc.cjs
       - name: Lighthouse CI (desktop)
-        continue-on-error: true
+        if: ${{ success() || steps.lh-mobile.outcome == 'failure' }}
         run: npx lhci autorun --config=lighthouserc.desktop.cjs
       - if: ${{ always() }}
         uses: actions/upload-artifact@v4

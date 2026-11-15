@@ -10,6 +10,9 @@
 //   the title bay, or beside a door's opening, on the side the stop's desktop frame shows left of
 //   the case, so that half reads as a dim warm wall instead of a void (multiplies the tint; 0 is
 //   no side bay). It is one more instance of the bays' mesh, never a light.
+// - `far`: the far bay (F-M5p, phone mood): the same dim wash on the other side of the title bay
+//   or door, so the frame's other half (the phone frame's dark side, down or up the aisle from
+//   the case) reads as a lit wall bay too. Also one more instance of the bays' mesh (0 is none).
 // Door stops own no light target: their row holds only the threshold pool alpha (the door
 // threshold pool) and the side bay, and `spot`, `wash` and `beam` stay 0.
 // Medium and low have one real spotlight, so the baked pools and washes carry more of the room
@@ -26,6 +29,7 @@ export interface LightRecipe {
   wash: number;
   beam: number;
   side: number;
+  far: number;
 }
 
 /** A pool never paints more than this alpha, whatever the tier lift. */
@@ -40,6 +44,8 @@ export const TIER_LIFT: Record<QualityTier, { pool: number; wash: number }> = {
 
 /** The side bay's strength where a stop has one (F-052): a dim wall, well under its title bay. */
 export const SIDE_WASH = 1.4;
+/** The far bay's strength (F-M5p): the side bay's family. */
+export const FAR_WASH = 1.7;
 
 const exhibit = (over: Partial<LightRecipe> = {}): LightRecipe => ({
   spot: 1,
@@ -47,6 +53,7 @@ const exhibit = (over: Partial<LightRecipe> = {}): LightRecipe => ({
   wash: 1,
   beam: 1,
   side: 0,
+  far: 0,
   ...over,
 });
 const door = (over: Partial<LightRecipe> = {}): LightRecipe => ({
@@ -55,6 +62,7 @@ const door = (over: Partial<LightRecipe> = {}): LightRecipe => ({
   wash: 0,
   beam: 0,
   side: 0,
+  far: 0,
   ...over,
 });
 
@@ -72,15 +80,15 @@ const door = (over: Partial<LightRecipe> = {}): LightRecipe => ({
  */
 export const STOP_RECIPES: Record<StopId, LightRecipe> = {
   lobby: exhibit({ spot: 0.35, wash: 0.45, beam: 0.4 }),
-  verafin: exhibit({ pool: 0.9, wash: 1.2, side: SIDE_WASH }),
-  'projects-door': door({ pool: 0.42, side: SIDE_WASH }),
+  verafin: exhibit({ pool: 0.9, wash: 1.2, side: SIDE_WASH, far: FAR_WASH }),
+  'projects-door': door({ pool: 0.42, side: SIDE_WASH, far: FAR_WASH }),
   klarup: exhibit(),
   'finance-tracker': exhibit(),
-  mysa: exhibit({ wash: 1.2, side: SIDE_WASH }),
-  'volunteer-door': door({ pool: 0.42, side: SIDE_WASH }),
+  mysa: exhibit({ wash: 1.2, side: SIDE_WASH, far: FAR_WASH }),
+  'volunteer-door': door({ pool: 0.42, side: SIDE_WASH, far: FAR_WASH }),
   sdsj: exhibit(),
   wailo: exhibit({ wash: 1.1 }),
-  cfia: exhibit({ wash: 1.15, side: SIDE_WASH }),
+  cfia: exhibit({ wash: 1.15, side: SIDE_WASH, far: FAR_WASH }),
   mun: exhibit(),
   certifications: exhibit({ spot: 0.5, pool: 0.7, wash: 0.7, beam: 0.5 }),
   desk: exhibit(),
@@ -98,6 +106,7 @@ export function stopRecipe(stop: StopId, tier: QualityTier): LightRecipe {
     pool: Math.min(MAX_POOL_ALPHA, base.pool + (base.pool > 0 ? lift.pool : 0)),
     wash: base.wash * lift.wash,
     side: base.side * lift.wash,
+    far: base.far * lift.wash,
     beam: tier === 'low' ? 0 : base.beam,
   };
 }

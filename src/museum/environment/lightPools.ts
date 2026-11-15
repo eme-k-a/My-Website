@@ -21,7 +21,10 @@ import { doorId, type StopId } from '../../content/ids';
 import type { QualityTier } from '../exhibits/_kit/types';
 import { AISLE_HALF, ARCH_Z, type Layout, type Room } from '../rail/layout';
 import { lightTargets, rampColor, WASH_BAY_WIDTH, type TargetId, type WashBay } from './lightPlan';
-import { stopRecipe } from './lightRecipe';
+import { FAR_WASH, stopRecipe } from './lightRecipe';
+
+/** A far pool never paints more than this alpha, whatever the tier lift. */
+const MAX_FAR_ALPHA = 0.55;
 import type { SeamLine } from './shell';
 
 const light = tokens.light;
@@ -39,6 +42,12 @@ export const DOOR_POOL_INSET = 0.6;
  * the hero, so the stage shows below "Begin the walk" and invites the first swipe.
  */
 export const ARCH_POOL = { dz: 4, radius: 2.6, alpha: 0.85 } as const;
+/**
+ * The floor pool in front of each side and far bay (F-M5p, phone mood): a soft warm pool on the
+ * aisle floor FAR_POOL.inset from the wall and FAR_POOL.along into the bay from its owner, so the phone frame's dark lower side meets a lit
+ * floor and the next stretch of the aisle reads as gallery. Its alpha scales with the far wash.
+ */
+export const FAR_POOL = { inset: 1.3, along: 0.8, radius: 1.8, alpha: 0.45 } as const;
 /** Desk footprint for its contact patch (Desk.tsx). */
 export const DESK_FOOTPRINT = [1.8, 0.7] as const;
 /**
@@ -56,7 +65,7 @@ export const WALL_WASH_INTENSITY = 40;
 export const WALL_WASH_PLAIN_V = 0.03;
 
 export interface PoolSpec {
-  kind: 'pool' | 'door' | 'arch';
+  kind: 'pool' | 'door' | 'arch' | 'far';
   /** The target or door it belongs to. */
   for: string;
   center: [number, number];
@@ -99,6 +108,31 @@ export function floorPaint(layout: Layout, tier: QualityTier = 'high'): FloorPai
       radius: light.doorPoolRadius,
       alpha: stopRecipe(doorId(door.wing), tier).pool,
       color: rampColor(0),
+    });
+  }
+  const { bays, sides, fars } = washLayout(layout, tier);
+  const owners = [
+    ...bays.map((b) => ({ for: b.for as string, span: spanOf(b.bay) })),
+    ...layout.doors.map((d) => ({
+      for: doorId(d.wing) as string,
+      span: { at: 0, lo: d.z, hi: d.z },
+    })),
+  ];
+  for (const bay of [...sides, ...fars]) {
+    // The pool sits at the bay's end next to its owner (the title bay or the door), where the
+    // phone frame's lower corner meets the floor.
+    const owner = owners.find((o) => o.for === bay.for);
+    const span = spanOf(bay.bay);
+    const ownerMid = owner ? (owner.span.lo + owner.span.hi) / 2 : bay.bay.center;
+    const toward = ownerMid > bay.bay.center ? 1 : -1;
+    const z = (toward > 0 ? span.hi : span.lo) - toward * FAR_POOL.along;
+    pools.push({
+      kind: 'far',
+      for: bay.for,
+      center: [Math.sign(bay.bay.at) * (AISLE_HALF - FAR_POOL.inset), z],
+      radius: FAR_POOL.radius,
+      alpha: Math.min(MAX_FAR_ALPHA, (FAR_POOL.alpha * bay.strength) / FAR_WASH),
+      color: bay.color,
     });
   }
   pools.push({
@@ -385,6 +419,8 @@ export interface WashLayout {
   bays: WashPlacement[];
   /** The dim side bays (lightRecipe.ts `side`), drawn in the bays' mesh after them. */
   sides: SideBay[];
+  /** The dim far bays (lightRecipe.ts `far`, F-M5p), drawn in the same mesh after the sides. */
+  fars: SideBay[];
   /** One per wall line that carries a bay: the shell's seams on it follow the bays' grid. */
   seams: SeamLine[];
 }
@@ -412,7 +448,8 @@ export function washLayout(layout: Layout, tier: QualityTier = 'high'): WashLayo
       strength: stopRecipe(target.stop, tier).wash,
     });
   }
-  return { bays, seams, sides: sideBays(layout, tier, bays) };
+  const sides = sideBays(layout, tier, bays, 'side', []);
+  return { bays, seams, sides, fars: sideBays(layout, tier, bays, 'far', sides) };
 }
 
 /**
@@ -440,7 +477,13 @@ interface Span {
  * every other bay, door lining and the aisle's ends on its wall (planes never overlap); a gap
  * under WASH_BAY_WIDTH gets none.
  */
-function sideBays(layout: Layout, tier: QualityTier, bays: WashPlacement[]): SideBay[] {
+function sideBays(
+  layout: Layout,
+  tier: QualityTier,
+  bays: WashPlacement[],
+  kind: 'side' | 'far',
+  placed: readonly SideBay[],
+): SideBay[] {
   const aisle = layout.rooms.find((r) => r.id === 'aisle');
   if (!aisle) return [];
   const out: SideBay[] = [];
@@ -458,18 +501,20 @@ function sideBays(layout: Layout, tier: QualityTier, bays: WashPlacement[]): Sid
         hi: b.bay.center + b.bay.width / 2,
       })),
     ...doors,
+    ...placed.map((p) => spanOf(p.bay)),
   ];
   const place = (stop: StopId, s: number, edge: Span, color: string) => {
-    const strength = stopRecipe(stop, tier).side;
+    const strength = stopRecipe(stop, tier)[kind];
     if (!(strength > 0)) return;
     const at = s * AISLE_HALF;
     const others = [...taken, ...out.map((o) => spanOf(o.bay))].filter(
       (t) => Math.abs(t.at - at) < 1e-6,
     );
-    // The frame's left: down the aisle on the right wall, up it on the left wall.
+    // The frame's left: down the aisle on the right wall, up it on the left wall. A far bay
+    // (F-M5p) takes the other side.
     let lo: number;
     let hi: number;
-    if (s > 0) {
+    if (s > 0 === (kind === 'side')) {
       hi = edge.lo - SIDE_BAY_GAP;
       const stop = Math.max(aisle.min[1], ...others.filter((t) => t.hi <= hi).map((t) => t.hi));
       lo = Math.max(hi - SIDE_BAY_WIDTH, stop + SIDE_BAY_GAP);

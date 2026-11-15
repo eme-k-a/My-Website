@@ -63,10 +63,10 @@ function bayMaterial(wall: MeshStandardMaterial, wash: Texture): MeshStandardMat
 function WashBays({ layout }: { layout: Layout }) {
   const library = useMaterialLibrary();
   const tier = useMuseum((s) => s.tier);
-  // The title bays, then the dim side bays (F-052): one tile, one mesh.
+  // The title bays, then the dim side bays (F-052) and far bays (F-M5p): one tile, one mesh.
   const bays = useMemo(() => {
     const wash = washLayout(layout, tier);
-    return [...wash.bays, ...wash.sides];
+    return [...wash.bays, ...wash.sides, ...wash.fars];
   }, [layout, tier]);
   const plane = useMemo(() => new PlaneGeometry(1, 1), []);
   const [wash] = useState(createBayWash);

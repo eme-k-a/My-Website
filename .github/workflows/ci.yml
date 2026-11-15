@@ -232,13 +232,17 @@ jobs:
       - name: Lighthouse precheck (the museum is what gets scored)
         run: npx playwright test tests/e2e/lh-precheck.spec.ts --project=desktop --trace off
       # The same two runs as npm run lh, as separate steps so desktop still runs (and reports)
-      # when mobile fails; either failure fails the job.
+      # when mobile fails; either failure fails the job. No full-page screenshot: under
+      # SwiftShader its Page.captureScreenshot timed out and ended the desktop run with a
+      # runtime error (CI run 152); no score or assertion reads it.
       - name: Lighthouse CI (mobile)
         id: lh-mobile
-        run: npx lhci autorun --config=lighthouserc.cjs
+        run: npx lhci autorun --config=lighthouserc.cjs --collect.settings.disableFullPageScreenshot=true
       - name: Lighthouse CI (desktop)
         if: ${{ success() || steps.lh-mobile.outcome == 'failure' }}
-        run: npx lhci autorun --config=lighthouserc.desktop.cjs
+        run: >-
+          npx lhci autorun --config=lighthouserc.desktop.cjs
+          --collect.settings.disableFullPageScreenshot=true
       - if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:

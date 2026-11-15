@@ -92,7 +92,8 @@ async function lcpElement(page: Page): Promise<string> {
  */
 async function needsMuseumPath(page: Page) {
   if (!isXbrowser()) return;
-  await page.goto('/resume/');
+  // A browser capability, so the probe runs on the page's initial about:blank: loading /resume/
+  // first cost a server round trip per test, and once timed out in Firefox (CI run on a70f302).
   test.skip(!(await hasWebgl2(page)), 'This headless browser has no WebGL2 (the museum path)');
 }
 

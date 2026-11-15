@@ -670,7 +670,7 @@
     "gate": "M6",
     "owner": "R8 with R6",
     "root_cause": "Not layout. The spec blocks the museum chunk and acknowledges the console errors that causes, but only in Chromium's wording. WebKit logs 'TypeError: Importing a module script failed.' (CI run 185) and Firefox 'error loading dynamically imported module' (when it has WebGL2, as in run 180), so the global guards failed the test.",
-    "resolution": "R0 for R8: acknowledgeBlockedChunk also acknowledges the WebKit and Firefox wordings. Chromium fast-path still passes locally (9 passed); the e2e-xbrowser job on the PR is the proof for Firefox and WebKit."
+    "resolution": "R0 for R8: acknowledgeBlockedChunk also acknowledges the WebKit and Firefox wordings. Chromium fast-path still passes locally (9 passed); the e2e-xbrowser job on the PR is the proof for Firefox and WebKit. On a70f302 WebKit passed; one Firefox test then timed out (60 s) in the WebGL2 probe's page.goto('/resume/'), while the same page loaded in the other Firefox tests. The probe is a browser capability, so it now runs on the initial about:blank page with no server round trip."
   },
   {
     "id": "F-059",

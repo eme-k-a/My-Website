@@ -11,7 +11,7 @@
 //   one contact-shadow pass renders on the plinth top. That pass sees only the slot's own content
 //   (SHADOW_LAYER), not the whole hall, so a stop where several exhibits reveal at once stays
 //   within the draw-call budget (F-M3a).
-import { ContactShadows } from '@react-three/drei';
+import { ContactShadows } from './ContactShadows';
 import { useThree, type ThreeEvent } from '@react-three/fiber';
 import {
   Component,

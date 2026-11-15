@@ -668,5 +668,37 @@
     "round": 0,
     "gate": "M6",
     "owner": "R8 with R6"
+  },
+  {
+    "id": "F-059",
+    "severity": "P2",
+    "title": "Projects wing: walking from KlarUp to Finance Tracker, the camera looks away from the cases before turning to the next one",
+    "stop": "klarup to finance-tracker",
+    "viewport": "all (seen by Emeka on his phone and laptop)",
+    "path": "src/museum/rail/gaze.ts",
+    "evidence": "Emeka, 2026-11-15. The EXPERIENCE §6.3 gaze looks at the rail point 6 m ahead mid-walk; inside the wing the two cameras are 2.8 m apart and 6 m ahead is past the wing's end wall, so mid-walk the camera faced the wall.",
+    "expected": "Between two cases in a wing the gaze turns straight from case to case.",
+    "check": "gaze.test 'turns straight from case to case inside a wing'.",
+    "status": "fixed",
+    "resolution": "R0 for R4: gazeAt blends F_a to F_b directly on wing tracks between two cases; the door-to-first-case walk keeps the forward look. EXPERIENCE §6.3 updated.",
+    "round": 0,
+    "gate": "G5",
+    "owner": "R4"
+  },
+  {
+    "id": "F-060",
+    "severity": "P1",
+    "title": "iOS Safari: at the front desk the desk is hidden behind the desk card",
+    "stop": "desk",
+    "viewport": "iPhone Safari with the toolbars showing",
+    "path": "src/museum/rail/CameraRig.tsx",
+    "evidence": "Emeka's iPhone screenshot, 2026-11-15: the end-wall line sits about 90 px lower than in a 390 x 664 Chromium emulation and the desk is under the card. The stage is pinned to 100lvh, the card's slot is 100svh, and the desk band put the card top at the canvas height less its rise, about 90 px (the toolbar height) too low. Chromium has lvh = svh, so no automated test could see it.",
+    "expected": "The desk sits above the card on iOS with the toolbars showing or hidden.",
+    "check": "The band reads the card top from the slot's top (scroll and toolbar independent); framing.test unchanged and passing; Emeka re-checks on his iPhone.",
+    "status": "fixed",
+    "resolution": "R0 for R4: measureDeskBand stores the card top relative to its slot, so the band no longer depends on the 100lvh canvas height. DESK_CARD_CLEARANCE stays 16 px (36 px pushed the end-wall line under the HUD at 360 x 640). Chromium output is unchanged (lvh = svh there), so no baselines change. Awaits Emeka's re-check on iOS.",
+    "round": 0,
+    "gate": "G5",
+    "owner": "R4"
   }
 ]

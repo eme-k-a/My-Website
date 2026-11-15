@@ -147,11 +147,14 @@ function panelLeft(openId: ExhibitId | null, width: number): number | null {
 
 /**
  * The portrait desk band (F-020, framing.ts `deskPortraitY`), measured from the DOM: the HUD
- * header's bottom, and how far the desk card's top rises above the bottom of its slot. At the desk
- * stop the slot fills the viewport, so the card's top on the canvas is the canvas height less
- * `rise`. Measured when the rig mounts and whenever the card, its slot or the HUD resizes.
+ * header's bottom, and the desk card's top measured from the top of its slot. At the desk stop the
+ * slot's top is the top of the viewport and of the canvas, so `cardTop` is the card's top on the
+ * canvas. It used to be the canvas height less the card's rise above the slot's bottom, but on iOS
+ * Safari the canvas is pinned to 100lvh while the slot is 100svh: with the toolbars showing, that
+ * put the card about 90 px lower than it is and framed the desk behind it (Emeka, 2026-11-15).
+ * Measured when the rig mounts and whenever the card, its slot or the HUD resizes.
  */
-const deskBand = { hud: 0, rise: 0, ok: false };
+const deskBand = { hud: 0, cardTop: 0, ok: false };
 
 function deskElements(): {
   card: HTMLElement | null;
@@ -166,21 +169,24 @@ function deskElements(): {
 /** Re-measures the desk band; true when it changed. */
 function measureDeskBand(): boolean {
   const { card, slot, hud } = deskElements();
-  const before = `${deskBand.hud}|${deskBand.rise}|${deskBand.ok}`;
+  const before = `${deskBand.hud}|${deskBand.cardTop}|${deskBand.ok}`;
   if (card && slot) {
-    deskBand.rise = slot.getBoundingClientRect().bottom - card.getBoundingClientRect().top;
+    deskBand.cardTop = card.getBoundingClientRect().top - slot.getBoundingClientRect().top;
     deskBand.hud = hud ? hud.getBoundingClientRect().bottom : 0;
-    deskBand.ok = deskBand.rise > 0;
+    deskBand.ok = deskBand.cardTop > 0;
   } else {
     deskBand.ok = false;
   }
-  return before !== `${deskBand.hud}|${deskBand.rise}|${deskBand.ok}`;
+  return before !== `${deskBand.hud}|${deskBand.cardTop}|${deskBand.ok}`;
 }
 
 /** The portrait framing height at the desk for a canvas `height` px tall. */
 function deskFramingY(height: number, fov: number): number {
   if (!deskBand.ok) return DESK_PORTRAIT_Y;
-  return deskPortraitY({ height, top: deskBand.hud, bottom: height - deskBand.rise }, fov);
+  return deskPortraitY(
+    { height, top: deskBand.hud, bottom: Math.min(height, deskBand.cardTop) },
+    fov,
+  );
 }
 
 /**

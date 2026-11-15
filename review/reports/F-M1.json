@@ -1,0 +1,143 @@
+{
+  "wp": "F-M1",
+  "role": "Fixer acting as R10 (F-001, F-002), R8 (F-003, F-004), R6 (F-005 to F-008), R9 with an R1 grant (F-009) and R7 (F-010)",
+  "status": "partial",
+  "branch": "claude/intelligent-sagan-poq45q (main tree, not pushed)",
+  "commits": [
+    "a9f0d49 fix(F-001): test scanContent on fixtures, not on live draft content",
+    "618a1d9 fix(F-002): split the lighthouse runs and harden two CI steps",
+    "d70f393 fix(F-003): write the private-use probe as an escape",
+    "1e89f8d fix(F-004): audit the canvas wrappers and every stop section",
+    "ee4d210 fix(F-005): keep the hyphenated surname whole in the hero h1",
+    "8c288e2 fix(F-006): render #app from scratch when nothing was prerendered",
+    "2923ac0 fix(F-007): show the card buttons only in museum mode",
+    "b7ea403 fix(F-008): show the lobby intro below the phone fold",
+    "5eb14cf fix(F-009): derive the /resume/ title and description from content",
+    "4e5a79a fix(F-010): fail the build when three.js code reaches the entry chunk"
+  ],
+  "changedFiles": [
+    "scripts/check-copy.test.ts",
+    ".github/workflows/ci.yml",
+    "scripts/check-glyphs.test.ts",
+    "tests/e2e/helpers.ts",
+    "src/overlay/Intro.tsx",
+    "src/overlay/Intro.module.css",
+    "src/main.tsx",
+    "src/overlay/StopCard.module.css",
+    "src/entry-server.tsx",
+    "src/content/selectors.ts",
+    "scripts/check-budgets.ts",
+    "scripts/check-budgets.test.ts",
+    "review/reports/F-M1.json"
+  ],
+  "acceptance": [
+    {
+      "id": "F-001 A1",
+      "criterion": "npm test passes",
+      "command": "npm test",
+      "result": "pass",
+      "evidence": "23 files, 391 tests passed (check-copy.test.ts 14: the two live-content tests now use fixtures or shape checks; real-content hits must start with content. and resolve to a draft: true object or a [placeholder string; the RELEASE=1 test asserts hits equal scanContent(content), not that any exist)"
+    },
+    {
+      "id": "F-001 A2",
+      "criterion": "A throwaway edit that flips exhibit.draft on verafin to false keeps npm test green (edit reverted)",
+      "command": "edit src/content/resume.ts verafin exhibit draft: false; npm test; git checkout src/content/resume.ts",
+      "result": "fail",
+      "evidence": "check-copy.test.ts stays green (14 passed; before the fix 'flags the real content today' failed under the same flip). npm test still has 2 failures, both in R1 tests outside this grant that read the live content: src/content/content.test.ts 'verafin is a draft exhibit (PLAN Addendum)' and src/content/selectors.test.ts 'carries the exhibit draft flag' (385 of 387 passed). Edit reverted; see openQuestions[0]."
+    },
+    {
+      "id": "F-002",
+      "criterion": "actionlint exits 0, the YAML parses, the diff shows (a) mobile and desktop lighthouse as two continue-on-error steps, (b) apt-get update before installing poppler-utils in the build job, (c) --pass-with-no-tests on the baseline regeneration step",
+      "command": "actionlint .github/workflows/ci.yml; python3 -c \"import yaml,sys;yaml.safe_load(open(sys.argv[1]))\" .github/workflows/ci.yml; git show 618a1d9",
+      "result": "pass",
+      "evidence": "actionlint 1.7.7 exit 0, yaml ok, prettier clean. CHROME_PATH now goes to GITHUB_ENV in its own step; 'Lighthouse CI (mobile)' and 'Lighthouse CI (desktop)' run npx lhci autorun with lighthouserc.cjs and lighthouserc.desktop.cjs, each continue-on-error: true (job-level continue-on-error kept). The remote GitHub Actions run is deferred to R0 after push."
+    },
+    {
+      "id": "F-003",
+      "criterion": "No literal U+E000 in scripts/check-glyphs.test.ts and the test still passes",
+      "command": "LC_ALL=C.UTF-8 grep -P '\\x{E000}' scripts/check-glyphs.test.ts; npx vitest run --project unit scripts/check-glyphs.test.ts",
+      "result": "pass",
+      "evidence": "grep finds nothing (exit 1, count 0); 8 tests passed. The constant is now written as the escape backslash-uE000."
+    },
+    {
+      "id": "F-004",
+      "criterion": "Smoke still passes; a deliberate non-passive wheel listener on a section[data-stop] makes the audit fail (scratch copy)",
+      "command": "PORT=4173 npx playwright test tests/e2e/harness.spec.ts tests/e2e/smoke.spec.ts; scratch spec tests/e2e/zz-scratch-f004.spec.ts (deleted after the run)",
+      "result": "pass",
+      "evidence": "harness plus smoke: 36 passed, 4 skipped on all four projects. Scratch spec on / (desktop and pixel7, 8 passed): baseline audit [] on the real lobby; a non-passive wheel listener on the second section is reported as 'section[data-stop=\"verafin\"] wheel'; expect(audit).toEqual([]) fails with it in place (test.fail passed); listeners on a canvas parent and its R3F-style wrapper are reported as 'canvas parent wheel' and 'R3F wrapper touchstart'."
+    },
+    {
+      "id": "F-005",
+      "criterion": "Cold load at 1440x900 and Pixel 7 on serve-dist with no ?test: sum of layout-shift values at most 0.02, 3 runs each",
+      "command": "PerformanceObserver('layout-shift', buffered) via addInitScript, fresh context per run, /?mode=museum on serve-dist :4173, 2.5 s after load",
+      "result": "pass",
+      "evidence": "Cause: the web-font swap about 140 to 175 ms after navigation. 'Instrument Serif Fallback' lists only Georgia and Gelasio, so on Linux the h1 used DejaVu Serif, which broke 'Nduka-Nwagbo' at its hyphen (4 lines, 363 px) until Instrument Serif arrived (3 lines, 272 px) and the centered hero moved. Fix: the hyphenated surname sits in a nowrap span. Sum of all shift entries, before and after: 1440x900 0.0270 x3 to 0.0012 x3; Pixel 7 0.0008 x3 to 0.0008 x3 (Playwright's touch emulation flags these hadRecentInput, so they are counted anyway). Lighthouse desktop on /?test=1&mode=museum: CLS 0.0011 x3 (WP-10 measured 0.020 to 0.022). Re-measured after F-008: unchanged."
+    },
+    {
+      "id": "F-006",
+      "criterion": "npm run dev page load shows 0 page errors in Chromium; the prerendered build still hydrates (e2e green)",
+      "command": "npx vite --port 4173; Chromium on /?mode=museum and /?test=1&mode=museum; PORT=4173 npm run e2e",
+      "result": "pass",
+      "evidence": "Before: 1 page error on each URL ('Hydration failed because the server rendered HTML didn't match the client'). After: 0 page errors, 0 console errors, h1 and 10 cards rendered. Built pages still take the hydrateRoot path (#app has element children); full e2e 111 passed, 89 skipped, exit 0."
+    },
+    {
+      "id": "F-007",
+      "criterion": "With JS disabled, / has 0 visible buttons inside stop cards and every story is reachable by a link; with JS on the existing e2e passes",
+      "command": "Chromium javaScriptEnabled: false on / (1440x900 and Pixel 7); PORT=4173 npm run e2e",
+      "result": "pass",
+      "evidence": "JS off: 10 cards, 8 buttons in the DOM, 0 visible; 10 distinct visible /exhibit/<id>/ links, none of the 8 experience, project and volunteer ids missing (plus mun and certifications). JS on (?test=1&mode=museum): all 8 buttons visible from first paint (html[data-mode=museum] is set by the boot script before paint). shell, smoke and fast-path 59 passed; a11y 20 passed."
+    },
+    {
+      "id": "F-008",
+      "criterion": "At 390x844 the intro paragraph is in the DOM and visible after scrolling; fast-path specs pass; Lighthouse mobile reports LCP on the h1",
+      "command": "Chromium at 390x844, 360x640, 412x915 (JS on and off); PORT=4173 npx playwright test tests/e2e/fast-path.spec.ts; lhci collect (repo mobile config, / only, 3 runs)",
+      "result": "pass",
+      "evidence": "390x844 JS on: intro display block, top 868 px (below the 844 px fold), visible after scrolling, lobby 1074 px tall, onboarding pill bottom at 828 px; same at 360x640 (top 664) and 412x915 (top 939); LCP entry is the h1 at all three. fast-path, shell and smoke 59 passed. Lighthouse mobile x3: LCP element h1 (selector ...div._fold > h1._name), LCP 2169 to 2220 ms, CLS 0.0009."
+    },
+    {
+      "id": "F-009",
+      "criterion": "dist/resume/index.html has a meta description equal to the content value; no hard-coded /resume/ string left in entry-server.tsx",
+      "command": "npm run build; compare the dist/resume/index.html description with resumePageMeta(content, build date).description",
+      "result": "pass",
+      "evidence": "equal: true, 156 characters: 'Resume of Chukwuemeka (Emeka) Nduka-Nwagbo: B.Eng Computer Engineering student at Memorial University of Newfoundland. Experience, projects, skills and PDF.' The title also comes from the selector. From June 2027 it reads 'graduate of'. The only literal left in HEAD is the 404 description, which repeats R6's NotFound body sentence (UI copy, not content); see openQuestions[3]."
+    },
+    {
+      "id": "F-010",
+      "criterion": "npm run check:budgets passes on the current build; a unit test proves the three.js fingerprint check fails on a fixture chunk",
+      "command": "npm run check:budgets; npx vitest run --project unit scripts/check-budgets.test.ts",
+      "result": "pass",
+      "evidence": "budgets ok (entry 87.30 KB gzip of 110, museum 0.07). 16 tests passed, 4 new: three.js, R3F and troika code in entry chunks is reported per file and needle; the same code in the museum chunk is allowed; each fingerprint fails on its own; checkBudgets returns 1. Fingerprints checked in a scratch minified Vite build of three, R3F, drei and troika, and absent from the current entry. Real-chunk proof: a temporary 'new Vector3()' import in main.tsx (reverted) made check-budgets report 'entry: assets/main-*.js contains three.js code (\"__THREE__\")' and exit 1."
+    },
+    {
+      "id": "Final",
+      "criterion": "npm run verify, npm run build and PORT=4173 npm run e2e after the last item",
+      "command": "npm run verify && npm run build && PORT=4173 npm run e2e && PORT=4173 npm run a11y && npm run test:pdf",
+      "result": "pass",
+      "evidence": "verify exit 0 (23 files, 391 tests); build exit 0 (PDF 1 page, resume.tex unchanged, budgets ok, check-copy ok with dist); e2e 111 passed, 89 skipped, exit 0; a11y 20 passed, 4 skipped; test:pdf 9 passed, 1 skipped."
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "F-001 A2: flipping verafin's exhibit.draft still fails two R1 tests that read the live content, both outside this grant: src/content/content.test.ts 'verafin is a draft exhibit (PLAN Addendum)' (a deliberate pin of the ruling) and src/content/selectors.test.ts 'carries the exhibit draft flag' (expects verafin among the draft cards). Should R1 move the selector test to a fixture (structuredClone(content) with a draft forced on) and retire the content pin when Verafin's copy is approved at G5?",
+      "for": "R0",
+      "default": "Both R1 tests untouched; check-copy.test.ts no longer depends on drafts"
+    },
+    {
+      "question": "F-005 root cause sits in src/design/fonts.css (R2, tuned by WP-28): 'Instrument Serif Fallback' has only Georgia and Gelasio sources, so on Linux (CI, this container) and Android the h1 falls to the generic serif (DejaVu Serif, Noto Serif) with no metric overrides. The overlay fix covers 1440x900 and Pixel 7, but at 360x640 'Chukwuemeka (Emeka)' fits one line only in Instrument Serif, so the swap still shifts about 0.041 there (0.045 before). Add metric-matched fallback families for DejaVu Serif, Liberation Serif or Tinos and Noto Serif to --font-serif, and preload the h1 face at <!--preload--> (WP-28)?",
+      "for": "R2",
+      "default": "Overlay fix only (nowrap surname); fonts.css and the preload marker untouched"
+    },
+    {
+      "question": "F-008 needed one wrapper element in src/overlay/Intro.tsx (div.fold around the first-viewport block) besides Intro.module.css, the only path the table lists for F-008; Intro.tsx is an R6 overlay file covered by the F-005 grant. Accept? Also for WP-09: below 480 px the lobby section is now taller than 100svh (1074 px at 390x844, 896 px at 360x640), so mandatory snapping must let the visitor scroll freely inside the lobby to read the intro paragraph.",
+      "for": "R0",
+      "default": "Wrapper kept in the F-008 commit; ScrollTrack untouched (R4)"
+    },
+    {
+      "question": "F-009: the /resume/ description is now built from content, so its wording moved from the CONTENT_DRAFT 6.6 suggestion ('Computer Engineering student at ...') to 'B.Eng Computer Engineering student at Memorial University of Newfoundland' (education.shortDegree), and it says 'graduate of' from June 2027. Copy review at G5. The 404 description in entry-server.tsx still repeats NotFound's body sentence as a literal (R6 UI copy); R6 could export it from NotFound.tsx so the head imports it. A unit test for resumePageMeta belongs in R1's selectors.test.ts (student before the graduation month, graduate after, at most 160 characters).",
+      "for": "Emeka",
+      "default": "Derived wording as written; 404 literal and selector test left to R6 and R1"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Worked in the main tree on the integration branch, one commit per item; nothing pushed, no tags. Ownership: every commit touches only its item's paths (F-008 also touches Intro.tsx, see openQuestions[2]). Shell heredocs here turn a backslash-u escape into the literal character, which put a literal U+E000 into the first F-003 commit message; it was amended before anything else (d70f393), and no commit message or added line holds non-ASCII text or U+2014. CLS numbers sum every layout-shift entry, including the ones Playwright's touch emulation marks hadRecentInput, because no input happened during the load. Lighthouse checks used the repo configs restricted to / (lhci collect), not the full npm run lh, which still stops at /exhibit/verafin/ (404 until WP-14). The F-002 remote CI run and anything on Netlify are deferred to R0 after push. Scratch output stayed in the session scratchpad and gitignored folders (.lighthouseci/, test-results/, playwright-report/); out/f010 was deleted."
+}

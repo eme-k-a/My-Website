@@ -1,0 +1,833 @@
+{
+  "wp": "F-M3a",
+  "role": "R7 Performance and Quality, with R3 (kit) and the R0 grant to merge exhibit static geometry",
+  "status": "done",
+  "branch": "wp/F-M3a (local; not pushed, integration by R0)",
+  "commits": [
+    "ef9d49c perf(F-M3a): contact-shadow bake draws only the slot's own content",
+    "cd2bda3 perf(F-M3a): kit MergeStatic merges static meshes per material",
+    "f512279 perf(F-M3a): merge the static parts of five exhibits",
+    "2f49242 test(F-M3a): greybox measures every stop and names all offenders"
+  ],
+  "changedFiles": [
+    "src/museum/exhibits/_kit/ExhibitFrame.tsx",
+    "src/museum/exhibits/_kit/MergeStatic.tsx",
+    "src/museum/exhibits/_kit/mergeStatic.ts",
+    "src/museum/exhibits/_kit/mergeStatic.test.ts",
+    "src/museum/exhibits/_kit/index.ts",
+    "src/museum/exhibits/klarup/Climb.tsx",
+    "src/museum/exhibits/mysa/WarmStart.tsx",
+    "src/museum/exhibits/sdsj/RoundTable.tsx",
+    "src/museum/exhibits/verafin/ReportingEngine.tsx",
+    "src/museum/exhibits/wailo/DeepLink.tsx",
+    "tests/e2e/greybox.spec.ts",
+    "review/reports/F-M3a.json"
+  ],
+  "rootCause": "stats().calls is the last rendered frame. When a stop is reached, every exhibit that mounts with it reveals in the same frame, and each revealed plinth slot bakes its drei ContactShadows once: a full scene render from a small orthographic camera, in which every hall-sized merged mesh (shell, ceiling slot, wash bays, aisle floor, plinths, cases, beams, brass trim, fixture brass) passes the frustum test, plus the exhibit itself. At verafin (desktop, medium) the steady frame was 49 calls and the reveal frame added the klarup and mysa bakes (9 + 20 and 9 + 12) for 98. At klarup on pixel7 four bakes landed in one frame (116). The drei blur passes draw nothing here (the blur plane sits at the world origin outside the shadow camera), so the bake is one unblurred depth pass; that is unchanged.",
+  "fix": [
+    "ExhibitFrame: the contact-shadow camera renders only SHADOW_LAYER (7); the slot's crate and exhibit meshes join it when the slot's content becomes final, before the one bake. A bake now costs the exhibit's own calls only (about 9 fewer per slot).",
+    "Kit <MergeStatic> (mergeStatic.ts, unit-tested): meshes that share a library material, render order and attribute layout are merged in the wrapper's frame, static instanced meshes expanded per instance; transparent, mirrored, lone and userData.keepUnmerged meshes keep their own calls; sources are hidden, not removed. Triangles unchanged.",
+    "Exhibits (R0 grant, merging only): klarup 20 to 8 calls, mysa 12 to 7, wailo 13 to 7, verafin 9 to 5, sdsj 11 to 9. The verafin report grid and the wailo pulse move, so they stay outside the merge. finance-tracker (4), cfia (6), mun (8) and certifications (7) were not touched.",
+    "greybox.spec: the draw-call walk records every stop, annotates the table and fails once with all offenders."
+  ],
+  "perStop": {
+    "method": "Temporary uncommitted probe spec: museumUrl('/', {tier}) on desktop and pixel7, goToStop(instant) through every main and wing stop in the greybox order, then __MUSEUM__.stats(). callsAfter is the higher of two after runs. A renderBufferDirect wrapper (also temporary) attributed each call to its object to find the cause.",
+    "summary": {
+      "desktop/medium": {
+        "maxCallsBefore": 98,
+        "maxCallsAfter": 53,
+        "maxTrianglesAfter": 22138
+      },
+      "desktop/high": {
+        "maxCallsBefore": 134,
+        "maxCallsAfter": 107,
+        "maxTrianglesAfter": 36743
+      },
+      "pixel7/medium": {
+        "maxCallsBefore": 116,
+        "maxCallsAfter": 48,
+        "maxTrianglesAfter": 18512
+      },
+      "pixel7/high": {
+        "maxCallsBefore": 154,
+        "maxCallsAfter": 100,
+        "maxTrianglesAfter": 30689
+      }
+    },
+    "tables": {
+      "desktop/medium": [
+        {
+          "stop": "lobby",
+          "callsBefore": 57,
+          "callsAfter": 53,
+          "trianglesBefore": 7528,
+          "trianglesAfter": 7528,
+          "mounted": [
+            "verafin"
+          ]
+        },
+        {
+          "stop": "verafin",
+          "callsBefore": 98,
+          "callsAfter": 43,
+          "trianglesBefore": 23418,
+          "trianglesAfter": 7400,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup"
+          ]
+        },
+        {
+          "stop": "projects-door",
+          "callsBefore": 55,
+          "callsAfter": 33,
+          "trianglesBefore": 26220,
+          "trianglesAfter": 22138,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "mysa",
+          "callsBefore": 74,
+          "callsAfter": 38,
+          "trianglesBefore": 20444,
+          "trianglesAfter": 9020,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "finance-tracker",
+            "sdsj"
+          ]
+        },
+        {
+          "stop": "volunteer-door",
+          "callsBefore": 46,
+          "callsAfter": 34,
+          "trianglesBefore": 10424,
+          "trianglesAfter": 6342,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "cfia",
+            "klarup",
+            "finance-tracker",
+            "sdsj"
+          ]
+        },
+        {
+          "stop": "wailo",
+          "callsBefore": 50,
+          "callsAfter": 44,
+          "trianglesBefore": 10060,
+          "trianglesAfter": 10060,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "cfia",
+            "klarup",
+            "sdsj",
+            "mun"
+          ]
+        },
+        {
+          "stop": "cfia",
+          "callsBefore": 39,
+          "callsAfter": 39,
+          "trianglesBefore": 11926,
+          "trianglesAfter": 11926,
+          "mounted": [
+            "mysa",
+            "wailo",
+            "cfia",
+            "sdsj",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "mun",
+          "callsBefore": 29,
+          "callsAfter": 29,
+          "trianglesBefore": 11078,
+          "trianglesAfter": 11078,
+          "mounted": [
+            "mysa",
+            "wailo",
+            "cfia",
+            "sdsj",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "certifications",
+          "callsBefore": 20,
+          "callsAfter": 20,
+          "trianglesBefore": 8414,
+          "trianglesAfter": 8414,
+          "mounted": [
+            "wailo",
+            "cfia",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "desk",
+          "callsBefore": 18,
+          "callsAfter": 18,
+          "trianglesBefore": 6798,
+          "trianglesAfter": 6798,
+          "mounted": [
+            "wailo",
+            "cfia",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "klarup",
+          "callsBefore": 33,
+          "callsAfter": 35,
+          "trianglesBefore": 7136,
+          "trianglesAfter": 9800,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "finance-tracker",
+          "callsBefore": 17,
+          "callsAfter": 17,
+          "trianglesBefore": 11600,
+          "trianglesAfter": 11600,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "sdsj",
+          "callsBefore": 24,
+          "callsAfter": 34,
+          "trianglesBefore": 4810,
+          "trianglesAfter": 4810,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "sdsj"
+          ]
+        }
+      ],
+      "desktop/high": [
+        {
+          "stop": "lobby",
+          "callsBefore": 115,
+          "callsAfter": 107,
+          "trianglesBefore": 15017,
+          "trianglesAfter": 15017,
+          "mounted": [
+            "verafin"
+          ]
+        },
+        {
+          "stop": "verafin",
+          "callsBefore": 124,
+          "callsAfter": 75,
+          "trianglesBefore": 27707,
+          "trianglesAfter": 11689,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup"
+          ]
+        },
+        {
+          "stop": "projects-door",
+          "callsBefore": 93,
+          "callsAfter": 64,
+          "trianglesBefore": 40341,
+          "trianglesAfter": 36743,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "mysa",
+          "callsBefore": 109,
+          "callsAfter": 74,
+          "trianglesBefore": 26289,
+          "trianglesAfter": 15133,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "finance-tracker",
+            "sdsj"
+          ]
+        },
+        {
+          "stop": "volunteer-door",
+          "callsBefore": 77,
+          "callsAfter": 63,
+          "trianglesBefore": 15599,
+          "trianglesAfter": 11517,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "cfia",
+            "klarup",
+            "finance-tracker",
+            "sdsj"
+          ]
+        },
+        {
+          "stop": "wailo",
+          "callsBefore": 72,
+          "callsAfter": 76,
+          "trianglesBefore": 14567,
+          "trianglesAfter": 17603,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "cfia",
+            "klarup",
+            "sdsj",
+            "mun"
+          ]
+        },
+        {
+          "stop": "cfia",
+          "callsBefore": 81,
+          "callsAfter": 81,
+          "trianglesBefore": 23301,
+          "trianglesAfter": 23301,
+          "mounted": [
+            "mysa",
+            "wailo",
+            "cfia",
+            "sdsj",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "mun",
+          "callsBefore": 61,
+          "callsAfter": 61,
+          "trianglesBefore": 20977,
+          "trianglesAfter": 20977,
+          "mounted": [
+            "mysa",
+            "wailo",
+            "cfia",
+            "sdsj",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "certifications",
+          "callsBefore": 45,
+          "callsAfter": 45,
+          "trianglesBefore": 16809,
+          "trianglesAfter": 16809,
+          "mounted": [
+            "wailo",
+            "cfia",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "desk",
+          "callsBefore": 46,
+          "callsAfter": 46,
+          "trianglesBefore": 15385,
+          "trianglesAfter": 15385,
+          "mounted": [
+            "wailo",
+            "cfia",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "klarup",
+          "callsBefore": 134,
+          "callsAfter": 52,
+          "trianglesBefore": 45723,
+          "trianglesAfter": 11279,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "finance-tracker",
+          "callsBefore": 33,
+          "callsAfter": 33,
+          "trianglesBefore": 15731,
+          "trianglesAfter": 15731,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "sdsj",
+          "callsBefore": 83,
+          "callsAfter": 50,
+          "trianglesBefore": 20379,
+          "trianglesAfter": 10577,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "sdsj"
+          ]
+        }
+      ],
+      "pixel7/medium": [
+        {
+          "stop": "lobby",
+          "callsBefore": 52,
+          "callsAfter": 48,
+          "trianglesBefore": 7438,
+          "trianglesAfter": 7438,
+          "mounted": [
+            "verafin"
+          ]
+        },
+        {
+          "stop": "verafin",
+          "callsBefore": 76,
+          "callsAfter": 27,
+          "trianglesBefore": 22928,
+          "trianglesAfter": 6910,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup"
+          ]
+        },
+        {
+          "stop": "projects-door",
+          "callsBefore": 32,
+          "callsAfter": 18,
+          "trianglesBefore": 23166,
+          "trianglesAfter": 11616,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "mysa",
+          "callsBefore": 24,
+          "callsAfter": 31,
+          "trianglesBefore": 8914,
+          "trianglesAfter": 10536,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "finance-tracker",
+            "sdsj"
+          ]
+        },
+        {
+          "stop": "volunteer-door",
+          "callsBefore": 43,
+          "callsAfter": 31,
+          "trianglesBefore": 10408,
+          "trianglesAfter": 6326,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "cfia",
+            "klarup",
+            "finance-tracker",
+            "sdsj"
+          ]
+        },
+        {
+          "stop": "wailo",
+          "callsBefore": 29,
+          "callsAfter": 33,
+          "trianglesBefore": 7080,
+          "trianglesAfter": 10116,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "cfia",
+            "klarup",
+            "sdsj",
+            "mun"
+          ]
+        },
+        {
+          "stop": "cfia",
+          "callsBefore": 29,
+          "callsAfter": 29,
+          "trianglesBefore": 9226,
+          "trianglesAfter": 9226,
+          "mounted": [
+            "mysa",
+            "wailo",
+            "cfia",
+            "sdsj",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "mun",
+          "callsBefore": 29,
+          "callsAfter": 29,
+          "trianglesBefore": 11046,
+          "trianglesAfter": 11046,
+          "mounted": [
+            "mysa",
+            "wailo",
+            "cfia",
+            "sdsj",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "certifications",
+          "callsBefore": 20,
+          "callsAfter": 20,
+          "trianglesBefore": 8414,
+          "trianglesAfter": 8414,
+          "mounted": [
+            "wailo",
+            "cfia",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "desk",
+          "callsBefore": 18,
+          "callsAfter": 18,
+          "trianglesBefore": 6798,
+          "trianglesAfter": 6798,
+          "mounted": [
+            "wailo",
+            "cfia",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "klarup",
+          "callsBefore": 116,
+          "callsAfter": 35,
+          "trianglesBefore": 41516,
+          "trianglesAfter": 18512,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "finance-tracker",
+          "callsBefore": 17,
+          "callsAfter": 17,
+          "trianglesBefore": 11600,
+          "trianglesAfter": 11600,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "sdsj",
+          "callsBefore": 24,
+          "callsAfter": 22,
+          "trianglesBefore": 4810,
+          "trianglesAfter": 4810,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "sdsj"
+          ]
+        }
+      ],
+      "pixel7/high": [
+        {
+          "stop": "lobby",
+          "callsBefore": 108,
+          "callsAfter": 100,
+          "trianglesBefore": 14879,
+          "trianglesAfter": 14879,
+          "mounted": [
+            "verafin"
+          ]
+        },
+        {
+          "stop": "verafin",
+          "callsBefore": 105,
+          "callsAfter": 52,
+          "trianglesBefore": 29841,
+          "trianglesAfter": 16487,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup"
+          ]
+        },
+        {
+          "stop": "projects-door",
+          "callsBefore": 54,
+          "callsAfter": 44,
+          "trianglesBefore": 34771,
+          "trianglesAfter": 30689,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "mysa",
+          "callsBefore": 96,
+          "callsAfter": 43,
+          "trianglesBefore": 29257,
+          "trianglesAfter": 17833,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "finance-tracker",
+            "sdsj"
+          ]
+        },
+        {
+          "stop": "volunteer-door",
+          "callsBefore": 75,
+          "callsAfter": 61,
+          "trianglesBefore": 15623,
+          "trianglesAfter": 11541,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "cfia",
+            "klarup",
+            "finance-tracker",
+            "sdsj"
+          ]
+        },
+        {
+          "stop": "wailo",
+          "callsBefore": 63,
+          "callsAfter": 51,
+          "trianglesBefore": 14165,
+          "trianglesAfter": 14165,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "cfia",
+            "klarup",
+            "sdsj",
+            "mun"
+          ]
+        },
+        {
+          "stop": "cfia",
+          "callsBefore": 63,
+          "callsAfter": 63,
+          "trianglesBefore": 18457,
+          "trianglesAfter": 18457,
+          "mounted": [
+            "mysa",
+            "wailo",
+            "cfia",
+            "sdsj",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "mun",
+          "callsBefore": 64,
+          "callsAfter": 64,
+          "trianglesBefore": 22133,
+          "trianglesAfter": 22133,
+          "mounted": [
+            "mysa",
+            "wailo",
+            "cfia",
+            "sdsj",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "certifications",
+          "callsBefore": 44,
+          "callsAfter": 44,
+          "trianglesBefore": 16829,
+          "trianglesAfter": 16829,
+          "mounted": [
+            "wailo",
+            "cfia",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "desk",
+          "callsBefore": 45,
+          "callsAfter": 45,
+          "trianglesBefore": 15383,
+          "trianglesAfter": 15383,
+          "mounted": [
+            "wailo",
+            "cfia",
+            "mun",
+            "certifications"
+          ]
+        },
+        {
+          "stop": "klarup",
+          "callsBefore": 154,
+          "callsAfter": 61,
+          "trianglesBefore": 48657,
+          "trianglesAfter": 25653,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "finance-tracker",
+          "callsBefore": 39,
+          "callsAfter": 39,
+          "trianglesBefore": 23205,
+          "trianglesAfter": 23205,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "klarup",
+            "finance-tracker"
+          ]
+        },
+        {
+          "stop": "sdsj",
+          "callsBefore": 96,
+          "callsAfter": 61,
+          "trianglesBefore": 21049,
+          "trianglesAfter": 9625,
+          "mounted": [
+            "verafin",
+            "mysa",
+            "wailo",
+            "klarup",
+            "sdsj"
+          ]
+        }
+      ]
+    }
+  },
+  "acceptance": [
+    {
+      "criterion": "At tier medium every stop is at or under 80 draw calls on desktop and pixel7; at tier high at or under 150",
+      "result": "pass",
+      "evidence": "medium max 53 (desktop, was 98) and 48 (pixel7, was 116); high max 107 (desktop, was 134) and 100 (pixel7, was 154, over 150 before). Worst case bound: a stop's steady frame plus every simultaneous bake is now about 60 at verafin (desktop, medium)."
+    },
+    {
+      "criterion": "Triangles stay within budget at every stop",
+      "result": "pass",
+      "evidence": "max after: 22138 desktop medium, 18512 pixel7 medium, 36743 desktop high, 30689 pixel7 high (limits 150k mobile, 500k desktop); per-exhibit triangles unchanged (mergeStatic.test asserts equal triangles)"
+    },
+    {
+      "criterion": "greybox, environment, exhibit-contract, exhibits, wings and rail-input specs pass on desktop and pixel7",
+      "command": "PORT=4174 npx playwright test greybox environment exhibit-contract exhibits wings rail-input --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "56 passed, 14 skipped (project-scoped), 0 failed, 18.1 min, on the final build"
+    },
+    {
+      "criterion": "npm run verify and npm run build pass",
+      "result": "pass",
+      "evidence": "verify: lint, typecheck, 859 unit tests (4 new in mergeStatic.test.ts); build: budgets ok (exhibit chunks 1.4 to 3.7 KB of 40), check-copy ok"
+    },
+    {
+      "criterion": "Before/after captures at verafin, klarup and the worst other stop show no visible change",
+      "result": "pass",
+      "evidence": "Full-page captures of all 13 stops x {desktop, pixel7} x {medium, high} from the base build (37cdf2a) and the final build, taken 1.5 s after settling, pixel-diffed and looked at side by side (verafin desktop medium, klarup pixel7 medium, mysa desktop high, mysa being the worst other stop at 74 calls before). Canvas pixels are identical: the only differences are the DOM rail at x 1358 to 1383 on desktop (481 px, present between two runs of the same base build too), antialiasing of the pixel7 Classic button over the canvas (72 px) and scattered 1 to 2 level noise at klarup on pixel7 high. Captures stay in the session scratchpad, not the repo."
+    }
+  ],
+  "deviations": [
+    "Integration onto claude/intelligent-sagan-poq45q is left to the milestone integrator (R0 authority); this worktree only commits and moves wp/F-M3a.",
+    "ExhibitFrame wraps the crate and the exhibit in a new identity group 'slot-content' (no transform) so the shadow layer can be applied to the slot's own content."
+  ],
+  "openQuestions": [
+    {
+      "question": "stats().calls reads the last rendered frame, which on arrival can be a reveal frame with one contact-shadow bake per revealed slot. Should the budget keep counting that transient frame (current behaviour, now within budget with margin) or measure a steady frame?",
+      "for": "R0",
+      "default": "Unchanged: transient bake frames are counted."
+    },
+    {
+      "question": "MergeStatic is a new kit export (R3). Should exhibit READMEs and ARCHITECTURE 7.5 mention it as the way to keep exhibits under their draw-call budgets?",
+      "for": "R0 (docs), R5 (exhibit READMEs)",
+      "default": "Not documented beyond the kit source comments."
+    }
+  ],
+  "depsRequest": [],
+  "notes": [
+    "Visual baselines are regenerated by R0 in CI; no @visual mismatches are expected from this change since canvas pixels matched.",
+    "drei ContactShadows' blur passes are culled (blur plane at the world origin), so contact shadows render unblurred; kept as is to avoid a visual change. Worth a separate art-direction look."
+  ]
+}

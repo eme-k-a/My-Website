@@ -1,0 +1,77 @@
+{
+  "wp": "F-G2r2",
+  "role": "R4 Camera + R6 Overlay (R3 layout)",
+  "status": "done",
+  "branch": "wp/F-G2r2",
+  "commits": [
+    "dd5d489 fix(F-020): frame the phone desk from the measured card top",
+    "401e010 fix(F-036): keep the wing rail's stop label off the wall title",
+    "f26fae7 fix(F-037): show the volunteer wing's lone case through its doorway",
+    "<this commit> docs(review): F-G2r2 report"
+  ],
+  "changedFiles": [
+    "src/museum/rail/framing.ts",
+    "src/museum/rail/framing.test.ts",
+    "src/museum/rail/CameraRig.tsx",
+    "src/overlay/StopCard.module.css",
+    "tests/e2e/camera.spec.ts",
+    "src/overlay/ProgressRail.module.css",
+    "tests/e2e/rail-input.spec.ts",
+    "src/museum/rail/layout.ts",
+    "src/museum/rail/layout.test.ts",
+    "src/museum/rail/__snapshots__/layout.test.ts.snap",
+    "src/museum/rail/rail.test.ts",
+    "src/museum/environment/lightPlan.test.ts",
+    "review/reports/F-G2r2.json"
+  ],
+  "previewUrl": null,
+  "productionUrl": null,
+  "acceptance": [
+    {
+      "id": "F-020",
+      "criterion": "screenPos('desk') above the desk card's top at 360 x 640 and 412 x 839; every desk object visible above the card; end-wall line clear of the HUD; no regression at 412 x 839",
+      "command": "PORT=4174 npx playwright test camera.spec --grep '(f) .*desk' --project=pixel7, plus a scratch probe (Pixel 7 project with viewport overrides) and capture.spec desk on pixel7",
+      "result": "pass",
+      "evidence": "Before (4f5d427): 360x640 card top 178 px, desk y 259 (hidden 81 px under the card); 412x839 card top 377, desk y 339. After: 360x640 card top 311, desk y 285, HUD bottom 60, end-wall line cap top about 74 px; 412x839 card top 531, desk y 428. Desk card 446 px tall before, 313 px (360) and 292 px (412) after. All four desk objects and the end-wall line read whole in both probe shots; camera.spec (f) passes on pixel7 and at 360x640."
+    },
+    {
+      "id": "F-036",
+      "criterion": "On desktop no rail text (tooltip, wing chip, exit control) intersects the stop's own 3D wall title at sdsj, klarup and finance-tracker; e2e assertion in the rail spec",
+      "command": "PORT=4174 npx playwright test rail-input --grep '(g)' --project=desktop; capture.spec sdsj,klarup,finance-tracker CAPTURE_TIER=high",
+      "result": "pass",
+      "evidence": "Before: tooltip 'No. V1, The Round Table' rect x 958 to 1128, y 209 to 238 over the projected title (x 652 to 1133, y 218 to 304 incl. 6 px margin); rail-input (g) fails with exactly that when the label is forced visible. After: the current-stop label is clipped at rest inside a wing (hover and focus still show it), the wing chip and exit control sit above and right of the title; (g) passes at all three wing stops; sdsj-desktop capture shows SOFTWARE DEVELOPERS OF ST. JOHN'S whole."
+    },
+    {
+      "id": "F-037",
+      "criterion": "Volunteer door on desktop and pixel7: the sdsj case and its pool wholly inside the door opening, its wall title whole, no rail tooltip over it",
+      "command": "capture.spec volunteer-door (desktop tier high, pixel7); layout.test and rail.test unit tests",
+      "result": "pass",
+      "evidence": "Before: the case cut by the right jamb (visible x about 1100 to 1175 on desktop), title 'SOFTWAR / OF S'. After: the lone wing item sits at the far plinth spot (z door - 2.2) with its camera straight in front; desktop case about x 880 to 995 inside the opening (about 655 to 1185), pool and V1 title whole; the rail tooltip sits below the title and clear of the case; pixel7 the same inside the doorway. Unit tests: door sightlines to the case sides (plus a 1 m pool margin) cross the door plane at least 0.15 m inside each jamb; every wing rail sample keeps 0.4 m from the aisle walls, jambs and room walls."
+    },
+    {
+      "id": "no-regression",
+      "criterion": "F-021, F-022 and F-020 at 412 x 839 hold; camera, rail-input, wings, dialog and keyboard specs pass on desktop and pixel7",
+      "command": "PORT=4174 npx playwright test camera rail-input wings dialog keyboard --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "65 passed, 25 skipped (project-gated), 0 failed in 12.9 min. sdsj-pixel7 framing is unchanged (the camera moves with the slot). npm run verify: 746 unit tests pass, lint and typecheck clean. npm run build: budgets ok, check-copy ok."
+    },
+    {
+      "id": "visual",
+      "criterion": "Visual baselines",
+      "command": "CI update-baselines",
+      "result": "deferred",
+      "evidence": "stop-desk-pixel7, stop-sdsj-*, stop-volunteer-door-* and any wing-stop baselines change; R0 regenerates them in CI after push."
+    }
+  ],
+  "deviations": [
+    "F-037 moves a lone wing item (layout.ts) to the far plinth spot; R3's layout rule from F-035 changes as the brief allows. This needed the pinned sdsj spotlight in src/museum/environment/lightPlan.test.ts updated (the brief's environment glob, only because F-037 needed it).",
+    "The rail-input (g) e2e repeats the wing wall-title metrics of src/museum/exhibits/_kit/placard.ts, because that module imports .woff files as Vite ?url assets that Node cannot load. If R3 changes TITLES.wing, the spec's WING_TITLE must follow.",
+    "The phone desk card in museum mode now uses the small body size and two link columns (Email me and LinkedIn, PDF and GitHub, then Walk the aisle again); classic and JS-off pages keep the full card."
+  ],
+  "openQuestions": [
+    "R8: the rail-input (g) title metrics could move into a font-free module shared by placard.ts and the spec (an R3 change in src/museum/exhibits/_kit/)."
+  ],
+  "depsRequest": [],
+  "missingSpecs": [],
+  "notes": "Before and after captures (gitignored scratch): /tmp/claude-0/-home-user-My-Website/2ae53d14-d10a-5863-979a-1f315781f19b/scratchpad/before and /tmp/claude-0/-home-user-My-Website/2ae53d14-d10a-5863-979a-1f315781f19b/scratchpad/after; 360x640 and 412x839 desk probe shots in /tmp/claude-0/-home-user-My-Website/2ae53d14-d10a-5863-979a-1f315781f19b/scratchpad/probe. Desk framing: CameraRig measures the HUD bottom and the desk card's rise above its slot bottom (ResizeObserver plus window resize) and framing.ts deskPortraitY centers the span from the end-wall line top to the desk point in that band, never letting the desk point fall within 16 px of the card top; DESK_PORTRAIT_Y stays as the unmeasured fallback."
+}

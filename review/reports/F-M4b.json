@@ -1,0 +1,218 @@
+{
+  "wp": "F-M4b",
+  "role": "R0 fixer acting as R4 (rail and framing), R3 (environment and labels), R2 (light values only), R6 (rail labels) and R8 (the label measurement viewport and the rail-input checks)",
+  "status": "done",
+  "branch": "claude/m4-f-m4b",
+  "commits": [
+    "047ad17 fix(F-048): frame main-aisle exhibit titles under the HUD row on phones",
+    "f6a425c fix(doors): frame the wing doors as one picture on desktop and phones",
+    "c7b68fc fix(F-052): dim warm side bays where the desktop frame showed a void",
+    "f64c05a fix(F-049): measure labels on the real Pixel 7 viewport, MUN cap to 0.20 m",
+    "588b41b fix(F-050): keep the certifications 06 whole in the desktop dialog",
+    "44ffcdb fix(F-053): a soft ink scrim behind the desktop rail column",
+    "(this commit) review(F-M4b): report and final captures"
+  ],
+  "changedFiles": [
+    "src/museum/rail/framing.ts",
+    "src/museum/rail/framing.test.ts",
+    "src/museum/rail/CameraRig.tsx",
+    "tests/e2e/rail-input.spec.ts",
+    "src/museum/environment/lightRecipe.ts",
+    "src/museum/environment/lightPools.ts",
+    "src/museum/environment/lightPools.test.ts",
+    "src/museum/environment/Hall.tsx",
+    "src/museum/environment/labels.test.ts",
+    "src/museum/exhibits/_kit/titleMetrics.ts",
+    "src/museum/exhibits/_kit/placard.test.ts",
+    "src/overlay/ProgressRail.module.css",
+    "review/runs/2026-10-24-f-m4b/*",
+    "review/reports/F-M4b.json"
+  ],
+  "items": [
+    {
+      "id": "F-048",
+      "role": "R4 with R3",
+      "change": "The F-039 portrait rule now covers every exhibit stop. CameraRig measures the bottom of the HUD's top row (its lowest visible control; fallback HUD_ROW_BOTTOM 52) and, at main-aisle exhibits, drops the framing point just enough that the wall title's number top lands WING_HEAD_CLEARANCE (8 px) under it (never above 0.36, at most 0.5). Main-aisle titles are bounded by numberTopCorners (the number's own advance width plus NUMBER_OVERSHOOT 4% for round numerals), not the widest line, so cases move only as far as needed: at 360 x 640 cfia +15 px, mun +23 px, certifications +16 px; verafin, mysa, wailo do not move. Wing exhibits keep the F-039 bound unchanged.",
+      "evidence": "probe-g4.mjs (PROBE_STOPS=verafin,mysa,wailo,cfia,mun,certifications), titleGapBelowHud after F-049: Pixel 7 37.1 / 37.5 / 36.7 / 12.7 / 12.4 / 9.3; 360 x 640 15.8 / 16.2 / 15.8 / 11.2 / 10.9 / 8.95 (before at 360 x 640: cfia 0.57, mun 2.1 with 05 under the PDF button, certifications 06 under it). review/runs/2026-10-24-f-m4b/f048-<stop>-<viewport>-before|after.png, f048-probe-before.json, f048-probe-after.json, f049-probe-after.json. New e2e: rail-input '(g) at each main-aisle exhibit stop the wall title clears the HUD row by 8 px' on pixel7 and at 360 x 640 (fails on the old framing: cfia -6 px); framing.test 'main-aisle portrait framing (F-048)'. The cases stay above the card (captures)."
+    },
+    {
+      "id": "F-051 and the door composition",
+      "role": "R4, R3",
+      "change": "At a door stop (stopWeightAt weight, blended over the half stop): desktop FOV tightens from 50 to DOOR_FOV_DESKTOP 44 and the framing point moves to (DOOR_DESKTOP_X 0.58, DOOR_DESKTOP_Y 0.57), so the doorway, transom title and the room's glow fill the frame, the transom keeps headroom under the HUD buttons and the volunteer room title stays clear of the rail label. On portrait the framing x centers the doorway's projected span (doorCorners + horizontalTangents, doorPortraitX in [0.38, 0.62]), so neither jamb is cut (projects lost its left jamb, volunteer its right). The void left of each door gets a side bay (see F-052).",
+      "evidence": "Volunteer door desktop, brass pixels in the leftmost 60 px: 339 before, 0 after (projects 0 and 0). review/runs/2026-10-24-f-m4b/doors-<door>-<desktop|pixel7>-before|after.png. rail-input '(g) at each door reached on the wing track no HUD rect covers the transom title' passes on desktop and pixel7; it now projects with the door lens CameraRig uses (doorLens). framing.test 'door framing (F-051)': both doorways whole at 412 x 839 and 360 x 640, and on desktop between the card column (x 446) and the rail labels (x 1240)."
+    },
+    {
+      "id": "F-049",
+      "role": "R3 with R8",
+      "change": "labels.test measures Pixel 7 at 412 x 839. There MUN read 13.52 px and every main-aisle organization 13.73 to 13.82 px. MUN: number cap 0.32 to 0.26 m (18.4 px), organization 0.19 to 0.20 m (14.28 px), same last baseline 3.12; the block top drops about 3 cm. Main aisle: organization cap 0.12 to 0.125 m (14.30 to 14.39 px), needed for the brief's 'every title' check.",
+      "evidence": "labels.test at 412 x 839 passes for every title and environment label. Probe on Pixel 7: MUN 05 top 12.35 px under the HUD row (0.9 before); MUN glyph boxes median 16.4 px (16.0 before; boxes are slanted by the wall angle). review/runs/2026-10-24-f-m4b/f049-mun-pixel7-top-before|after.png. munTitle.test and placard.test updated and passing."
+    },
+    {
+      "id": "F-050",
+      "role": "R4",
+      "change": "The wall vitrine joins CameraRig's dialog dolly map with topClearDolly: the longest move (up to 0.6 m) at which the number top stays TITLE_TOP_CLEARANCE (0.072, 65 px of 900) under the top edge in the desktop dialog framing, below the HUD wordmark. The dolly at certifications is now about 0.055 m.",
+      "evidence": "framing.test 'vitrine dialog dolly (F-050)': at the full dolly the 06 top projects above y 0, at the limit at least 65 px down. review/runs/2026-10-24-f-m4b/f050-certifications-dialog-desktop-before|after.png: 06 and CERTIFICATIONS whole."
+    },
+    {
+      "id": "F-052",
+      "role": "R2 with R3",
+      "change": "A `side` strength in the light recipe (SIDE_WASH 1.4 at verafin, mysa, cfia and both doors; tier lift as the washes) adds one wall-washer scallop beside the title bay (or the door opening), on the side the stop's desktop frame shows left of the case (down the aisle on the right wall, up it on the left wall). Side bays are 5 m wide, trimmed to keep 0.1 m from any bay, door lining or wall end. They are instances of the existing bays' InstancedMesh: no light, no draw call, no texture.",
+      "evidence": "Sample at (300, 300), desktop high: mysa rgb(8, 7, 9) to (26, 22, 21); cfia (8, 7, 9) to (24, 16, 11); projects-door (8, 7, 9) to (24, 21, 23); volunteer-door (10, 9, 10) to (30, 27, 29). Verafin: its left half is mostly the far aisle and ceiling (raycast), so (300, 300) stays (11, 11, 13); the side bay lights the wall between the case and the aisle (left-half mean 56.9 to 58.5). review/runs/2026-10-24-f-m4b/f052-<stop>-desktop-before|after.png (verafin, mysa, cfia, lobby, wailo). lightPools.test 'side bays': stops, sides, no overlaps, colors. Budgets unchanged (check:budgets ok)."
+    },
+    {
+      "id": "F-053",
+      "role": "R6",
+      "change": "Desktop rail: a feathered radial ink scrim behind the column (::before, 0.78 core, fading to 0 at the edges) and an ink halo under the year and end labels. Phones are untouched.",
+      "evidence": "review/runs/2026-10-24-f-m4b/f053-cfia-rail-before|after.png: the MUN case is dimmed under the rail, labels read clean; the lobby portrait is untouched. npm run a11y: 28 passed, 16 skipped."
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "npm run verify",
+      "result": "pass",
+      "evidence": "lint, typecheck, 914 unit tests passed"
+    },
+    {
+      "id": "A2",
+      "criterion": "npm run build",
+      "result": "pass",
+      "evidence": "budgets ok, check-copy ok (627 files, with dist/)"
+    },
+    {
+      "id": "A3",
+      "criterion": "npm run check:budgets",
+      "result": "pass",
+      "evidence": "budgets ok; perf/budgets.json untouched"
+    },
+    {
+      "id": "A4",
+      "criterion": "npm run check:glyphs",
+      "result": "pass",
+      "evidence": "glyphs ok: 35 labels, 76 code points"
+    },
+    {
+      "id": "A5",
+      "criterion": "rail-input, wings, dialog, environment, greybox, exhibits, mobile and quality specs on desktop and pixel7",
+      "command": "PORT=4174 npx playwright test <8 specs> --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "107 passed, 65 skipped (project-scoped skips), 0 failed, 22.4 min, Chromium 1243 linked under the 1194 names outside the repo"
+    },
+    {
+      "id": "A6",
+      "criterion": "npm run a11y",
+      "result": "pass",
+      "evidence": "28 passed, 16 skipped"
+    },
+    {
+      "id": "A7",
+      "criterion": "capture run",
+      "result": "pass",
+      "evidence": "CAPTURE_DIALOGS=1: desktop (tier high) 13 passed, pixel7 13 passed"
+    }
+  ],
+  "visualBaselinesChanged": [
+    "certifications-dialog-desktop",
+    "certifications-pixel7",
+    "cfia-desktop",
+    "cfia-dialog-desktop",
+    "cfia-pixel7",
+    "desk-desktop",
+    "finance-tracker-dialog-desktop",
+    "klarup-dialog-desktop",
+    "lobby-desktop",
+    "lobby-pixel7",
+    "mun-desktop",
+    "mun-dialog-desktop",
+    "mun-pixel7",
+    "mysa-desktop",
+    "mysa-dialog-desktop",
+    "mysa-pixel7",
+    "projects-door-desktop",
+    "projects-door-pixel7",
+    "sdsj-dialog-desktop",
+    "verafin-desktop",
+    "verafin-dialog-desktop",
+    "verafin-pixel7",
+    "volunteer-door-desktop",
+    "volunteer-door-pixel7",
+    "wailo-desktop",
+    "wailo-dialog-desktop",
+    "wailo-pixel7"
+  ],
+  "deviations": [
+    "Brief order: F-052 was done before F-049 because the door void wash (doors item) uses the same side bays.",
+    "F-049 raises the main-aisle organization cap from 0.12 to 0.125 m (F-G2a set 0.12), because the brief's check 'labels.test at 412 x 839 passes for every title' fails at 0.12 (13.7 to 13.8 px)."
+  ],
+  "openQuestions": [
+    {
+      "question": "Ratify the main-aisle organization cap at 0.125 m (F-G2a said 0.12) and the MUN caps 0.26 / 0.20 m?",
+      "for": "R0",
+      "default": "Kept 0.125 and 0.26 / 0.20 on this branch; EXPERIENCE §5.4 and ART_DIRECTION need the numbers in the next docs pass."
+    },
+    {
+      "question": "ART_DIRECTION §4 'Per-stop recipe' table has no column for the new `side` strength.",
+      "for": "R0 (R2)",
+      "default": "Values live in lightRecipe.ts (SIDE_WASH 1.4 at verafin, mysa, cfia and both doors); docs not edited (not in my paths)."
+    },
+    {
+      "question": "Wailo, an approved still, could also take a side bay; left without one.",
+      "for": "R0",
+      "default": "No side bay at wailo."
+    }
+  ],
+  "depsRequest": [],
+  "notes": {
+    "changedShots": [
+      "certifications-dialog-desktop (9.0%)",
+      "certifications-pixel7 (3.1%)",
+      "cfia-desktop (15.1%)",
+      "cfia-dialog-desktop (0.7%)",
+      "cfia-pixel7 (4.0%)",
+      "desk-desktop (0.5%)",
+      "finance-tracker-dialog-desktop (0.7%)",
+      "klarup-dialog-desktop (0.5%)",
+      "lobby-desktop (1.6%)",
+      "lobby-pixel7 (2.1%)",
+      "mun-desktop (1.2%)",
+      "mun-dialog-desktop (1.5%)",
+      "mun-pixel7 (15.9%)",
+      "mysa-desktop (25.4%)",
+      "mysa-dialog-desktop (3.0%)",
+      "mysa-pixel7 (4.9%)",
+      "projects-door-desktop (47.2%)",
+      "projects-door-pixel7 (15.8%)",
+      "sdsj-dialog-desktop (3.0%)",
+      "verafin-desktop (4.8%)",
+      "verafin-dialog-desktop (5.2%)",
+      "verafin-pixel7 (7.2%)",
+      "volunteer-door-desktop (41.4%)",
+      "volunteer-door-pixel7 (17.8%)",
+      "wailo-desktop (12.9%)",
+      "wailo-dialog-desktop (3.9%)",
+      "wailo-pixel7 (6.3%)"
+    ],
+    "unchangedShots": [
+      "certifications-desktop (0.0%)",
+      "certifications-dialog-pixel7 (0.0%)",
+      "cfia-dialog-pixel7 (0.0%)",
+      "desk-pixel7 (0.0%)",
+      "finance-tracker-desktop (0.0%)",
+      "finance-tracker-dialog-pixel7 (0.0%)",
+      "finance-tracker-pixel7 (0.0%)",
+      "klarup-desktop (0.1%)",
+      "klarup-dialog-pixel7 (0.0%)",
+      "klarup-pixel7 (0.0%)",
+      "mun-dialog-pixel7 (0.0%)",
+      "mysa-dialog-pixel7 (0.0%)",
+      "sdsj-desktop (0.2%)",
+      "sdsj-dialog-pixel7 (0.0%)",
+      "sdsj-pixel7 (0.0%)",
+      "verafin-dialog-pixel7 (0.0%)",
+      "wailo-dialog-pixel7 (0.0%)"
+    ],
+    "method": "local capture diff vs the pre-change build, same renderer; share of pixels whose mean channel moved more than 4; threshold 0.5%",
+    "ciVisual": "Visual baselines come from CI only: the CI visual step on this branch is expected to fail on the stop and dialog shots listed in visualBaselinesChanged (capture names map to stop-<id>-<project> and dialog-<id>-<project>); desk-desktop and the wing dialogs move only under 1% (the rail scrim, the main title caps seen through).",
+    "captures": "review/runs/2026-10-24-f-m4b/: per-item before/after PNGs (f048-, doors-, f052-, f049-, f050-, f053-) and final-<stop>-<viewport>-before|after.png for stops round 1 scored as improved (wailo, lobby) and the phone titles (mun, verafin)."
+  }
+}

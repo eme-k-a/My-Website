@@ -1,0 +1,353 @@
+{
+  "wp": "WP-26",
+  "role": "R3 Environment Builder with R2 Art Director",
+  "status": "done",
+  "branch": "claude/m4-wp-26",
+  "base": "beed37a (claude/intelligent-sagan-poq45q)",
+  "commits": [
+    "fb85ac5 feat(environment): per-stop light recipe and warmth by age",
+    "649a094 feat(museum): css vignette over the stage",
+    "5408fa3 feat(design): freeze light tokens",
+    "(this commit) docs(review): WP-26 report, evidence crops and proposed G4 stills"
+  ],
+  "changedFiles": [
+    "src/museum/environment/lightRecipe.ts (new)",
+    "src/museum/environment/lightRecipe.test.ts (new)",
+    "src/museum/environment/lightPlan.ts",
+    "src/museum/environment/lightPlan.test.ts",
+    "src/museum/environment/lightPools.ts",
+    "src/museum/environment/lightPools.test.ts",
+    "src/museum/environment/Lighting.tsx",
+    "src/museum/environment/Hall.tsx",
+    "src/museum/environment/Beams.tsx",
+    "src/museum/environment/Floor.tsx",
+    "src/museum/environment/Fixtures.tsx",
+    "src/museum/environment/stage.ts",
+    "src/museum/environment/stage.test.ts",
+    "src/museum/MuseumCanvas.tsx",
+    "src/design/tokens.ts (values only)",
+    "src/design/tokens.css (values only)",
+    "src/museum/materials/library.ts (values only, M4 grant)",
+    "src/museum/materials/library.test.ts",
+    "docs/ART_DIRECTION.md (section 4 recipe, sections 2 and 5 values)",
+    "review/runs/2026-10-24-wp26/** (R0 grant)",
+    "review/reports/WP-26.json"
+  ],
+  "recipe": {
+    "where": "src/museum/environment/lightRecipe.ts (STOP_RECIPES, stopRecipe), documented in docs/ART_DIRECTION.md section 4 'Per-stop recipe (WP-26)'",
+    "fields": "spot = share of light.spotIntensity (40 cd); pool = baked pool peak alpha; wash = wall-wash bay strength; beam = beam cone strength. Colors stay on the age ramp (targetColor); the recipe never changes a temperature.",
+    "highTier": {
+      "lobby": {
+        "spot": 0.35,
+        "pool": 0.85,
+        "wash": 0.45,
+        "beam": 0.4
+      },
+      "verafin": {
+        "spot": 1,
+        "pool": 0.9,
+        "wash": 1.2,
+        "beam": 1
+      },
+      "projects-door": {
+        "pool": 0.42
+      },
+      "volunteer-door": {
+        "pool": 0.42
+      },
+      "mysa": {
+        "spot": 1,
+        "pool": 0.85,
+        "wash": 1.2,
+        "beam": 1
+      },
+      "wailo": {
+        "spot": 1,
+        "pool": 0.85,
+        "wash": 1.1,
+        "beam": 1
+      },
+      "cfia": {
+        "spot": 1,
+        "pool": 0.85,
+        "wash": 1.15,
+        "beam": 1
+      },
+      "certifications": {
+        "spot": 0.5,
+        "pool": 0.7,
+        "wash": 0.7,
+        "beam": 0.5
+      },
+      "klarup, finance-tracker, sdsj, mun, desk": {
+        "spot": 1,
+        "pool": 0.85,
+        "wash": 1,
+        "beam": 1
+      }
+    },
+    "tierLift": "medium and low (one real light): pool +0.06 (cap 0.95), wash x1.15; low has no beam cones",
+    "frozenTokens": {
+      "light.hemiIntensity": "0.15 -> 0.22",
+      "light.fogDensity": "0.045 -> 0.038",
+      "color.ceilingSlot / --ceiling-slot": "#2A2622 -> #6A5A48 (a warm leading line down the aisle)"
+    },
+    "materials": {
+      "brass": "metalness 1 -> 0.9, roughness 0.35 -> 0.42 (no new materials, no renamed tokens)"
+    },
+    "environment": {
+      "LIGHTFORMERS.sides": "intensity 0.6 -> 1.2, 20 x 6 m at y 5 -> 40 x 3.2 m at y 1.4",
+      "LIGHTFORMERS.lobby": "intensity 1 -> 1.2, 6 x 2.5 m at (0, 2.5, 6) -> 14 x 3.2 m at (0, 1.4, 8)",
+      "WALL_WASH_BASE": "0.04 -> 0.06",
+      "WASH_TITLE_PAD": "1 -> 2.6 m",
+      "WASH_PANEL_MARGIN": "new, 1.2 m past each side of the certifications backing panel",
+      "WALL_PANEL_TONE": "new, certifications wall panels use a walnut clone at 45% tone (same program)"
+    },
+    "unchanged": "real lights per tier (3 / 1 / 1), spot angle, penumbra, decay, ramp colors, tone mapping, exposure, all budgets"
+  },
+  "g3Items": {
+    "F-043": {
+      "cause": "the light-3 spot landed square on the full-tone walnut panel (and its edges sat outside any wash)",
+      "fix": "certifications recipe (spot 0.5, wash 0.7, beam 0.5), the panel walnut at 45% tone, and a wall bay 1.2 m wider than the panel on each side so its edges sit inside a soft wash",
+      "measure": "desktop high, 20 px mean on the panel outside the vitrine: before rgb(28, 12, 5), after rgb(24, 16, 10); red-to-blue ratio 5.6 -> 2.4, the same warm-dark family as the wall washes (mysa aisle wall now rgb(16, 13, 12))",
+      "evidence": [
+        "review/runs/2026-10-24-wp26/f043-certifications-desktop.png",
+        "review/runs/2026-10-24-wp26/f043-certifications-pixel7.png"
+      ]
+    },
+    "brassAtMedium": {
+      "cause": "brass is a metal, so it shows only reflections; the side Lightformers sat above eye level (y 5), so the environment cube's horizon, which a vertical brass face mirrors, was black. High looked the same: it was never a tier difference",
+      "fix": "side and lobby Lightformers moved to the horizon and brightened, brass metalness 0.9 and roughness 0.42",
+      "glareAtHigh": "none seen at verafin, klarup, wailo, certifications desktop high; case edge strips now read as brass lines",
+      "evidence": [
+        "review/runs/2026-10-24-wp26/brass-finance-tracker-pixel7.png",
+        "review/runs/2026-10-24-wp26/brass-finance-tracker-desktop.png",
+        "review/runs/2026-10-24-wp26/brass-klarup-pixel7.png",
+        "review/runs/2026-10-24-wp26/brass-verafin-pixel7.png"
+      ]
+    },
+    "mood": {
+      "lobbyArch": "fog 0.038, a warm ceiling slot that recedes into the fog, verafin pool and wash a step up, hemisphere 0.22: the second case and the Foundations glow show through the arch on both viewports",
+      "portraitWedge": "the portrait is an unlit basic material, so its spot only painted a grey wedge on the dark front wall; lobby spot 0.35, wash 0.45, beam 0.4",
+      "mysaLeftHalf": "the left half of the desktop frame is mysa's own aisle wall at a grazing angle; wider title bays (pad 2.6 m), wash 1.2 and a 0.06 wall base give it a soft warm gradient (sample at (500, 250): rgb(4, 4, 4) -> rgb(9, 8, 9); cfia the same)",
+      "vignette": "CSS vignette over the stage from --vignette",
+      "evidence": [
+        "review/runs/2026-10-24-wp26/mood-lobby-desktop.png",
+        "review/runs/2026-10-24-wp26/mood-lobby-pixel7.png",
+        "review/runs/2026-10-24-wp26/mood-mysa-desktop.png",
+        "review/runs/2026-10-24-wp26/mood-cfia-desktop.png"
+      ]
+    }
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Budgets unchanged; every stop within limits on all tiers and projects",
+      "command": "PORT=4174 npx playwright test tests/e2e/environment.spec.ts ... --project=desktop --project=pixel7 --workers=2; npm run check:budgets",
+      "result": "pass",
+      "evidence": "environment.spec passes (tiers high, medium, low on desktop and pixel7). Capture stats identical before and after: max 109 draw calls desktop high (lobby), 49 Pixel 7 medium, max 30,483 triangles, 12.42 MB textures. npm run build and check:budgets: budgets ok. No budget file touched."
+    },
+    {
+      "id": "A2",
+      "criterion": "lightRecipe.test.ts and contrast.test.ts pass",
+      "command": "npx vitest run --project unit src/museum/environment src/design",
+      "result": "pass",
+      "evidence": "lightRecipe.test.ts (every stop has a recipe, ranges, doors pool only, tier lift, F-043, recipe applied to pools, washes and beams, EXPERIENCE 6.9 colors, monotonic warmth, 3 targets on high and 1 on medium and low) and contrast.test.ts pass. npm run verify: 78 files, 884 tests passed."
+    },
+    {
+      "id": "A3",
+      "criterion": "quality.spec passes",
+      "command": "PORT=4174 npx playwright test tests/e2e/environment.spec.ts tests/e2e/quality.spec.ts tests/e2e/greybox.spec.ts tests/e2e/exhibits.spec.ts --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "38 passed, 32 skipped (the specs' own project guards, for example exhibit motion cases run on pixel7 only), 0 failed, 6.9 min."
+    },
+    {
+      "id": "A4",
+      "criterion": "26 captures exist and 10 stills are named",
+      "command": "CAPTURE_DIALOGS=1 CAPTURE_DIR=out/wp26/high CAPTURE_TIER=high npx playwright test --grep @capture --project=desktop; CAPTURE_DIALOGS=1 CAPTURE_DIR=out/wp26 npx playwright test --grep @capture --project=pixel7",
+      "result": "pass",
+      "evidence": "26 stop captures and 18 dialog captures in out/wp26 (gitignored); before captures in out/wp26-before. The 10 proposed stills are committed (downscaled, 192 colors) under review/runs/2026-10-24-wp26/stills/."
+    }
+  ],
+  "proposedG4Stills": [
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/01-lobby-desktop.png",
+      "source": "out/wp26/high/lobby-desktop.png",
+      "viewport": "desktop 1440 x 900, high",
+      "why": "Arrival: the arch now shows the ceiling line, the second case and depth"
+    },
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/02-lobby-pixel7.png",
+      "source": "out/wp26/lobby-pixel7.png",
+      "viewport": "Pixel 7, medium",
+      "why": "The phone arrival (the weakest G3 stop): lit first case and aisle depth under the fast path"
+    },
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/03-verafin-desktop.png",
+      "source": "out/wp26/high/verafin-desktop.png",
+      "viewport": "desktop, high",
+      "why": "First exhibit, brass cartridges and case edges reading as brass"
+    },
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/04-mysa-desktop.png",
+      "source": "out/wp26/high/mysa-desktop.png",
+      "viewport": "desktop, high",
+      "why": "G3 mood note: the left half is a soft warm wall, not a void"
+    },
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/05-wailo-desktop.png",
+      "source": "out/wp26/high/wailo-desktop.png",
+      "viewport": "desktop, high",
+      "why": "Best main stop, with the Foundations room glowing ahead"
+    },
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/06-klarup-desktop.png",
+      "source": "out/wp26/high/klarup-desktop.png",
+      "viewport": "desktop, high",
+      "why": "Wing stop: glow arch, brass crate strips"
+    },
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/07-finance-tracker-pixel7.png",
+      "source": "out/wp26/finance-tracker-pixel7.png",
+      "viewport": "Pixel 7, medium",
+      "why": "Wing stop on the phone at medium: the brass stack reads as brass (F-045)"
+    },
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/08-certifications-desktop.png",
+      "source": "out/wp26/high/certifications-desktop.png",
+      "viewport": "desktop, high",
+      "why": "F-043: dark walnut panel in a soft wash, medals carry the light"
+    },
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/09-desk-desktop.png",
+      "source": "out/wp26/high/desk-desktop.png",
+      "viewport": "desktop, high",
+      "why": "The ending: front desk"
+    },
+    {
+      "file": "review/runs/2026-10-24-wp26/stills/10-wailo-dialog-desktop.png",
+      "source": "out/wp26/high/wailo-dialog-desktop.png",
+      "viewport": "desktop, high",
+      "why": "A story dialog over the dimmed gallery"
+    }
+  ],
+  "visualBaselinesExpectedToChange": {
+    "reason": "lighting, fog, the ceiling slot, brass and the vignette are global, so every canvas screenshot changes; resume-light, resume-dark and not-found do not (no canvas)",
+    "stops": [
+      "stop-lobby-desktop",
+      "stop-lobby-pixel7",
+      "stop-verafin-desktop",
+      "stop-verafin-pixel7",
+      "stop-projects-door-desktop",
+      "stop-projects-door-pixel7",
+      "stop-klarup-desktop",
+      "stop-klarup-pixel7",
+      "stop-finance-tracker-desktop",
+      "stop-finance-tracker-pixel7",
+      "stop-mysa-desktop",
+      "stop-mysa-pixel7",
+      "stop-volunteer-door-desktop",
+      "stop-volunteer-door-pixel7",
+      "stop-sdsj-desktop",
+      "stop-sdsj-pixel7",
+      "stop-wailo-desktop",
+      "stop-wailo-pixel7",
+      "stop-cfia-desktop",
+      "stop-cfia-pixel7",
+      "stop-mun-desktop",
+      "stop-mun-pixel7",
+      "stop-certifications-desktop",
+      "stop-certifications-pixel7",
+      "stop-desk-desktop",
+      "stop-desk-pixel7"
+    ],
+    "dialogs": [
+      "dialog-verafin-desktop",
+      "dialog-verafin-pixel7",
+      "dialog-klarup-desktop",
+      "dialog-klarup-pixel7",
+      "dialog-finance-tracker-desktop",
+      "dialog-finance-tracker-pixel7",
+      "dialog-mysa-desktop",
+      "dialog-mysa-pixel7",
+      "dialog-sdsj-desktop",
+      "dialog-sdsj-pixel7",
+      "dialog-wailo-desktop",
+      "dialog-wailo-pixel7",
+      "dialog-cfia-desktop",
+      "dialog-cfia-pixel7",
+      "dialog-mun-desktop",
+      "dialog-mun-pixel7",
+      "dialog-certifications-desktop",
+      "dialog-certifications-pixel7"
+    ]
+  },
+  "measurements": {
+    "renderStats": "identical before and after on all 13 stops x 2 projects (calls, triangles, textureMB)",
+    "f043PanelSample": {
+      "before": [
+        28,
+        12,
+        5
+      ],
+      "after": [
+        24,
+        16,
+        10
+      ]
+    },
+    "verafinWashSample": {
+      "before": [
+        39,
+        35,
+        32
+      ],
+      "after": [
+        65,
+        57,
+        51
+      ]
+    },
+    "mysaLeftSample": {
+      "before": [
+        4,
+        4,
+        4
+      ],
+      "after": [
+        9,
+        8,
+        9
+      ]
+    }
+  },
+  "openQuestions": [
+    {
+      "question": "EXPERIENCE 7.5 and 7.6 still state the pre-WP-26 values (hemisphere 0.15, fog 0.045 with its 25%/69% fog figures, Lightformer side panels at intensity 0.6, brass metalness 1 and roughness 0.35, ceiling slot #2A2622). ART_DIRECTION (R2's file) now records the new values. Default taken: tokens and ART_DIRECTION are authoritative for values; R0 updates EXPERIENCE in the next docs pass.",
+      "for": "R0"
+    },
+    {
+      "question": "The vignette is a child div of the stage with an inline style, not '.stage::after' as ARCHITECTURE 8.6 words it, because the stage is styled inline (no museum CSS file, see stage.ts). Same look, same pointer-events none, same token. Default: keep the child div.",
+      "for": "R0"
+    },
+    {
+      "question": "Portrait hover warmth (600 ms duotone to color, fine pointers only, none under reduced motion or ?test=1) already shipped in WP-11 (Lobby.tsx); verified in code, not changed.",
+      "for": "R0"
+    },
+    {
+      "question": "DOM paper aging is R6's and present (src/overlay/model.ts mixes --paper to --paper-old by layout.ageT); nothing to file for WP-27.",
+      "for": "R0"
+    },
+    {
+      "question": "Local environment only: this container has Chromium revision 1243, while @playwright/test 1.56.1 expects 1194. I aliased /opt/pw-browsers/chromium*-1194 to the 1243 binaries (nothing in the repo changed, no playwright install). CLAUDE.md's environment note about revision 1194 is out of date for this container image.",
+      "for": "R0"
+    },
+    {
+      "question": "Judged on SwiftShader. Brass and fog should be rechecked on a real GPU at G5 (WP-36 checklist), especially brass glare at high.",
+      "for": "R0, Emeka"
+    }
+  ],
+  "depsRequest": [],
+  "ciRunUrls": [],
+  "notes": "Visual baselines are CI only; the stops listed above will fail the branch's visual step by design until the post-merge refresh."
+}

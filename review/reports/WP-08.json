@@ -1,0 +1,226 @@
+{
+  "wp": "WP-08",
+  "role": "R3 (Environment Builder)",
+  "status": "partial",
+  "branch": "wp/WP-08",
+  "commits": [
+    "11afd63 feat(kit): exhibit frame, placeholder, placard and helpers",
+    "83a68f2 feat(museum): canvas stage and greybox hall from layout",
+    "(this commit) test(museum): greybox render and draw-call checks"
+  ],
+  "changedFiles": [
+    "src/museum/MuseumCanvas.tsx",
+    "src/museum/Scene.tsx",
+    "src/museum/environment/Fixtures.tsx",
+    "src/museum/environment/GreyboxLighting.tsx",
+    "src/museum/environment/Hall.tsx",
+    "src/museum/environment/fixtures.test.ts",
+    "src/museum/environment/fixtures.ts",
+    "src/museum/environment/gallery.ts",
+    "src/museum/environment/lighting.test.ts",
+    "src/museum/environment/lighting.ts",
+    "src/museum/environment/shell.test.ts",
+    "src/museum/environment/shell.ts",
+    "src/museum/environment/stage.test.ts",
+    "src/museum/environment/stage.ts",
+    "src/museum/environment/useVisitorStop.ts",
+    "src/museum/exhibits/_kit/ExhibitFrame.tsx",
+    "src/museum/exhibits/_kit/Placard.tsx",
+    "src/museum/exhibits/_kit/Placeholder.tsx",
+    "src/museum/exhibits/_kit/anatomy.test.ts",
+    "src/museum/exhibits/_kit/anatomy.ts",
+    "src/museum/exhibits/_kit/canvasTexture.ts",
+    "src/museum/exhibits/_kit/clock.ts",
+    "src/museum/exhibits/_kit/fonts.test.ts",
+    "src/museum/exhibits/_kit/fonts.ts",
+    "src/museum/exhibits/_kit/index.ts",
+    "src/museum/exhibits/_kit/measure.test.ts",
+    "src/museum/exhibits/_kit/measure.ts",
+    "src/museum/exhibits/_kit/noise.test.ts",
+    "src/museum/exhibits/_kit/noise.ts",
+    "src/museum/exhibits/_kit/placard.test.ts",
+    "src/museum/exhibits/_kit/placard.ts",
+    "src/museum/exhibits/_kit/placeholder.test.ts",
+    "src/museum/exhibits/_kit/placeholderGeometry.ts",
+    "src/museum/exhibits/_kit/resources.test.ts",
+    "src/museum/exhibits/_kit/resources.ts",
+    "src/museum/exhibits/_kit/runtime.test.ts",
+    "src/museum/exhibits/_kit/runtime.ts",
+    "src/museum/exhibits/_kit/stopDistance.test.ts",
+    "src/museum/exhibits/_kit/stopDistance.ts",
+    "src/museum/exhibits/_kit/troika-three-text.d.ts",
+    "src/museum/exhibits/_kit/useExhibitClock.ts",
+    "src/museum/exhibits/_kit/useExhibitRuntime.ts",
+    "tests/e2e/greybox.spec.ts",
+    "review/reports/WP-08.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Unit tests: distances, placeholder under 300 triangles, instancing counts",
+      "command": "npx vitest run --project unit src/museum/exhibits/_kit src/museum/environment src/museum/rail",
+      "result": "pass",
+      "evidence": "15 files, 92 tests passed (stopDistance lobby->verafin 1, lobby->klarup = projects-door index + 1, mount 2 / preload 3 / keep 4; crate 132 triangles; instances = slots per variant, 12 edges per case; registry test green). npm run verify: 36 files, 451 tests passed"
+    },
+    {
+      "id": "A2",
+      "criterion": "Museum chunk <= 350 KB gzip, entry <= 110 KB gzip",
+      "command": "npm run build && npm run check:budgets",
+      "result": "pass",
+      "evidence": "entry 87.34 KB, museum 293.49 KB, budgets ok (merge preview on 7658245 with the F-010 three.js entry check: entry 87.56, museum 293.50, ok)"
+    },
+    {
+      "id": "A3",
+      "criterion": "Lobby renders: calls <= 80, triangles <= 150k, center luminance > 8/255, zero guard failures",
+      "command": "npx playwright test tests/e2e/greybox.spec.ts --project=desktop --project=pixel7",
+      "result": "pass",
+      "evidence": "desktop calls 37, triangles 2694, luminance 11.1/255; pixel7 calls 29, triangles 2534, luminance 11.2/255; mounted [verafin]; 2 passed, 2 skipped (test 2), no guard trips"
+    },
+    {
+      "id": "A4",
+      "criterion": "Every stop calls <= 80 with its placeholder mounted (post-integration)",
+      "command": "npx playwright test tests/e2e/greybox.spec.ts --project=desktop --project=pixel7 (test 2)",
+      "result": "skipped",
+      "evidence": "Deferred by the brief to the WP-09 merge: test 2 is skipped with 'needs WP-09 goTo' (WP-09 removes the skip). Pre-check with a temporary, uncommitted ?pose= camera override on every stop: max 37 calls (lobby desktop), max 2694 triangles, each exhibit stop had its own id in stats().mounted (see stopCalls)"
+    },
+    {
+      "id": "A5",
+      "criterion": "No banned rendering features",
+      "command": "grep -rnE \"castShadow|receiveShadow|shadowMap|transmission|<Html|ScrollControls\" src/museum/environment src/museum/exhibits/_kit src/museum/MuseumCanvas.tsx src/museum/Scene.tsx",
+      "result": "pass",
+      "evidence": "prints nothing (exit 1)"
+    },
+    {
+      "id": "A6",
+      "criterion": "Glyphs",
+      "command": "npm run check:glyphs",
+      "result": "pass",
+      "evidence": "glyphs ok: 30 labels, 68 code points checked in their fonts"
+    }
+  ],
+  "lobbyStats": {
+    "desktop": {
+      "calls": 37,
+      "triangles": 2694,
+      "geometries": 32,
+      "textures": 5,
+      "programs": 10,
+      "textureMB": 1.58,
+      "mounted": [
+        "verafin"
+      ],
+      "dpr": 1,
+      "tier": "medium",
+      "centerLuminance255": 11.1
+    },
+    "pixel7": {
+      "calls": 29,
+      "triangles": 2534,
+      "geometries": 24,
+      "textures": 5,
+      "programs": 10,
+      "textureMB": 1.58,
+      "mounted": [
+        "verafin"
+      ],
+      "dpr": 1,
+      "tier": "medium",
+      "centerLuminance255": 11.2
+    }
+  },
+  "stopCalls": {
+    "note": "Draw calls [desktop, pixel7] per stop, measured 1.5 s after ready with a temporary ?pose= override in MuseumCanvas that was never committed (the real path is WP-09 goTo). Fresh page per stop, so no hysteresis mounts.",
+    "calls": {
+      "lobby": [
+        37,
+        29
+      ],
+      "verafin": [
+        27,
+        17
+      ],
+      "projects-door": [
+        18,
+        12
+      ],
+      "klarup": [
+        13,
+        12
+      ],
+      "finance-tracker": [
+        12,
+        12
+      ],
+      "mysa": [
+        20,
+        11
+      ],
+      "volunteer-door": [
+        18,
+        12
+      ],
+      "safe-sip": [
+        13,
+        12
+      ],
+      "sdsj": [
+        13,
+        12
+      ],
+      "wailo": [
+        18,
+        11
+      ],
+      "cfia": [
+        20,
+        14
+      ],
+      "mun": [
+        12,
+        10
+      ],
+      "certifications": [
+        9,
+        9
+      ],
+      "desk": [
+        4,
+        4
+      ]
+    }
+  },
+  "openQuestions": [
+    {
+      "question": "tests/e2e/fast-path.spec.ts blocks **/MuseumCanvas* and acknowledges only the JS chunk errors. A CSS module in the museum chunk makes the blocked load also log 'Unable to preload CSS for .../MuseumCanvas-*.css', which trips the console guard (seen with the first draft of this WP). Should R8 acknowledge that message too?",
+      "for": "R8",
+      "default": "WP-08 keeps the stage styles inline (environment/stage.ts stageStyle) and has no MuseumCanvas.module.css, so the chunk is one JS file and the suite is green. WP-26 can draw the vignette as an inline-styled sibling div instead of .stage::after."
+    },
+    {
+      "question": "ARCHITECTURE §10.3 read literally ignores height-only resizes on fine pointers too. Is re-measuring --stage-h on every resize for fine pointers (desktop window height changes) acceptable?",
+      "for": "R0",
+      "default": "Fine pointers re-measure on any resize; coarse pointers on a width change or a height change of 20% or more (environment/stage.ts, unit-tested)."
+    },
+    {
+      "question": "compilePending is held from ExhibitFrame mount until the slot shows its final content (the revealed exhibit, or the compiled crate), not only from the lazy component resolving. Accept this stricter reading of the brief?",
+      "for": "R0",
+      "default": "Held from mount, so ready (ARCHITECTURE §13.4) can never fire between mount and the chunk resolving."
+    },
+    {
+      "question": "configureTextBuilder also gets useWorker: false: troika's typesetting worker loads code with importScripts(blob:), which the CSP's script-src 'self' blocks inside a blob worker. Keep main-thread typesetting, or add blob: to script-src?",
+      "for": "R0",
+      "default": "useWorker: false (pinned by fonts.test.ts); 20 wall titles typeset at boot while the stage is still hidden."
+    },
+    {
+      "question": "Greybox lighting: the hemisphere fill uses light-0 at intensity 8 (GREYBOX_HEMI_INTENSITY) instead of EXPERIENCE §7.5's #1A1C22 at 0.15, and fog (§7.5 values) is already on. Brass wall titles read near-black except under the spot until WP-11 adds the Lightformer environment. OK for M1?",
+      "for": "R2",
+      "default": "Kept until WP-11 replaces GreyboxLighting; titles stay brass per EXPERIENCE §5.4."
+    },
+    {
+      "question": "Over the certifications vitrine the organization baseline (2.40, EXPERIENCE §5.4) equals the top edge of the 2.4 x 1.6 walnut backing panel (§5.3). Raise that baseline?",
+      "for": "R2",
+      "default": "Baselines unchanged; both labels stand 2 cm further out, in front of the panel face, so the panel never clips them."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Merge after WP-06, WP-07, WP-10 (already in) and before WP-09. The branch is based on dfd4381; the WP-08 diff applied cleanly onto the integration tip 7658245 in a scratch export (no file overlaps with the F-M1 fixes), where typecheck, lint, unit tests, build, budgets (including the F-010 entry fingerprints), check-copy and the full Playwright suite (133 passed, 99 skipped, 0 failed, all projects) were green. The WIP commit 5ae2007 was folded into the three Output commits (local branch only, never pushed). For WP-09: each slot is a group 'slot-<id>' with an invisible hit box mesh 'hit-<id>' (standard 0.9 x 1.85 x 0.9) for screenPos; Scene picks the visitor's stop from progress.track and Math.round(progress.current) (environment/useVisitorStop.ts), so exhibits mount ahead while walking; case clicks call openStory(id, { source: 'case' }) on the settled stop, else travelTo(id); the canvas starts at the lobby pose (position and rotation) until CameraRig moves it; sections still need pointer-events: none for 3D hover and click (WP-09 CSS). Remove the skip from greybox.spec.ts test 2 when goTo lands. Implementation notes: drei ContactShadows re-renders its pass after every React re-render (its frame counter lives in the component body), so it sits behind a memo (PlinthShadow) and renders once per mount; the crate gets the pass too. Fog must attach to the scene (Scene.tsx top level), not a group. The fixtures are 7 instanced draws (plinths, base strips, wide plinth, wall panels, desk, case edges, cases); the shell is one merged mesh; floors are one mesh per room."
+}

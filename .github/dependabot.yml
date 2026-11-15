@@ -1,0 +1,52 @@
+# Dependabot (ARCHITECTURE §14.5, R10). Every update PR must pass the full ci.yml; R10 merges.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      # Their peer caps move together (R3F caps react, typescript-eslint caps typescript).
+      3d-stack:
+        patterns:
+          - three
+          - '@types/three'
+          - '@react-three/*'
+          - react
+          - react-dom
+          - '@types/react'
+          - '@types/react-dom'
+          - troika-three-text
+          - maath
+      lint:
+        patterns:
+          - eslint
+          - '@eslint/*'
+          - typescript-eslint
+          - eslint-plugin-*
+          - globals
+          - prettier
+      test:
+        patterns:
+          - vitest
+          - '@axe-core/playwright'
+          - '@lhci/cli'
+    ignore:
+      # Bumped only with a new container image (Chromium revision 1194 matches 1.56.1).
+      - dependency-name: '@playwright/test'
+      # typescript-eslint peers on typescript <6.1.0.
+      - dependency-name: typescript
+        versions: ['>=6.1']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns:
+          - '*'

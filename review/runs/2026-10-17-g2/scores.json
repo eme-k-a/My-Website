@@ -1,0 +1,118 @@
+{
+  "round": 1,
+  "gate": "G2",
+  "date": "2026-10-17",
+  "build": "a8df9c7 (claude/intelligent-sagan-poq45q), npm run build, served by the Playwright webServer on PORT=4174",
+  "capture": "tests/e2e/capture.spec.ts @capture, ?test=1&mode=museum; desktop 1440x900 at tier=high, pixel7 412x839 at tier medium",
+  "scale": "1 to 5, half points; anchors in docs/ART_DIRECTION.md section 7",
+  "scores": {
+    "lobby": {
+      "desktop": {
+        "D1": [3.5, "Deep ink and the first case's warm pool glows through the arch, but the beam wedge top right washes the corner behind the HUD and portrait, and the arch interior is nearly dead (2026 strip barely visible).", "review/runs/2026-10-17-g2/lobby-desktop.png"],
+        "D2": [3.5, "Hero in its left scrim, arch right of center with the Verafin case in the sightline; the progress rail crosses the portrait frame (2025 tick) and the beam wedge competes with the arch.", "review/runs/2026-10-17-g2/lobby-desktop.png"],
+        "D3": [4.5, "Name, role, degree and three links read at a glance with a clear hierarchy; the 3D COMMIT HISTORY label is large and repeats the wordmark.", "review/runs/2026-10-17-g2/lobby-desktop.png"],
+        "D4": [4, "Arch, glowing first case and the title tell the newest-first walk; the portrait grounds it in a person; nothing overstated.", "review/runs/2026-10-17-g2/lobby-desktop.png"],
+        "D5": [3.5, "Brass arch trim, portrait frame and rail share one vocabulary; the beam cone is far brighter than any other light in the room.", "review/runs/2026-10-17-g2/lobby-desktop.png"],
+        "D6": [3.5, "Thumbnail: the arch reads as the main silhouette, but the portrait and the hero text block compete with it.", "review/runs/2026-10-17-g2/lobby-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [3, "Calm and dark, but the stage is almost invisible behind the hero scrim and the lower 40% is an empty gradient; no pool reads.", "review/runs/2026-10-17-g2/lobby-pixel7.png"],
+        "D2": [2.5, "The arch and the first case sit behind the hero buttons; the 3D COMMIT HISTORY label sits directly behind the h1; the lower 40% of the frame is empty.", "review/runs/2026-10-17-g2/lobby-pixel7.png"],
+        "D3": [4, "Fast path complete and legible; the ghosted 3D label behind the h1 makes the name read over a busy backdrop.", "review/runs/2026-10-17-g2/lobby-pixel7.png"],
+        "D4": [3, "On the phone the concept is carried by the DOM alone; the 3D adds nothing at first glance.", "review/runs/2026-10-17-g2/lobby-pixel7.png"],
+        "D5": [3.5, "HUD and hero chrome follow the tokens (brass primary, hairline secondaries, 44 px targets); too little 3D on screen to judge more.", "review/runs/2026-10-17-g2/lobby-pixel7.png"],
+        "D6": [2.5, "No single silhouette: the arch and case are hidden behind the hero, only faint edges show.", "review/runs/2026-10-17-g2/lobby-pixel7.png"]
+      }
+    },
+    "verafin": {
+      "desktop": {
+        "D1": [3, "The case sits in a warm pool and the teal core is the only cool note, but the plinth is a black void, the right wall is washed grey by the beam, and no next pool reads ahead.", "review/runs/2026-10-17-g2/verafin-desktop.png"],
+        "D2": [3.5, "Case at 61% of the width (on the 62% point) and clear of the card; the wall title is pushed top right, its 01 clipped by the viewport top and sitting under the Resume button.", "review/runs/2026-10-17-g2/verafin-desktop.png"],
+        "D3": [4, "Card reads at a glance with the ON VIEW NOW pill; 3D labels exceed 14 px but are dark brass on a dark wall and cropped.", "review/runs/2026-10-17-g2/verafin-desktop.png"],
+        "D4": [4, "Column feeding a stepped block of bars reads as data becoming reports; no detection imagery; the cartridges read as plugins only after the card.", "review/runs/2026-10-17-g2/verafin-desktop.png"],
+        "D5": [4, "Only library materials, precise joins, nothing floats; a soft ellipse of light on the back glass of the case is the one unexplained artifact.", "review/runs/2026-10-17-g2/verafin-desktop.png"],
+        "D6": [3.5, "Thumbnail: a tall column beside a stepped block is checkable, but the object is about 35 px wide and splits into two light masses; the paper card is the brightest shape.", "review/runs/2026-10-17-g2/verafin-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [3, "Lit case in a dark room, but the floor at lower right is a flat warm-grey wedge and the plinth is a black void; no next pool.", "review/runs/2026-10-17-g2/verafin-pixel7.png"],
+        "D2": [3, "Case at 50% and 35% of the height (on the 36% point) and clear of the card; the wall title collides: NASDAQ VERA is cut by the right edge and 01 sits under the Classic button.", "review/runs/2026-10-17-g2/verafin-pixel7.png"],
+        "D3": [4.5, "Compact card is legible and well spaced; title, role, dates and pill read at a glance.", "review/runs/2026-10-17-g2/verafin-pixel7.png"],
+        "D4": [4, "Object reads larger on the phone; caption and medium are left to the story, which is fine.", "review/runs/2026-10-17-g2/verafin-pixel7.png"],
+        "D5": [4, "Same vocabulary and precision as desktop at tier medium.", "review/runs/2026-10-17-g2/verafin-pixel7.png"],
+        "D6": [4, "The object fills more of the frame; column and bar block form one clear silhouette on the tray.", "review/runs/2026-10-17-g2/verafin-pixel7.png"]
+      }
+    },
+    "projects-door": {
+      "desktop": {
+        "D1": [3, "The doorway invites with a pool inside, but the wall wash behind the P2 title is a blurry grey arch and the aisle wall at left shows vertical streak noise.", "review/runs/2026-10-17-g2/projects-door-desktop.png"],
+        "D2": [3, "Strong diagonal door frame, card clear; PROJECTS is clipped at the top edge and the P2 title inside is split by the beam cone and the case.", "review/runs/2026-10-17-g2/projects-door-desktop.png"],
+        "D3": [3.5, "Card is clean; the 3D labels are cropped (PROJECTS) or occluded and low contrast (PERSONAL FINANCE TRACKER), though they only repeat the DOM.", "review/runs/2026-10-17-g2/projects-door-desktop.png"],
+        "D4": [3.5, "Door, title and the card's two exhibit links say what the wing is; the first title seen inside is P2, not P1, which muddles the order.", "review/runs/2026-10-17-g2/projects-door-desktop.png"],
+        "D5": [3.5, "Brass door frame matches the trims; the streak noise on the aisle wall reads as a rendering fault.", "review/runs/2026-10-17-g2/projects-door-desktop.png"],
+        "D6": [3.5, "Thumbnail: the door frame is a clear silhouette; the bright wash arch inside competes.", "review/runs/2026-10-17-g2/projects-door-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [2, "The wing floor renders as a flat, bright warm-grey plane over about 40% of the frame; it reads as a lit box, not a dark gallery.", "review/runs/2026-10-17-g2/projects-door-pixel7.png"],
+        "D2": [2.5, "Door framing works and the card is clear, but the PDF button covers the middle of the PROJECTS label (PROJ...CTS).", "review/runs/2026-10-17-g2/projects-door-pixel7.png"],
+        "D3": [3.5, "Card text legible; the 3D label is half hidden by the HUD.", "review/runs/2026-10-17-g2/projects-door-pixel7.png"],
+        "D4": [3.5, "Same reading as desktop.", "review/runs/2026-10-17-g2/projects-door-pixel7.png"],
+        "D5": [3, "The tier-medium floor looks like a different material from the desktop room.", "review/runs/2026-10-17-g2/projects-door-pixel7.png"],
+        "D6": [3, "The door silhouette reads but the bright floor plane competes with it.", "review/runs/2026-10-17-g2/projects-door-pixel7.png"]
+      }
+    },
+    "volunteer-door": {
+      "desktop": {
+        "D1": [3.5, "Deep ink with the Wailo pool and title glowing ahead at left (a real sightline); wash arches inside the wing are blurry blobs.", "review/runs/2026-10-17-g2/volunteer-door-desktop.png"],
+        "D2": [3, "Card clear and door well placed, but VOLUNTEER & LEADERSHIP runs off the top edge and under the Resume button, and the SDSJ title inside is split by the beam cone.", "review/runs/2026-10-17-g2/volunteer-door-desktop.png"],
+        "D3": [3.5, "Card legible (one awkward wrap: St. / John's); the wing label is cropped.", "review/runs/2026-10-17-g2/volunteer-door-desktop.png"],
+        "D4": [3.5, "Door, title and card make the wing clear; the case seen inside is V2, not V1.", "review/runs/2026-10-17-g2/volunteer-door-desktop.png"],
+        "D5": [3.5, "Consistent brass frame and trims; same faint wall streaks at far left.", "review/runs/2026-10-17-g2/volunteer-door-desktop.png"],
+        "D6": [3.5, "Thumbnail: the door frame reads; the Wailo wash at left and the wash arch inside compete.", "review/runs/2026-10-17-g2/volunteer-door-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [2, "Same flat bright wing floor as the projects door, about 35% of the frame.", "review/runs/2026-10-17-g2/volunteer-door-pixel7.png"],
+        "D2": [2.5, "The wing label runs under and through the PDF and Classic buttons (DERSP shows inside the Classic button outline).", "review/runs/2026-10-17-g2/volunteer-door-pixel7.png"],
+        "D3": [3, "DOM text legible, but 3D letters show inside a transparent HUD button, a visible text-on-text collision.", "review/runs/2026-10-17-g2/volunteer-door-pixel7.png"],
+        "D4": [3.5, "Same reading as desktop.", "review/runs/2026-10-17-g2/volunteer-door-pixel7.png"],
+        "D5": [3, "Floor material inconsistent with desktop.", "review/runs/2026-10-17-g2/volunteer-door-pixel7.png"],
+        "D6": [3, "Door silhouette competes with the bright floor.", "review/runs/2026-10-17-g2/volunteer-door-pixel7.png"]
+      }
+    },
+    "safe-sip": {
+      "desktop": {
+        "D1": [3.5, "Warm pool on the case, warm washes behind the titles, deep ink; the plinth is a black void and the wash arches are soft blobs.", "review/runs/2026-10-17-g2/safe-sip-desktop.png"],
+        "D2": [3.5, "Case at 61% with V1 ENACTUS MEMORIAL above it (as the 5 anchor asks), card clear; a cropped SDSJ title fragment hangs at the left edge and the beam crosses the title.", "review/runs/2026-10-17-g2/safe-sip-desktop.png"],
+        "D3": [4, "Card and wing chip legible; the 3D title is crossed by the beam and low contrast.", "review/runs/2026-10-17-g2/safe-sip-desktop.png"],
+        "D4": [3, "A cup in a gimbal reads, but the lid steps, the board and the tamper ring are illegible at stop distance, so tamper detection reads only from the card.", "review/runs/2026-10-17-g2/safe-sip-desktop.png"],
+        "D5": [3.5, "Library materials, but the frosted cup reads as an opaque white can (brighter than any neighbour) and the edge-on yaw arc looks like a stray floating wire.", "review/runs/2026-10-17-g2/safe-sip-desktop.png"],
+        "D6": [3, "Thumbnail: a tilted white cylinder dominates; the gimbal and lid cannot be told apart, so the checklist line cannot be checked from the thumbnail.", "review/runs/2026-10-17-g2/safe-sip-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [2.5, "Pool and beam are fine, but bright flat floor planes fill both sides of the plinth.", "review/runs/2026-10-17-g2/safe-sip-pixel7.png"],
+        "D2": [3, "Case on the point (50%, 34.5%) and clear of the card; the V1 title sits behind the Return to the aisle button.", "review/runs/2026-10-17-g2/safe-sip-pixel7.png"],
+        "D3": [4, "Wing chip, return button and card all legible.", "review/runs/2026-10-17-g2/safe-sip-pixel7.png"],
+        "D4": [3, "Gimbal ring now visible, lid and board still too small to carry the story.", "review/runs/2026-10-17-g2/safe-sip-pixel7.png"],
+        "D5": [3.5, "Same as desktop.", "review/runs/2026-10-17-g2/safe-sip-pixel7.png"],
+        "D6": [3.5, "Larger in frame: cup and gimbal ring form one silhouette, the cup still dominant.", "review/runs/2026-10-17-g2/safe-sip-pixel7.png"]
+      }
+    },
+    "desk": {
+      "desktop": {
+        "D1": [4, "The calmest stop: the end-wall line and walnut desk in one warm pool, deep ink around; the beam shaft is a near-opaque grey column.", "review/runs/2026-10-17-g2/desk-desktop.png"],
+        "D2": [4, "Desk on the framing point, title reads above it, card clear; the beam shaft is the strongest shape in the frame.", "review/runs/2026-10-17-g2/desk-desktop.png"],
+        "D3": [4.5, "Card hierarchy is clear and the end-wall label is crisp and repeats the DOM.", "review/runs/2026-10-17-g2/desk-desktop.png"],
+        "D4": [3.5, "Postcard, envelope, catalogue and ledger are present but about 60 px wide, so the gift-shop joke needs the card.", "review/runs/2026-10-17-g2/desk-desktop.png"],
+        "D5": [4, "Walnut, paper and brass match the exhibits; joins precise.", "review/runs/2026-10-17-g2/desk-desktop.png"],
+        "D6": [4, "Thumbnail: the desk is one clear silhouette in its pool.", "review/runs/2026-10-17-g2/desk-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [3, "End-wall line and beam in a dark room; with no desk visible the frame is mostly void.", "review/runs/2026-10-17-g2/desk-pixel7.png"],
+        "D2": [1, "The desk, the stop's only object, is entirely hidden behind the card (CI baseline stop-desk-pixel7.png shows the same).", "review/runs/2026-10-17-g2/desk-pixel7.png"],
+        "D3": [4.5, "Card legible with clear actions; end-wall label crisp.", "review/runs/2026-10-17-g2/desk-pixel7.png"],
+        "D4": [2, "The gift-shop objects are invisible; only the DOM tells the story.", "review/runs/2026-10-17-g2/desk-pixel7.png"],
+        "D5": [3.5, "Chrome and label consistent; no object visible to judge.", "review/runs/2026-10-17-g2/desk-pixel7.png"],
+        "D6": [1.5, "No object silhouette in frame, only the beam.", "review/runs/2026-10-17-g2/desk-pixel7.png"]
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "stop": "volunteer-door",
+  "project": "desktop",
+  "url": "/?test=1&mode=museum&tier=high",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "stats": {
+    "calls": 67,
+    "triangles": 17137,
+    "geometries": 98,
+    "textures": 32,
+    "programs": 36,
+    "textureMB": 12.0833371480306,
+    "frames": 17,
+    "dpr": 1,
+    "tier": "high",
+    "track": "main",
+    "mounted": [
+      "verafin",
+      "mysa",
+      "wailo",
+      "cfia",
+      "safe-sip",
+      "sdsj"
+    ],
+    "exhibits": {
+      "verafin": {
+        "triangles": 2732,
+        "drawCalls": 9,
+        "inBounds": true
+      },
+      "safe-sip": {
+        "triangles": 5620,
+        "drawCalls": 12,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        0,
+        1.6,
+        -26.2
+      ],
+      "target": [
+        3.5000000000000004,
+        1.5,
+        -28
+      ]
+    },
+    "progress": {
+      "target": 4,
+      "current": 4
+    }
+  }
+}

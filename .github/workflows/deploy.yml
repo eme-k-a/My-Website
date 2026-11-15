@@ -1,0 +1,200 @@
+# Deploy (ARCHITECTURE §14.3, WP-18, R10): uploads the dist/ that ci built and tested to Netlify
+# with --no-build, so Netlify never builds anything (Git builds stay off). Previews get an alias
+# per branch or pull request and X-Robots-Tag: noindex; main deploys to production. Every deploy
+# is followed by the @smoke specs against the deployed URL.
+#
+# Two triggers, exactly one deploy per green ci run (R0 ruling, M2a):
+# - workflow_call: ci.yml calls this as its last job, after every other job passed, on same-repo
+#   pushes. GitHub fires workflow_run only for workflow files on the default branch, and main
+#   stays untouched until launch, so this is the path that deploys the integration branch.
+# - workflow_run: the §14.3 trigger, live once this file is on main. It deploys pull request runs
+#   only (alias pr-<number>). Push runs were already deployed by the workflow_call job inside the
+#   same ci run, and workflow_dispatch runs rebuild a commit that its push already deployed.
+# Runs from forks never deploy: their ci runs have no secrets and are filtered out below.
+name: deploy
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+  workflow_call:
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  deploy:
+    if: >-
+      (github.event_name == 'push' && !github.event.repository.fork) ||
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.event == 'pull_request')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.url }}
+    # A newer green run for the same target replaces an older deploy that is still uploading.
+    concurrency:
+      group: deploy-${{ github.event.workflow_run.event || github.event_name }}-${{ github.event.workflow_run.head_branch || github.ref_name }}
+      cancel-in-progress: true
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      BRANCH: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+      RUN_ID: ${{ github.event.workflow_run.id || github.run_id }}
+      PR_NUMBER: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.pull_requests[0].number || '' }}
+      IS_PR: ${{ github.event.workflow_run.event == 'pull_request' }}
+      PRODUCTION: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Download the tested dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+          run-id: ${{ env.RUN_ID }}
+          github-token: ${{ github.token }}
+
+      - name: Check the Netlify secrets
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          missing=''
+          [ -n "$NETLIFY_AUTH_TOKEN" ] || missing="$missing NETLIFY_AUTH_TOKEN"
+          [ -n "$NETLIFY_SITE_ID" ] || missing="$missing NETLIFY_SITE_ID"
+          if [ -n "$missing" ]; then
+            echo "::error title=Netlify secrets missing::Repository secret(s)$missing not set. Add them under Settings, Secrets and variables, Actions (README, Deploy). Nothing was deployed."
+            exit 1
+          fi
+
+      - name: Choose the target
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          pr="$PR_NUMBER"
+          if [ "$IS_PR" = 'true' ] && [ -z "$pr" ]; then
+            # workflow_run.pull_requests can be empty; ask GitHub for the open PR of the branch.
+            pr="$(gh pr list --repo "$REPO" --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          fi
+          if [ "$PRODUCTION" = 'true' ]; then
+            alias=''
+          elif [ -n "$pr" ]; then
+            alias="pr-$pr"
+          else
+            # Lowercase, every character outside [a-z0-9] becomes '-', at most 37 characters
+            # (the netlify-cli limit), no leading or trailing '-'.
+            alias="$(printf '%s' "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]/-/g' | cut -c1-37 | sed -e 's/^-*//' -e 's/-*$//')"
+            if [ -z "$alias" ]; then
+              echo "::error title=No preview alias::Branch '$BRANCH' gives an empty alias."
+              exit 1
+            fi
+          fi
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
+          echo "alias=$alias" >> "$GITHUB_OUTPUT"
+          echo "Target: ${alias:-production} (commit $SHA)"
+
+      - name: Mark the preview noindex
+        if: ${{ env.PRODUCTION != 'true' }}
+        run: |
+          set -euo pipefail
+          test "$(grep -c '^/\*$' dist/_headers)" = 1
+          awk '{ print } $0 == "/*" { print "  X-Robots-Tag: noindex" }' dist/_headers > "$RUNNER_TEMP/_headers"
+          mv "$RUNNER_TEMP/_headers" dist/_headers
+          grep -A1 '^/\*$' dist/_headers | grep -qx '  X-Robots-Tag: noindex'
+
+      - name: Deploy to Netlify
+        id: deploy
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          ALIAS: ${{ steps.target.outputs.alias }}
+        run: |
+          set -euo pipefail
+          args=(deploy --no-build --dir=dist --message="$SHA" --json)
+          if [ "$PRODUCTION" = 'true' ]; then args+=(--prod); else args+=(--alias="$ALIAS"); fi
+          out="$RUNNER_TEMP/netlify-deploy.json"
+          # netlify-cli reads the token and site id from the environment; its JSON is parsed here
+          # and never printed.
+          npx --yes netlify-cli@27.12.1 "${args[@]}" > "$out"
+          url="$(sed -n '/^{/,$p' "$out" | jq -r '.deploy_url // empty')"
+          site_url="$(sed -n '/^{/,$p' "$out" | jq -r '.url // empty')"
+          rm -f "$out"
+          if [ -z "$url" ]; then
+            echo "::error title=No deploy URL::netlify-cli returned no deploy_url."
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $url"
+          if [ "$PRODUCTION" = 'true' ]; then
+            expected="$(npx tsx --eval "import('./src/content/site.ts').then(m => console.log(m.SITE_URL))")"
+            if [ "$site_url" != "$expected" ]; then
+              echo "::warning title=SITE_URL differs::Netlify serves production at $site_url but src/content/site.ts says $expected."
+            fi
+          fi
+
+      - name: Write the job summary
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+          ALIAS: ${{ steps.target.outputs.alias }}
+        run: |
+          {
+            if [ "$PRODUCTION" = 'true' ]; then
+              echo "### Production deploy"
+            else
+              echo "### Preview deploy (noindex)"
+            fi
+            echo
+            echo "- URL: $URL"
+            if [ -n "$ALIAS" ]; then echo "- Alias: \`$ALIAS\`"; fi
+            echo "- Commit: \`$SHA\` on \`$BRANCH\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment the preview URL on the pull request
+        if: ${{ steps.target.outputs.pr != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ steps.target.outputs.pr }}
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          body="Preview for $SHA (noindex): $URL"
+          gh pr comment "$PR" --repo "$REPO" --edit-last --create-if-none --body "$body" ||
+            gh pr comment "$PR" --repo "$REPO" --body "$body"
+
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Smoke test the deployed site
+        env:
+          BASE_URL: ${{ steps.deploy.outputs.url }}
+        run: npx playwright test --grep @smoke --project=desktop
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-smoke-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

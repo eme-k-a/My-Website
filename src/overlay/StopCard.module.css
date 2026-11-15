@@ -1,0 +1,365 @@
+/*
+ * DOM placard cards (EXPERIENCE §5.8). The slot fills its section and places the card: phone
+ * portrait pinned to the bottom with 16 px gutters; desktop (and landscape at 640 px and wider) a
+ * left column at left 5vw, bottom 12vh, width clamp(320px, 26vw, 400px). The slot itself takes no
+ * pointer events (they fall through to the scene); only the card does ([data-card], §6.1).
+ */
+.slot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100svh;
+  padding: 88px max(16px, env(safe-area-inset-right))
+    max(16px, calc(env(safe-area-inset-bottom) + 12px)) max(16px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.card {
+  --card-paper: var(--paper);
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  background: var(--card-paper);
+  color: var(--paper-ink);
+  pointer-events: auto;
+}
+
+.card :focus-visible {
+  outline-color: var(--focus-paper);
+}
+
+.numberRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 22px;
+  margin: 0 0 8px;
+}
+
+.number {
+  composes: label from './ui.module.css';
+  color: var(--paper-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.pill {
+  composes: label from './ui.module.css';
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--paper-ink);
+  color: var(--paper);
+}
+
+.pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brass);
+}
+
+.pill[data-pill='now']::before {
+  background: var(--signal);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--type-title);
+  font-style: italic;
+  font-weight: var(--weight-regular);
+  line-height: var(--lh-title);
+}
+
+/*
+ * The artwork title and the door links are 44 px targets (EXPERIENCE §7.8): the padding grows the
+ * link's box and the negative margin gives the space back, so the title line keeps its height.
+ */
+.storyLink {
+  display: inline-block;
+  padding: 10px 0;
+  margin: -10px 0;
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(26, 26, 30, 0.35);
+}
+
+@media (hover: hover) {
+  .storyLink:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+.role {
+  margin: 8px 0 0;
+  font-size: var(--type-role);
+  font-weight: var(--weight-medium);
+  line-height: var(--lh-role);
+}
+
+.org,
+.count {
+  margin: 2px 0 0;
+  color: var(--paper-ink-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+.dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  margin: 6px 0 0;
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.range {
+  min-width: 17ch;
+}
+
+.dimensions {
+  color: var(--paper-ink-2);
+}
+
+.medium,
+.caption {
+  margin: 8px 0 0;
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+.mediumLabel {
+  composes: label from './ui.module.css';
+  margin-right: 4px;
+  color: var(--paper-ink-2);
+}
+
+.caption {
+  color: var(--paper-ink-2);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/*
+ * "Read the story" and "Step inside" need the hydrated app, so they show only in museum mode
+ * (ARCHITECTURE §5.2). The boot script sets data-mode before first paint, so with JS off (no
+ * data-mode) they are never drawn, and in museum mode they never pop in. Without them the title
+ * and the door links still lead to every /exhibit/<id>/ page.
+ */
+:global(html:not([data-mode='museum'])) .actions {
+  display: none;
+}
+
+/* "Installation in progress" (EXPERIENCE §5.7): a reserved line, so it never shifts the card. */
+.status {
+  min-height: calc(var(--type-small) * 1.5);
+  margin: 8px 0 0;
+  color: var(--paper-ink-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+  font-style: italic;
+}
+
+.doorLinks {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doorLinks li {
+  display: flex;
+  min-height: var(--target-min);
+  align-items: center;
+}
+
+.doorLinks .storyLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding: 0;
+  margin: 0;
+  font-size: var(--type-body);
+}
+
+.helper {
+  margin: 8px 0 0;
+  color: var(--paper-ink-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+.body {
+  margin: 10px 0 0;
+}
+
+.deskLinks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deskLinks li:first-child {
+  margin-bottom: 6px;
+}
+
+.deskLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--target-min);
+  color: var(--paper-ink);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
+  text-underline-offset: 4px;
+}
+
+.footnote {
+  margin: 10px 0 0;
+  color: var(--paper-ink-2);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+/*
+ * Phone desk card (F-020): in museum mode on portrait phones the card is kept short, so the desk
+ * top sits above it even at 360 x 640 (CameraRig frames the desk into the band between the HUD and
+ * this card's measured top, framing.ts `deskPortraitY`). The closing line is dropped, the body
+ * uses the small size, and the links sit in two columns (Email me and LinkedIn, the PDF and
+ * GitHub, then Walk the aisle again), each still a 44 px target. Without JS or in classic mode the
+ * card is the page, and it keeps the full layout.
+ */
+@media (orientation: portrait) and (max-width: 639px) {
+  :global(html[data-mode='museum']) .desk .footnote {
+    display: none;
+  }
+
+  :global(html[data-mode='museum']) .desk .body {
+    margin-top: 6px;
+    font-size: var(--type-small);
+    line-height: var(--lh-small);
+  }
+
+  :global(html[data-mode='museum']) .desk .deskLinks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 0 12px;
+    margin-top: 10px;
+  }
+
+  :global(html[data-mode='museum']) .desk .deskLinks li:first-child {
+    margin-bottom: 0;
+  }
+
+  :global(html[data-mode='museum']) .desk .deskLink {
+    line-height: 1.3;
+  }
+}
+
+/*
+ * The story dialog is open (F-021, F-028): the stop cards step aside, so the framed case is fully
+ * visible in the area left of the desktop panel instead of sitting under the dimmed card. The
+ * dialog is modal, so nothing hidden here could take focus or input anyway; the opener's "Read the
+ * story" comes back before focus returns to it (the dialog closes first).
+ */
+:global(html:has(dialog[open])) .card {
+  visibility: hidden;
+}
+
+/*
+ * Phones: Medium and Caption are hidden below 480 px (EXPERIENCE §5.8, §9.2). The card stays short
+ * so the case above it is never covered, down to 360 x 640 (G3: the sdsj card met the case floor).
+ * The reserved "Installation in progress" line moves out of the flow, beside "Read the story", so
+ * it costs no height and still never shifts the card.
+ */
+@media (max-width: 479px) {
+  .medium,
+  .caption {
+    display: none;
+  }
+
+  .card {
+    padding: 14px 18px 16px;
+  }
+
+  .numberRow {
+    margin-bottom: 6px;
+  }
+
+  .title {
+    font-size: var(--type-title-phone);
+  }
+
+  .role {
+    margin-top: 6px;
+  }
+
+  .actions {
+    margin-top: 12px;
+  }
+
+  .status {
+    position: absolute;
+    right: 18px;
+    bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    max-width: calc(100% - 210px);
+    min-height: var(--target-min);
+    margin: 0;
+    line-height: 1.2;
+    text-align: right;
+  }
+}
+
+/* Desktop and landscape: the left column, clear of the case framed right of center. */
+@media (min-width: 1024px), (orientation: landscape) and (min-width: 640px) {
+  .slot {
+    align-items: flex-start;
+    padding: 96px 0 12vh 5vw;
+  }
+
+  .card {
+    width: clamp(320px, 26vw, 400px);
+  }
+}
+
+/* Landscape phones: compact desktop layout (EXPERIENCE §9.1). */
+@media (orientation: landscape) and (max-height: 500px) {
+  .slot {
+    padding-top: 64px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .card {
+    width: 300px;
+    padding: 14px 18px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .medium,
+  .caption {
+    display: none;
+  }
+}

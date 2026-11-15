@@ -1,0 +1,124 @@
+{
+  "wp": "F-M4a",
+  "role": "R0 fixer acting as R5 (exhibits), R4 (rail), R3 (riser parts of the anatomy kit) and R1 (the certifications entry)",
+  "status": "done, except F-041 (blocked: not reachable by framing within the brief's constraints; see openQuestions)",
+  "branch": "claude/m4-f-m4a",
+  "commits": [
+    "1551fed fix(F-040): stand the mun scaffold on a riser that spans its footprint",
+    "73d7309 fix(F-044): show the certification date and issuer placeholders in the exhibit story",
+    "5bbab48 fix(F-042): shorten the wing dialog dolly so the wall title clears the case",
+    "a06e6a5 fix(F-045): lift and enlarge the small exhibits so they read in the thumbnail",
+    "(this commit) review(F-M4a): before/after captures and the F-M4a report"
+  ],
+  "changedFiles": [
+    "docs/spec/EXPERIENCE.md (§4.4, §4.6, §4.8, §4.9 numbers)",
+    "src/content/resume.ts (certifications entry only)",
+    "src/museum/exhibits/_kit/anatomy.ts (WIDE_RISER_FOOTPRINT and its comment only)",
+    "src/museum/exhibits/cfia/*",
+    "src/museum/exhibits/finance-tracker/*",
+    "src/museum/exhibits/sdsj/*",
+    "src/museum/exhibits/mun/*",
+    "src/museum/rail/framing.ts",
+    "src/museum/rail/framing.test.ts",
+    "src/museum/rail/CameraRig.tsx",
+    "review/runs/2026-10-24-f-m4a/*",
+    "review/reports/F-M4a.json"
+  ],
+  "items": [
+    {
+      "id": "F-040",
+      "role": "R5 with R3",
+      "change": "Kit riser under the wide plinth grows from 0.6 m to 0.96 m square (anatomy WIDE_RISER_FOOTPRINT; fixtureMatrices draws it unchanged), so it spans the scaffold's corner uprights (0.912 m outer). The scaffold now starts at the slot floor y 0.10 (the riser top) and ends at 1.10; X-braces are shortened to stay inside each tier's height so the bottom tier's braces end on the riser top, not in it. The MUN slot contract is unchanged.",
+      "evidence": "chip.test 'stands every upright and the plate on a surface: nothing floats (F-040)': every bottom-tier upright corner is 0 to 2 mm above the riser top under it, each upper upright stands on the one below, no scaffold part dips below the riser top, plate corners on the riser. fixtureMatrices.test (riser = slot floor, footprint = WIDE_RISER_FOOTPRINT) passes. Captures: review/runs/2026-10-24-f-m4a/mun-desktop-after.png, review/runs/2026-10-24-f-m4a/mun-pixel7-after.png (uprights meet the riser).",
+      "experienceEdits": "§4.9 scaffold y 0.10 to 1.10, standing on the 0.96 m kit riser."
+    },
+    {
+      "id": "F-041",
+      "role": "R4",
+      "change": "None. Projected with the real layout (unit probe through three.js, the same math as framing.test): at the mun stop on Pixel 7 (412 x 839, FOV 68, framing 0.5 x 0.36) the title spans x -0.465 to -0.039 of the width (entirely off the left edge) while the case spans 0.079 to 0.903. The title lies 19 to 32 degrees left of the view axis and the visible half-width is 18.3 degrees, so no projection shift, gaze yaw or FOV within the 14 px label floor brings it in while the case stays within 3% of its framing point. Desktop dialog (panel left 0.56, dolly 0.6): title -0.208 to 0.015, case 0.051 to 0.497; bringing the title in needs a +0.22 shift, which puts the case 0.16 under the panel (even with no dolly: +0.16 shift, case right edge 0.62 > 0.56).",
+      "evidence": "Before captures review/runs/2026-10-24-f-m4a/mun-pixel7-before.png and review/runs/2026-10-24-f-m4a/mun-dialog-desktop-before.png; numbers above.",
+      "experienceEdits": "none"
+    },
+    {
+      "id": "F-042",
+      "role": "R4",
+      "change": "framing.ts adds titleBottomCorners, verticalTangents and titleClearDolly: the longest dialog dolly, up to dialogDollyM (0.6), at which the wall title's last baseline still projects TITLE_CASE_CLEARANCE_TAN (about 10 px at 900 px) above the case top (brass edge included). CameraRig computes it once per wing exhibit (klarup 0.244 m, finance-tracker 0.172 m, sdsj 0.294 m) and scales the eased dolly by it. Main-aisle exhibits are not in the map and keep the full 0.6 m dolly, so their dialogs do not change.",
+      "evidence": "framing.test 'wing dialog dolly (F-042)': for klarup, finance-tracker and sdsj on desktop with the panel at 806/1440, the full 0.6 m dolly puts the title bottom below the case top (the reported defect) and the shortened dolly keeps it at least about 9 px above. Captures: review/runs/2026-10-24-f-m4a/wing-dialogs-before-after.png (left before, right after: KLARUP, TRACKER and OF ST. JOHN'S whole).",
+      "experienceEdits": "none"
+    },
+    {
+      "id": "F-045",
+      "role": "R5 with R3",
+      "change": "cfia: walnut box 0.34 x 0.26 x 0.26 (top 0.285) lifts the paper stack to y 0.29 to 0.42; tickets 0.17 x 0.004 x 0.115 at a 0.009 pitch, rod r 0.007, tip at 0.665, stamps 0.05 x 0.02; same 14 tickets and the one 6 s motion. finance-tracker: a walnut stand (plain box, 12 triangles) lifts the tray to y 0.215; coins r 0.065, h 0.011 (full stack 0.479). sdsj: table top at y 0.36 on a 0.30 m pedestal, foot r 0.15, and a brass rim band (open cylinder, 128 triangles) outlines the walnut disc. mun: the die head leans 30 degrees toward the stop camera about the post top and turns about its own axis (dieFrame), so the face with its core and traces reads instead of an edge. Brass color stays with WP-26 (M3 decision). klarup untouched.",
+      "evidence": "320 px grayscale thumbnails, desktop tier high (G3 format): review/runs/2026-10-24-f-m4a/thumbs-before.png and review/runs/2026-10-24-f-m4a/thumbs-after.png (cfia, finance-tracker, sdsj, mun left to right), side by side in review/runs/2026-10-24-f-m4a/thumbs-before-after.png; case crops review/runs/2026-10-24-f-m4a/case-crops-after.png. stats() after: cfia 1,116 triangles 6 draw calls inBounds; finance-tracker 7,480 / 5 / inBounds (budget 8,000 / 6); sdsj 792 / 9 / inBounds; mun 2,676 / 8 / inBounds. Unit tests: chip.test (die lean holds at every yaw, pivots on the post top, every die part inside the slot and clear of the uprights at every yaw), spindle.test, counts.test, table.test with the new numbers. build budgets ok (draw calls at every stop).",
+      "experienceEdits": "§4.4 box, spindle, tickets, stamps, fall height; §4.6 stand, tray, coin size and stack top; §4.8 table height, pedestal, foot, brass rim; §4.9 die lean and motion axis."
+    },
+    {
+      "id": "F-044",
+      "role": "R1",
+      "change": "The certifications exhibit story gains one draft paragraph: 'Issue dates: [placeholder: certification issue dates]. Tech Stewardship issuer: [placeholder: Tech Stewardship issuer].' The items stay without dates or issuer, so print is unchanged. No schema change was needed (Certification.date is YYYY-MM and issuer prints, so neither could carry a placeholder without printing it).",
+      "evidence": "dist/exhibit/certifications/index.html contains both placeholders; dist/resume/index.html, resume/resume.tex and pdftotext dist/resume.pdf contain none; pdfinfo: 1 page; RELEASE=1 npm run check:copy lists content.certifications.exhibit.story[2].text: [placeholder in content.",
+      "experienceEdits": "none (§4.10 already names both placeholders)"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "npm run verify",
+      "command": "npm run verify",
+      "result": "pass",
+      "evidence": "lint, typecheck, 876 unit tests passed, 3 skipped"
+    },
+    {
+      "id": "A2",
+      "criterion": "npm run build",
+      "command": "npm run build",
+      "result": "pass",
+      "evidence": "budgets ok, check-copy ok, PDF 1 page"
+    },
+    {
+      "id": "A3",
+      "criterion": "npm run check:budgets and npm run check:glyphs",
+      "command": "npm run check:budgets && npm run check:glyphs",
+      "result": "pass",
+      "evidence": "budgets ok; glyphs ok: 35 labels, 76 code points"
+    },
+    {
+      "id": "A4",
+      "criterion": "exhibit-contract, exhibits, greybox, rail-input, dialog and wings specs on desktop and pixel7",
+      "command": "npx playwright test tests/e2e/{exhibit-contract,exhibits,greybox,rail-input,dialog,wings}.spec.ts --project=desktop --project=pixel7 --workers=2 (PORT=4177)",
+      "result": "see evidence",
+      "evidence": "100 passed, 40 skipped (project-gated), 0 failed in 17.9 min on desktop and pixel7 against the build with F-040, F-042, F-044 and F-045"
+    },
+    {
+      "id": "A5",
+      "criterion": "F-041 check (title inside the viewport at the mun stop on pixel7 and in the mun dialog on desktop)",
+      "command": "n/a",
+      "result": "not met",
+      "evidence": "Not reachable by framing.ts within the brief's constraints; see items F-041 and openQuestions."
+    }
+  ],
+  "visualBaselinesChanged": [
+    "stops: cfia, finance-tracker, sdsj, mun (desktop and pixel7; their exhibits changed), and every stop whose frame shows those cases from afar (for example projects-door, volunteer-door, wailo, certifications if their screenshots include a neighbouring case)",
+    "dialogs: klarup, finance-tracker, sdsj (desktop, shorter dolly), cfia and mun (exhibit changed), certifications (new story paragraph, both projects)"
+  ],
+  "deviations": [
+    "F-041 is not fixed: the brief's constraint (case within the D2 3% tolerance of its framing point) cannot hold with the title in view on Pixel 7 or in the desktop dialog (numbers in the item). Nothing was changed for it.",
+    "F-040 also shortens the scaffold X-braces (about 4 cm) so the bottom tier stays above the riser top; the braces now end on the rails rather than in the corners.",
+    "Local Playwright: this container ships Chromium 1243 at /opt/pw-browsers, not 1194. PLAYWRIGHT_BROWSERS_PATH pointed at a scratch folder whose chromium-1194 and chromium_headless_shell-1194 entries are symlinks to the 1243 binary. No install, no version change, nothing committed."
+  ],
+  "openQuestions": [
+    {
+      "question": "F-041: the MUN wall title sits 19 to 32 degrees left of the stop camera's axis, wider than the Pixel 7 half view (18.3 degrees). Fix it in the title placement (R3, kit placard.ts: place the mun title on the wall behind the case like the certifications vitrine, or at the slot's sightline as for the aisle titles), or rule that the mun stop and dialog may frame the case off its point (R4)?",
+      "for": "R0 (with R3)",
+      "default": "Left open: no change on this branch. Recommended: R3 places the mun title on the back wall at the camera's sightline through the slot center, as F-022 did for the aisle titles."
+    },
+    {
+      "question": "F-044: the placeholder sits in the story as its own draft paragraph. Should the card show it instead?",
+      "for": "R0",
+      "default": "Story (dialog and /exhibit/certifications/), card unchanged."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Before/after captures are under review/runs/2026-10-24-f-m4a/ (stop shots and dialogs at 412 x 839 and 1440 x 900; desktop thumbnails at tier high as in G3). klarup was not changed."
+}

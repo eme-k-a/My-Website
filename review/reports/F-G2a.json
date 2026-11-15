@@ -1,0 +1,149 @@
+{
+  "wp": "F-G2a",
+  "role": "R3 Environment (with R2 judgment)",
+  "status": "partial",
+  "branch": "wp/F-G2a",
+  "commits": [
+    "1ec990d fix(F-023): damp the medium floor's env reflection to match high",
+    "b9e48e7 fix(F-022): keep wall and door titles in frame and clear of the HUD",
+    "583c1ed fix(F-027): center each wall wash on its title and widen it to cover it",
+    "742953c fix(F-025): dim the wall wash and fade beam cones toward the mount",
+    "d150280 fix(F-026): stop dithering the plain wall-wash rows the shell samples",
+    "5df1b96 fix(F-024): ground the plinths with a baked side wash and top-edge glint",
+    "8bdf9d0 fix(F-031): move the lobby portrait clear of the desktop progress rail",
+    "d9da3a7 fix(F-032): clear the phone h1 and light the lobby floor under the hero"
+  ],
+  "changedFiles": [
+    "src/museum/environment/Beams.tsx",
+    "src/museum/environment/Fixtures.tsx",
+    "src/museum/environment/Floor.tsx",
+    "src/museum/environment/Hall.tsx",
+    "src/museum/environment/Labels.tsx",
+    "src/museum/environment/LightformerEnvironment.tsx",
+    "src/museum/environment/beams.test.ts",
+    "src/museum/environment/fixtureMatrices.ts",
+    "src/museum/environment/labels.test.ts",
+    "src/museum/environment/labels3d.ts",
+    "src/museum/environment/lightPlan.test.ts",
+    "src/museum/environment/lightPlan.ts",
+    "src/museum/environment/lightPools.test.ts",
+    "src/museum/environment/lightPools.ts",
+    "src/museum/environment/plinthGlow.test.ts",
+    "src/museum/environment/shell.test.ts",
+    "src/museum/environment/shell.ts",
+    "src/museum/exhibits/_kit/Placard.tsx",
+    "src/museum/exhibits/_kit/placard.test.ts",
+    "src/museum/exhibits/_kit/placard.ts",
+    "review/reports/F-G2a.json"
+  ],
+  "acceptance": [
+    {
+      "id": "F-023",
+      "criterion": "Pixel 7 medium floor mean luminance within about 15% of the high capture at projects-door, volunteer-door (safe-sip context only)",
+      "command": "capture.spec pixel7 (medium) and pixel7 CAPTURE_TIER=high, region x 20-390 y 390-545",
+      "result": "pass",
+      "evidence": "Floor mean before 65.7 / 65.3 (medium) vs 6.2 / 6.1 (high); after 6.2 / 6.2 vs 6.2 / 6.1. Cause: the library floor read scene.environment, so three used environmentIntensity 1 and ignored envMapIntensity 0.6. Floor clones now take the env cube as their own envMap at 0.07. out/f-g2a/before vs out/f-g2a/after"
+    },
+    {
+      "id": "F-022",
+      "criterion": "Every 3D title complete and clear of HUD control rects at the slice stops, desktop and pixel7",
+      "command": "out/f-g2a/tools/project.ts (titles projected with the stop camera and real framing vs live HUD rects) plus captures",
+      "result": "pass",
+      "evidence": "Own-title problems before: desktop 6, pixel7 12. After: desktop 0; pixel7 0 at the seven slice stops (the tool still flags COMMIT HISTORY, which F-032 hides on portrait). Titles hang on the stop camera's sight line through the slot; room names sit on a new 0.3 m door transom. Residual outside the slice stops: finance-tracker 'P2' touches the phone wing 'Return to the aisle' button (about 25 px)"
+    },
+    {
+      "id": "F-027",
+      "criterion": "Wing titles unbroken and centered on their wash",
+      "command": "lightPools.test.ts (bay center equals title center, width covers title) plus projects-door and volunteer-door captures",
+      "result": "pass",
+      "evidence": "Bays are seamless, centered on the title, title width + 1 m (min 2 m); wrapped organizations stack up from a fixed last baseline above the case edge (placard.test.ts). The beam no longer cuts titles: cones fade to 0 at the mount (F-025)"
+    },
+    {
+      "id": "F-024",
+      "criterion": "Verafin desktop plinth front visibly above the floor beside it; plinth edge visible in the thumbnail",
+      "command": "capture.spec desktop high, verafin",
+      "result": "pass",
+      "evidence": "Plinth front mean 2.0 -> 17.4 (floor beside it 17.4 right, 26.4 left in the pool, about 4 off-pool); top-edge band 58.7. Baked plinth glow lightmap on a clone of the library plinth, same draw calls, done in environment/Fixtures.tsx (no kit change)"
+    },
+    {
+      "id": "F-025",
+      "criterion": "Desk and lobby desktop: beam region darker than the end-wall label and the floor pool; portrait and HUD corner not washed",
+      "command": "capture.spec desktop high, desk and lobby",
+      "result": "pass",
+      "evidence": "Desk shaft (top) mean 46.9 -> 23.2 vs floor pool 33.4 and label p95 87; lobby top-right wash mean 42.9 -> 20.5. Wash scallop peak 0.3, beam cones ramp from black at the mount"
+    },
+    {
+      "id": "F-026",
+      "criterion": "Projects-door desktop: no high-frequency vertical pattern on the left wall brightened 3x",
+      "command": "out/f-g2a/tools/streak.py (share of differing neighbour pixels, x 0-560 y 80-500)",
+      "result": "pass",
+      "evidence": "0.111 -> 0.005 (mysa 0.076 -> 0.019). Cause: dither in the plain wash row the shell samples, stretched floor to ceiling; plain rows are no longer dithered"
+    },
+    {
+      "id": "F-031",
+      "criterion": "Lobby desktop: portrait right edge left of the rail bounding box",
+      "command": "capture.spec desktop high, lobby",
+      "result": "pass",
+      "evidence": "Portrait center x 3.4 -> 3.0: frame ends near x 1297 vs rail column from about x 1328"
+    },
+    {
+      "id": "F-032",
+      "criterion": "Lobby pixel7: no 3D label inside the h1 box; the arch's light pool visible below 'Begin the walk'",
+      "command": "capture.spec pixel7, lobby",
+      "result": "pass",
+      "evidence": "COMMIT HISTORY hidden at aspect < 1 (still mounted, so ready is unaffected). New light-0 threshold pool in front of the arch: band below 'Begin the walk' mean 23 to 32 vs 1 without it. The arch itself still sits behind the hero links; moving it needs the lobby camera or phone framing (R4)"
+    },
+    {
+      "id": "F-033",
+      "criterion": "Brass titles glint (optional, R2 taste call)",
+      "command": "none",
+      "result": "skipped",
+      "evidence": "Skipped per R0 (optional)"
+    },
+    {
+      "id": "V1",
+      "criterion": "npm run verify, npm run build",
+      "command": "npm run verify && npm run build",
+      "result": "pass",
+      "evidence": "747 unit tests pass; budgets ok (museum 318.36 KB gzip); check-copy ok"
+    },
+    {
+      "id": "V2",
+      "criterion": "environment.spec (per-stop draw calls and triangles) and the functional e2e suite",
+      "command": "PORT=4174 npx playwright test --grep-invert '@visual|@a11y'",
+      "result": "pass",
+      "evidence": "214 passed, 230 skipped (capture and project-specific skips), 0 failed (30.8 min, all projects). environment.spec desktop and pixel7: 3 passed, 1 skipped"
+    },
+    {
+      "id": "V3",
+      "criterion": "Visual baselines",
+      "command": "npm run visual",
+      "result": "skipped",
+      "evidence": "Pixels change at every stop by design; R0 regenerates the baselines in CI after push"
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "EXPERIENCE §5.4 needs updating to match: room names move from above the door (cap 0.14 m, baseline 3.05) onto a 0.3 m door transom (cap 0.10 m, clear door opening 2.5 m); §5.4 says caps may be raised, never lowered. 0.14 m cannot fit 'VOLUNTEER & LEADERSHIP' in one line inside the 2.4 m door or the phone frame. Main-aisle organization cap is raised 0.10 -> 0.12 m; titles hang on the stop's sight line instead of the plinth z; organization baselines are now the last line (2.32 main, 2.14 wings and mun).",
+      "for": "R0",
+      "default": "Implemented as described; legibility unit test still gives at least 14 px on Pixel 7 for every title"
+    },
+    {
+      "question": "Record in ART_DIRECTION §4: wash scallop peak 0.3 of its old level, beam cones fade from the mount, plinth glow lightmap (intensity 18), arch threshold pool (r 2.6 m, alpha 0.85, light-0), medium floor envMapIntensity 0.07 on its own envMap, portrait center x 3.0 (EXPERIENCE §2.3 and §5.5 coordinates too). No token in src/design changed.",
+      "for": "R2",
+      "default": "Values live as named constants in lightPools.ts, Floor.tsx and lightPlan.ts"
+    },
+    {
+      "question": "Phone lobby: the arch and first case still sit behind the hero links; showing them below 'Begin the walk' needs a lobby camera or portrait framing change (R4). Also finance-tracker 'P2' touches the phone wing exit button, and on pixel7-landscape the lobby, desk and volunteer-door titles meet the PDF button (not scored viewports).",
+      "for": "R4",
+      "default": "Left as is; environment side done (h1 clear, floor pool under the hero)"
+    },
+    {
+      "question": "The _kit glob was 'plinth only', but F-022 directs the label components: placard.ts, Placard.tsx and placard.test.ts in _kit changed for wall-title placement (lineHeight, explicit line breaks, slotPlacard helper). The plinth fix itself needed no kit change.",
+      "for": "R0",
+      "default": "Kept the kit changes to the wall-title files"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Merge after F-G2c and F-G2b; no file overlap expected (environment and _kit placard only). Visual baselines must be regenerated in CI. Safe Sip results were captured for context only (it is being removed); wing checks were made at projects-door and volunteer-door. Before/after captures and measurement scripts are in out/f-g2a/ (gitignored)."
+}

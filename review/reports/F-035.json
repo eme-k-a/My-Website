@@ -1,0 +1,96 @@
+{
+  "wp": "F-035",
+  "role": "Fixer for R1, R5, R3, R8 and R0 (docs)",
+  "status": "done",
+  "branch": "wp/F-035",
+  "commits": [
+    "chore(F-035): remove the Safe Sip volunteer entry from content, exhibits and tests",
+    "docs(F-035): drop the Safe Sip entry from the specs, briefs, owners and context packs",
+    "docs(review): add the F-035 report"
+  ],
+  "changedFiles": [
+    "src/content/resume.ts",
+    "src/content/ids.ts",
+    "src/content/selectors.ts (comment only)",
+    "src/museum/exhibits/safe-sip/** (deleted)",
+    "review/concepts/safe-sip.md (deleted)",
+    "src/museum/rail/layout.ts",
+    "src/museum/rail/layout.test.ts and __snapshots__/layout.test.ts.snap",
+    "src/museum/rail/framing.test.ts",
+    "src/museum/environment/lightPlan.test.ts, fixtureMatrices.test.ts",
+    "src/museum/exhibits/_kit/placard.test.ts, stopDistance.test.ts",
+    "src/app/routes.test.ts, src/content/*.test.ts",
+    "scripts/build-resume-tex.test.ts, build-resume-pdf.test.ts",
+    "resume/resume.tex",
+    "tests/e2e/dialog.spec.ts, exhibits.spec.ts, visual.spec.ts",
+    "tests/e2e/__screenshots__/visual.spec.ts/*safe-sip*.png (4 deleted: stop-safe-sip-desktop/pixel7, dialog-safe-sip-desktop/pixel7)",
+    "docs/spec/EXPERIENCE.md, docs/ARCHITECTURE.md, docs/ART_DIRECTION.md, docs/CONTENT_DRAFT.md",
+    "docs/wp/WP-22.md, WP-23.md, WP-24.md, WP-25.md, WP-26.md, WP-27.md, WP-29.md, WP-30.md, WP-31.md, WP-34.md",
+    "docs/wp/packs/WP-20.md to WP-36.md (regenerated)",
+    "OWNERS.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "grep -rniE \"enactus|safe.?sip\" src tests scripts resume public prints nothing",
+      "command": "grep -rniE \"enactus|safe.?sip\" src tests scripts resume public | wc -l",
+      "result": "pass",
+      "evidence": "0 matches"
+    },
+    {
+      "id": "A2",
+      "criterion": "verify, build, check:copy and check:glyphs pass",
+      "command": "npm run verify; npm run build; npm run check:copy; npm run check:glyphs",
+      "result": "pass",
+      "evidence": "verify exit 0 (66 unit files, 737 tests); build exit 0 (budgets ok, check-copy ok with dist); glyphs ok 35 labels"
+    },
+    {
+      "id": "A3",
+      "criterion": "wings, rail-input, dialog, exhibits and keyboard specs pass on desktop and pixel7; full e2e passes",
+      "command": "PORT=4180 npm run e2e -- --workers=2; npm run a11y",
+      "result": "pass",
+      "evidence": "e2e 212 passed, 224 skipped by project gating, 0 failed (16.4 min); a11y 28 passed incl. keyboard.spec; test:pdf 9 passed. dialog (n) now runs at verafin, new (n2) covers the one-exhibit wing head at sdsj"
+    },
+    {
+      "id": "A4",
+      "criterion": "dist has no exhibit/safe-sip and no safe-sip chunk",
+      "command": "ls dist/exhibit; grep -rl safe-sip dist",
+      "result": "pass",
+      "evidence": "dist/exhibit holds 9 folders (no safe-sip); no file in dist mentions safe-sip"
+    },
+    {
+      "id": "A5",
+      "criterion": "Resume PDF is one page; Volunteer section lists only SDSJ",
+      "command": "pdfinfo dist/resume.pdf; pdftotext dist/resume.pdf -",
+      "result": "pass",
+      "evidence": "Pages: 1; VOLUNTEER EXPERIENCE lists President, Jul 2024 - Present only; resume.tex regenerated and the PDF/tex tests pass"
+    },
+    {
+      "id": "A6",
+      "criterion": "Every rail sample at least 0.4 m from the walls in the new layout",
+      "command": "npm test (rail and environment clearance tests)",
+      "result": "pass",
+      "evidence": "unit suite green with the lone sdsj stop at (5.6, 1.6, -28), 4 m from each end wall"
+    },
+    {
+      "id": "A7",
+      "criterion": "Visual baselines",
+      "command": "n/a",
+      "result": "deferred",
+      "evidence": "stop-safe-sip-* and dialog-safe-sip-* baselines deleted; volunteer-door and sdsj-adjacent stops will mismatch until R0 rebaselines in CI"
+    }
+  ],
+  "deviations": [
+    "Layout change in src/museum/rail/layout.ts: the validator already allowed one-item wings, but the item then sat at the +2.2 m offset with its camera at +1.4 m (lopsided in the 8 m room). A lone item is now centred on the door axis (plinth and camera at the door z). Poses pinned in layout.test.ts, snapshot, EXPERIENCE 2.5 and ARCHITECTURE 6.6 updated; two new unit tests cover it.",
+    "dialog.spec test (n) moved to verafin as briefed; added (n2) so the wing head (exitWing) stays covered at sdsj.",
+    "Also updated counts in WP-26, WP-27, WP-29, WP-31 and WP-34 (13 stops, 9 exhibits, 26 stop baselines, 18 dialog baselines, 9 exhibit pages), beyond the briefs listed.",
+    "EXPERIENCE 4.7 and CONTENT_DRAFT 5.7 are kept as short 'removed' stubs so section numbers and cross-references still hold.",
+    "PLAN.md (not in the brief) still mentions Safe Sip; docs/RULINGS.md already records the removal and wins as the binding ruling.",
+    "OWNERS.json: removed the safe-sip glob from the exhibit list; the finished WP-13 entry is left as history.",
+    "public/og does not exist and gen-og.ts is a stub (WP-31), so there was no OG image to delete."
+  ],
+  "openQuestions": [
+    "At the sdsj stop on desktop the 3D wall title ('SOFTWARE DEVELOPERS OF ST. JOHN'S') overlaps the progress rail's current-stop tooltip ('No. V1, The Round Table') by a few pixels (capture out/f035/sdsj-desktop.png). The rail dot of a wing's first item sits at the same height as the title, so klarup is likely the same; not touched here (R3/R2 call, F-G2 area).",
+    "The sdsj exhibit is still the placeholder crate until WP-23."
+  ]
+}

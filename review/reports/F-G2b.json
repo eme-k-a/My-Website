@@ -1,0 +1,96 @@
+{
+  "wp": "F-G2b",
+  "role": "R4 Camera + R6 Overlay",
+  "status": "done",
+  "branch": "wp/F-G2b",
+  "commits": [
+    "63dce63 fix(F-020): frame the phone desk above its card",
+    "7a191a3 fix(F-021): hide the HUD controls and rail under the story panel",
+    "e9cc428 fix(F-028): clear the stop card from the dialog framing area",
+    "f2d993d fix(F-030): give the gallery root scrollbar dark colors",
+    "f5e3f5b fix(F-034): keep the phone year chip on the aisle year",
+    "<this commit> docs(review): F-G2b report"
+  ],
+  "changedFiles": [
+    "src/museum/rail/framing.ts",
+    "src/museum/rail/framing.test.ts",
+    "src/museum/rail/CameraRig.tsx",
+    "src/overlay/StopCard.module.css",
+    "src/overlay/Hud.module.css",
+    "src/overlay/Hud.tsx",
+    "src/overlay/ProgressRail.module.css",
+    "src/overlay/model.ts",
+    "src/overlay/model.test.ts",
+    "src/app/global.css",
+    "tests/e2e/dialog.spec.ts",
+    "tests/e2e/capture.spec.ts",
+    "review/reports/F-G2b.json"
+  ],
+  "previewUrl": null,
+  "productionUrl": null,
+  "acceptance": [
+    {
+      "id": "F-020",
+      "criterion": "Pixel 7 desk: every desk object visible above the card; screenPos('desk') y above the card's top",
+      "command": "CAPTURE_STOPS=desk CAPTURE_DIALOGS=1 npx playwright test tests/e2e/capture.spec.ts --grep @capture --project=pixel7, plus a scratch probe of screenPos('desk') and the desk card rect",
+      "result": "pass",
+      "evidence": "Before (34a5555): card top 346 px of 839, the desk projected below it (only the beam and end-wall line visible); screenPos('desk') returned null (the desk has no exhibit hit box). After: card top 377 px (closing line dropped on museum-mode portrait phones), desk framing point 34% of the height on the desk stop only; screenPos('desk') = (201, 339), 38 px above the card top. The capture shows the walnut desk with postcard, envelope, catalogue and ledger above the card, the end-wall line just under the HUD buttons, and the year chip reading FRONT DESK. Desktop desk framing is unchanged (deskWeightAt applies to portrait only). Rebaseline of stop-desk-pixel7 deferred to R0 in CI."
+    },
+    {
+      "id": "F-021",
+      "criterion": "Desktop story dialog: no HUD, rail or wing text inside the panel; e2e assertion",
+      "command": "PORT=4175 npx playwright test tests/e2e/dialog.spec.ts --project=desktop --project=pixel7",
+      "result": "pass",
+      "evidence": "New dialog.spec (n) at safe-sip (volunteer wing): hud-progress, exit-wing, hud-pdf, hud-classic and the stop card are hidden while the story is open, a text-node scan finds no page text under the panel, and all return after Esc with focus on Read the story. Negative check: with the two hide rules disabled the test fails (hud-progress toBeHidden, received visible). After captures verafin-dialog-desktop and safe-sip-dialog-desktop show a clean panel. dialog.spec: 28 passed, 10 skipped (project filters) on desktop and pixel7."
+    },
+    {
+      "id": "F-028",
+      "criterion": "Desktop dialog: the case is fully visible, uncovered by the card and left of the panel (verafin, safe-sip)",
+      "command": "CAPTURE_STOPS=verafin,safe-sip CAPTURE_DIALOGS=1 npx playwright test tests/e2e/capture.spec.ts --grep @capture --project=desktop",
+      "result": "pass",
+      "evidence": "Settled screenPos with the panel open (panel left 806 px): verafin x 410, safe-sip x 406, both the center of the area left of the panel. The round 1 safe-sip shot (case at x 640 to 806) was taken mid framing shift: capture.spec took the dialog shot as soon as the dialog was visible. Fixes: stop cards hidden while a story is open (verafin's case was under the card), and capture.spec now waits for the slide-in and a still screenPos. After captures: verafin case x 225 to 590, safe-sip case x 245 to 590, both whole and clear of the panel."
+    },
+    {
+      "id": "F-030",
+      "criterion": "grep -n 'color-scheme: dark' src/app/global.css; dark scrollbar at 1440x900 with scrollbars shown",
+      "command": "grep -n 'color-scheme: dark' src/app/global.css; scratch Chromium 141 run with --hide-scrollbars removed",
+      "result": "pass",
+      "evidence": "The declaration was already there before this WP (global.css html rule since 1c04668, plus the color-scheme meta in index.html); the round 1 evidence missed it. Added scrollbar-color: var(--border-secondary) var(--ink) next to it. Probe: the gallery html computes color-scheme dark, its 15 px gutter strip renders only ink (11, 11, 13); the classic /resume/ page in the same browser (light system theme) renders a light track (252) and a grey thumb, so the probe does show native scrollbars."
+    },
+    {
+      "id": "F-034",
+      "criterion": "Pixel 7 year chip at volunteer-door, safe-sip and desk",
+      "command": "CAPTURE_STOPS=volunteer-door,safe-sip,desk npx playwright test tests/e2e/capture.spec.ts --grep @capture --project=pixel7; npx vitest run src/overlay/model.test.ts",
+      "result": "pass",
+      "evidence": "Before: 2025, 2026, 2022. After: 2025, 2025, FRONT DESK. chipLabel holds the door's main-aisle year inside a wing and uses the rail's own 'Front desk' end label at the desk; unit tests cover every main stop, the desk and every wing."
+    },
+    {
+      "id": "V",
+      "criterion": "npm run verify and npm run build",
+      "command": "npm run verify && npm run build",
+      "result": "pass",
+      "evidence": "lint, prettier, typecheck clean; vitest 65 files, 737 tests passed; build ok, budgets ok, check-copy ok."
+    },
+    {
+      "id": "E2E",
+      "criterion": "All e2e and a11y specs stay green (visual baselines excluded: R0 regenerates them in CI)",
+      "command": "PORT=4175 npx playwright test --grep-invert @visual",
+      "result": "pass",
+      "evidence": "Full run, 1 worker, PORT=4175: 161 passed, 249 skipped (project filters), 82 failed, all with ECONNREFUSED on :4175 after the reused local serve-dist (a background probe server) hit its 30 min time limit mid-run; no assertion failures. playwright test --last-failed on those 82 against a fresh server: 82 passed. Total 243 passed, 0 failed, a11y included. npm run visual not run: baselines change by design and R0 regenerates them in CI."
+    }
+  ],
+  "deviations": [
+    "tests/e2e/capture.spec.ts changed (not in the brief's e2e allowance, which covers the F-021 assertion and broken specs): the dialog shot now waits for the panel slide and a still screenPos. Without it the round 2 capture would show the same mid-shift frame that produced F-028's safe-sip evidence. It is in the F-028 commit and can be dropped by R0 or R8 if unwanted.",
+    "screenPos('desk') is new runtime behaviour behind the unchanged frozen type (screenPos(id: ExhibitId)); specs pass 'desk' with a cast. It returns the center of the four desk object hit boxes.",
+    "F-030 needed no fix: color-scheme: dark was already on html in global.css. Only scrollbar-color was added."
+  ],
+  "openQuestions": [
+    "R0: accept the capture.spec.ts settle wait (see deviations), or hand it to R8.",
+    "R8: an e2e for F-020 (pixel7 desk: screenPos('desk' as never).y below the desk card's top) was not added, because the brief limits tests/e2e to the F-021 assertion. Suggest adding it to camera.spec.",
+    "Smaller portrait phones (360 x 640) still have a proportionally taller desk card; DESK_PORTRAIT_Y is tuned for 412 x 839. Re-check at round 2 if the reviewer scores other phones.",
+    "Visual baselines that change: stop-desk-pixel7 (framing, chip, card), every pixel7 stop's year chip inside the volunteer and projects wings, and dialog baselines if they include the HUD or rail. Deferred to R0 in CI."
+  ],
+  "depsRequest": [],
+  "missingSpecs": [],
+  "notes": "Integration: disjoint from F-G2a and F-G2c globs. F-G2c or F-G2a changes to the environment (labels3d, Floor) may move the end-wall line on the phone desk; re-check that the label stays clear of the HUD at DESK_PORTRAIT_Y 0.34 after the batch merge. Exhibit copy untouched."
+}

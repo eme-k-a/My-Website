@@ -1,0 +1,47 @@
+{
+  "stop": "lobby",
+  "project": "desktop",
+  "url": "/?test=1&mode=museum&tier=high",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "stats": {
+    "calls": 119,
+    "triangles": 12317,
+    "geometries": 73,
+    "textures": 22,
+    "programs": 36,
+    "textureMB": 10.8333371480306,
+    "frames": 12,
+    "dpr": 1,
+    "tier": "high",
+    "track": "main",
+    "mounted": [
+      "verafin"
+    ],
+    "exhibits": {
+      "verafin": {
+        "triangles": 2732,
+        "drawCalls": 9,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        0,
+        1.6,
+        4
+      ],
+      "target": [
+        0,
+        1.6,
+        -10
+      ]
+    },
+    "progress": {
+      "target": 0,
+      "current": 0
+    }
+  }
+}

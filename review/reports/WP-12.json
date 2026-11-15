@@ -1,0 +1,137 @@
+{
+  "wp": "WP-12",
+  "role": "R5 (Builder A), with R2 for the concept verdict",
+  "status": "partial",
+  "branch": "wp/WP-12",
+  "commits": [
+    "9a58d34 feat(exhibit-verafin): the reporting engine",
+    "3236121 docs(concepts): verafin checklist verdict"
+  ],
+  "changedFiles": [
+    "src/museum/exhibits/verafin/index.ts",
+    "src/museum/exhibits/verafin/ReportingEngine.tsx",
+    "src/museum/exhibits/verafin/engine.ts",
+    "src/museum/exhibits/verafin/engine.test.ts",
+    "src/museum/exhibits/verafin/README.md",
+    "review/concepts/verafin.md",
+    "review/reports/WP-12.json"
+  ],
+  "measurements": {
+    "triangles": 2732,
+    "trianglesByPart": "tray 556, cartridges 3 x 236, collar 768, column 192, core 64, conduit 12, bars 36 x 12",
+    "drawCalls": 9,
+    "inBounds": true,
+    "budgetDeclared": {
+      "triangles": 4000,
+      "drawCalls": 12,
+      "textureMB": 0
+    },
+    "chunkGzipKB": 2.81,
+    "museumChunkGzipKB": {
+      "before": 298.14,
+      "after": 298.54
+    }
+  },
+  "evidencePaths": {
+    "desktop": "out/wp12/verafin-desktop.png",
+    "pixel7": "out/wp12/verafin-pixel7.png",
+    "desktopHigh": "out/wp12/high/verafin-desktop.png",
+    "thumbnail": "out/wp12/verafin-thumb.png",
+    "thumbnailHigh": "out/wp12/high/verafin-thumb.png",
+    "stats": "out/wp12/verafin-desktop.json, out/wp12/verafin-pixel7.json",
+    "motion": "out/wp12/motion/ lived in the first (pre-pause) build worktree, which no longer exists; the motion and reduced-motion probe results are recorded in A6 and otherChecks"
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Lint and types (exhibit rules of ARCHITECTURE §7.5)",
+      "command": "npm run verify",
+      "result": "pass",
+      "evidence": "Re-run on the integration tip 3a2c574: eslint + prettier clean, typecheck clean, 43 files / 554 unit tests pass"
+    },
+    {
+      "id": "A2",
+      "criterion": "Registry: folder equals id, triangle budget <= 20,000",
+      "command": "npx vitest run --project unit src/museum/exhibits",
+      "result": "pass",
+      "evidence": "Re-run: 11 files / 64 tests pass, including registry.test.ts and the 13 engine.test.ts tests"
+    },
+    {
+      "id": "A3",
+      "criterion": "verafin exhibit chunk <= 40 KB gzip",
+      "command": "npm run build && npm run check:budgets",
+      "result": "pass",
+      "evidence": "Re-run: exhibits/verafin 2.81 KB gzip (RoundedBox and toCreasedNormals inside it); entry 91.07, museum 298.54; budgets ok"
+    },
+    {
+      "id": "A4",
+      "criterion": "inBounds true and triangles <= 20000 on desktop and pixel7",
+      "command": "npx playwright test tests/e2e/exhibit-contract.spec.ts --grep verafin --project=desktop --project=pixel7 --workers=1",
+      "result": "pass",
+      "evidence": "Re-run (--workers=1, PORT=4175): stats().exhibits.verafin = { triangles: 2732, drawCalls: 9, inBounds: true } on desktop and pixel7; the spec passes these steps (captures out/wp12/verafin-desktop.json and verafin-pixel7.json agree)"
+    },
+    {
+      "id": "A5",
+      "criterion": "Click at screenPos('verafin') opens the dialog with 'The Reporting Engine'; Esc returns focus to open-verafin",
+      "command": "same spec",
+      "result": "fail",
+      "evidence": "Deferred to integration (re-run confirms): the click at screenPos opens the dialog containing \"The Reporting Engine\" and Esc closes it on both projects; only the final toBeFocused(open-verafin) fails, because focus on close is a WP-14 Todo and src/overlay/story.ts is still the WP-02 seam (openStory ignores opener). WP-14 merges before WP-12, so the integrator re-runs the spec after the WP-14 merge."
+    },
+    {
+      "id": "A6",
+      "criterion": "Two canvas screenshots 3 s apart are identical under ?test=1",
+      "command": "same spec",
+      "result": "pass",
+      "evidence": "Re-run: the stillness assertion (two canvas shots 3 s apart) passes on desktop and pixel7 (the run reaches the final focus step). First build: reduced motion with &idle=1 also byte-identical at 0, 3 and 10 s"
+    },
+    {
+      "id": "A7",
+      "criterion": "Concept checklist: 0 unchecked and Verdict PASS signed by R2",
+      "command": "grep -c '^- \\[ \\]' review/concepts/verafin.md",
+      "result": "pass",
+      "evidence": "grep -c prints 0; Verdict PASS, 2026-10-16, signed R2 (Art Director), WP-12, one evidence line per box"
+    }
+  ],
+  "otherChecks": [
+    "npx playwright test --grep @smoke --workers=1 (PORT=4175): 80 passed, 4 skipped",
+    "Captures re-made on the integration tip: out/wp12/verafin-desktop.png, out/wp12/verafin-pixel7.png, out/wp12/high/verafin-desktop.png, thumbnails out/wp12/verafin-thumb.png and out/wp12/high/verafin-thumb.png",
+    "tests/e2e/greybox.spec.ts on desktop and pixel7 (first build): 4 passed (per-stop draw-call budget with verafin built)",
+    "npm run check:copy: ok (316 files); no U+2014 in any WP-12 file",
+    "Motion probe (first build, &idle=1, motion on): the only changed pixels over 16 s are in the bar grid (canvas x 706 to 791, y 492 to 544 at 1440 x 900)"
+  ],
+  "missingSliceSpecsForWP17": [
+    "verafin motion: under ?test=1&idle=1 the canvas changes only inside the grid's screen box after the 8 s refresh, and the column region never changes",
+    "reduced motion stillness for every built exhibit: reducedMotion 'reduce' plus &idle=1, canvas identical over 10 s (exhibit-contract covers only the frozen ?test=1 clock)",
+    "exhibit-contract focus step re-run after WP-14 merges (A5)",
+    "visual baseline for the verafin stop and its dialog on desktop and pixel7"
+  ],
+  "openQuestions": [
+    {
+      "question": "The standard slot floor is y 0.025, so the spec'd tray (center y 0.04, 0.03 tall) stands 2.5 cm above the plinth top. At the stop it reads grounded thanks to the contact-shadow line, but is the reveal intended for every standard exhibit, or should the slot floor (a frozen contract) drop to 0?",
+      "for": "R0",
+      "default": "Built exactly as EXPERIENCE §4.1 specifies; the reveal is noted in the README."
+    },
+    {
+      "question": "The R2 checklist pass ran in the WP-12 builder session (no separate R2 agent exists in the milestone workflow). Should R11 confirm the verafin verdict independently at G2?",
+      "for": "R0",
+      "default": "Verdict PASS committed with one evidence line per box and the session noted in the Notes field."
+    },
+    {
+      "question": "Routed by R0 to WP-16: if the 15 s idle stop lands during a 1.8 s sweep, the exhibit clock stops and the bars hold an in-between pose until the next input. WP-16 asks R0 for the ruling (freeze mid-cycle, or let a running ease finish).",
+      "for": "R7",
+      "default": "No exhibit change: the exhibit is driven only by useExhibitClock() as the brief requires, so whatever WP-16 and R0 decide in the kit applies here without an edit. Recheck after WP-16 merges."
+    },
+    {
+      "question": "Resolved by R0: desktop captures at the default tier (medium) and at CAPTURE_TIER=high are byte-identical (re-confirmed with cmp), which is expected before WP-16 lands.",
+      "for": "R7",
+      "default": "Used the high-tier capture path for the R2 verdict anyway; re-capture both tiers after WP-16 for G2."
+    },
+    {
+      "question": "Resolved by R0: under the current lighting the brass cartridges read as dark tabs and the ceramic bars sit near white; WP-11 tunes the lighting recipe, not the exhibit.",
+      "for": "R2",
+      "default": "No exhibit change; re-capture the verafin stop after WP-11 merges and recheck the G2 rubric there."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Resumed after the usage-limit pause: the saved commits (wp/WP-12 13f0c2b, 122ae28, 32ec85e on 350e3f8) were cherry-picked onto the integration tip 3a2c574 (only docs and workflow files changed between the two) and every acceptance check was re-run there; this report replaces the saved one. The worktree was created from main and its branch was reset to 3a2c574 before any work. Conduit routing (EXPERIENCE §4.1 gives only its size and \"from the column base toward the grid\"): it lies on the line from the column axis to the grid center, starts inside the column base and its far corner meets the left face of the first bar column, so the 0.24 m strip touches but never cuts a bar. Bar heights per set come from rng() with a seeded level, left-right trend and back-row rise plus per-bar variation, so the back rows show from the camera and no single bar stands out. Integrator: after merging WP-14, re-run exhibit-contract.spec.ts --grep verafin on desktop and pixel7 to close A5. No changes outside the WP-12 globs; no tests/** written."
+}

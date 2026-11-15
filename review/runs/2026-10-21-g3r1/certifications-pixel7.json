@@ -1,0 +1,59 @@
+{
+  "stop": "certifications",
+  "project": "pixel7",
+  "url": "/?test=1&mode=museum",
+  "viewport": {
+    "width": 412,
+    "height": 839
+  },
+  "stats": {
+    "calls": 20,
+    "triangles": 7922,
+    "geometries": 79,
+    "textures": 23,
+    "programs": 19,
+    "textureMB": 11.416996002197264,
+    "frames": 11,
+    "dpr": 1,
+    "tier": "medium",
+    "track": "main",
+    "mounted": [
+      "cfia",
+      "mun",
+      "certifications"
+    ],
+    "exhibits": {
+      "cfia": {
+        "triangles": 1116,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "mun": {
+        "triangles": 2676,
+        "drawCalls": 8,
+        "inBounds": true
+      },
+      "certifications": {
+        "triangles": 3924,
+        "drawCalls": 7,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        2.2000685707597665,
+        1.6,
+        -57.000292148643595
+      ],
+      "target": [
+        5.849999819307854,
+        1.6,
+        -57.00000019340289
+      ]
+    },
+    "progress": {
+      "target": 8.000037246722288,
+      "current": 8.000037246722288
+    }
+  }
+}

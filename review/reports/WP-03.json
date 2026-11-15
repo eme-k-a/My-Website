@@ -1,0 +1,199 @@
+{
+  "wp": "WP-03",
+  "role": "R1 (Content & Resume Editor)",
+  "status": "done",
+  "branch": "claude/intelligent-sagan-poq45q",
+  "commits": [
+    "999cfeb feat(content): transcribe resume and museum copy",
+    "0442ac4 feat(content): stop card, hero and 3D string selectors",
+    "507b842 feat(media): headshot crops and textures",
+    "feat(content): check-content build step (this commit; carries this report)"
+  ],
+  "changedFiles": [
+    "src/content/resume.ts",
+    "src/content/content.test.ts",
+    "src/content/schema.test.ts",
+    "src/content/selectors.ts",
+    "src/content/selectors.test.ts",
+    "scripts/build-media.ts",
+    "scripts/build-media.test.ts",
+    "public/images/headshot-400.avif",
+    "public/images/headshot-400.webp",
+    "public/images/headshot-400.jpg",
+    "public/images/headshot-800.avif",
+    "public/images/headshot-800.webp",
+    "public/images/headshot-800.jpg",
+    "public/images/headshot-texture-512.webp",
+    "public/images/headshot-texture-512-duotone.webp",
+    "scripts/check-content.ts",
+    "review/reports/WP-03.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Content tests pass (order, ids, wings, no em dashes, four durations, draft and print flags)",
+      "command": "npx vitest run --project unit src/content",
+      "result": "pass",
+      "evidence": "5 files, 102 tests passed (content.test.ts, selectors.test.ts, schema.test.ts, format.test.ts, temporal.test.ts); verafin Sep 2026 to Dec 2026 = 4 months"
+    },
+    {
+      "id": "A2",
+      "criterion": "Layout untouched",
+      "command": "npx vitest run --project unit src/museum/rail",
+      "result": "pass",
+      "evidence": "20 tests passed without -u; snapshot file unchanged"
+    },
+    {
+      "id": "A3",
+      "criterion": "Tense guard",
+      "command": "BUILD_DATE=2027-01-05 npx tsx scripts/check-content.ts; npx tsx scripts/check-content.ts",
+      "result": "pass",
+      "evidence": "2027-01-05: exit 1, \"check-content: verafin: tense is 'present' but the role ended 2026-12. ...\"; today: exit 0, \"content ok (10 entries, build date 2026-10-15)\""
+    },
+    {
+      "id": "A4",
+      "criterion": "Headshot size and metadata",
+      "command": "npx vitest run --project unit scripts/build-media.test.ts && stat -c %s public/images/headshot-800.webp",
+      "result": "pass",
+      "evidence": "21 tests passed; headshot-800.webp 22632 bytes (cap 61440); exif, icc and xmp undefined on all 8 files; 8 files in public/images; two runs byte-identical"
+    },
+    {
+      "id": "A5",
+      "criterion": "Build green",
+      "command": "npm run verify && npm run build",
+      "result": "pass",
+      "evidence": "build exit 0 (content ok, client and SSR built, dist/images has the 8 files); verify exit 0 on the final run (see notes on the parallel worktree)"
+    },
+    {
+      "id": "A6",
+      "criterion": "Placeholders and drafts are caught",
+      "command": "grep -c '\\[placeholder' src/content/resume.ts",
+      "result": "pass",
+      "evidence": "count 1 (gallery.desk.body, draft: true); content.test.ts asserts every placeholder sits in a draft-flagged block or meta.siteUrl; RELEASE=1 npm run check:copy is still the WP-06 stub, so its failure is checked once WP-06 lands"
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "Verafin: on-site, hybrid or remote? (CONTENT_DRAFT §7 item 1)",
+      "for": "Emeka",
+      "default": "location.mode 'on-site', printed as \"St. John's, NL\""
+    },
+    {
+      "question": "Verafin: which technologies, scale or outcomes can be named publicly, and has the manager cleared the three bullets? (§7 item 2)",
+      "for": "Emeka",
+      "default": "The three safe bullets, no technologies, every bullet draft: true; exhibit.draft: true"
+    },
+    {
+      "question": "Verafin: one public highlight for the story? (§7 item 3)",
+      "for": "Emeka",
+      "default": "Story keeps \"This exhibit is still being installed, so check back after December.\" (draft)"
+    },
+    {
+      "question": "Site display name \"Chukwuemeka (Emeka) Nduka-Nwagbo\"? (§7 item 4)",
+      "for": "Emeka",
+      "default": "displayName() derives that form; meta.title uses it"
+    },
+    {
+      "question": "Is eme-k-a the GitHub handle, and should GitHub go on the PDF header? (§7 item 5)",
+      "for": "Emeka",
+      "default": "contact.github https://github.com/eme-k-a, site only"
+    },
+    {
+      "question": "KlarUp: role, start and end dates; personal, team, course or hackathon project? (§7 item 6)",
+      "for": "Emeka",
+      "default": "role and dates omitted; card subtitle \"Project\"; KlarUp listed first in the Projects wing"
+    },
+    {
+      "question": "Personal Finance Tracker: role and dates; is \"Full-Stack Web App\" an acceptable tagline? (§7 item 7)",
+      "for": "Emeka",
+      "default": "role and dates omitted; tagline \"Full-Stack Web App\""
+    },
+    {
+      "question": "Certifications: issue dates, the Tech Stewardship issuing body, verification links (§7 item 8)",
+      "for": "Emeka",
+      "default": "Names only; AWS issuer \"Amazon Web Services\"; no dates, no links"
+    },
+    {
+      "question": "MUN program start date (§7 item 9)",
+      "for": "Emeka",
+      "default": "education.start omitted; no duration on the card"
+    },
+    {
+      "question": "Are both volunteer roles still active (Safe Sip, SDSJ President)? (§7 item 10)",
+      "for": "Emeka",
+      "default": "Both end 'present', present tense, ONGOING pill"
+    },
+    {
+      "question": "Official capitalization: \"Right-To-Rise\" or \"Right to Rise\"? (§7 item 11)",
+      "for": "Emeka",
+      "default": "\"Right-To-Rise\", as on the resume"
+    },
+    {
+      "question": "Did the Mysa web app use a database alongside Cognito? Which? (§7 item 12)",
+      "for": "Emeka",
+      "default": "mysa.b3 safe version without a database (§3.5 A4 holds the alternate)"
+    },
+    {
+      "question": "What roles is he targeting, for the desk call to action? (§7 item 13)",
+      "for": "Emeka",
+      "default": "Desk body keeps \"[placeholder: target roles]\" (draft: true); the §6.3 fallback sentence is ready if none is named by G5"
+    },
+    {
+      "question": "Does he use SQL at Verafin? (§7 item 14)",
+      "for": "Emeka",
+      "default": "SQL not added to the Languages line"
+    },
+    {
+      "question": "A personal email for after graduation? (§7 item 15)",
+      "for": "Emeka",
+      "default": "cndukanwagbo@mun.ca"
+    },
+    {
+      "question": "Curator's notes: will he write them, or approve notes R1 drafts from facts he gives? (§7 item 16)",
+      "for": "Emeka",
+      "default": "No curatorNote stored on any exhibit"
+    },
+    {
+      "question": "Does he want a custom domain? (§7 item 17)",
+      "for": "Emeka",
+      "default": "SITE_URL stays the netlify placeholder until WP-18"
+    },
+    {
+      "question": "Headshot crop: the pinned extract({ left: 0, top: 0, width: 1008, height: 1260 }) ends at y 1260, but the face in assets-src/headshot.jpg runs to about y 1320 (hair top about y 560), so every output cuts the face at the mouth and chin. A crop with top 360 (still 1008 x 1260, 4:5) would frame head and shoulders with about 200 px of headroom. Change CROP.top in scripts/build-media.ts and rerun npm run media?",
+      "for": "R0",
+      "default": "Kept the brief's crop exactly (top 0); a one-line change if R0 or R2 agrees"
+    },
+    {
+      "question": "sdsj.b1 priority: the brief says tier-3 candidates such as the SDSJ long bullet get priority 3, while the CONTENT_DRAFT §3.3 register lists it as 2. Should R1 update the register to match?",
+      "for": "R0",
+      "default": "priority 3 per the brief (authority order); CONTENT_DRAFT.md left unchanged"
+    },
+    {
+      "question": "exhibit.draft beyond verafin: under the brief's ruling (draft when title, caption, tags or object text goes beyond the resume) cfia (object text \"methodical\", tag \"Remote Support\"), mun (caption framing, coursework tags) and certifications (\"responsible technology\") are also draft. Accept this set, or mark all ten exhibits draft until G5?",
+      "for": "R0",
+      "default": "verafin, cfia, mun and certifications draft; the other six false"
+    },
+    {
+      "question": "threeDStrings(c, now?) returns { kind, text, font, for } objects (font 'serif' or 'sans' per EXPERIENCE §5.4) rather than bare strings, and takes an optional build date for the year numerals. WP-07's check-glyphs should pass buildDateFromEnv() and check each text in its font.",
+      "for": "R0",
+      "default": "Without now, the newest year in the work dates stands in for the build year (2026 to 2022 today)"
+    },
+    {
+      "question": "stopCards carries CTA labels (\"Read the story\", \"Step inside\") from EXPERIENCE §5.8 and §8.4, which CONTENT_DRAFT §6 calls UI copy owned by R6. Keep them in the view model or move them to components?",
+      "for": "R0",
+      "default": "Kept in the view model (the brief lists CTA); desk button labels left to R6"
+    },
+    {
+      "question": "EXPERIENCE §4.10 says the DOM shows the certification placeholder and the release check blocks launch while dates are unknown, but CONTENT_DRAFT rule 4 omits optional fields, so RELEASE=1 check:copy will not block on missing certification dates (the certifications exhibit is draft, which blocks until G5).",
+      "for": "R0",
+      "default": "Fields omitted per CONTENT_DRAFT rule 4 and the brief"
+    },
+    {
+      "question": "npm run verify fails while a parallel agent's worktree under .claude/worktrees/ holds unformatted files, because prettier --check . walks the untracked .claude/ folder. Add .claude/ to .prettierignore and the ESLint global ignores (R10)?",
+      "for": "R0",
+      "default": "Verify retried until the parallel file was formatted; scoped checks (prettier excluding .claude, eslint, typecheck, tests) recorded as evidence"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Remaining placeholders: (1) gallery.desk.body \"[placeholder: target roles]\" (draft: true), the only [placeholder string in src/content/resume.ts (grep count 1); (2) SITE_URL in src/content/site.ts (meta.siteUrl), set by WP-18. Unknown facts held by omission, no string stored (CONTENT_DRAFT rule 4): klarup role and dates; finance-tracker role and dates; mun start; certifications items[0..2] date and url, items[1..2] issuer; exhibit links (none anywhere). No curatorNote or takeaway is stored. Draft flags by entry id: verafin bullets b1 to b3; exhibit.draft true on verafin, cfia, mun and certifications (false on mysa, wailo, klarup, finance-tracker, safe-sip, sdsj); every story block (2 per exhibit, 20 in all) and every object description (10) on all ten exhibits; gallery.lobby.intro and gallery.desk.body. Undrafted copy that still needs G5 review (no flag in the schema): captions and tags of the six non-draft exhibits, every artwork title, project taglines (finance-tracker \"Full-Stack Web App\" is not on the resume), lobby eyebrow, headline and hint, desk headline and footnote, wing titles, meta title and description. Priority 3 (trim first): mysa.b4, wailo.b2, finance-tracker.b1 (print: false), sdsj.b1. Finance Tracker stack is now \"MERN\", \"ChatGPT API\" (CONTENT_DRAFT §5.6), replacing the skeleton's four MERN parts. Transcription: a script checked every human-readable string in resume.ts appears verbatim in quotes in CONTENT_DRAFT.md, and every object description and title matches EXPERIENCE §4; no mismatch was found, so CONTENT_DRAFT.md is unchanged. Selectors added: displayName, organizationOf, wallLabelOf, heroLines, stopCards (lobby, exhibit, door and desk cards in prerendered section order), threeDStrings. check-content also runs computeLayout (R0 ruling after WP-02) and reports a malformed BUILD_DATE as an error. Media: 800 px WebP 22632 B, AVIF 17468 B, JPEG 36458 B; texture 11772 B, duotone 8932 B; settings fixed in scripts/build-media.ts, libvips on one thread. package.json scripts.media unchanged (already tsx scripts/build-media.ts). Process: commits went straight onto the integration branch (as WP-02 did); nothing pushed. npm ci was not run because node_modules is already installed from the lockfile and a parallel worktree is active (npm ls shows no invalid or missing entries). The first commit was amended locally before any push to replace a literal U+2014 the editor wrote into a test constant with its escape. npm run verify failed twice mid-session only because prettier --check . walked a parallel agent's untracked worktree in .claude/worktrees/ with unformatted files; eslint, typecheck, tests and prettier excluding .claude were green throughout."
+}

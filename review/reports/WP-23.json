@@ -1,0 +1,113 @@
+{
+  "wp": "WP-23",
+  "role": "R5 (Builder D), with R2 for the concept verdict (signed in this session)",
+  "status": "done",
+  "branch": "claude/m3-wp-23",
+  "commits": [
+    "f6aa800 feat(exhibit-sdsj): the round table",
+    "d57527c docs(concepts): sdsj verdict",
+    "this report: docs(report): WP-23 report"
+  ],
+  "changedFiles": [
+    "src/museum/exhibits/sdsj/index.ts",
+    "src/museum/exhibits/sdsj/RoundTable.tsx",
+    "src/museum/exhibits/sdsj/table.ts",
+    "src/museum/exhibits/sdsj/table.test.ts",
+    "src/museum/exhibits/sdsj/README.md",
+    "review/concepts/sdsj.md",
+    "review/reports/WP-23.json"
+  ],
+  "measurements": {
+    "triangles": 664,
+    "trianglesByPart": "top 256, foot 192, pedestal 48 (open ended), cube 12, shells 12 x 12 (one InstancedMesh), screens 6 x 2",
+    "drawCalls": 11,
+    "inBounds": true,
+    "budgetDeclared": { "triangles": 1500, "drawCalls": 12, "textureMB": 0 },
+    "chunkGzipKB": 1.7,
+    "museumChunkGzipKB": { "after": 319.02 }
+  },
+  "evidencePaths": {
+    "desktop": "out/wp23/sdsj-desktop.png",
+    "pixel7": "out/wp23/sdsj-pixel7.png",
+    "desktopHigh": "out/wp23/high/sdsj-desktop.png",
+    "thumbnail": "out/wp23/sdsj-thumb.png",
+    "thumbnailHigh": "out/wp23/high/sdsj-thumb.png",
+    "dialogs": "out/wp23/sdsj-dialog-desktop.png, out/wp23/sdsj-dialog-pixel7.png",
+    "doorView": "out/wp23/volunteer-door-desktop.png, out/wp23/volunteer-door-pixel7.png",
+    "stats": "out/wp23/sdsj-desktop.json, out/wp23/sdsj-pixel7.json"
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "npm run verify and the registry test pass",
+      "command": "npm run verify && npx vitest run --project unit src/museum/exhibits",
+      "result": "pass",
+      "evidence": "verify: lint, prettier and typecheck clean, 67 files / 761 tests pass; exhibits: 12 files / 84 tests pass, including registry.test.ts and the 15 table.test.ts tests"
+    },
+    {
+      "id": "A2",
+      "criterion": "Exhibit chunk at most 40 KB gzip",
+      "command": "npm run build && npm run check:budgets",
+      "result": "pass",
+      "evidence": "exhibits/sdsj 1.70 KB gzip; entry 94.84, museum 319.02, verafin 2.76; budgets ok. check:glyphs ok (35 labels, 76 code points); check:copy ok"
+    },
+    {
+      "id": "A3",
+      "criterion": "exhibit-contract --grep sdsj on desktop and pixel7: inBounds, triangles <= 20000, click opens 'The Round Table', Esc returns focus, deterministic frames",
+      "command": "npx playwright test tests/e2e/exhibit-contract.spec.ts --grep sdsj --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "2 passed (desktop 29.3 s, pixel7 24.5 s); stats().exhibits.sdsj = { triangles: 664, drawCalls: 11, inBounds: true } on both"
+    },
+    {
+      "id": "A4",
+      "criterion": "R2 checklist: 0 unchecked boxes and Verdict PASS",
+      "command": "grep -c '^- \\[ \\]' review/concepts/sdsj.md",
+      "result": "pass",
+      "evidence": "grep -c prints 0; Verdict PASS, 2026-10-20, signed R2 (Art Director), WP-23, one evidence line per box. Signed in the builder session, as instructed"
+    }
+  ],
+  "otherChecks": [
+    "Captures (CAPTURE_DIALOGS=1): sdsj and volunteer-door on desktop and pixel7, plus CAPTURE_TIER=high on desktop; the door view shows the case on the far plinth through the doorway (F-037)",
+    "Motion probe (scratch script, not committed; preview on :4181, &idle=1, 960 x 600, SwiftShader): over 60 s every changed canvas pixel lies in the screen band (y 313 to 326), different screens in different windows; reduced motion with &idle=1 is byte-identical at 0, 3 and 10 s",
+    "SwiftShader renders slowly at 1440 x 900, and useExhibitClock caps a frame at 0.1 s, so the exhibit clock runs well behind wall time there; a 13 s probe at that size covered only the first turns. Not an exhibit issue (verafin shows the same)",
+    "No U+2014 in any WP-23 file; no phone number; no tests/** written"
+  ],
+  "missingSliceSpecsForWP17": [
+    "sdsj motion: under ?test=1&idle=1 the canvas changes only inside the screen band over one 12 s loop",
+    "visual baseline for the sdsj stop and its dialog on desktop and pixel7 (CI only)"
+  ],
+  "openQuestions": [
+    {
+      "question": "The spec does not say how long the hand-over takes inside each 2 s turn ('one rises to 1.4 while the previous falls to 0.25').",
+      "for": "R2",
+      "default": "A 0.8 s easeInOutCubic crossfade at the start of each turn, then a 1.2 s hold, so one screen reads as lit at a time; above the 0.5 s glow ramp floor."
+    },
+    {
+      "question": "EXPERIENCE §4 asks for the reduced-motion pose under ?test=1, but the exhibit cannot tell ?test=1 from an idle stop (runtime.motion is false for both), and snapping to 0.8 on an idle stop would jump.",
+      "for": "R0",
+      "default": "For the first second the clock blends from the 0.8 rest pose into the loop, so the clock at 0 (?test=1, tier low) is the rest pose; reduced motion pins 0.8; an idle stop freezes mid-turn (WP-16 ruling). One motion, one clock."
+    },
+    {
+      "question": "'Facing the center' is read as screens facing the table center (front edge inward, hinge outward). Azimuths start at 0 degrees (+X), not 90, so two back screens face the camera and the cube shows between the two front laptops.",
+      "for": "R2",
+      "default": "Built that way; the alternative (screens facing outward) would hide the back screens behind their lids."
+    },
+    {
+      "question": "At the specified dimensions the object fills only the lower 40% of the slot (lid tops at y 0.26), so the case reads airy; in the 320 px thumbnail the laptops are small but distinct.",
+      "for": "R0",
+      "default": "Built exactly to EXPERIENCE §4.8 (top surface at y 0.20); flagged as G3 polish. Raising the table would be a spec change."
+    },
+    {
+      "question": "The concept file said 'No. V2'; since F-035 SDSJ is No. V1 (the brief and the placard say V1).",
+      "for": "R0",
+      "default": "Corrected to No. V1 in review/concepts/sdsj.md (an R2 path this brief owns)."
+    },
+    {
+      "question": "The R2 checklist pass ran in the WP-23 builder session, as in WP-12.",
+      "for": "R0",
+      "default": "Verdict PASS committed with one evidence line per box; R11 may confirm at G3."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Worked on claude/m3-wp-23 from integration tip 4d1ce31. The pedestal is open ended (its ends sit under the table and on the foot), saving 96 triangles. Twelve laptop shells share one InstancedMesh of a unit box; each screen is its own mesh with its own accentGlow clone (useMaterialInstance inside a small Screen component), writing emissiveIntensity only when it changes. No changes outside the WP-23 globs."
+}

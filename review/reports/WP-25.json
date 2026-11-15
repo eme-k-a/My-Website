@@ -1,0 +1,82 @@
+{
+  "wp": "WP-25",
+  "role": "R8 QA & Test Automation",
+  "status": "partial",
+  "branch": "claude/m3-wp-25",
+  "base": "75a387b (claude/intelligent-sagan-poq45q)",
+  "commits": [
+    "cbb2ed3 test(e2e): every stop, every dialog, no placeholders",
+    "3ba8062 test(e2e): run pixel7-landscape in the desktop-dialog shard"
+  ],
+  "changedFiles": [
+    "tests/e2e/visual.spec.ts",
+    "tests/e2e/no-placeholders.spec.ts",
+    "tests/e2e/exhibits.spec.ts",
+    "tests/e2e/fixtures.ts",
+    "playwright.config.ts",
+    "review/reports/WP-25.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "No placeholders remain: no-placeholders.spec passes, zero \"Installation in progress\" lines",
+      "command": "npx playwright test tests/e2e/exhibit-contract.spec.ts tests/e2e/no-placeholders.spec.ts --project=desktop --project=pixel7 --workers=2",
+      "result": "pass",
+      "evidence": "4 no-placeholders cases pass (registry and walk, desktop and pixel7); also green in CI run 84 (desktop-dialog and phones-rest shards). The walk visits all 13 stops: 45 s desktop locally, 24 s pixel7 in CI."
+    },
+    {
+      "id": "A2",
+      "criterion": "Exhibit contract for all nine: 18 passing cases",
+      "command": "same as A1",
+      "result": "pass",
+      "evidence": "18 of 18 pass locally (22 passed in 3.6 min with A1) and in CI run 84. One pixel7 sdsj case failed once in a full local 30-minute run (canvas changed within 3 s); not reproduced in 12 targeted runs at 2 and 4 workers nor in CI. See openQuestions."
+    },
+    {
+      "id": "A3",
+      "criterion": "26 stop baselines plus 18 dialog baselines committed from the CI artifact",
+      "command": "npx playwright test --list --grep @visual",
+      "result": "skipped",
+      "evidence": "Specs list 26 stop cases and 18 dialog cases on desktop and pixel7 (plus resume light, dark and 404 on desktop). No PNGs committed by design: R0 regenerates them with the ci.yml update-baselines dispatch (wp: WP-25). The 10 existing slice baselines keep their file names and passed locally under VISUAL_LOCAL=1 from both cold loads and the shared walk; 34 new files are missing, so npm run visual fails in desktop-rest and phones-rest until the dispatch."
+    },
+    {
+      "id": "A4",
+      "criterion": "CI e2e under 10 minutes per shard, green with retries 0",
+      "command": "CI run 84 (cbb2ed3) job durations",
+      "result": "skipped",
+      "evidence": "Deferred to R0 after baselines. Run 84 (before the 3ba8062 rebalance): every e2e and a11y step green in all six shards; jobs desktop-input 7.4, desktop-walks 7.1, desktop-dialog 4.7, pixel7 9.1, desktop-rest 9.7 (visual 5.5 of it, inflated by missing-baseline failures restarting the worker), phones-rest 10.5 min (visual 2.9). With baselines each visual case costs 2 to 4 s in CI, so expected after 3ba8062: phones-rest about 7.5, desktop-dialog about 6.5, desktop-rest about 6 min."
+    }
+  ],
+  "measurements": {
+    "visualCases": { "stops": 26, "dialogs": 18, "domDesktop": 3, "listedTotalAllProjects": 100 },
+    "localFullSuite": "npm run e2e -- --workers=2: 252 passed, 1 failed (pixel7 sdsj contract stillness, see openQuestions), 303 skipped, 29.9 min. npm run a11y -- --workers=2: 28 passed, 16 skipped, 2.3 min.",
+    "ciRun84": "https://github.com/eme-k-a/My-Website/actions/runs/39525369445",
+    "ciVisualPerCase": "pixel7 1.4 to 3.9 s per case on the shared page",
+    "phonesRestTestTime": "pixel7 exhibits 561 s, pixel7-landscape dialog 131 s, pixel7 visual 65 s (missing baselines), landscape environment 39 s",
+    "localColdLoadVsMove": "cold load to ready 11 to 14 s; instant goTo between stops 1 to 3 s (desktop and pixel7)"
+  },
+  "openQuestions": [
+    {
+      "question": "Possible stillness nondeterminism at sdsj on pixel7: in one full local run (two workers, 30 min) exhibit-contract saw the sdsj canvas change between two captures 3 s apart under ?test=1. The trace was overwritten before inspection; 12 targeted repeats (stats and pixel diffs every 0.5 s) and CI run 84 were all still. If it recurs in CI, an R3 or R5 owner should look for work that continues after `settled` at sdsj (late texture, bake or wing-entry glide end).",
+      "for": "R0",
+      "default": "No threshold or test change; reported here for tracking."
+    },
+    {
+      "question": "Brief text says the registry holds 10 ids; after the Safe Sip removal it is 9.",
+      "for": "R0",
+      "default": "no-placeholders checks the registry folders against EXHIBIT_IDS (9)."
+    },
+    {
+      "question": "exhibits.spec left the per-exhibit idle-motion matrix to WP-25.",
+      "for": "R0",
+      "default": "Idle motion and reduced-motion stillness now run for all nine exhibits on pixel7 (18 tests, 561 s of CI test time, in phones-rest)."
+    },
+    {
+      "question": "The brief asks for one page per describe; the visual groups share a page created in beforeAll, outside the guards fixture.",
+      "for": "R0",
+      "default": "Each visual case asserts no console or uncaught errors on the shared page itself (favicon probe exempt, as in fixtures.ts); CSP and cross-origin guards remain covered by every other spec."
+    }
+  ],
+  "depsRequest": [],
+  "ciRunUrls": ["https://github.com/eme-k-a/My-Website/actions/runs/39525369445"],
+  "notes": "Merge, then dispatch ci.yml with update-baselines=true and wp=WP-25 to commit the 34 new PNGs (stop-<id> and dialog-<id> for desktop and pixel7), review them, and measure A4 on the following normal run. Shards (playwright.config.ts SHARDS): pixel7-landscape moved to desktop-dialog, no-webgl to desktop-rest, no-placeholders in desktop-dialog (desktop) and phones-rest (pixel7). Still six shards; ci.yml unchanged. fixtures.ts now exports isBrowserFaviconProbe (no behavior change)."
+}

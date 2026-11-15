@@ -1,0 +1,332 @@
+# CI (ARCHITECTURE §14.1, R10): verify, build (PDF gate, _headers, budgets, copy checks), e2e,
+# Lighthouse and the LaTeX one-page check. deploy.yml (WP-18) runs on this workflow's success.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'claude/**']
+  workflow_dispatch:
+    inputs:
+      update-baselines:
+        description: Regenerate the @visual screenshots and commit them to the branch
+        type: boolean
+        default: false
+      wp:
+        description: Work package or fix id for the baseline commit trailer
+        type: string
+        default: baseline refresh
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Release mode only on main: check-copy then also blocks draft copy and placeholders.
+  RELEASE: ${{ github.ref == 'refs/heads/main' && '1' || '' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Chromium here too, so the resume overflow-gate unit tests run instead of skipping.
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run check:copy
+      - name: resume.tex is up to date
+        run: npx tsx scripts/build-resume-tex.ts && git diff --exit-code resume/resume.tex
+
+  build:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:pdf
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Render the PDF preview
+        run: mkdir -p out && pdftoppm -png -r 110 dist/resume.pdf out/resume-preview
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          include-hidden-files: true
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resume-preview
+          path: out/resume-preview*.png
+          if-no-files-found: error
+
+  # Sharded (WP-17, R0 grant): six jobs, each running the e2e, a11y and visual steps for the
+  # slice of the suite that E2E_SHARD names in playwright.config.ts. One unsharded job took 29.4
+  # minutes in CI run 34 (every SwiftShader frame costs 2 to 3 s there); the slices are sized from
+  # run 35's per-test durations to finish in about 10 minutes each. deploy needs every shard.
+  e2e:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [desktop-input, desktop-walks, desktop-dialog, desktop-rest, pixel7, phones-rest]
+    name: e2e (${{ matrix.shard }})
+    env:
+      E2E_SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - run: npm run e2e -- --pass-with-no-tests
+      - run: npm run a11y
+      - if: ${{ !inputs.update-baselines }}
+        run: npm run visual
+      # Upload only the screenshots this shard changed or added. Uploading the whole folder let a
+      # shard without @visual tests re-upload the committed (old) files, which then overwrote the
+      # regenerated ones in commit-baselines (run 52: "Baselines unchanged").
+      - name: Regenerate the visual baselines
+        if: ${{ inputs.update-baselines }}
+        run: |
+          npx playwright test --grep @visual --update-snapshots=all --pass-with-no-tests
+          mkdir -p baseline-changes
+          git ls-files -m -o --exclude-standard tests/e2e/__screenshots__ | while read -r f; do
+            mkdir -p "baseline-changes/$(dirname "$f")"
+            cp "$f" "baseline-changes/$f"
+          done
+          echo "Changed or new baselines in this shard: $(find baseline-changes -type f | wc -l)"
+      - if: ${{ inputs.update-baselines }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-${{ matrix.shard }}
+          path: baseline-changes/
+          if-no-files-found: ignore
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: playwright-report/
+          if-no-files-found: ignore
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.shard }}
+          path: test-results/
+          if-no-files-found: ignore
+
+  # Cross-browser DOM smoke (WP-32, ARCHITECTURE §13.2 and §14.1): Firefox and WebKit run the @dom
+  # tests (DOM, classic and no-WebGL checks; never WebGL screenshots) against the built site.
+  # Advisory: continue-on-error, and deploy does not need it. The report is uploaded every time.
+  e2e-xbrowser:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      # Its own key: the Chromium jobs save their cache under playwright-<os>-<version>.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-xbrowser-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Firefox and WebKit
+        run: npx playwright install --with-deps firefox webkit
+      - run: npx playwright test --project=firefox-dom --project=webkit-dom
+      - if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-xbrowser
+          path: playwright-report/
+          if-no-files-found: ignore
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-xbrowser
+          path: test-results/
+          if-no-files-found: ignore
+
+  # A dispatch with update-baselines commits the regenerated screenshots back to the branch (R0,
+  # 2026-10-17): artifact downloads are not reachable from the agent containers. A push made with
+  # GITHUB_TOKEN starts no new run, so R0 dispatches a normal run (or pushes) afterwards.
+  commit-baselines:
+    needs: e2e
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.update-baselines }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: visual-baselines-*
+          merge-multiple: true
+          path: .
+      - name: Commit the baselines
+        env:
+          WP: ${{ inputs.wp }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git add tests/e2e/__screenshots__/
+          if git diff --cached --quiet; then echo "Baselines unchanged."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "test(visual): rebaseline from CI for ${WP}" -m "Regenerated by ${RUN_URL}" -m "WP: ${WP}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git log --oneline -1
+
+  lighthouse:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # Blocking (WP-29). The precheck proves Lighthouse scores the museum, not the classic
+    # fallback; then the error-level assertions of lighthouserc*.cjs gate the job. SwiftShader
+    # performance on / and the exhibit page stays a warning there (ARCHITECTURE §13.8).
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Point Lighthouse at the Playwright Chromium
+        run: echo "CHROME_PATH=$(node -p "require('@playwright/test').chromium.executablePath()")" >> "$GITHUB_ENV"
+      # With the lhci chromeFlags and URLs: each museum URL boots in museum mode and reaches
+      # `ready`. If not, lhci would score the classic page, so the job stops here.
+      - name: Lighthouse precheck (the museum is what gets scored)
+        run: npx playwright test tests/e2e/lh-precheck.spec.ts --project=desktop --trace off
+      # The same two runs as npm run lh, as separate steps so desktop still runs (and reports)
+      # when mobile fails; either failure fails the job. No full-page screenshot: under
+      # SwiftShader its Page.captureScreenshot timed out and ended the desktop run with a
+      # runtime error (CI run 152); no score or assertion reads it.
+      - name: Lighthouse CI (mobile)
+        id: lh-mobile
+        run: npx lhci autorun --config=lighthouserc.cjs --collect.settings.disableFullPageScreenshot=true
+      - name: Lighthouse CI (desktop)
+        if: ${{ success() || steps.lh-mobile.outcome == 'failure' }}
+        run: >-
+          npx lhci autorun --config=lighthouserc.desktop.cjs
+          --collect.settings.disableFullPageScreenshot=true
+      - if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouseci
+          path: .lighthouseci/
+          include-hidden-files: true
+          if-no-files-found: ignore
+
+  latex:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Compiles the committed resume/resume.tex only, so it needs no Node setup. The default
+    # pdflatex engine is required: Jake's preamble uses \pdfgentounicode (WP-04 report).
+    steps:
+      - uses: actions/checkout@v4
+      - uses: xu-cheng/latex-action@v3
+        with:
+          root_file: resume.tex
+          working_directory: resume
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: resume.pdf is one page
+        run: |
+          pdfinfo resume/resume.pdf | grep '^Pages:'
+          test "$(pdfinfo resume/resume.pdf | awk '/^Pages:/{print $2}')" = "1"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resume-tex-pdf
+          path: resume/resume.pdf
+          if-no-files-found: error
+
+  # WP-18 (R0 ruling, M2a): the deploy runs as the last job of this workflow, after every other
+  # job passed, on same-repo pushes only. deploy.yml's workflow_run trigger fires only once that
+  # file is on main, and then it deploys pull request runs only, so no commit deploys twice.
+  deploy:
+    needs: [verify, build, e2e, lighthouse, latex]
+    if: ${{ github.event_name == 'push' && !github.event.repository.fork }}
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit

@@ -1,0 +1,47 @@
+{
+  "stop": "lobby",
+  "project": "pixel7",
+  "url": "/?test=1&mode=museum",
+  "viewport": {
+    "width": 412,
+    "height": 839
+  },
+  "stats": {
+    "calls": 49,
+    "triangles": 8036,
+    "geometries": 63,
+    "textures": 19,
+    "programs": 19,
+    "textureMB": 11.166996002197264,
+    "frames": 7,
+    "dpr": 1,
+    "tier": "medium",
+    "track": "main",
+    "mounted": [
+      "verafin"
+    ],
+    "exhibits": {
+      "verafin": {
+        "triangles": 2732,
+        "drawCalls": 5,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        0,
+        1.6,
+        4
+      ],
+      "target": [
+        0,
+        1.6,
+        -10
+      ]
+    },
+    "progress": {
+      "target": 0,
+      "current": 0
+    }
+  }
+}

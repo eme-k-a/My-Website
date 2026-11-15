@@ -1,0 +1,50 @@
+{
+  "stop": "klarup",
+  "project": "desktop",
+  "url": "/?test=1&mode=museum&tier=high",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "stats": {
+    "calls": 32,
+    "triangles": 8367,
+    "geometries": 79,
+    "textures": 30,
+    "programs": 38,
+    "textureMB": 11.916996002197266,
+    "frames": 17,
+    "dpr": 1,
+    "tier": "high",
+    "track": "projects",
+    "mounted": [
+      "verafin",
+      "mysa",
+      "klarup",
+      "finance-tracker"
+    ],
+    "exhibits": {
+      "verafin": {
+        "triangles": 2732,
+        "drawCalls": 9,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        -5.6,
+        1.6,
+        -14.6
+      ],
+      "target": [
+        -9,
+        1.35,
+        -13.799999999999999
+      ]
+    },
+    "progress": {
+      "target": 1,
+      "current": 1
+    }
+  }
+}

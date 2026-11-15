@@ -1,0 +1,92 @@
+{
+  "wp": "WP-27",
+  "role": "R6 UI & Classic Engineer",
+  "status": "done",
+  "branch": "claude/m4-wp-27",
+  "base": "beed37a (claude/intelligent-sagan-poq45q)",
+  "commits": [
+    "dc036c9 feat(mobile): phone cards, hud and safe areas",
+    "d0249b0 feat(onboarding): admission ticket and reduced-motion chip",
+    "79901df test(e2e): mobile layout specs",
+    "791dcb6 fix(onboarding): widen the ticket stub so the stamp is never clipped",
+    "(this commit) docs(review): WP-27 report and before/after phone captures"
+  ],
+  "changedFiles": [
+    "src/overlay/StopCard.module.css",
+    "src/overlay/Hud.tsx",
+    "src/overlay/Hud.module.css",
+    "src/overlay/ProgressRail.tsx",
+    "src/overlay/ProgressRail.module.css",
+    "src/overlay/model.ts",
+    "src/overlay/Intro.tsx",
+    "src/overlay/Intro.module.css",
+    "src/overlay/ticket.ts",
+    "src/overlay/ticket.test.ts",
+    "src/overlay/MotionChip.tsx",
+    "src/overlay/MotionChip.module.css",
+    "src/app/App.tsx",
+    "tests/e2e/mobile.spec.ts",
+    "review/runs/2026-10-24-wp27/*.png",
+    "review/reports/WP-27.json"
+  ],
+  "changes": [
+    {
+      "item": "G3: sdsj at 360 x 640 (card covered the case floor)",
+      "change": "Phone card (below 480 px) is shorter: the reserved 'Installation in progress' line moves out of the flow, beside 'Read the story' (absolute, still reserved, no shift), plus tighter padding and row spacing. On phones the wing head is now in the HUD row: 'Return to the aisle' takes the year chip's place (EXPERIENCE 9.2), the wing chip sits under it (portrait) or beside it (landscape). The measured wing-head bottom at 360 x 640 drops from about 140 px to about 82 px, so the F-039 framing lifts the case.",
+      "evidence": "mobile.spec '360 x 640: every stop' projects the glass case through the live camera and asserts no card/case intersection at all 13 stops: pass (before: sdsj card top 327 vs case bottom 354, mun 348 vs 349). review/runs/2026-10-24-wp27/before-sdsj-360x640.png vs after-sdsj-360x640.png, before/after-mun-360x640.png, before/after-sdsj-pixel7.png."
+    },
+    {
+      "item": "F-046 (P3): year ticks drawn through stop dots on the desktop rail",
+      "change": "Each tick carries its distance to the nearest dot (--gap, a fraction of the line) and is nudged in CSS by max(0px, 8px - gap * 60vh) away from the dot, so the nudge adapts to the 60vh line height. Ticks farther than 8 px are untouched.",
+      "evidence": "mobile.spec 'desktop rail: F-046' asserts every tick center is at least 6 px from every dot center: pass (2025 was 5.4 px from volunteer-door at 900 px tall)."
+    },
+    {
+      "item": "F-039 and F-038 kept fixed",
+      "change": "The exit control's parentElement is still the wing head that CameraRig measures; the head still unmounts at the door on the wing track (shared helper wingHeadShown in model.ts, used by the rail and the HUD).",
+      "evidence": "rail-input.spec (g) passes on desktop, pixel7 and 360 x 640, inside the 94-test regression run below."
+    },
+    {
+      "item": "Admission ticket (EXPERIENCE 11.1 item 3)",
+      "change": "'Begin the walk' is a CSS ticket: admit part, dashed perforation with half notches, fixed-width 112 px stub. The stamp (day, short month, year in the visitor's locale, ticket.ts) is empty in the prerender and filled right after hydration via useSyncExternalStore. Under ?test=1 it is the frozen TEST_STAMP '15 OCT 2026' (en-CA), so baselines are stable and no visual mask is needed. Click tears the stub (400 ms, transform and opacity) while the walk starts; none under reduced motion; the stub returns when the visitor comes back to the lobby. Accessible name stays 'Begin the walk' (stub aria-hidden).",
+      "evidence": "mobile.spec 'onboarding' tests (stamp text, empty prerendered stamp, accessible name, tear attribute, no animation under reduced motion) and CLS with the stamp: pass; ticket.test.ts unit tests; review/runs/2026-10-24-wp27/after-lobby-pixel7.png."
+    },
+    {
+      "item": "Reduced-motion chip",
+      "change": "MotionChip.tsx: under prefers-reduced-motion, in museum mode at the lobby, a fixed chip 'Prefer a quick read? Open the classic view.' (link to /resume/) with a 'Close' button. Never in the prerender, so no shift. Close or following the link stores the dismissal in localStorage inside try/catch.",
+      "evidence": "mobile.spec 'reduced motion' (visible, clear of the HUD, dismissed stays dismissed after reload) and 'no chip without reduced motion': pass."
+    },
+    {
+      "item": "44 px targets",
+      "change": "The artwork title link gets 10 px padding with a matching negative margin (box at least 44 px, line height unchanged); door links are 44 px inline-flex rows.",
+      "evidence": "mobile.spec checks every visible button and link in the card and the HUD at all 13 stops on pixel7, pixel7-landscape and 360 x 640: pass (before: every title link 29 to 31 px tall)."
+    }
+  ],
+  "acceptance": [
+    { "id": "A1", "criterion": "No card and HUD intersection, case never covered, all 13 stops", "command": "npx playwright test tests/e2e/mobile.spec.ts --project=pixel7 --project=pixel7-landscape --workers=2", "result": "pass", "evidence": "pixel7, pixel7-landscape and the 360 x 640 context (pixel7 project): card vs every visible HUD and wing-head rect, card vs screenPos, card vs projected case rect." },
+    { "id": "A2", "criterion": "Every control at least 44 x 44", "command": "same", "result": "pass", "evidence": "same spec, all three contexts" },
+    { "id": "A3", "criterion": "CLS at most 0.02 including the ticket stamp", "command": "same, plus tests/e2e/fast-path.spec.ts", "result": "pass", "evidence": "pixel7, pixel7-landscape and 360 x 640 all within perf/budgets.json web.cls; fast-path CLS on desktop and pixel7 passes." },
+    { "id": "A4", "criterion": "Landscape compact UI", "command": "same on pixel7-landscape", "result": "pass", "evidence": "card 300 px, Medium and caption hidden (existing CSS, now tested)" },
+    { "id": "A5", "criterion": "Nothing regressed; entry at most 110 KB gzip", "command": "npm run verify && npm run build; dialog, keyboard, wings, rail-input, fast-path, shell specs on desktop and pixel7; npm run a11y", "result": "pass", "evidence": "verify: 871 unit tests pass (plus 4 new in ticket.test.ts); build, budgets and check-copy ok, entry 95.63 KB gzip (was 94.85). Regression: 94 passed, 34 skipped (17.9 min). a11y desktop and pixel7: 17 passed, 5 skipped. Final mobile + fast-path run on desktop, pixel7, pixel7-landscape: 21 passed, 33 skipped." }
+  ],
+  "measurements": {
+    "entryJsGzipKB": 95.63,
+    "wingHeadBottom360x640Px": { "before": 139.6, "after": 81.6 },
+    "sdsj360x640": { "before": "card top 327.0, case bottom 353.6 (covered)", "after": "card clear of the case (see after-sdsj-360x640.png)" }
+  },
+  "visualBaselinesExpectedToChange": [
+    "stop-lobby-desktop, stop-lobby-pixel7 (ticket stub and stamp)",
+    "stop-<every exhibit>-pixel7 (shorter phone card)",
+    "stop-klarup-pixel7, stop-finance-tracker-pixel7, stop-sdsj-pixel7 (wing head in the HUD row, case framed higher)",
+    "stop-<main-track stops>-desktop where a year tick moved (2025 and 2023 ticks): verafin, projects-door, mysa, volunteer-door, wailo, cfia, mun, certifications, desk",
+    "possibly stop-*-desktop for the title link change (no visible change expected; inline-block with padding and negative margin)"
+  ],
+  "openQuestions": [
+    { "question": "The ticket stamp under ?test=1 uses a fixed date and locale (15 OCT 2026, en-CA, the EXPERIENCE 11.1 example) rather than the build date, because CI builds daily. OK?", "default": "kept as is; no visual mask was added to visual.spec.ts" },
+    { "question": "Reduced-motion chip: it shows at the lobby on each page load until the visitor presses Close or follows the link (then never again). 'Close' (from the dialog microcopy in EXPERIENCE 8.4) is the dismiss label, and the landmark is named 'Classic view'. Neither label is new copy, but please confirm.", "default": "kept" },
+    { "question": "The phone wing head reorders visually (exit control above the wing chip, column-reverse); DOM order is unchanged (the chip text, then the button).", "default": "kept" },
+    { "question": "mobile.spec.ts holds one desktop test (F-046 rail ticks), because mobile.spec is the only spec in my grant. R8 may move it.", "default": "kept in mobile.spec" }
+  ],
+  "depsRequest": [],
+  "ciRunUrls": [],
+  "notes": "Container note: Chromium here is revision 1243 while @playwright/test 1.56.1 expects 1194, so I linked /opt/pw-browsers/*-1194 to the 1243 binaries (container only, nothing in the repo, no install). Before/after captures in review/runs/2026-10-24-wp27/ are downscaled PNGs (388 KB total) from ?test=1&mode=museum at tier medium; 'before' is beed37a."
+}

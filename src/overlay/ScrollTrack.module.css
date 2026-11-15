@@ -1,0 +1,90 @@
+/*
+ * The scroll track (ARCHITECTURE §6.1, EXPERIENCE §3.3). Snapping is CSS only: mandatory on coarse
+ * pointers, proximity on fine ones, and every section stops a fling (scroll-snap-stop: always).
+ * No touch-action and no scroll hijacking anywhere. A section taller than the viewport (the lobby
+ * on phones) still scrolls through its own content under mandatory snapping: the browser treats
+ * any position where it covers the viewport as valid (CSS Scroll Snap 1, "snap area larger than
+ * the snapport").
+ */
+:global(html) {
+  scrollbar-gutter: stable;
+}
+
+/*
+ * Snapping is keyed on museum mode: without JS the gallery is a plain document whose header and
+ * notice sit above the lobby, and mandatory snapping would pull the first paint down to the lobby
+ * section instead of the top of the page (the recruiter fast path needs scrollY 0).
+ */
+@media (pointer: coarse) {
+  :global(html[data-mode='museum']) {
+    scroll-snap-type: y mandatory;
+  }
+}
+
+@media (pointer: fine) {
+  :global(html[data-mode='museum']) {
+    scroll-snap-type: y proximity;
+  }
+}
+
+.section {
+  min-height: 100svh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  pointer-events: none;
+}
+
+/* The last stop stays reachable when the URL bar collapses; inside a wing, its last item. */
+.section:last-child,
+.section[data-wing-last] {
+  min-height: 100lvh;
+}
+
+/* Sections let empty-area pointer events fall through to #app (R3F raycasts them); cards opt in. */
+:global([data-card]),
+:global([data-card] a),
+:global([data-card] button) {
+  pointer-events: auto;
+}
+
+/* Page scroll is locked while the story dialog is open (also in global.css, R6). */
+:global(html:has(dialog[open])) {
+  overflow: hidden;
+}
+
+/*
+ * Museum mode: only the active track takes part in layout. On the main track every wing exhibit
+ * is hidden; inside a wing, everything except that wing's door and items. The door section
+ * belongs to both its tracks. Without JS (no data-mode) every section shows.
+ */
+:global(html[data-mode='museum'] #track[data-track='main']) .section[data-wing],
+:global(html[data-mode='museum'] #track[data-track='projects'])
+  .section:not([data-wing='projects']):not([data-door='projects']),
+:global(html[data-mode='museum'] #track[data-track='volunteer'])
+  .section:not([data-wing='volunteer']):not([data-door='volunteer']) {
+  display: none;
+}
+
+/*
+ * The fade-cut layer (EXPERIENCE §6.6, ARCHITECTURE §6.5): fixed over the stage and under the
+ * cards (z-index -1 inside the track's stacking context, which sits above the stage). fade.ts sets
+ * data-fade: 'out' goes to ink over half of --fade-cut (100 ms), 'in' and 'clear' come back.
+ */
+.fade {
+  display: none;
+}
+
+:global(html[data-mode='museum']) .fade {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  background: var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity calc(var(--fade-cut) / 2) linear;
+}
+
+:global(html[data-mode='museum']) .fade[data-fade='out'] {
+  opacity: 1;
+}

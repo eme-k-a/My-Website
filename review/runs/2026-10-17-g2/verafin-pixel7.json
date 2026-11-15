@@ -1,0 +1,49 @@
+{
+  "stop": "verafin",
+  "project": "pixel7",
+  "url": "/?test=1&mode=museum",
+  "viewport": {
+    "width": 412,
+    "height": 839
+  },
+  "stats": {
+    "calls": 27,
+    "triangles": 5560,
+    "geometries": 71,
+    "textures": 21,
+    "programs": 19,
+    "textureMB": 11.3333371480306,
+    "frames": 15,
+    "dpr": 1,
+    "tier": "medium",
+    "track": "main",
+    "mounted": [
+      "verafin",
+      "mysa",
+      "klarup"
+    ],
+    "exhibits": {
+      "verafin": {
+        "triangles": 2732,
+        "drawCalls": 9,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        0.5999964900644611,
+        1.6,
+        -7.200219410326818
+      ],
+      "target": [
+        2.3999999222537967,
+        1.3500000084931831,
+        -10.00000010791373
+      ]
+    },
+    "progress": {
+      "target": 1.0000372467222884,
+      "current": 1.0000372467222884
+    }
+  }
+}

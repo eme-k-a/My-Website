@@ -1,0 +1,59 @@
+{
+  "stop": "finance-tracker",
+  "project": "desktop",
+  "url": "/?test=1&mode=museum&tier=high",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "stats": {
+    "calls": 36,
+    "triangles": 16939,
+    "geometries": 74,
+    "textures": 28,
+    "programs": 37,
+    "textureMB": 11.666996002197266,
+    "frames": 11,
+    "dpr": 1,
+    "tier": "high",
+    "track": "projects",
+    "mounted": [
+      "verafin",
+      "klarup",
+      "finance-tracker"
+    ],
+    "exhibits": {
+      "verafin": {
+        "triangles": 2732,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "klarup": {
+        "triangles": 3052,
+        "drawCalls": 8,
+        "inBounds": true
+      },
+      "finance-tracker": {
+        "triangles": 7480,
+        "drawCalls": 5,
+        "inBounds": true
+      }
+    },
+    "camera": {
+      "position": [
+        -5.6,
+        1.6,
+        -17.4
+      ],
+      "target": [
+        -9,
+        1.35,
+        -18.200000000000003
+      ]
+    },
+    "progress": {
+      "target": 2,
+      "current": 2
+    }
+  }
+}

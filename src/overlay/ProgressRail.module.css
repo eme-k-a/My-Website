@@ -1,0 +1,300 @@
+/*
+ * Desktop progress rail (EXPERIENCE §6.10): a 60vh brass hairline on the right edge, vertically
+ * centered. Museum mode only; without JS (or in classic mode) the dots could not travel anywhere.
+ * Phones and short windows use the HUD's bar and year chip; inside a wing they keep only the
+ * "Return to the aisle" control here.
+ */
+.rail {
+  display: none;
+}
+
+:global(html[data-mode='museum']) .rail {
+  position: fixed;
+  z-index: 3;
+  top: 50%;
+  right: max(12px, env(safe-area-inset-right));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  /* An ink halo under the year and end labels, so a bright pixel behind never meets a glyph. */
+  --rail-halo: 0 0 2px var(--ink), 0 0 4px var(--ink);
+}
+
+.rail button {
+  pointer-events: auto;
+}
+
+/*
+ * A soft ink scrim behind the desktop rail column (F-053): at cfia the lit MUN case stood right
+ * under the rail and its brass lines ran through the year labels and dots. The scrim fades out
+ * at every edge, so over the dark gallery it is invisible and over a lit object it only holds the
+ * rail's text off it. Phones keep their own wing head, which has solid chips.
+ */
+@media (min-width: 1024px) and (min-height: 560px) {
+  :global(html[data-mode='museum']) .rail::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: -48px -12px -48px -32px;
+    background: radial-gradient(
+      farthest-side,
+      rgba(11, 11, 13, 0.78) 62%,
+      rgba(11, 11, 13, 0) 100%
+    );
+    pointer-events: none;
+  }
+}
+
+/*
+ * The story dialog is open (F-021): the rail, its tooltips and the wing head ("... wing, 1 of 2",
+ * "Return to the aisle") sit under the desktop panel and would read through it, so the whole rail
+ * steps aside. The dialog is modal, so its buttons are inert while it is open.
+ */
+:global(html:has(dialog[open])) .rail {
+  visibility: hidden;
+}
+
+.end {
+  composes: label from './ui.module.css';
+  padding-left: 4px;
+  color: var(--text-2);
+  text-shadow: var(--rail-halo);
+}
+
+.line {
+  position: relative;
+  width: 64px;
+  height: 60vh;
+}
+
+/* The hairline itself, 22 px from the rail's left edge. */
+.line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 22px;
+  width: 1px;
+  background: var(--brass);
+}
+
+.bead {
+  position: absolute;
+  top: -4px;
+  left: 18px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--brass-hi);
+  box-shadow: 0 0 0 3px rgba(11, 11, 13, 0.8);
+  transform: translateY(calc(var(--p, 0) * 60vh));
+  pointer-events: none;
+}
+
+/*
+ * Year ticks sit at the floor strips' progress (EXPERIENCE §6.10). A tick closer than --tick-clear
+ * to a stop dot's center (`--gap`, a fraction of the 60vh line) is nudged away from it until it
+ * clears the 9 px dot, the door stub and its own label's half height (F-046: 2025 crossed the
+ * volunteer-door dot, 2023 the cfia dot).
+ */
+.tick {
+  --tick-clear: 8px;
+  position: absolute;
+  top: calc(var(--at) * 100%);
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 12px;
+  transform: translateY(
+    calc(-50% + var(--dir, 1) * max(0px, var(--tick-clear) - var(--gap, 1) * 60vh))
+  );
+  color: var(--text-2);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-shadow: var(--rail-halo);
+}
+
+.tick::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 9px;
+  height: 1px;
+  background: var(--brass);
+}
+
+.dots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stop {
+  position: absolute;
+  top: calc(var(--at) * 100%);
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.dot {
+  position: relative;
+  display: block;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.dot::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--brass);
+  border-radius: 50%;
+  background: var(--ink);
+  transform: translateY(-50%);
+}
+
+.dot[aria-current='step']::before {
+  background: var(--brass);
+}
+
+/* Door stubs: a short side line on the wing's side of the aisle. */
+.dot[data-door]::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: var(--brass);
+}
+
+.dot[data-door='left']::after {
+  left: 8px;
+}
+
+.dot[data-door='right']::after {
+  left: 27px;
+}
+
+.dot:focus-visible {
+  outline-offset: -4px;
+}
+
+/* Labels: the accessible name always; visible on hover, focus and the current stop. */
+.label {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 4px);
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  background: var(--panel-solid);
+  color: var(--text);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+  white-space: nowrap;
+  transform: translateY(-50%);
+  clip-path: inset(50%);
+}
+
+.dot:hover .label,
+.dot:focus-visible .label,
+.dot[aria-current='step'] .label {
+  clip-path: none;
+}
+
+/*
+ * Inside a wing the current stop's label stays hidden at rest (F-036): a wing's rail is short, so
+ * its first dot sits at the height of the wing's 3D wall titles, and the label ran left over the
+ * title. The wing chip above already names the wing and the place in it, and the stop card names
+ * the exhibit. Hover and keyboard focus still show it (a visitor asked for it), and it stays the
+ * dot's accessible name.
+ */
+.rail:not([data-track='main']) .dot[aria-current='step'] .label {
+  clip-path: inset(50%);
+}
+
+.rail:not([data-track='main']) .dot:is(:hover, :focus-visible) .label {
+  clip-path: none;
+}
+
+.wingHead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.wingTitle {
+  composes: label from './ui.module.css';
+  margin: 0;
+  padding: 4px 8px;
+  background: var(--panel-solid);
+  color: var(--text);
+}
+
+@media (max-width: 1023px), (max-height: 559px) {
+  :global(html[data-mode='museum']) .rail {
+    display: none;
+  }
+
+  /*
+   * Phones and short windows: in a wing, "Return to the aisle" takes the year chip's place in the
+   * HUD row (EXPERIENCE §9.2), level with "PDF" and "Classic", and the wing chip sits under it.
+   * Keeping the head this short leaves the wing framing room for the wall title and the whole case
+   * above the card (F-039, CameraRig measures the head's bottom; G3, sdsj at 360 x 640).
+   */
+  :global(html[data-mode='museum']) .rail:not([data-track='main']) {
+    top: max(8px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    right: auto;
+    display: flex;
+    transform: none;
+  }
+
+  .rail:not([data-track='main']) .line {
+    display: none;
+  }
+
+  /* At the door on the wing track the wing head steps aside (F-038), so nothing is left to show. */
+  :global(html[data-mode='museum']) .rail[data-at-door] {
+    display: none;
+  }
+
+  .wingHead {
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+/* Portrait phones: the wing chip goes under the exit control, clear of "PDF" and "Classic". */
+@media (max-width: 639px) {
+  .wingHead {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+/* Narrow phones: the exit control wraps to two lines to fit beside "PDF" and "Classic". */
+@media (max-width: 399px) {
+  .wingHead button {
+    max-width: 132px;
+    line-height: 1.15;
+    text-align: left;
+    white-space: normal;
+  }
+}

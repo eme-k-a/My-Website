@@ -1,0 +1,106 @@
+{
+  "wp": "WP-09",
+  "role": "R4 (Camera & Interaction Engineer)",
+  "status": "done",
+  "branch": "wp/WP-09",
+  "commits": [
+    "1ad8b39 wip(wp-09): partial scroll track and rail work saved before the usage-limit stop",
+    "71a2b27 chore(wp-09): merge the integration branch with WP-08",
+    "74d97c3 feat(rail): scroll track sections with css snapping",
+    "4c68d75 test(e2e): wheel, flick, listener and wing specs",
+    "(this commit) docs(wp-09): add the WP-09 report"
+  ],
+  "changedFiles": [
+    "review/reports/WP-09.json",
+    "src/museum/rail/CameraRig.tsx",
+    "src/museum/rail/keys.test.ts",
+    "src/museum/rail/keys.ts",
+    "src/museum/rail/navigation.ts",
+    "src/museum/rail/progress.test.ts",
+    "src/museum/rail/progress.ts",
+    "src/museum/rail/rail.test.ts",
+    "src/museum/rail/rail.ts",
+    "src/museum/rail/scrollMap.test.ts",
+    "src/museum/rail/scrollMap.ts",
+    "src/museum/rail/scrollRuntime.ts",
+    "src/museum/rail/settle.test.ts",
+    "src/museum/rail/settle.ts",
+    "src/overlay/ScrollTrack.module.css",
+    "src/overlay/ScrollTrack.tsx",
+    "tests/e2e/greybox.spec.ts",
+    "tests/e2e/rail-input.spec.ts",
+    "tests/e2e/wings.spec.ts"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Momentum and notches never skip: settled on a whole stop, no skipped index, scrollY within 2 px",
+      "command": "npx playwright test tests/e2e/rail-input.spec.ts tests/e2e/wings.spec.ts tests/e2e/greybox.spec.ts --project=desktop --project=pixel7 (PORT=4175)",
+      "result": "pass",
+      "evidence": "rail-input (a) and (b) pass on desktop. Caveat: in headless Chromium each synthetic page.mouse.wheel event snaps back, so the 799 px stream and each 100 px notch rest at lobby@0 (see openQuestions)"
+    },
+    {
+      "id": "A2",
+      "criterion": "One flick, one stop (pixel7)",
+      "command": "npx playwright test tests/e2e/rail-input.spec.ts tests/e2e/wings.spec.ts tests/e2e/greybox.spec.ts --project=desktop --project=pixel7 (PORT=4175)",
+      "result": "pass",
+      "evidence": "rail-input (c): verafin -> projects-door -> mysa, +1 per cdpFlick, scrollY within 2 px. Tall-lobby ruling: first flick rests inside the lobby at scrollY = lobbyHeight - innerHeight with the intro fully in view, next flick lands on verafin at its stopY (pass)"
+    },
+    {
+      "id": "A3",
+      "criterion": "No non-passive wheel or touch listeners",
+      "command": "npx playwright test tests/e2e/rail-input.spec.ts tests/e2e/wings.spec.ts tests/e2e/greybox.spec.ts --project=desktop --project=pixel7 (PORT=4175) ; grep -rnE \"touch-action: *none|addEventListener\\(['\\\"](wheel|mousewheel|touch)|onWheel|onTouch\" src index.html",
+      "result": "pass",
+      "evidence": "rail-input (d) listenerAudit [] on desktop and pixel7, before and after travel into a wing; grep prints nothing (exit 1)"
+    },
+    {
+      "id": "A4",
+      "criterion": "Arrivals never write the URL",
+      "command": "npx playwright test tests/e2e/rail-input.spec.ts tests/e2e/wings.spec.ts tests/e2e/greybox.spec.ts --project=desktop --project=pixel7 (PORT=4175)",
+      "result": "pass",
+      "evidence": "rail-input (e): walking all 10 main stops by ArrowDown and back by HUD dots: push 0, replace 0, history.length unchanged, pathname /"
+    },
+    {
+      "id": "A5",
+      "criterion": "Native keys visit every stop in order (plus the keyboard stepping ruling)",
+      "command": "npx playwright test tests/e2e/rail-input.spec.ts tests/e2e/wings.spec.ts tests/e2e/greybox.spec.ts --project=desktop --project=pixel7 (PORT=4175)",
+      "result": "pass",
+      "evidence": "rail-input (f): ArrowDown and PageDown each visit the 10 main stops in order and back up with ArrowUp/PageUp; ArrowDown x2 = projects-door, x3 = mysa; End = desk, Home = lobby. One keydown handler per the R0 ruling (scrollIntoView on the neighbouring section, skipped in form fields and with the dialog open)"
+    },
+    {
+      "id": "A6",
+      "criterion": "Wings: Esc and Back return to the door, URL stays /, history.length unchanged by scrolling",
+      "command": "npx playwright test tests/e2e/rail-input.spec.ts tests/e2e/wings.spec.ts tests/e2e/greybox.spec.ts --project=desktop --project=pixel7 (PORT=4175)",
+      "result": "pass",
+      "evidence": "wings.spec 7 tests x desktop and pixel7 pass: Enter (desktop) / tap Step inside (pixel7) lands on klarup and safe-sip, Esc and Back return to the door with scrollY === mainScrollY, goTo crosses tracks through the wing history entry"
+    },
+    {
+      "id": "A7",
+      "criterion": "All stops render: every stop stats().calls <= 80",
+      "command": "npx playwright test tests/e2e/rail-input.spec.ts tests/e2e/wings.spec.ts tests/e2e/greybox.spec.ts --project=desktop --project=pixel7 (PORT=4175)",
+      "result": "pass",
+      "evidence": "greybox (2) unskipped; passes on desktop and pixel7 for all 14 stops via goTo"
+    },
+    {
+      "id": "A8",
+      "criterion": "Unit tests",
+      "command": "npx vitest run --project unit src/museum/rail src/app",
+      "result": "pass",
+      "evidence": "10 files, 102 tests passed; npm run verify: 42 files, 541 tests passed"
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "Desktop wheel feel under proximity snapping. In headless Chromium every synthetic wheel event (page.mouse.wheel, any size up to 300 px) and a synthesized 100 px mouse scroll gesture snap back to the current stop; a single gesture needs more than about half a viewport (600 px tested) to advance. The same happens with mandatory (tested with an injected style). So A1 passes on its threshold, but the stream and notches never leave the lobby, and a real mouse notch may not advance a stop either. Needs a hand check on real Chrome, Firefox and Safari with a mouse wheel and a trackpad at G1, and possibly a PLAN ruling (for example smaller snap areas or a different fine-pointer rule).",
+      "for": "R0",
+      "default": "Kept proximity on fine pointers per PLAN \u00a73; no wheel listener added"
+    },
+    {
+      "question": "Scroll snapping is keyed on html[data-mode='museum'] instead of plain html (ARCHITECTURE \u00a76.1 shows html). Without JS the header and notice sit above the lobby and mandatory snapping pulled first paint to scrollY 144, failing fast-path.spec (JavaScript off). Accept the deviation?",
+      "for": "R0",
+      "default": "Keyed on museum mode; all fast-path tests pass"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "Merged the integration branch (WP-08) with a merge commit; every WP-08 file equals the integration version, the only conflict (tests/e2e/greybox.spec.ts) took theirs. The WIP commit 1ad8b39 carries most of the rail work, so the brief's five commit subjects are not separate commits (history kept, no rebase). Full e2e on desktop, pixel7, pixel7-landscape and no-webgl: 159 passed, 137 skipped, 0 failed. Build: entry 91.06 KB, museum 298.14 KB gzip, budgets ok, check-copy ok. Keys handle tall sections: stepping keys stay native until the end of a section taller than the viewport is in view."
+}

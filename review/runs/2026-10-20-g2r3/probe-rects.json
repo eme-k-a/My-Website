@@ -1,0 +1,676 @@
+{
+ "360x640": {
+  "heroLinks": [
+   [
+    "hero-pdf",
+    341
+   ],
+   [
+    "hero-email",
+    341
+   ],
+   [
+    "hero-classic",
+    393
+   ],
+   [
+    "begin-walk",
+    481
+   ]
+  ],
+  "h1": {
+   "x": 16,
+   "y": 96,
+   "r": 344,
+   "b": 171
+  },
+  "desk": {
+   "card": {
+    "x": 16,
+    "y": 311,
+    "r": 344,
+    "b": 624
+   },
+   "hud": {
+    "x": 0,
+    "y": 0,
+    "r": 360,
+    "b": 60
+   },
+   "hudPdf": {
+    "x": 153,
+    "y": 8,
+    "r": 235,
+    "b": 52
+   },
+   "screenPos": {
+    "x": 176,
+    "y": 285
+   }
+  }
+ },
+ "412x839": {
+  "heroLinks": [
+   [
+    "hero-pdf",
+    318
+   ],
+   [
+    "hero-email",
+    318
+   ],
+   [
+    "hero-classic",
+    370
+   ],
+   [
+    "begin-walk",
+    458
+   ]
+  ],
+  "h1": {
+   "x": 16,
+   "y": 96,
+   "r": 396,
+   "b": 171
+  },
+  "desk": {
+   "card": {
+    "x": 16,
+    "y": 531,
+    "r": 396,
+    "b": 823
+   },
+   "hud": {
+    "x": 0,
+    "y": 0,
+    "r": 412,
+    "b": 60
+   },
+   "hudPdf": {
+    "x": 205,
+    "y": 8,
+    "r": 287,
+    "b": 52
+   },
+   "screenPos": {
+    "x": 201,
+    "y": 428
+   }
+  }
+ },
+ "klarup": {
+  "rail": [
+   {
+    "t": "Projects wing, 1 of 2",
+    "x": 1241,
+    "y": 136,
+    "r": 1413,
+    "b": 160,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Return to the aisleEsc",
+    "x": 1200,
+    "y": 168,
+    "r": 1413,
+    "b": 212,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Esc",
+    "x": 1366,
+    "y": 181,
+    "r": 1398,
+    "b": 198,
+    "vis": true,
+    "clip": "",
+    "op": "0.8"
+   },
+   {
+    "t": "No. P1, The Climb",
+    "x": 1200,
+    "y": 202,
+    "r": 1244,
+    "b": 246,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. P1, The Climb",
+    "x": 1068,
+    "y": 209,
+    "r": 1196,
+    "b": 238,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "No. P2, The Balance",
+    "x": 1200,
+    "y": 742,
+    "r": 1244,
+    "b": 786,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. P2, The Balance",
+    "x": 1054,
+    "y": 749,
+    "r": 1196,
+    "b": 778,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   }
+  ],
+  "screenPos": {
+   "x": 883,
+   "y": 566
+  },
+  "card": {
+   "x": 72,
+   "y": 478,
+   "r": 446,
+   "b": 792
+  }
+ },
+ "finance-tracker": {
+  "rail": [
+   {
+    "t": "Projects wing, 2 of 2",
+    "x": 1241,
+    "y": 136,
+    "r": 1413,
+    "b": 160,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Return to the aisleEsc",
+    "x": 1200,
+    "y": 168,
+    "r": 1413,
+    "b": 212,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Esc",
+    "x": 1366,
+    "y": 181,
+    "r": 1398,
+    "b": 198,
+    "vis": true,
+    "clip": "",
+    "op": "0.8"
+   },
+   {
+    "t": "No. P1, The Climb",
+    "x": 1200,
+    "y": 202,
+    "r": 1244,
+    "b": 246,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. P1, The Climb",
+    "x": 1068,
+    "y": 209,
+    "r": 1196,
+    "b": 238,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "No. P2, The Balance",
+    "x": 1200,
+    "y": 742,
+    "r": 1244,
+    "b": 786,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. P2, The Balance",
+    "x": 1054,
+    "y": 749,
+    "r": 1196,
+    "b": 778,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   }
+  ],
+  "screenPos": {
+   "x": 884,
+   "y": 566
+  },
+  "card": {
+   "x": 72,
+   "y": 478,
+   "r": 446,
+   "b": 792
+  }
+ },
+ "sdsj": {
+  "rail": [
+   {
+    "t": "Volunteer & Leadership wing, 1 of 1",
+    "x": 1132,
+    "y": 136,
+    "r": 1413,
+    "b": 160,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Return to the aisleEsc",
+    "x": 1200,
+    "y": 168,
+    "r": 1413,
+    "b": 212,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Esc",
+    "x": 1366,
+    "y": 181,
+    "r": 1398,
+    "b": 198,
+    "vis": true,
+    "clip": "",
+    "op": "0.8"
+   },
+   {
+    "t": "No. V1, The Round Table",
+    "x": 1132,
+    "y": 202,
+    "r": 1176,
+    "b": 246,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. V1, The Round Table",
+    "x": 958,
+    "y": 209,
+    "r": 1128,
+    "b": 238,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   }
+  ],
+  "screenPos": {
+   "x": 884,
+   "y": 569
+  },
+  "card": {
+   "x": 72,
+   "y": 399,
+   "r": 446,
+   "b": 792
+  }
+ },
+ "volunteer-door": {
+  "rail": [
+   {
+    "t": "Volunteer & Leadership wing, 1 of 1",
+    "x": 1132,
+    "y": 136,
+    "r": 1413,
+    "b": 160,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Return to the aisleEsc",
+    "x": 1200,
+    "y": 168,
+    "r": 1413,
+    "b": 212,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Esc",
+    "x": 1366,
+    "y": 181,
+    "r": 1398,
+    "b": 198,
+    "vis": true,
+    "clip": "",
+    "op": "0.8"
+   },
+   {
+    "t": "No. V1, The Round Table",
+    "x": 1132,
+    "y": 202,
+    "r": 1176,
+    "b": 246,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. V1, The Round Table",
+    "x": 958,
+    "y": 209,
+    "r": 1128,
+    "b": 238,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   }
+  ],
+  "screenPos": null,
+  "card": {
+   "x": 72,
+   "y": 545,
+   "r": 446,
+   "b": 792
+  }
+ },
+ "projects-door": {
+  "rail": [
+   {
+    "t": "Now",
+    "x": 1328,
+    "y": 152,
+    "r": 1363,
+    "b": 168,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "2026",
+    "x": 1346,
+    "y": 217,
+    "r": 1384,
+    "b": 228,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "2025",
+    "x": 1346,
+    "y": 409,
+    "r": 1384,
+    "b": 420,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "2024",
+    "x": 1346,
+    "y": 506,
+    "r": 1384,
+    "b": 517,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "2023",
+    "x": 1346,
+    "y": 542,
+    "r": 1384,
+    "b": 553,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "2022",
+    "x": 1346,
+    "y": 579,
+    "r": 1384,
+    "b": 590,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Lobby",
+    "x": 1328,
+    "y": 158,
+    "r": 1372,
+    "b": 202,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Lobby",
+    "x": 1270,
+    "y": 166,
+    "r": 1324,
+    "b": 195,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "No. 01, The Reporting Engine",
+    "x": 1328,
+    "y": 218,
+    "r": 1372,
+    "b": 262,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. 01, The Reporting Engine",
+    "x": 1125,
+    "y": 226,
+    "r": 1324,
+    "b": 255,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "Projects wing",
+    "x": 1328,
+    "y": 278,
+    "r": 1372,
+    "b": 322,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Projects wing",
+    "x": 1223,
+    "y": 286,
+    "r": 1324,
+    "b": 315,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. 02, Warm Start",
+    "x": 1328,
+    "y": 338,
+    "r": 1372,
+    "b": 382,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. 02, Warm Start",
+    "x": 1188,
+    "y": 346,
+    "r": 1324,
+    "b": 375,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "Volunteer & Leadership wing",
+    "x": 1328,
+    "y": 398,
+    "r": 1372,
+    "b": 442,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Volunteer & Leadership wing",
+    "x": 1128,
+    "y": 406,
+    "r": 1324,
+    "b": 435,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "No. 03, The Deep Link",
+    "x": 1328,
+    "y": 458,
+    "r": 1372,
+    "b": 502,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. 03, The Deep Link",
+    "x": 1170,
+    "y": 466,
+    "r": 1324,
+    "b": 495,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "No. 04, The Ticket Spindle",
+    "x": 1328,
+    "y": 518,
+    "r": 1372,
+    "b": 562,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. 04, The Ticket Spindle",
+    "x": 1143,
+    "y": 526,
+    "r": 1324,
+    "b": 555,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "No. 05, Work in Progress",
+    "x": 1328,
+    "y": 578,
+    "r": 1372,
+    "b": 622,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. 05, Work in Progress",
+    "x": 1153,
+    "y": 586,
+    "r": 1324,
+    "b": 615,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "No. 06, The Medal Cabinet",
+    "x": 1328,
+    "y": 638,
+    "r": 1372,
+    "b": 682,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "No. 06, The Medal Cabinet",
+    "x": 1142,
+    "y": 646,
+    "r": 1324,
+    "b": 675,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "Front desk",
+    "x": 1328,
+    "y": 698,
+    "r": 1372,
+    "b": 742,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   },
+   {
+    "t": "Front desk",
+    "x": 1241,
+    "y": 706,
+    "r": 1324,
+    "b": 735,
+    "vis": true,
+    "clip": "inset(50%)",
+    "op": "1"
+   },
+   {
+    "t": "Front desk",
+    "x": 1328,
+    "y": 732,
+    "r": 1413,
+    "b": 748,
+    "vis": true,
+    "clip": "",
+    "op": "1"
+   }
+  ],
+  "screenPos": null,
+  "card": {
+   "x": 72,
+   "y": 508,
+   "r": 446,
+   "b": 792
+  }
+ }
+}

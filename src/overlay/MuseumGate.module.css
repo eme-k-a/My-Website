@@ -1,0 +1,36 @@
+/* Fallback notice (ARCHITECTURE §10.5): a panel above the track when the museum cannot load. */
+.notice {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  bottom: max(16px, calc(env(safe-area-inset-bottom) + 12px));
+  transform: translateX(-50%);
+  width: min(calc(100vw - 32px), 520px);
+  padding: 16px 20px;
+  background: var(--panel-solid);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: var(--type-small);
+  line-height: var(--lh-small);
+}
+
+.text {
+  margin: 0 0 8px;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--target-min);
+  color: var(--brass-hi);
+  font-weight: var(--weight-medium);
+}

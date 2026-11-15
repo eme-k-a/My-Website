@@ -1,0 +1,269 @@
+# Handover: continuing "Commit History" in another Claude Code session
+
+This file lets a fresh Claude Code session pick up the build where the last one stopped. That can be a local terminal or a new cloud session. Everything the work depends on is committed to the branch `claude/intelligent-sagan-poq45q` on `eme-k-a/My-Website`.
+
+## 1. Fastest way to resume
+
+**Option A: teleport this exact session to your machine.** This keeps the full conversation history.
+```sh
+git clone https://github.com/eme-k-a/My-Website.git && cd My-Website
+claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
+```
+- Teleport needs a clean working tree, and you must be signed in to the same claude.ai account (`claude auth login`).
+- Agents that were still running in the cloud are not carried over. Check the status table below, then re-run anything marked "in progress".
+
+**Option B: start a new session** (local or cloud) on the branch and paste the prompt in section 6.
+
+**Usage limits:** cloud and local sessions share one pool, your Pro plan usage. Moving to a local session does not give you more usage. It mainly protects against the cloud machine expiring.
+
+## 2. Where the truth lives (all in the repo)
+
+| File | What it is |
+|---|---|
+| `docs/PLAN.md` | The approved master plan: milestones M0 to M7, gates, the roster of 12 roles. The Addendum at the end holds binding rulings |
+| `docs/spec/EXPERIENCE.md` | The visitor experience: coordinates, stops, exhibit concepts, art direction, microcopy |
+| `docs/ARCHITECTURE.md` | Stack pins, repo tree, content schema, routes, rendering, budgets, testing, CI/CD |
+| `docs/CONTENT_DRAFT.md` | All resume and museum copy, with draft flags, the change log against the old resume, and facts still needed |
+| `docs/wp/WP-00.md` to `WP-36.md` | One brief per work package: owned files, todos, commands, acceptance checks |
+| `OWNERS.json` | Which role and work package may edit which paths |
+| `CLAUDE.md` | Operating rules for agents. Loaded automatically by Claude Code |
+| `review/reports/WP-xx.json` | What each finished work package reported |
+
+## 3. Status (update this table as work lands)
+
+| WP | Name | Status |
+|---|---|---|
+| WP-00 | Commit reconciled spec and briefs | Done (commit 8b015d5) |
+| WP-01 | Scaffold, legacy cleanup, pinned toolchain | Done (288cf93 to 52b0407). Two checks were waived by R0 rulings in the PLAN Addendum: the `legacy-site` tag is local only, and leva keeps its own zustand in the debug chunk |
+| WP-02 | Contracts freeze (schema, layout, registry, tokens, test hook) | Done (ffe42c3 to 3b4acc5; `contracts-v1` is a local tag on 3b4acc5) |
+| WP-03 | Content file + headshot pipeline | Done (999cfeb to c62ddbf; crop fixed after verification) |
+| WP-04 | Resume outputs (PDF public/private, `.tex`, before/after) | Done (fdbfb6a to 6ef8e39) |
+| WP-05 | Art direction + tokens | Done (f9b8ae5 to 2383647) |
+| Gate G0 | Emeka approves the resume before/after, Verafin bullets, title style | Approved 2026-10-15 (7658245): hybrid, manager cleared, (Co-op) style, no GitHub on PDF yet |
+| WP-06, WP-07, WP-10 | CI, test harness, app shell | Done (merged at ced456a; first CI run: verify, build, e2e green; latex fixed in 1431a5c) |
+| F-M1 | Fix-ups from M1a verification | Done and verified (a9f0d49..9937041) |
+| WP-08, WP-09 | Greybox gallery + kit, scroll track + rail | Done and verified (WP-08 3df75cb..705ed8e, WP-09 to bcc065a); CI run 11 green |
+| Context packs | docs/RULINGS.md + docs/wp/packs/ (cost rules) | Done (33b5492) |
+| Gate G1 | CI green + smoke tests on desktop and Pixel 7 | Passed 2026-10-16: CI run 13 green on c10c67f; smoke tests pass on desktop and Pixel 7 (139 e2e). Next: M2 on Emeka's "go" |
+| WP-11 to WP-16, WP-18 | M2a: environment, Verafin, Safe Sip, dialog and routes, camera feel, quality tiers, preview deploy | Done 2026-10-16: all merged and verified (WP-16, WP-11, WP-15, WP-14 one by one; WP-12, WP-13, WP-18 as one batch), tip d0c2d50. CI run 27 failed 11 e2e tests on GitHub runners, so the deploy job has not run yet |
+| F-M2 | Green CI after M2a (F-011 to F-014), first Netlify preview | Done 2026-10-16: CI runs 34 and 35 green; preview live at https://claude-intelligent-sagan-poq45q--emeka-nduka-nwagbo.netlify.app (report `review/reports/F-M2.json`). Next: WP-17 (slice tests, plus F-015 and F-016), then WP-19, then Gate G2 |
+| WP-17 | M2b: slice tests | Done 2026-10-17: merged and verified; six e2e shards; 19 CI baselines (`e4b5a40`, committed by the CI bot); A4 passed with CI runs 41, 43 and 45 green in a row (about 13.5 min each) |
+| WP-19 and F-G2 | Slice review and fixes | Done 2026-10-20. Round 1: 3.33. Round 2: 3.65. Round 3: 3.74 (desktop 3.83, Pixel 7 3.65), the last allowed round. Every P1 is closed: F-020 to F-023, F-036 and F-037 by F-G2a, F-G2b and F-G2r2; F-038 by its own scoped fix with an e2e check (`0d291d9`). Open P2 and P3: F-027, F-032, F-033. Baselines were refreshed by the CI bot (`fee0ac2`). Stills for Emeka: `review/runs/2026-10-20-g2r3/stills/` |
+| F-035 | Remove Safe Sip and Enactus | Done 2026-10-20 (Emeka's decision): gone from the gallery, its story page, `/resume/`, the PDF and the tex. The volunteer wing holds only SDSJ |
+| Gate G2 | Slice sign-off | **Passed 2026-10-20: Emeka approved the stills and the preview.** Review round 3 scored 3.74 with no open P0 or P1, and CI run 60 was green and deployed. **M2 is complete.** Next: Emeka runs `/compact`, then M3 (WP-20 to WP-25) starts on his "go", with builders in separate cloud sessions a few at a time (PLAN section 7). The usage-limit check-ins are paused until then (section 9) |
+| WP-20 to WP-25 | M3: the full gallery | Done; Gate G3 passed 2026-10-24 (section 11) |
+| WP-26 to WP-28, F-M4a, F-M4b | M4: polish | Done; **Gate G4 passed 2026-11-15**: Emeka accepted round 2's 3.94 as a taste call, with his 10 approved stills (section 12) |
+| WP-29 to WP-32, F-M5p | M5: performance, accessibility, SEO, cross-browser tests, G4 polish | Started 2026-11-15 (section 13) |
+| WP-33 onward | M6 and M7 | Not started |
+
+How to tell what's done:
+- `git log --oneline` shows commits carrying a `WP: WP-xx` trailer.
+- `ls review/reports/` lists the reports of finished packages.
+
+## 4. Decisions already made
+
+**Locked choices:**
+- Modern-gallery look.
+- Scroll-driven walk using native page scrolling.
+- Main aisle is work only, newest first. Optional side wings hold Projects and Volunteer. The Education + Certifications room comes at the end.
+- Hosted on Netlify, on a free `*.netlify.app` subdomain.
+- The resume is trimmed by an agent and approved by Emeka. It ships as a generated PDF plus a synced `resume.tex`.
+
+**Defaults pending Emeka's confirmation:**
+- No phone number on the site or in the public PDF.
+- Verafin uses the three "safe" bullets, location St. John's, NL.
+- GitHub link: `github.com/eme-k-a`.
+- No analytics, sound or post-processing effects in v1.
+
+**Hard rules:**
+- No em dashes anywhere: code, copy or commit messages.
+- Never commit the phone number. The private PDF reads it from `RESUME_PHONE`.
+- Never invent facts about Emeka.
+
+## 5. Differences when running locally (outside the cloud container)
+
+- **Playwright browsers.** The briefs assume the cloud image: browsers at `/opt/pw-browsers`, and "never run playwright install". Locally you must install the matching browser once: `npx playwright install chromium`. It matches `@playwright/test` 1.56.1, which `package.json` pins. Skip the WP-01 check that expects revision 1194 at `/opt/pw-browsers`, and don't set `PLAYWRIGHT_BROWSERS_PATH`.
+- **SwiftShader flags** (`--use-angle=swiftshader --enable-unsafe-swiftshader --ignore-gpu-blocklist`) still work locally for deterministic screenshots. Visual baselines are compared in CI only.
+- **Original resume PDF** (the "before" image in WP-04). The cloud copy was at `/root/.claude/uploads/.../d186f081-Emeka_Resume_One_Page.pdf`. Locally, point WP-04 at your own copy, kept outside the repo, because it contains your phone number. For example, set `RESUME_BEFORE_PDF=/path/to/Emeka_Resume_One_Page.pdf` and tell the agent to use it.
+- **Private PDF:** put `RESUME_PHONE=...` in `.env.local` (gitignored) before running `npm run resume:private`.
+- **Netlify:** the site `emeka-nduka-nwagbo` (https://emeka-nduka-nwagbo.netlify.app, team `eme-k-a`) was created through the connector on 2026-10-16, with no Git link, so Netlify Git builds are off. WP-18 needs two GitHub repo secrets that Emeka adds: `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID`. The site ID is under Site configuration, General, in the Netlify dashboard, or the connector's get-projects call returns it. Never commit it.
+- **Orchestration tools.** The cloud session used a Workflow tool to fan out agents. A local session can do the same work with the Agent tool (subagents, with worktree isolation for parallel exhibit builders) or one work package at a time. Quality comes from the briefs and their acceptance checks, not the tool.
+
+## 6. Continuation prompt (paste into the new session)
+
+```
+You are continuing the "Commit History" website build for Emeka Nduka-Nwagbo on branch
+claude/intelligent-sagan-poq45q. Act as R0, the orchestrator described in docs/PLAN.md.
+
+1. Read CLAUDE.md, docs/HANDOVER.md, docs/RULINGS.md, docs/PLAN.md section 7 (the cost-aware
+   operating rules) and docs/wp/_TEMPLATE.md. Do not read the big specs up front: each work
+   package has a context pack in docs/wp/packs/.
+2. Work out the real status: `git log --oneline`, `ls review/reports/`, and run
+   `npm ci && npm run verify && npm run build` if package.json exists. Update the status
+   table in docs/HANDOVER.md.
+3. Continue with the next milestone from docs/PLAN.md section 5. If the Workflow tool is
+   available, run the saved workflow .claude/workflows/milestone.js (name "milestone"),
+   following the cost rules in docs/PLAN.md section 7. Otherwise work through the WPs one at a time.
+   For each WP: hand its brief (docs/wp/WP-xx.md) to a subagent, or do it yourself. Then
+   have a separate subagent independently re-run every acceptance check and review the
+   diff adversarially. Fix and re-verify until it passes. Commit with a conventional
+   message ending in "WP: WP-xx". Push to the branch.
+4. Stop at each gate (G0, G2, G4, G5, and before launch) and ask me for the approvals
+   listed there. Do not open a pull request to main unless I ask.
+5. Rules: no em dashes anywhere; never commit my phone number; never invent facts about
+   me (use [placeholder: ...]); stay inside each WP's owned files (OWNERS.json).
+   Local environment differences are in docs/HANDOVER.md section 5.
+```
+
+## 7. Facts Emeka still owes (defaults apply if skipped)
+
+- **Verafin:** on-site, hybrid or remote, and which technologies can be named publicly.
+- **KlarUp and Finance Tracker:** his role and the dates.
+- **Certifications:** issue dates, the Tech Stewardship issuer, verification links.
+- **MUN:** start date.
+- **Volunteer roles:** whether both are still active.
+- **Mysa:** whether the web app used a database alongside Cognito.
+- **Exit desk:** the target roles to mention.
+- **Identity:** GitHub handle, display form of his name, favicon monogram letters.
+- **Testing:** his phone model, for the real-device checklist.
+
+## 8. Resuming M2a after the usage-limit pause (2026-10-16)
+
+1. If `git branch --list 'wp/WP-1*'` does not show `wp/WP-11` and `wp/WP-12` (a fresh container), rebuild them from the patches:
+   `git branch wp/WP-12 350e3f8 && git worktree add /tmp/r12 wp/WP-12 && git -C /tmp/r12 am "$PWD"/review/wip/WP-12/*.patch && git worktree remove /tmp/r12`, then the same for WP-11.
+2. Run M2a again with the saved `milestone` workflow, but skip the WP-12 build (reuse its report) and start the WP-11 builder from `wp/WP-11`. The workflow needs a small edit for that: a `fromBranch` field per WP (the builder checks out that branch in its worktree and continues) and a `built: true` field (skip the build; read the report from the branch). Same efforts as before: WP-11, WP-12, WP-15, WP-16 at xhigh; WP-13, WP-14 at high. Merge order WP-16, WP-11, WP-15, WP-14, WP-12, WP-13.
+3. Delete `review/wip/` in the first commit after WP-11 and WP-12 are integrated.
+4. Netlify: the site exists (section 5). WP-18 waits for Emeka's two GitHub secrets.
+
+
+## 9. Automatic resume after usage limits (2026-10-20; paused at the M2 boundary, re-arm on M3 "go")
+
+Emeka asked for a cheap automatic resume.
+
+**The chain.** A one-shot check-in, "Usage-limit check-in (5-hour chain)", fires into this session. The first one fires at 07:52 UTC on 2026-10-20, 2 minutes after the estimated reset. Each check-in first books the next one 5 hours and 2 minutes later. When a limit error names an exact reset time, it books 2 minutes after that time instead. Each check-in then does one of three things:
+- **Resume:** if a usage limit or a container restart stopped any work, it resumes that work.
+- **Wait:** if work is still running, or the next step needs Emeka, it does nothing.
+- **Stop:** if the build is done or Emeka says stop, it books no next check-in.
+
+**The backup.** A daily backup, "Daily backup for the usage-limit chain" (`trig_01Pj547R92sA2hw76nRLHqLt`, 15:46 UTC), re-arms the chain if it broke. A break happens when a check-in fires while the limit is still in force.
+
+Nothing can read the usage meter directly; reset times come only from limit errors and from `/usage`. A new session that replaces this one should cancel both, or point them at the new session.
+
+## 10. M3 builder sessions (started 2026-10-20 19:27 UTC)
+
+Emeka said "go" for M3 after G2. Builders run as separate cloud sessions, each on its own machine and pushing only to its own branch. R0 polls them about every 90 minutes with a "M3 check-in" scheduled message, because child sessions do not report back on their own.
+
+| WP | Scope | Session | Branch |
+|---|---|---|---|
+| WP-20 | Mysa, Wailo | session_01VEeLNNVFTUjbX2HsbKLCM1 | `claude/m3-wp-20` |
+| WP-21 | CFIA, MUN, Certifications | session_015AAw5CUALiSJ9hb7nBd9YT | `claude/m3-wp-21` |
+| WP-22 | KlarUp, Finance Tracker | session_01UAEqq8fd4Z6z8u9rnHdrQ8 | `claude/m3-wp-22` |
+| WP-23 | SDSJ | session_01Fb4q9FnUpbrUw37qr78qwJ (started 20:17 UTC) | `claude/m3-wp-23` |
+| WP-24 | Wing rooms and doors | session_01TKpHXcQ2rbXarKXZo3A4TM (started 20:17 UTC) | `claude/m3-wp-24` |
+| WP-25 | Test expansion | after WP-20 to WP-24 merge | |
+
+Then the F-M3 follow-ups listed in RULINGS, the review (G3 needs an average of at least 3.5 and no open P0 or P1), and the CI baseline refresh.
+
+**Group 1 status:** WP-20, WP-21 and WP-22 are merged (cherry-picked by R0 on 2026-10-20, 12 commits, `f529e57` to `9eb31c7`). On the merged tip, verify (827 tests), build, budgets and glyphs pass, as do the exhibit contract and exhibit specs on desktop and pixel7. The workflow integrator answered a status question instead of merging, so R0 merged by hand.
+
+Each push to a `claude/m3-*` branch runs CI and deploys an alias preview for that branch. That is harmless. R0 merges the branches into the integration branch with the batch integrator.
+
+## 11. M3 complete, Gate G3 passed (2026-10-24)
+
+**M3 is complete.** All of it is merged:
+- WP-20 to WP-25, F-M3a (draw calls), F-M3 (follow-ups) and F-039;
+- Emeka's approved KlarUp change: the staircase raised and the checks thickened.
+
+**Checks:** CI run 102 is green at `71e5f62`, with 47 CI baselines.
+
+**G3 review:** round 1 averaged 3.78 with no P0. The P1 F-039 is closed. The open P2 and P3 findings (listed in RULINGS) go to M4.
+
+**Housekeeping:** the seven M3 builder sessions are archived.
+
+**Next:** Emeka runs `/compact`, then says "go" for **M4: polish**:
+- WP-26: lighting and atmosphere, including dark brass at tier medium (F-045);
+- WP-27: mobile and onboarding, including the short phone card and F-040 to F-044 where they apply;
+- WP-28: the asset pass.
+
+Gate G4 needs an average of at least 4.0, no dimension below 3.5, and Emeka's sign-off on 10 screenshots. Run the builders as separate cloud sessions, a few at a time, and merge by hand with cherry-pick, since workflow integrators can misread the user's turn. The Workflow tool may be switched off; in that case, use background agents in worktrees.
+
+**Usage check-ins:** the 5-hour chain (next at 07:22 UTC) and the daily backup (`trig_01LUJuUEwDgi8NtdCq45PVUp`) are armed at Emeka's request (2026-10-24). They only resume stopped work; they never start a new milestone.
+
+## 12. M4 builder sessions (started 2026-10-24)
+
+Emeka said "go" for M4 after G3. Four builders run as separate cloud sessions, each pushing only to its own branch. R0 polls them about every 90 minutes with an "M4 check-in" scheduled message, because child sessions do not report back.
+
+| WP | Scope | Session | Branch |
+|---|---|---|---|
+| WP-26 | Lighting and atmosphere, F-043, brass at medium, mood notes | session_01Uuq5imcpDHnnu66econpQ6 | `claude/m4-wp-26` |
+| WP-27 | Mobile and onboarding, F-046, sdsj 360 x 640 card | session_01StRh2HFpnS7dr2XHwVqXR4 | `claude/m4-wp-27` |
+| WP-28 | Asset pass: font subsets, preload, credits, transfer spec | session_013MaHaucLVSCbXU8ujtxFy2 | `claude/m4-wp-28` |
+| F-M4a | Exhibit read, grounding and framing: F-040 to F-042, F-044, F-045 | session_01NCDqgD8piiMcgxgg2YWSnS | `claude/m4-f-m4a` |
+
+All four started at 04:31 UTC. Then: merge by cherry-pick, one CI baseline refresh, the G4 review, and Emeka's 10-screenshot sign-off.
+
+**Status (09:00 UTC):** all four builders and the F-041b follow-up (session_01FhEZFpyAr9LGCEt84Lrpmv, `claude/m4-f-041b`) are merged by cherry-pick, and their sessions are archived. CI run 119 failed at three phone wing stops; R0 fixed the cause (hover styles on touch screens, `f4b2f42`) and the next dispatch committed the M4 baselines (`82e10a0`). One more baseline refresh covers the MUN title. **Next:** a normal green run, then the G4 review, which waits on Emeka's go-ahead because the weekly usage limit is at its warning level (it resets 2026-10-27 02:00 UTC).
+
+**Status (09:50 UTC):** CI run 125 committed the MUN baselines (`28f1d57`) after one allowed re-run (F-047 records the two intermittent checks). This push runs the normal CI and redeploys the preview. The M4 build is complete once that run is green; the G4 review still waits on Emeka's go-ahead.
+
+**M4 build complete (10:12 UTC):** CI run 126 is green at `c0fd2e2`, and its deploy put all of M4 on the preview. Next: the G4 review (R11, as in G3: `review/runs/<date>-g4r1/`, scorecard, `scores.json`, findings), then Emeka signs off 10 screenshots. The review waits on Emeka's go-ahead, because the weekly usage limit is at its warning level (it resets 2026-10-27 02:00 UTC).
+
+**G4 review started (14:36 UTC, Emeka said "go"):** R11 runs in session_01EyjuW51kYuRu41kv7GpZNa on `claude/m4-g4r1`, writing `review/runs/2026-10-24-g4r1/` (scorecard, scores, findings, 10 sign-off stills). R0 cherry-picks it, then sends Emeka the stills if G4 passes, or plans a scoped fix round if it does not.
+
+**G4 round 1 (15:40 UTC):** the average is 3.90 against the 4.0 bar. Emeka approved the 10 stills (recorded in ART_DIRECTION §10). The review session is merged and archived. Next: one fix session, F-M4b (brief `docs/wp/F-M4b.md`: F-048, the doors with F-051, F-049, F-050, F-052 and F-053), then G4 round 2. It starts on Emeka's go-ahead.
+
+**Paused (Emeka, 2026-10-24 16:40 UTC, "wait"):** the F-M4b fix round starts after the weekly reset, by a scheduled task at 2026-10-27 02:02 UTC (`trig_013ocREzx7Vvv6HKuoiPf6pf`). The 5-hour usage chain and the daily backup stay armed but never start it early. After F-M4b: merge, a baseline refresh, a green run, then G4 round 2.
+
+**F-M4b started (2026-10-27 02:03 UTC, after the weekly reset):** session_019vLPzjbphHPaHjpeWyeYqn on `claude/m4-f-m4b`, from `bc36379`. Then: merge, a baseline refresh, a green run, and G4 round 2 as a new R11 session on `claude/m4-g4r2`. The 5-hour chain had lapsed on 2026-10-25 (a worker restart came before the next booking; nothing was running), and it is re-armed.
+
+**G4 round 2 started (2026-10-27 04:30 UTC):** F-M4b is merged (archived session). CI run 142's quality (b) failure was fixed in the test (F-047, `e7b202d`), and run 144 committed the F-M4b baselines (`86d8dc8`). R11 round 2 runs in session_019vLPzo3MvoSuATWmcafpYW on `claude/m4-g4r2`. A normal run is deploying the preview.
+
+
+## 13. M5 launch (prepared 2026-10-27; Emeka's go is given in advance)
+
+When G4 round 2 passes, R0:
+1. Records "Gate G4 passed, M4 complete" in RULINGS, and marks task 21 complete.
+2. Creates four cloud sessions (`create_session`, source `claude/intelligent-sagan-poq45q`, tag `commit-history:M5`), one each for WP-29, WP-30, WP-31 and WP-32, with `outcome_branch` `claude/m5-wp-29` to `claude/m5-wp-32`.
+3. Prompts them in the same shape as the M4 builder prompts:
+   - Read CLAUDE.md, then `docs/wp/packs/WP-xx.md`, then RULINGS from "M3 decisions" on, including "M5 routing".
+   - List the other three sessions' paths as off limits, per the routing.
+   - Setup: `npm ci`; Playwright `--workers=2` on PORT 4174 to 4177; the Chromium 1243 symlink workaround if needed.
+   - Rules: no em dashes, no invented facts, no budget raises, baselines from CI only.
+   - Push after each finished item, only to the session's own branch; never tags or PRs.
+   - Done means the brief's acceptance, `review/reports/WP-xx.json`, and a final message under 400 words.
+4. Records the session ids below, and arms a check-in about 90 minutes later.
+5. Sends Emeka one message: M4 is complete (with the score and the preview link), and M5 has started. It also asks for the G5 facts:
+   - certification dates and issuers;
+   - KlarUp and Finance Tracker roles and dates;
+   - the MUN start date;
+   - target roles;
+   - his GitHub handle;
+   - an approval pass on all first-person copy.
+6. After the merges: a baseline refresh if any screenshots changed, a green run, then the G5 checks: `RELEASE=1 npm run check:copy` (after Emeka's facts), Lighthouse at least 0.95 for accessibility and SEO, and Emeka's phone checklist.
+
+**G4 round 2 (2026-10-27 04:51 UTC):** 3.94, with no P0 or P1 open. The session is merged (`8404187`) and archived. M5 is held: Emeka chooses between accepting G4 (R0's recommendation, with a parallel polish session) and a third, final G4 round.
+
+
+**G4 accepted, M5 starting (2026-11-15 05:45 UTC):** Emeka chose "Accept, start M5". RULINGS records "G4 passed, M4 complete". Five sessions start from this commit: WP-29 to WP-32 as above, plus the polish session F-M5p (brief `docs/wp/F-M5p.md`, branch `claude/m5-f-m5p`). Session ids follow below once created.
+
+| WP | Scope | Session | Branch |
+|---|---|---|---|
+| WP-29 | Budgets in CI, blocking Lighthouse | session_019vLPznDvQ8caFQWwjQAJKP | `claude/m5-wp-29` |
+| WP-30 | Accessibility (attribute-level) | session_019vLPznsYLU7jZSjCEdXD8n | `claude/m5-wp-30` |
+| WP-31 | SEO and sharing | session_019vLPzjK2ewBTuvamnv62Bm | `claude/m5-wp-31` |
+| WP-32 | Cross-browser DOM tests, F-047 verafin half, phone checklist | session_019vLPzoDztZiUFNP1PxxkiZ | `claude/m5-wp-32` |
+| F-M5p | G4 polish (F-054, phone pools, F-052, doors, F-056, F-055 row) | session_019vLPzjnGWK1r2YHsrPK2Ek | `claude/m5-f-m5p` |
+
+All five started at 05:44 UTC from `df5a730`. R0 polls them with an "M5 check-in" about every 90 minutes. Merge order when done: WP-29, WP-31, WP-30, WP-32, F-M5p (cherry-pick; ci.yml is shared by WP-29's `lighthouse` job and WP-32's `e2e-xbrowser` job). Then a CI baseline refresh, a green run, and the G5 checks (step 6 above).
+
+**M5 merged (2026-11-15 07:25 UTC):** all five sessions finished within an hour, and R0 merged them by cherry-pick, then applied the three cross-owner fixes (MuseumGate paint gate, the ContactShadows leak, the `/resume/` JSON-LD check) and Emeka's content answers (RULINGS "M5 merges", "Emeka's G5 facts"). Next: archive the sessions, push, a CI baseline dispatch (screenshots change at the doors, verafin, mysa, cfia, mun, the desk and the project cards), a normal green run, then the G5 checks. Still owed by Emeka: review of the SDSJ, MUN and Certifications copy, and the favicon monogram letters.
+
+**M5 baselines (07:50 UTC):** CI run 179 (dispatch, update-baselines) was green and the bot committed 29 screenshots (`dbc1ec3`). A local run of loops, shell, fast-path and exhibit-contract on desktop and pixel7 passed 54 of 54 (the leak fix holds). This push starts the normal run that deploys the preview. F-047 needs 3 consecutive green runs.
+
+**CI run 180 green (08:16 UTC):** every blocking job passed, including the now-blocking Lighthouse job on mobile and desktop (the MuseumGate paint gate fixed mobile LCP), and the deploy put M5 on the preview. F-047: 2 of 3 consecutive green runs (179, 180). The advisory `e2e-xbrowser` job ran for the first time: 20 passed, 3 failed, all the fast-path "hero fully inside the first viewport" check at phone sizes in Firefox and WebKit (F-058, P2, M6). M5's builds are done; G5 still needs Emeka's SDSJ, MUN and Certifications copy review and his phone checklist (`tests/manual/PHONE_CHECKLIST.md`), then `RELEASE=1 npm run check:copy`.
+
+**F-059 and F-060 live (2026-11-15 15:52 UTC):** Emeka found on his phone that the camera looked at the Projects wing's end wall between KlarUp and Finance Tracker (F-059), and that on iOS Safari the front desk was framed behind its card (F-060: the stage is 100lvh, the card slot 100svh). R0 fixed both (`9641f51`, `7ef4b7f`); CI run 182 is green and deployed. F-047 is fixed after runs 179 to 182. Waiting on Emeka: his iPhone re-check of the desk and the wing walk, the SDSJ, MUN and Certifications copy, the favicon monogram, and the phone checklist.
+
+**G5 copy approved, M6 prepared (2026-11-15 19:20 UTC):** Emeka approved all remaining copy and the "EN" monogram, and asked for `docs/FUTURE_IMPROVEMENTS.md` (new KlarUp and Verafin objects later). `RELEASE=1` build and check:copy are clean; README has the v1.0.0 notes and `package.json` is 1.0.0. Next (WP-33): Emeka signs the phone checklist, then asks for the PR to `main` and merges it; R0 then watches the production deploy, runs the production checks and tags `v1.0.0`. M7 (WP-34 to WP-36) starts after the merge.
+
+**Gate G5 passed (2026-11-15 19:35 UTC):** Emeka re-checked the F-059 and F-060 fixes on his iPhone against the preview and approved them: "approved. phone looks good". R0 records that as his phone check for G5. With the copy approved, `RELEASE=1` clean and every threshold green, M5 is complete. Next: the PR to `main` when Emeka explicitly asks for it (WP-33), then the production checks and the `v1.0.0` tag.

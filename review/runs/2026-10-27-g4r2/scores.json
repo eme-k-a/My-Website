@@ -1,0 +1,1154 @@
+{
+  "round": 2,
+  "gate": "G4",
+  "date": "2026-10-27",
+  "build": "4df46e0 (tip of claude/intelligent-sagan-poq45q: F-M4b merged, CI run 144 green with refreshed baselines per R0), npm ci && npm run build (budgets ok, check-copy ok), served by scripts/serve-dist.ts on PORT=4174",
+  "capture": "tests/e2e/capture.spec.ts @capture, CAPTURE_DIALOGS=1, ?test=1&mode=museum; desktop 1440x900 at tier=high, pixel7 412x839 at tier medium; 13 stops and 9 dialogs per project; probes in probe-g4.mjs (Pixel 7 and 360x640)",
+  "scale": "1 to 5, half points; anchors in docs/ART_DIRECTION.md section 7",
+  "scope": "all 13 stops (156 cells), same set as G4 round 1",
+  "previous": "review/runs/2026-10-24-g4r1/scores.json",
+  "cellFormat": "[score, reason, screenshot path, G4 round 1 score]",
+  "scores": {
+    "lobby": {
+      "desktop": {
+        "D1": [
+          4,
+          "Held: WP-26 arch interior: the ceiling line, aisle depth, a second case and the first case lit under its own pool now read through the arch (3.5 in G3, dead interior). Not 4.5: the right third beyond the portrait is still flat ink.",
+          "review/runs/2026-10-27-g4r2/lobby-desktop.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Hero at left, arch and first case on the sightline, portrait clear of the rail; unchanged and sound.",
+          "review/runs/2026-10-27-g4r2/lobby-desktop.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: Name, role, degree, links and the ticket read at a glance; the 2026 floor numeral is still a faint smear (not 5).",
+          "review/runs/2026-10-27-g4r2/lobby-desktop.png",
+          4.5
+        ],
+        "D4": [
+          4,
+          "Held: Gallery of work, admission ticket (15 OCT 2026 under ?test=1) and an aisle that visibly leads on; the ticket adds to the museum story.",
+          "review/runs/2026-10-27-g4r2/lobby-desktop.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: Brass arch, ticket stamp and buttons share one vocabulary with the exhibit stops.",
+          "review/runs/2026-10-27-g4r2/lobby-desktop.png",
+          4
+        ],
+        "D6": [
+          3.5,
+          "Held: Thumbnail: a framed doorway with a small case inside; reads as a portal, the case is still a few pixels.",
+          "review/runs/2026-10-27-g4r2/lobby-thumb.png",
+          3.5
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Held: The lit first case and aisle depth now fill the arch under the fast path (G3 3.5: dim and tiny).",
+          "review/runs/2026-10-27-g4r2/lobby-pixel7.png",
+          4
+        ],
+        "D2": [
+          3.5,
+          "Held: The arch sits low and is cut by the bottom of the viewport behind Swipe up to walk; the case is small.",
+          "review/runs/2026-10-27-g4r2/lobby-pixel7.png",
+          3.5
+        ],
+        "D3": [
+          4.5,
+          "Held: Fast path crisp: name, role, degree, Resume (PDF), Email and Classic view end above y 371.",
+          "review/runs/2026-10-27-g4r2/lobby-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          3.5,
+          "Held: Welcome line and ticket, but the gallery below is still a glimpse rather than an invitation.",
+          "review/runs/2026-10-27-g4r2/lobby-pixel7.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: Ticket and arch match the desktop treatment; one vocabulary.",
+          "review/runs/2026-10-27-g4r2/lobby-pixel7.png",
+          4
+        ],
+        "D6": [
+          3,
+          "Held: At reduced size the case is a few pixels inside a dark arch; no object read.",
+          "review/runs/2026-10-27-g4r2/lobby-pixel7.png",
+          3
+        ]
+      }
+    },
+    "verafin": {
+      "desktop": {
+        "D1": [
+          3.5,
+          "F-052 side bay shows as a dim grey arch between the aisle and the case (evidence/verafin-left-desktop.png), but the left half is still the dark far aisle: (300, 300) samples rgb(11, 11, 13), unchanged, and no pool glows ahead. Not 4.",
+          "review/runs/2026-10-27-g4r2/verafin-desktop.png",
+          3.5
+        ],
+        "D2": [
+          4,
+          "Held: Case on the framing point, title above, card at left; unchanged.",
+          "review/runs/2026-10-27-g4r2/verafin-desktop.png",
+          4
+        ],
+        "D3": [
+          4,
+          "Card and dialog crisp; NASDAQ VERAFIN slightly larger at 0.125 m but still skewed by the wall angle.",
+          "review/runs/2026-10-27-g4r2/verafin-desktop.png",
+          4
+        ],
+        "D4": [
+          4,
+          "Held: Column and cartridges say data platform and reports; no detection imagery.",
+          "review/runs/2026-10-27-g4r2/verafin-desktop.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: Brass cartridges now read as brass at high (WP-26), in family with the other stops.",
+          "review/runs/2026-10-27-g4r2/verafin-desktop.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Thumbnail: column beside a block of bars reads as one object (3.5 in G3: the bars merged with the tray).",
+          "review/runs/2026-10-27-g4r2/verafin-thumb.png",
+          4
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Held: Beam and case only, dark around; unchanged.",
+          "review/runs/2026-10-27-g4r2/verafin-pixel7.png",
+          3.5
+        ],
+        "D2": [
+          4,
+          "Held: Case centred above the shorter WP-27 card with room to breathe.",
+          "review/runs/2026-10-27-g4r2/verafin-pixel7.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: Card and title read; 01 clear of the HUD by 38 px (probe-g4-main.json).",
+          "review/runs/2026-10-27-g4r2/verafin-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          4,
+          "Held: Same object read as desktop.",
+          "review/runs/2026-10-27-g4r2/verafin-pixel7.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: Consistent with the other phone stops.",
+          "review/runs/2026-10-27-g4r2/verafin-pixel7.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Column and bars distinct at reduced size.",
+          "review/runs/2026-10-27-g4r2/verafin-pixel7.png",
+          4
+        ]
+      }
+    },
+    "projects-door": {
+      "desktop": {
+        "D1": [
+          4,
+          "Doors pass (F-051, F-052): the left wall is now a dim warm bay (sample 19, 17, 18, was 8, 7, 9) and the room's glow fills the doorway; no black void. Not 4.5: the room beyond is one pool, no faint promise past it.",
+          "review/runs/2026-10-27-g4r2/projects-door-desktop.png",
+          3.5
+        ],
+        "D2": [
+          4,
+          "The doorway, PROJECTS transom and the room compose as one picture between the card (x 446) and the rail; nothing cut at an edge, no brass in the leftmost 60 px. Not 4.5: both jambs run off the bottom edge and the inner case sits low and small.",
+          "review/runs/2026-10-27-g4r2/projects-door-desktop.png",
+          3.5
+        ],
+        "D3": [
+          4,
+          "PROJECTS and P2 PERSONAL FINANCE TRACKER read; transom skewed by perspective.",
+          "review/runs/2026-10-27-g4r2/projects-door-desktop.png",
+          4
+        ],
+        "D4": [
+          3.5,
+          "Still a door with one case inside; KlarUp is only in the card.",
+          "review/runs/2026-10-27-g4r2/projects-door-desktop.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: Brass frame and glow arch in family.",
+          "review/runs/2026-10-27-g4r2/projects-door-desktop.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Thumbnail: a large brass doorway silhouette with a lit case inside.",
+          "review/runs/2026-10-27-g4r2/projects-door-thumb.png",
+          4
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "The lit room floor and P2 glow read through the door, but the surround and the band above the card stay dead ink.",
+          "review/runs/2026-10-27-g4r2/projects-door-pixel7.png",
+          3.5
+        ],
+        "D2": [
+          4,
+          "Both jambs whole (F-051 portrait rule), transom 50 px under the HUD row (probe-g4-main.json), case on the door's axis, card clear below. Not 4.5: an empty black floor band between door and card.",
+          "review/runs/2026-10-27-g4r2/projects-door-pixel7.png",
+          3.5
+        ],
+        "D3": [
+          4,
+          "PROJECTS crisp, P2 PERSONAL FINANCE TRACKER legible inside.",
+          "review/runs/2026-10-27-g4r2/projects-door-pixel7.png",
+          4
+        ],
+        "D4": [
+          3.5,
+          "Held: Door with one case; the wing content is in the card.",
+          "review/runs/2026-10-27-g4r2/projects-door-pixel7.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "The frame's lit inner face now matches the desktop door (G4 r1 3.5: darker and flatter).",
+          "review/runs/2026-10-27-g4r2/projects-door-pixel7.png",
+          3.5
+        ],
+        "D6": [
+          3.5,
+          "Door silhouette strong; the inner case is still small at reduced size.",
+          "review/runs/2026-10-27-g4r2/projects-door-pixel7.png",
+          3.5
+        ]
+      }
+    },
+    "klarup": {
+      "desktop": {
+        "D1": [
+          4,
+          "Held: Calm glow arch over the case, warm pool; unchanged.",
+          "review/runs/2026-10-27-g4r2/klarup-desktop.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Case on the point, title above, wing HUD clear at right.",
+          "review/runs/2026-10-27-g4r2/klarup-desktop.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: P1 KLARUP whole above the case at the stop and in the dialog (F-042 fixed); a faint ghost of the neighbouring title beside the panel remains.",
+          "review/runs/2026-10-27-g4r2/klarup-desktop.png",
+          4.5
+        ],
+        "D4": [
+          4,
+          "Held: Staircase of tiles and beads reads as a climb.",
+          "review/runs/2026-10-27-g4r2/klarup-desktop.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: Raised object in the shared vocabulary; brass strips read as brass.",
+          "review/runs/2026-10-27-g4r2/klarup-desktop.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Thumbnail: a staircase clearly rising across the case (3.5 in G3, small in the case).",
+          "review/runs/2026-10-27-g4r2/klarup-thumb.png",
+          4
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Held: Glow arch and case; unchanged.",
+          "review/runs/2026-10-27-g4r2/klarup-pixel7.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Case centred; the WP-27 top row (Return to the aisle, PDF, Classic) leaves the chip on its own line.",
+          "review/runs/2026-10-27-g4r2/klarup-pixel7.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: P1 KLARUP 89 px below the HUD (probe-g4.json); 44 px targets.",
+          "review/runs/2026-10-27-g4r2/klarup-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          4,
+          "Held: Climb reads.",
+          "review/runs/2026-10-27-g4r2/klarup-pixel7.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: Consistent with the other wing stops.",
+          "review/runs/2026-10-27-g4r2/klarup-pixel7.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Raised staircase reads at reduced size.",
+          "review/runs/2026-10-27-g4r2/klarup-pixel7.png",
+          4
+        ]
+      }
+    },
+    "finance-tracker": {
+      "desktop": {
+        "D1": [
+          4,
+          "Held: Glow arch and pool; calm.",
+          "review/runs/2026-10-27-g4r2/finance-tracker-desktop.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Case on the point; the three-line title now sits above the case top (G3 3.5: crowded).",
+          "review/runs/2026-10-27-g4r2/finance-tracker-desktop.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: PERSONAL FINANCE TRACKER whole at the stop and in the dialog (F-042 fixed).",
+          "review/runs/2026-10-27-g4r2/finance-tracker-desktop.png",
+          4.5
+        ],
+        "D4": [
+          3.5,
+          "Held: Three stacks on a tray say balance, not yet finance tracker; the card carries the rest.",
+          "review/runs/2026-10-27-g4r2/finance-tracker-desktop.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: Brass stack now reads as brass next to graphite and glass (G3 3.5: brown).",
+          "review/runs/2026-10-27-g4r2/finance-tracker-desktop.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Thumbnail: three stacks on a raised stand fill the lower half of the case (3.5 in G3).",
+          "review/runs/2026-10-27-g4r2/finance-tracker-thumb.png",
+          4
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Held: Glow arch and pool; unchanged.",
+          "review/runs/2026-10-27-g4r2/finance-tracker-pixel7.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Title, case and card stack cleanly; the HUD no longer sits on P2 (G3 3, F-039).",
+          "review/runs/2026-10-27-g4r2/finance-tracker-pixel7.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: P2 whole, 61 px below the HUD row (G3 2.5: the exit control on P2).",
+          "review/runs/2026-10-27-g4r2/finance-tracker-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          3.5,
+          "Held: As desktop.",
+          "review/runs/2026-10-27-g4r2/finance-tracker-pixel7.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: Brass reads at medium (WP-26).",
+          "review/runs/2026-10-27-g4r2/finance-tracker-pixel7.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Stacks distinct at reduced size.",
+          "review/runs/2026-10-27-g4r2/finance-tracker-pixel7.png",
+          4
+        ]
+      }
+    },
+    "mysa": {
+      "desktop": {
+        "D1": [
+          4,
+          "F-052: the left half is now a dim warm wall (sample rgb 26, 21, 21 at x 300, y 300; G4 r1 8, 7, 9), so the case sits in a room rather than beside a void. Not 4.5: no next pool in view.",
+          "review/runs/2026-10-27-g4r2/mysa-desktop.png",
+          3.5
+        ],
+        "D2": [
+          4,
+          "Held: Case on the point, card at left.",
+          "review/runs/2026-10-27-g4r2/mysa-desktop.png",
+          4
+        ],
+        "D3": [
+          4,
+          "Held: Card and dialog crisp; MYSA skewed.",
+          "review/runs/2026-10-27-g4r2/mysa-desktop.png",
+          4
+        ],
+        "D4": [
+          4,
+          "Held: Slab, dial and key through a ring read as a thermostat and sign-on.",
+          "review/runs/2026-10-27-g4r2/mysa-desktop.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: In family.",
+          "review/runs/2026-10-27-g4r2/mysa-desktop.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Thumbnail: slab and ring, clear.",
+          "review/runs/2026-10-27-g4r2/mysa-thumb.png",
+          4
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Held: Unchanged.",
+          "review/runs/2026-10-27-g4r2/mysa-pixel7.png",
+          3.5
+        ],
+        "D2": [
+          4,
+          "Held: Case centred over the shorter card.",
+          "review/runs/2026-10-27-g4r2/mysa-pixel7.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: Title and card read; 02 38 px below the HUD.",
+          "review/runs/2026-10-27-g4r2/mysa-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          4,
+          "Held: As desktop.",
+          "review/runs/2026-10-27-g4r2/mysa-pixel7.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: In family.",
+          "review/runs/2026-10-27-g4r2/mysa-pixel7.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Slab and dial read at reduced size.",
+          "review/runs/2026-10-27-g4r2/mysa-pixel7.png",
+          4
+        ]
+      }
+    },
+    "volunteer-door": {
+      "desktop": {
+        "D1": [
+          4,
+          "F-051 and F-052: the wailo fragments are gone (0 brass px in the leftmost 60 px), the left wall is a dim warm wash (31, 28, 30) and the V1 room glows through the door.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-desktop.png",
+          3.5
+        ],
+        "D2": [
+          3.5,
+          "Doorway and transom fill the frame with nothing cut at the left, but the active rail label 'Volunteer & Leadership wing' (x 1128 to 1322) sits on the right door jamb, and the room title ends about 13 px from it (evidence/volunteer-door-rail-desktop.png, F-054). Not 4.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-desktop.png",
+          3.5
+        ],
+        "D3": [
+          4,
+          "VOLUNTEER & LEADERSHIP and V1 SOFTWARE DEVELOPERS OF ST. JOHN'S crisp; no edge fragments.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-desktop.png",
+          3.5
+        ],
+        "D4": [
+          3.5,
+          "A door with one case inside, as projects-door.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-desktop.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "No framing error left; frame, glow and wash in family with projects-door.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-desktop.png",
+          3.5
+        ],
+        "D6": [
+          4,
+          "Thumbnail: doorway silhouette clear.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-thumb.png",
+          4
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Room glow through the door; dim surround, as projects-door.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-pixel7.png",
+          3.5
+        ],
+        "D2": [
+          4,
+          "Both jambs whole (the right jamb was cut in G4 r1), transom 33 px under the HUD row (probe-g4-main.json), case near the door's axis, card clear below.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-pixel7.png",
+          3.5
+        ],
+        "D3": [
+          4,
+          "The transom now spans the frame and reads at a glance; V1 title legible inside (G4 r1 3.5: small and skewed).",
+          "review/runs/2026-10-27-g4r2/volunteer-door-pixel7.png",
+          3.5
+        ],
+        "D4": [
+          3.5,
+          "As desktop.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-pixel7.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Matches projects-door and the desktop door treatment.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-pixel7.png",
+          3.5
+        ],
+        "D6": [
+          3.5,
+          "Door reads; the inner case is small at reduced size.",
+          "review/runs/2026-10-27-g4r2/volunteer-door-pixel7.png",
+          3.5
+        ]
+      }
+    },
+    "sdsj": {
+      "desktop": {
+        "D1": [
+          4,
+          "Held: Calm glow arch and pool.",
+          "review/runs/2026-10-27-g4r2/sdsj-desktop.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Case on the point, title whole above it.",
+          "review/runs/2026-10-27-g4r2/sdsj-desktop.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: V1 SOFTWARE DEVELOPERS OF ST. JOHN'S whole at the stop and in the dialog (F-042 fixed).",
+          "review/runs/2026-10-27-g4r2/sdsj-desktop.png",
+          4.5
+        ],
+        "D4": [
+          4,
+          "Held: Round table with laptops facing in reads as a community table.",
+          "review/runs/2026-10-27-g4r2/sdsj-desktop.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: Raised table with a brass rim band, in family.",
+          "review/runs/2026-10-27-g4r2/sdsj-desktop.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Thumbnail: table on a pedestal with the laptops distinct (3.5 in G3, lost low in the case).",
+          "review/runs/2026-10-27-g4r2/sdsj-thumb.png",
+          4
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Held: Unchanged.",
+          "review/runs/2026-10-27-g4r2/sdsj-pixel7.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Title, case and card stack cleanly; V1 58 px below the HUD (G3 3.5: abutting).",
+          "review/runs/2026-10-27-g4r2/sdsj-pixel7.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: Title whole; card crisp.",
+          "review/runs/2026-10-27-g4r2/sdsj-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          4,
+          "Held: As desktop.",
+          "review/runs/2026-10-27-g4r2/sdsj-pixel7.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: In family.",
+          "review/runs/2026-10-27-g4r2/sdsj-pixel7.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Table reads at reduced size.",
+          "review/runs/2026-10-27-g4r2/sdsj-pixel7.png",
+          4
+        ]
+      }
+    },
+    "wailo": {
+      "desktop": {
+        "D1": [
+          4,
+          "Held: Warm case, the Foundations room glowing ahead; unchanged.",
+          "review/runs/2026-10-27-g4r2/wailo-desktop.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Case on the point, card at left.",
+          "review/runs/2026-10-27-g4r2/wailo-desktop.png",
+          4
+        ],
+        "D3": [
+          4,
+          "Held: Card and dialog crisp; WAILO skewed; a tiny illegible desk line ghosts in the far room.",
+          "review/runs/2026-10-27-g4r2/wailo-desktop.png",
+          4
+        ],
+        "D4": [
+          4.5,
+          "Held: Envelope, arc and phone tell deep links at a glance.",
+          "review/runs/2026-10-27-g4r2/wailo-desktop.png",
+          4.5
+        ],
+        "D5": [
+          4,
+          "Held: Brass case edges now read as brass; in family.",
+          "review/runs/2026-10-27-g4r2/wailo-desktop.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Thumbnail: arc and phone, clear.",
+          "review/runs/2026-10-27-g4r2/wailo-thumb.png",
+          4
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Held: Case in beam, dark surround.",
+          "review/runs/2026-10-27-g4r2/wailo-pixel7.png",
+          3.5
+        ],
+        "D2": [
+          4,
+          "Held: Case centred over the card.",
+          "review/runs/2026-10-27-g4r2/wailo-pixel7.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: Title and card read; 03 37 px below the HUD.",
+          "review/runs/2026-10-27-g4r2/wailo-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          4.5,
+          "Held: As desktop.",
+          "review/runs/2026-10-27-g4r2/wailo-pixel7.png",
+          4.5
+        ],
+        "D5": [
+          4,
+          "Held: In family.",
+          "review/runs/2026-10-27-g4r2/wailo-pixel7.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Arc reads at reduced size.",
+          "review/runs/2026-10-27-g4r2/wailo-pixel7.png",
+          4
+        ]
+      }
+    },
+    "cfia": {
+      "desktop": {
+        "D1": [
+          4,
+          "Warm case and beam; the left half is now a dim warm bay (24, 15, 10; F-052) and the MUN room glows at right.",
+          "review/runs/2026-10-27-g4r2/cfia-desktop.png",
+          4
+        ],
+        "D2": [
+          4,
+          "F-053: a feathered ink scrim dims the neighbouring MUN case under the rail, so the 2025 to 2023 labels no longer fight lit brass (evidence/cfia-rail-desktop.png); title whole above the case. Not 4.5: the dimmed MUN case and its title ghost still sit at the right edge.",
+          "review/runs/2026-10-27-g4r2/cfia-desktop.png",
+          3.5
+        ],
+        "D3": [
+          4,
+          "Two-line CANADIAN FOOD INSPECTION AGENCY readable but steeply skewed; card and dialog crisp.",
+          "review/runs/2026-10-27-g4r2/cfia-desktop.png",
+          4
+        ],
+        "D4": [
+          3.5,
+          "Held: Spindle and stack say tickets; the box still reads as a plain block.",
+          "review/runs/2026-10-27-g4r2/cfia-desktop.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: Raised object in family.",
+          "review/runs/2026-10-27-g4r2/cfia-desktop.png",
+          4
+        ],
+        "D6": [
+          3.5,
+          "Held: Thumbnail: spindle and pale stack now read on the taller box (3 in G3), still a thin line in a large case.",
+          "review/runs/2026-10-27-g4r2/cfia-thumb.png",
+          3.5
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Held: Beam and case; unchanged.",
+          "review/runs/2026-10-27-g4r2/cfia-pixel7.png",
+          3.5
+        ],
+        "D2": [
+          3.5,
+          "04 now 12.7 px under the HUD row (G4 r1 11.6), but the two-line title block is still large and steeply skewed at the top of the frame.",
+          "review/runs/2026-10-27-g4r2/cfia-pixel7.png",
+          3.5
+        ],
+        "D3": [
+          4.5,
+          "Held: Title and card read.",
+          "review/runs/2026-10-27-g4r2/cfia-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          3.5,
+          "Held: As desktop.",
+          "review/runs/2026-10-27-g4r2/cfia-pixel7.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: In family.",
+          "review/runs/2026-10-27-g4r2/cfia-pixel7.png",
+          4
+        ],
+        "D6": [
+          3.5,
+          "Held: Stack reads, the spindle is a hairline.",
+          "review/runs/2026-10-27-g4r2/cfia-pixel7.png",
+          3.5
+        ]
+      }
+    },
+    "mun": {
+      "desktop": {
+        "D1": [
+          4,
+          "Held: The case in its own warm pool with the title lit on the wall above (G3 3.5).",
+          "review/runs/2026-10-27-g4r2/mun-desktop.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Large case on the point; the title sits high, 05 at y 62 near the header line.",
+          "review/runs/2026-10-27-g4r2/mun-desktop.png",
+          4
+        ],
+        "D3": [
+          4,
+          "MEMORIAL UNIVERSITY larger and readable, skewed; the 05 is now smaller than the organization letters (F-056); card and dialog crisp.",
+          "review/runs/2026-10-27-g4r2/mun-desktop.png",
+          4
+        ],
+        "D4": [
+          3.5,
+          "Held: Scaffold with one brass tier and ghosts says in progress only once the card is read.",
+          "review/runs/2026-10-27-g4r2/mun-desktop.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: Scaffold stands on the riser (F-040 fixed); G3 3, floating legs.",
+          "review/runs/2026-10-27-g4r2/mun-desktop.png",
+          4
+        ],
+        "D6": [
+          3.5,
+          "Held: Thumbnail: a cage with a tilted die; the die face now reads (3 in G3), the cage dominates.",
+          "review/runs/2026-10-27-g4r2/mun-thumb.png",
+          3.5
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          3.5,
+          "Held: Case in its pool; title lit.",
+          "review/runs/2026-10-27-g4r2/mun-pixel7.png",
+          3.5
+        ],
+        "D2": [
+          4,
+          "F-049: the 05 sits 12.35 px under the HUD row (0.9 in G4 r1), title above the case, case clear of the card. Not 4.5: the title hangs left of the case axis and the card covers the plinth foot.",
+          "review/runs/2026-10-27-g4r2/mun-pixel7.png",
+          3.5
+        ],
+        "D3": [
+          4,
+          "Organization cap 14.28 px by labels.test at 412 x 839; rendered glyph boxes median 16.4 px (16.0 in G4 r1), crisper (probe-g4.json). Not 4.5: slanted, and the 05 is small.",
+          "review/runs/2026-10-27-g4r2/mun-pixel7.png",
+          3.5
+        ],
+        "D4": [
+          3.5,
+          "Held: As desktop.",
+          "review/runs/2026-10-27-g4r2/mun-pixel7.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: Grounded scaffold.",
+          "review/runs/2026-10-27-g4r2/mun-pixel7.png",
+          4
+        ],
+        "D6": [
+          3.5,
+          "Held: Cage and die read at reduced size.",
+          "review/runs/2026-10-27-g4r2/mun-pixel7.png",
+          3.5
+        ]
+      }
+    },
+    "certifications": {
+      "desktop": {
+        "D1": [
+          4,
+          "Held: The backing panel is now dark walnut (rgb 19, 12, 8 against 77, 44, 26 in G3), so the medals carry the light (F-043; G3 3).",
+          "review/runs/2026-10-27-g4r2/certifications-desktop.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Vitrine centred under 06 and CERTIFICATIONS.",
+          "review/runs/2026-10-27-g4r2/certifications-desktop.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Stop crisp, and in the dialog 06 and CERTIFICATIONS are now whole (F-050 fixed, certifications-dialog-desktop.png). Not 5: the card's wraps are long.",
+          "review/runs/2026-10-27-g4r2/certifications-desktop.png",
+          4
+        ],
+        "D4": [
+          4,
+          "Held: Three medals in a cabinet; the card names the three credentials.",
+          "review/runs/2026-10-27-g4r2/certifications-desktop.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: Panel in the wall-wash family; a faint hard panel edge remains (step of about 6 levels).",
+          "review/runs/2026-10-27-g4r2/certifications-desktop.png",
+          4
+        ],
+        "D6": [
+          3.5,
+          "Held: Thumbnail: a framed cabinet with three small discs; emblems distinct but small.",
+          "review/runs/2026-10-27-g4r2/certifications-thumb.png",
+          3.5
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Held: Calm, dark panel (G3 3).",
+          "review/runs/2026-10-27-g4r2/certifications-pixel7.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Vitrine centred under the title.",
+          "review/runs/2026-10-27-g4r2/certifications-pixel7.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "06 and CERTIFICATIONS read, 06 now 9.3 px below the HUD row (7.0 in G4 r1).",
+          "review/runs/2026-10-27-g4r2/certifications-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          4,
+          "Held: As desktop.",
+          "review/runs/2026-10-27-g4r2/certifications-pixel7.png",
+          4
+        ],
+        "D5": [
+          4,
+          "Held: Panel fixed.",
+          "review/runs/2026-10-27-g4r2/certifications-pixel7.png",
+          4
+        ],
+        "D6": [
+          3.5,
+          "Held: Medals small at reduced size.",
+          "review/runs/2026-10-27-g4r2/certifications-pixel7.png",
+          3.5
+        ]
+      }
+    },
+    "desk": {
+      "desktop": {
+        "D1": [
+          4.5,
+          "Held: One beam on the desk, deep ink around; the calmest stop.",
+          "review/runs/2026-10-27-g4r2/desk-desktop.png",
+          4.5
+        ],
+        "D2": [
+          4.5,
+          "Held: Desk on the point, title above, card at left.",
+          "review/runs/2026-10-27-g4r2/desk-desktop.png",
+          4.5
+        ],
+        "D3": [
+          4.5,
+          "Held: Title and card crisp.",
+          "review/runs/2026-10-27-g4r2/desk-desktop.png",
+          4.5
+        ],
+        "D4": [
+          3.5,
+          "Held: An ending; the desk objects are small and the [placeholder: target roles] line waits for Emeka.",
+          "review/runs/2026-10-27-g4r2/desk-desktop.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: In family.",
+          "review/runs/2026-10-27-g4r2/desk-desktop.png",
+          4
+        ],
+        "D6": [
+          4,
+          "Held: Thumbnail: a desk under a beam.",
+          "review/runs/2026-10-27-g4r2/desk-thumb.png",
+          4
+        ]
+      },
+      "pixel7": {
+        "D1": [
+          4,
+          "Held: Beam and desk.",
+          "review/runs/2026-10-27-g4r2/desk-pixel7.png",
+          4
+        ],
+        "D2": [
+          4,
+          "Held: Desk framed above the card.",
+          "review/runs/2026-10-27-g4r2/desk-pixel7.png",
+          4
+        ],
+        "D3": [
+          4.5,
+          "Held: Title and links read.",
+          "review/runs/2026-10-27-g4r2/desk-pixel7.png",
+          4.5
+        ],
+        "D4": [
+          3.5,
+          "Held: As desktop.",
+          "review/runs/2026-10-27-g4r2/desk-pixel7.png",
+          3.5
+        ],
+        "D5": [
+          4,
+          "Held: In family.",
+          "review/runs/2026-10-27-g4r2/desk-pixel7.png",
+          4
+        ],
+        "D6": [
+          3.5,
+          "Held: Desk is a dark slab at reduced size.",
+          "review/runs/2026-10-27-g4r2/desk-pixel7.png",
+          3.5
+        ]
+      }
+    }
+  },
+  "averages": {
+    "overall": 3.94,
+    "desktop": 3.98,
+    "pixel7": 3.91,
+    "points": {
+      "desktop": 310.5,
+      "pixel7": 305.5,
+      "total": 616.0,
+      "bar": 624.0
+    },
+    "perDimension": {
+      "D1": {
+        "desktop": 4.0,
+        "pixel7": 3.73,
+        "both": 3.86
+      },
+      "D2": {
+        "desktop": 4.0,
+        "pixel7": 3.92,
+        "both": 3.96
+      },
+      "D3": {
+        "desktop": 4.23,
+        "pixel7": 4.38,
+        "both": 4.3
+      },
+      "D4": {
+        "desktop": 3.8,
+        "pixel7": 3.76,
+        "both": 3.78
+      },
+      "D5": {
+        "desktop": 4.0,
+        "pixel7": 4.0,
+        "both": 4.0
+      },
+      "D6": {
+        "desktop": 3.84,
+        "pixel7": 3.69,
+        "both": 3.76
+      }
+    },
+    "perStop": {
+      "lobby": {
+        "desktop": 4.0,
+        "pixel7": 3.75,
+        "both": 3.87
+      },
+      "verafin": {
+        "desktop": 3.91,
+        "pixel7": 4.0,
+        "both": 3.95
+      },
+      "projects-door": {
+        "desktop": 3.91,
+        "pixel7": 3.75,
+        "both": 3.83
+      },
+      "klarup": {
+        "desktop": 4.08,
+        "pixel7": 4.08,
+        "both": 4.08
+      },
+      "finance-tracker": {
+        "desktop": 4.0,
+        "pixel7": 4.0,
+        "both": 4.0
+      },
+      "mysa": {
+        "desktop": 4.0,
+        "pixel7": 4.0,
+        "both": 4.0
+      },
+      "volunteer-door": {
+        "desktop": 3.83,
+        "pixel7": 3.75,
+        "both": 3.79
+      },
+      "sdsj": {
+        "desktop": 4.08,
+        "pixel7": 4.08,
+        "both": 4.08
+      },
+      "wailo": {
+        "desktop": 4.08,
+        "pixel7": 4.08,
+        "both": 4.08
+      },
+      "cfia": {
+        "desktop": 3.83,
+        "pixel7": 3.75,
+        "both": 3.79
+      },
+      "mun": {
+        "desktop": 3.83,
+        "pixel7": 3.75,
+        "both": 3.79
+      },
+      "certifications": {
+        "desktop": 4.0,
+        "pixel7": 4.0,
+        "both": 4.0
+      },
+      "desk": {
+        "desktop": 4.16,
+        "pixel7": 3.91,
+        "both": 4.04
+      }
+    }
+  },
+  "moved": [
+    "projects-door desktop D1: 3.5 to 4",
+    "projects-door desktop D2: 3.5 to 4",
+    "projects-door pixel7 D2: 3.5 to 4",
+    "projects-door pixel7 D5: 3.5 to 4",
+    "mysa desktop D1: 3.5 to 4",
+    "volunteer-door desktop D1: 3.5 to 4",
+    "volunteer-door desktop D3: 3.5 to 4",
+    "volunteer-door desktop D5: 3.5 to 4",
+    "volunteer-door pixel7 D2: 3.5 to 4",
+    "volunteer-door pixel7 D3: 3.5 to 4",
+    "volunteer-door pixel7 D5: 3.5 to 4",
+    "cfia desktop D2: 3.5 to 4",
+    "mun pixel7 D2: 3.5 to 4",
+    "mun pixel7 D3: 3.5 to 4",
+    "certifications desktop D3: 4 to 4.5"
+  ]
+}

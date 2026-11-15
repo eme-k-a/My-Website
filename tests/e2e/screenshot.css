@@ -1,0 +1,7 @@
+/* Applied while toHaveScreenshot captures (helpers.ts `shot`, ARCHITECTURE §13.6). Playwright
+   draws masks in the page's normal layer, so they never cover anything inside the modal <dialog>
+   (the top layer): the durations of ongoing roles, which change monthly, are hidden here. */
+[data-testid='dialog-duration'],
+[data-card] [class*='_dimensions_'] {
+  visibility: hidden !important;
+}

@@ -1,0 +1,102 @@
+{
+  "round": 2,
+  "gate": "G2",
+  "date": "2026-10-20",
+  "build": "aa62a6d (claude/intelligent-sagan-poq45q), npm run build, served by scripts/serve-dist.ts on PORT=4184 (4174 was held by another worktree's server)",
+  "capture": "tests/e2e/capture.spec.ts @capture, ?test=1&mode=museum; desktop 1440x900 at tier=high, pixel7 412x839 at tier medium",
+  "scale": "1 to 5, half points; anchors in docs/ART_DIRECTION.md section 7",
+  "scope": "lobby, verafin, projects-door, volunteer-door, desk (safe-sip removed by F-035); mysa and sdsj captured for context, not scored",
+  "previous": "review/runs/2026-10-17-g2/scores.json",
+  "scores": {
+    "lobby": {
+      "desktop": {
+        "D1": [3.5, "Deep ink and the first case glows through the arch; the top-right beam wedge is much dimmer than round 1 but still a grey cone behind the portrait, and the arch interior is still dead.", "review/runs/2026-10-20-g2r2/lobby-desktop.png"],
+        "D2": [4, "Hero in its scrim, arch with the Verafin case in the sightline, and the portrait now clears the rail (F-031); the 3D title and arch compose cleanly.", "review/runs/2026-10-20-g2r2/lobby-desktop.png"],
+        "D3": [4.5, "Name, role, degree and three links read at a glance; COMMIT HISTORY is large and repeats the wordmark.", "review/runs/2026-10-20-g2r2/lobby-desktop.png"],
+        "D4": [4, "Arch, glowing first case and title tell the newest-first walk; nothing overstated (unchanged).", "review/runs/2026-10-20-g2r2/lobby-desktop.png"],
+        "D5": [4, "The beam is no longer far brighter than every other light; brass trims, portrait frame and rail share one vocabulary.", "review/runs/2026-10-20-g2r2/lobby-desktop.png"],
+        "D6": [3.5, "Thumbnail: the arch is the main silhouette, but the hero text block and the portrait still compete with it (unchanged).", "review/runs/2026-10-20-g2r2/lobby-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [3, "Calm and dark; a faint warm pool now sits under the hero (mean 19.6 of 255), but by eye the stage still barely reads and the lower 40% is a near-empty gradient.", "review/runs/2026-10-20-g2r2/lobby-pixel7.png"],
+        "D2": [3, "The 3D label is gone from behind the h1 (F-032), but the arch and first case still sit behind the Email and Classic buttons, the arch's top edge runs behind 'Nduka-Nwagbo', and the portrait is cut by the right edge.", "review/runs/2026-10-20-g2r2/lobby-pixel7.png"],
+        "D3": [4.5, "Fast path complete and the name now reads over plain ink; only a faint brass arch line crosses behind the second h1 line.", "review/runs/2026-10-20-g2r2/lobby-pixel7.png"],
+        "D4": [3, "On the phone the concept is still carried by the DOM alone; the 3D adds nothing at first glance.", "review/runs/2026-10-20-g2r2/lobby-pixel7.png"],
+        "D5": [3.5, "HUD and hero chrome follow the tokens; too little 3D on screen to judge more (unchanged).", "review/runs/2026-10-20-g2r2/lobby-pixel7.png"],
+        "D6": [2.5, "No single silhouette: the arch and case are still hidden behind the hero (unchanged).", "review/runs/2026-10-20-g2r2/lobby-pixel7.png"]
+      }
+    },
+    "verafin": {
+      "desktop": {
+        "D1": [3.5, "Plinth now grounded (front mean 18.8 vs floor 8.8) and the right wall no longer washed; still no next pool ahead, the left half is a dead void, and the beam wedge crosses the title.", "review/runs/2026-10-20-g2r2/verafin-desktop.png"],
+        "D2": [4, "Case at 61% of the width, clear of the card; 01 and NASDAQ VERAFIN now read whole above it, clear of the HUD (F-022); the next pool is still out of the sightline.", "review/runs/2026-10-20-g2r2/verafin-desktop.png"],
+        "D3": [4, "Card reads at a glance with the ON VIEW NOW pill; the 3D title is complete but dark brass on the lit wash, so it reads as a silhouette.", "review/runs/2026-10-20-g2r2/verafin-desktop.png"],
+        "D4": [4, "Column feeding a stepped block of bars reads as data becoming reports; no detection imagery (unchanged).", "review/runs/2026-10-20-g2r2/verafin-desktop.png"],
+        "D5": [4, "Library materials, precise joins, nothing floats; the soft ellipse of light on the back glass is still there.", "review/runs/2026-10-20-g2r2/verafin-desktop.png"],
+        "D6": [3.5, "Thumbnail: column beside a stepped block is checkable, but the object is still about 35 px wide and the lighter plinth block now competes with its base.", "review/runs/2026-10-20-g2r2/verafin-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [3.5, "The flat warm-grey floor wedge is gone and the plinth reads as an object; still no next pool and a grey beam wedge over the title.", "review/runs/2026-10-20-g2r2/verafin-pixel7.png"],
+        "D2": [4, "Case on the 36% point (about 35%), clear of the card; the title now reads whole above it and clear of the PDF and Classic buttons; no next pool in the sightline.", "review/runs/2026-10-20-g2r2/verafin-pixel7.png"],
+        "D3": [4.5, "Compact card legible and well spaced; the 3D title is complete though dim.", "review/runs/2026-10-20-g2r2/verafin-pixel7.png"],
+        "D4": [4, "Object reads larger on the phone; the story holds the rest (unchanged).", "review/runs/2026-10-20-g2r2/verafin-pixel7.png"],
+        "D5": [4, "Consistent with desktop; the medium floor now matches the high tier in value.", "review/runs/2026-10-20-g2r2/verafin-pixel7.png"],
+        "D6": [4, "One object on its plinth at small size; the plinth is now a large mid-grey block that competes a little.", "review/runs/2026-10-20-g2r2/verafin-pixel7.png"]
+      }
+    },
+    "projects-door": {
+      "desktop": {
+        "D1": [3.5, "Dark wing, a warm pool under the P2 case and a centered wash; the wall streaks are gone (brightened 4x: flat), but the left 40% is a featureless void with no seams and the interior is very dim.", "review/runs/2026-10-20-g2r2/projects-door-desktop.png"],
+        "D2": [3.5, "PROJECTS sits whole on the transom, clear of the HUD; the P2 case shows through the door in its pool; KlarUp is not visible and the left half of the frame is empty.", "review/runs/2026-10-20-g2r2/projects-door-desktop.png"],
+        "D3": [3.5, "Card and PROJECTS read well; the P2 wall title inside is very low contrast and about 11 CSS px tall at this distance.", "review/runs/2026-10-20-g2r2/projects-door-desktop.png"],
+        "D4": [3.5, "Door, title and '2 exhibits' card say optional wing; only one of the two cases is visible.", "review/runs/2026-10-20-g2r2/projects-door-desktop.png"],
+        "D5": [4, "Brass door trims match the arch and cases; streak noise gone; joins clean.", "review/runs/2026-10-20-g2r2/projects-door-desktop.png"],
+        "D6": [4, "Thumbnail: the door frame with PROJECTS above reads as one silhouette with a lit case inside.", "review/runs/2026-10-20-g2r2/projects-door-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [3.5, "The flat bright floor is gone (floor mean 6.0 vs 5.8 at desktop high, F-023); dark room with one pool and the wash; large dead black areas below the case.", "review/runs/2026-10-20-g2r2/projects-door-pixel7.png"],
+        "D2": [3.5, "PROJECTS now whole and clear of the PDF button (F-022); P2 case above the card in its pool; KlarUp not visible and the lower third is empty.", "review/runs/2026-10-20-g2r2/projects-door-pixel7.png"],
+        "D3": [4, "Card reads at a glance; PROJECTS is legible; the P2 inner title is barely readable but repeats the DOM.", "review/runs/2026-10-20-g2r2/projects-door-pixel7.png"],
+        "D4": [3.5, "The door and card say 'optional wing' (unchanged).", "review/runs/2026-10-20-g2r2/projects-door-pixel7.png"],
+        "D5": [3.5, "The medium floor now matches high; brass trims consistent; the jamb is a heavy dark slab at right.", "review/runs/2026-10-20-g2r2/projects-door-pixel7.png"],
+        "D6": [3.5, "Door frame silhouette with the case inside reads at reduced size; the case itself is small.", "review/runs/2026-10-20-g2r2/projects-door-pixel7.png"]
+      }
+    },
+    "volunteer-door": {
+      "desktop": {
+        "D1": [3.5, "Dark aisle, lit brass door frame; the wing's one pool is half hidden by the right jamb and the room behind is black.", "review/runs/2026-10-20-g2r2/volunteer-door-desktop.png"],
+        "D2": [3, "VOLUNTEER & LEADERSHIP now reads whole on the transom, clear of the HUD, but the wing's only case is cut by the right jamb with the rail tooltip over it, and clipped fragments of a neighbour's title sit at the left edge (F-037).", "review/runs/2026-10-20-g2r2/volunteer-door-desktop.png"],
+        "D3": [3.5, "Card and transom title read well; the sdsj wall title inside is cut to 'SOFTWAR / OF S' by the jamb.", "review/runs/2026-10-20-g2r2/volunteer-door-desktop.png"],
+        "D4": [3.5, "Door, title and '1 exhibit' card say optional wing; the one exhibit is only half seen.", "review/runs/2026-10-20-g2r2/volunteer-door-desktop.png"],
+        "D5": [3.5, "Brass trims consistent; the lone case pressed against the jamb looks unplanned.", "review/runs/2026-10-20-g2r2/volunteer-door-desktop.png"],
+        "D6": [3.5, "Thumbnail: the door frame is the silhouette; the case fragment at its right edge competes.", "review/runs/2026-10-20-g2r2/volunteer-door-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [3, "The bright floor is gone (mean 6.1), but the room is an empty black interior with the only pool cut at the right edge.", "review/runs/2026-10-20-g2r2/volunteer-door-pixel7.png"],
+        "D2": [3, "The wing title is whole and clear of the HUD (F-022); the only case is cut by the jamb and the frame edge, so the doorway frames nothing.", "review/runs/2026-10-20-g2r2/volunteer-door-pixel7.png"],
+        "D3": [3.5, "Card and transom title legible; the inner title is clipped to 'SOFTWAR / OF S'.", "review/runs/2026-10-20-g2r2/volunteer-door-pixel7.png"],
+        "D4": [3, "The door says wing, but the one exhibit inside is half out of frame, so the 3D does not show what is in it.", "review/runs/2026-10-20-g2r2/volunteer-door-pixel7.png"],
+        "D5": [3.5, "Floor now matches high; brass trims consistent.", "review/runs/2026-10-20-g2r2/volunteer-door-pixel7.png"],
+        "D6": [3.5, "Door frame reads as the silhouette; the case fragment at the edge does not.", "review/runs/2026-10-20-g2r2/volunteer-door-pixel7.png"]
+      }
+    },
+    "desk": {
+      "desktop": {
+        "D1": [4.5, "One warm pool on walnut in deep ink; the beam is now a faint shaft (19.2) darker than the pool (33.3) and the end-wall line is clean; the only miss is a slightly grey shaft.", "review/runs/2026-10-20-g2r2/desk-desktop.png"],
+        "D2": [4.5, "Desk on the 62% point, end-wall line reads above it, card and rail tooltip clear; the beam no longer dominates the frame.", "review/runs/2026-10-20-g2r2/desk-desktop.png"],
+        "D3": [4.5, "Card hierarchy clear; end-wall label crisp and repeats the DOM (unchanged).", "review/runs/2026-10-20-g2r2/desk-desktop.png"],
+        "D4": [3.5, "Postcard, envelope, catalogue and ledger are still about 60 px wide, so the gift-shop joke needs the card (unchanged).", "review/runs/2026-10-20-g2r2/desk-desktop.png"],
+        "D5": [4, "Walnut, paper and brass match the exhibits; joins precise (unchanged).", "review/runs/2026-10-20-g2r2/desk-desktop.png"],
+        "D6": [4, "Thumbnail: the desk is one clear silhouette in its pool (unchanged).", "review/runs/2026-10-20-g2r2/desk-thumb.png"]
+      },
+      "pixel7": {
+        "D1": [3.5, "Warm pool on the desk top and the end-wall line in deep ink; the middle 30% of the frame between line and desk is empty dark.", "review/runs/2026-10-20-g2r2/desk-pixel7.png"],
+        "D2": [3, "The desk top and all four objects now sit above the card (F-020 at 412x839), but only as a sliver: the body is under the card and the end-wall line sits 13 CSS px under the HUD buttons.", "review/runs/2026-10-20-g2r2/desk-pixel7.png"],
+        "D3": [4.5, "Card legible with clear actions; end-wall label crisp and clear of the HUD; chip reads FRONT DESK.", "review/runs/2026-10-20-g2r2/desk-pixel7.png"],
+        "D4": [3, "The four objects are visible but tiny white slabs at this size; the gift-shop idea reads only with the card.", "review/runs/2026-10-20-g2r2/desk-pixel7.png"],
+        "D5": [3.5, "Walnut and paper consistent with desktop; too small to judge joins.", "review/runs/2026-10-20-g2r2/desk-pixel7.png"],
+        "D6": [3, "One silhouette (the desk top) is recognizable, but it is a thin slab merging into the card's top edge.", "review/runs/2026-10-20-g2r2/desk-pixel7.png"]
+      }
+    }
+  }
+}

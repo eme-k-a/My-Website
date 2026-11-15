@@ -1,0 +1,94 @@
+{
+  "wp": "WP-19",
+  "role": "R11 Experience Reviewer",
+  "status": "done",
+  "branch": "wp/WP-19",
+  "round": "G3 round 1",
+  "commits": [
+    "<this commit> docs(review): G3 review round 1 scorecard, findings and stills"
+  ],
+  "changedFiles": [
+    "review/runs/2026-10-21-g3r1/scorecard.md",
+    "review/runs/2026-10-21-g3r1/scores.json",
+    "review/runs/2026-10-21-g3r1/<stop>-<desktop|pixel7>.json (26 capture stats records, 13 stops on both projects)",
+    "review/runs/2026-10-21-g3r1/probe-wing-hud.mjs and probe-wing-hud.json (phone wing HUD probe; eslint-ignored like the F-M3 probe)",
+    "review/runs/2026-10-21-g3r1/stills/*.png (10 stills, 1,812,073 bytes, force-added past the review/runs/**/*.png ignore rule as R0 asked)",
+    "review/findings.json",
+    "review/reports/WP-19.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Complete scorecard: every stop x D1 to D6 x desktop and Pixel 7, each with a screenshot path; averages computed",
+      "command": "PORT=4174 CAPTURE_DIR=review/runs/2026-10-21-g3r1 CAPTURE_DIALOGS=1 CAPTURE_TIER=high npx playwright test --grep @capture --project=desktop; the same without CAPTURE_TIER --project=pixel7",
+      "result": "pass",
+      "evidence": "13 passed on desktop (5.7 min) and 13 passed on pixel7 (2.5 min), 9 dialogs each, on bc1ac35 built with npm ci && npm run build (budgets ok, check-copy ok). 156 cells (13 stops) scored with reason and path in scores.json and scorecard.md; per-stop, per-dimension, per-viewport and overall averages computed by script, truncated to two decimals; 320 px grayscale thumbnails for all 13 desktop shots."
+    },
+    {
+      "id": "A2",
+      "criterion": "Valid findings, P0 and P1 counts stated in the scorecard",
+      "command": "node -e \"JSON.parse(require('fs').readFileSync('review/findings.json','utf8')).forEach(f=>{for(const k of ['id','severity','stop','viewport','path','evidence','expected','check','status','round'])if(!(k in f))throw new Error(f.id+' missing '+k)});console.log('findings ok')\"",
+      "result": "pass",
+      "evidence": "findings ok. 26 findings. Re-checked: F-038, F-027, F-032, F-033 now fixed (field g3r1); F-020 to F-023, F-036, F-037 hold. New: F-039 (P1), F-040 to F-044 (P2), F-045 and F-046 (P3), each with gate G3, round 1. Open P0 0, P1 1, P2 5, P3 2, stated in the scorecard gate table."
+    },
+    {
+      "id": "A3",
+      "criterion": "Gate inputs ready: overall average against 3.5, open P0/P1 list, stills listed",
+      "command": "review/runs/2026-10-21-g3r1/scorecard.md sections 'Result against gate G3' and 'Stills'",
+      "result": "pass",
+      "evidence": "Overall 3.78 (590/156; desktop 3.83, Pixel 7 3.72) clears 3.5; like for like on G2's five stops 3.78 against 3.74. G3 review conditions do not hold: open P1 F-039 (finance-tracker on Pixel 7, all three wing stops at 360x640), with stop, viewport, fix and check named. Ten named stills in stills/, one line each."
+    },
+    {
+      "id": "R0-concepts",
+      "criterion": "Independent verdict per exhibit on the builder-signed R2 concept checklists",
+      "command": "scorecard section 'Concept checklists: independent R11 verdicts'",
+      "result": "pass",
+      "evidence": "PASS: verafin, mysa, wailo, klarup, finance-tracker, sdsj; PASS marginal on box 1: cfia; PASS with a D5 finding: mun (F-040); FAIL: certifications box 6 (the DOM shows no placeholder for the unknown dates and issuer, F-044). Pixel identity and per-frame motion rules not re-measured (builders' tests)."
+    },
+    {
+      "id": "R0-recheck",
+      "criterion": "Re-check open findings (F-027, F-032, F-033 addressed by F-M3) and F-038",
+      "command": "PORT=4174 npx playwright test tests/e2e/rail-input.spec.ts -g \"(g)\" --project=desktop --project=pixel7; capture shots; review/runs/2026-10-21-f-m3/capture-probe.mjs small:lobby,small:desk",
+      "result": "pass",
+      "evidence": "rail-input (g): 3 passed, 1 skipped (the wing-stop test is desktop only). F-038 fixed on both projects; F-027 fixed at the stop (dialog residual F-042); F-032 fixed on Pixel 7 (360x640 residual noted, fast path still whole); F-033 fixed."
+    },
+    {
+      "id": "CI",
+      "criterion": "All merged and green (G3)",
+      "command": "GitHub Actions on the integration branch",
+      "result": "deferred",
+      "evidence": "Deferred to R0 after push: R0's notes report CI run 93 green at bc1ac35; this WP changes only review/**."
+    }
+  ],
+  "deviations": [
+    "Ten stills (PNGs) are committed in review/runs/2026-10-21-g3r1/stills/ with git add -f, as R0's notes ask; the brief forbids committing PNGs, and .gitignore keeps every other capture and probe PNG out.",
+    "The scored set grows from G2's 5 stops to all 13 (156 cells), as R0's notes ask; the scorecard reports G2's five-stop set like for like (3.78 against 3.74).",
+    "New findings carry gate: 'G3' with round: 1, because round numbers restart per milestone; re-checks of earlier findings are recorded in a g3r1 field.",
+    "The review ran on the locally served build (scripts/serve-dist.ts on 4174), because this container cannot reach netlify.app.",
+    "probe-wing-hud.mjs is committed in the run folder (eslint ignores review/runs, as for the F-M3 probe) so F-039's check can be re-run."
+  ],
+  "openQuestions": [
+    {
+      "question": "G3's review conditions fail only on the new F-039 (P1). Choose: (a) a scoped F-039 fix for R4 (portrait framing of wing stops from the measured wing head bottom) with R6, verified by rail-input (g) extended to pixel7 and 360x640 plus probe-wing-hud.mjs at 0, then G3 round 2; or (b) take G3 to Emeka with F-039 as a known P1.",
+      "for": "R0",
+      "default": "(a)"
+    },
+    {
+      "question": "Certifications checklist box 6 fails as written (F-044): fix in content (R1 adds the two placeholders) or rule that omission plus draft: true satisfies the box and have R2 amend it?",
+      "for": "R0",
+      "default": "R1 adds the placeholders"
+    },
+    {
+      "question": "F-040 (mun scaffold floats): widen the kit riser to the scaffold footprint (R3) or an R0 ruling on the frozen MUN slot floor (y 0.10)?",
+      "for": "R0",
+      "default": "widen the riser to at least 0.912 m"
+    },
+    {
+      "question": "Approve the five proposed G3 reference stills for the new exhibits (wailo-desktop, klarup-desktop, mysa-pixel7, lobby-pixel7, exhibit-thumbs in review/runs/2026-10-21-g3r1/stills/).",
+      "for": "Emeka",
+      "default": "ART_DIRECTION section 10 unchanged until approval"
+    }
+  ],
+  "depsRequest": [],
+  "notes": "G3 round 1 of at most 3 for M3. Overall average 3.78 (bar 3.5; desktop 3.83, Pixel 7 3.72; G2 five-stop set 3.78 vs 3.74). P0 0. Open P1 1: new F-039 (phone wing HUD drawn over the wall title: finance-tracker on Pixel 7, all three wing stops at 360x640). Open P2 5 (F-040 mun scaffold floats, F-041 mun title out of phone frame, F-042 wing dialog titles cut by the case top, F-043 certifications backing panel hot, F-044 certifications placeholders), P3 2 (F-045, F-046). Fixed this round: F-038, F-027, F-032, F-033. Concept verdicts: 8 PASS (cfia marginal, mun with F-040), certifications FAIL on box 6. Best stop wailo 4.08; weakest mun 3.37."
+}

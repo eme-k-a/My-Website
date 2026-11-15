@@ -1,0 +1,358 @@
+import { Vector3 } from 'three';
+import { describe, expect, it } from 'vitest';
+import { content } from '../../content/index';
+import { tokens } from '../../design/tokens';
+import { PLINTH_SIZE } from '../exhibits/_kit/anatomy';
+import { slotPlacard } from '../exhibits/_kit/placard';
+import { AISLE_HALF, ARCH_Z, computeLayout, type Room } from '../rail/layout';
+import { stopRecipe, TIER_LIFT } from './lightRecipe';
+import { lightTargets, rampColor, WASH_BAY_WIDTH, WASH_TITLE_PAD } from './lightPlan';
+import {
+  ARCH_POOL,
+  floorPaint,
+  MAX_LIGHTMAP_SIZE,
+  paintFloorZones,
+  paintZone,
+  SIDE_BAY_GAP,
+  SIDE_BAY_WIDTH,
+  WALL_WASH_BASE,
+  WALL_WASH_PLAIN_V,
+  WALL_WASH_SIZE,
+  wallWashPixels,
+  WASH_PEAK,
+  washLayout,
+  washMatrix,
+  zoneSize,
+  type ZoneRaster,
+} from './lightPools';
+
+const layout = computeLayout(content, new Date('2026-10-15T00:00:00Z'));
+const light = tokens.light;
+const room = (id: Room['id']) => layout.rooms.find((r) => r.id === id)!;
+
+/** The sRGB-encoded red byte of the zone pixel holding world [x, z]. */
+function byteAt(zone: ZoneRaster, r: Room, x: number, z: number): number {
+  const col = Math.min(zone.width - 1, Math.floor((x - r.min[0]) / zone.scale[0]));
+  const row = Math.min(zone.height - 1, Math.floor((z - r.min[1]) / zone.scale[1]));
+  return zone.data[(row * zone.width + col) * 4]!;
+}
+
+describe('floor paint (EXPERIENCE §7.5, ART_DIRECTION §4)', () => {
+  const paint = floorPaint(layout);
+
+  it('paints one pool per light target in its temperature, radius 1.6 m, alpha from the recipe', () => {
+    const pools = paint.pools.filter((p) => p.kind === 'pool');
+    expect(pools.map((p) => p.for)).toEqual(lightTargets(layout).map((t) => t.id));
+    for (const pool of pools) {
+      expect(pool.radius).toBe(light.poolRadius);
+      // lightRecipe.ts: 0.85 (light.poolAlpha) unless the stop's recipe says otherwise.
+      expect(pool.alpha).toBeGreaterThanOrEqual(0.7);
+      expect(pool.alpha).toBeLessThanOrEqual(0.95);
+    }
+    expect(pools.find((p) => p.for === 'mysa')!.alpha).toBe(light.poolAlpha);
+    expect(pools.find((p) => p.for === 'cfia')!.color).toBe(light.ramp[3]);
+  });
+
+  it('paints a light-0 threshold pool on the aisle side of every door', () => {
+    const doors = paint.pools.filter((p) => p.kind === 'door');
+    expect(doors).toHaveLength(layout.doors.length);
+    for (const pool of doors) {
+      expect(pool).toMatchObject({ radius: 1.2, color: rampColor(0) });
+      // The door recipe (lightRecipe.ts) invites a little more than the spec's 0.35 floor.
+      expect(pool.alpha).toBeGreaterThanOrEqual(light.doorPoolAlpha);
+      expect(Math.abs(pool.center[0])).toBeLessThan(3.5);
+    }
+  });
+
+  it('puts a soft contact patch under every plinth and the desk', () => {
+    const plinths = layout.slots.filter((s) => s.plinth !== 'none').map((s) => s.id);
+    expect(paint.contacts.map((c) => c.for)).toEqual([...plinths, 'desk']);
+    for (const c of paint.contacts) {
+      expect(c.soft).toBe(0.25);
+      expect(c.darkness).toBe(0.55);
+    }
+  });
+});
+
+describe('floor lightmaps', () => {
+  const zones = paintFloorZones(layout);
+  const aisle = room('aisle');
+  const aisleZone = zones.find((z) => z.room === 'aisle')!;
+
+  it('paints one lightmap per floor zone, no larger than the cap', () => {
+    expect(zones.map((z) => z.room)).toEqual(layout.rooms.map((r) => r.id));
+    for (const zone of zones) {
+      expect(Math.max(zone.width, zone.height)).toBeLessThanOrEqual(MAX_LIGHTMAP_SIZE);
+      expect(zone.data).toHaveLength(zone.width * zone.height * 4);
+    }
+    expect(zoneSize(aisle)).toEqual({ width: aisleZone.width, height: aisleZone.height });
+  });
+
+  it('is deterministic (seeded dither, painted from the layout only)', () => {
+    const again = paintZone(aisle, floorPaint(layout), 2);
+    expect(Buffer.from(again.data).equals(Buffer.from(aisleZone.data))).toBe(true);
+  });
+
+  it('lights the pool, darkens under the plinth and leaves the dark floor between', () => {
+    const slot = layout.slots.find((s) => s.id === 'verafin')!;
+    const [w] = PLINTH_SIZE.standard;
+    // Toward the aisle center, just past the contact patch's soft edge: inside the pool.
+    const litX =
+      slot.position[0] - Math.sign(slot.position[0]) * (w / 2 + light.contactSoftEdge + 0.02);
+    const lit = byteAt(aisleZone, aisle, litX, slot.position[2]);
+    const under = byteAt(aisleZone, aisle, slot.position[0], slot.position[2]);
+    const between = byteAt(aisleZone, aisle, 0, -16 - 3);
+    expect(lit).toBeGreaterThan(200);
+    // The patch darkens linear light (darkness 0.55); compare there, not in sRGB bytes.
+    const linear = (byte: number) => ((byte / 255 + 0.055) / 1.055) ** 2.4;
+    expect(linear(under)).toBeLessThan(linear(lit) * 0.7);
+    expect(between).toBeLessThan(100);
+  });
+});
+
+describe('arch threshold pool (F-032)', () => {
+  it('lights the lobby floor in front of the arch, light-0, painted into the lobby zone', () => {
+    const arch = floorPaint(layout).pools.filter((p) => p.kind === 'arch');
+    expect(arch).toHaveLength(1);
+    expect(arch[0]).toMatchObject({
+      center: [0, ARCH_Z + ARCH_POOL.dz],
+      radius: ARCH_POOL.radius,
+      alpha: ARCH_POOL.alpha,
+      color: rampColor(0),
+    });
+    const lobby = room('lobby');
+    const zone = paintZone(lobby, floorPaint(layout));
+    const center = byteAt(zone, lobby, 0, ARCH_Z + ARCH_POOL.dz);
+    const outside = byteAt(zone, lobby, -5.5, 5.5);
+    expect(center).toBeGreaterThan(outside + 100);
+  });
+});
+
+describe('wall wash (EXPERIENCE §7.5)', () => {
+  const pixels = wallWashPixels();
+  const at = (col: number, row: number) => pixels[(row * WALL_WASH_SIZE + col) * 4]!;
+  const mid = WALL_WASH_SIZE / 2;
+
+  it('is one deterministic 256 px tile', () => {
+    expect(pixels).toHaveLength(WALL_WASH_SIZE * WALL_WASH_SIZE * 4);
+    expect(Buffer.from(wallWashPixels()).equals(Buffer.from(pixels))).toBe(true);
+  });
+
+  it('draws the scallop high in the middle, fading toward the floor, and plain bottom rows', () => {
+    const scallop = at(mid, Math.round(WALL_WASH_SIZE * 0.2));
+    const low = at(mid, Math.round(WALL_WASH_SIZE * 0.8));
+    const plain = at(mid, WALL_WASH_SIZE - 2);
+    expect(scallop).toBeGreaterThan(low);
+    expect(low).toBeGreaterThan(plain);
+    expect(Math.abs(plain - at(mid - 40, WALL_WASH_SIZE - 2))).toBeLessThanOrEqual(2);
+  });
+
+  it('keeps the scallop peak at WASH_PEAK over the base level (F-025)', () => {
+    const toLinear = (byte: number) => {
+      const c = byte / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    };
+    const bay = wallWashPixels(WALL_WASH_SIZE, 7, { seams: false });
+    let peak = 0;
+    for (let i = 0; i < bay.length; i += 4) peak = Math.max(peak, toLinear(bay[i]!));
+    const expected = WALL_WASH_BASE + (1 - WALL_WASH_BASE) * WASH_PEAK;
+    expect(peak).toBeLessThanOrEqual(expected * 1.03);
+    expect(peak).toBeGreaterThan(expected * 0.85);
+    expect(WASH_PEAK).toBeLessThan(0.5);
+  });
+
+  it('leaves the plain rows the shell samples undithered: no per-column noise (F-026)', () => {
+    const row = Math.round(WALL_WASH_SIZE * (1 - WALL_WASH_PLAIN_V));
+    const values = new Set<number>();
+    // Away from the seams every column of a plain row has the same byte.
+    for (let col = 8; col < WALL_WASH_SIZE - 8; col++) values.add(at(col, row));
+    expect(values.size).toBe(1);
+    // The bay tile's plain rows match it.
+    const bay = wallWashPixels(WALL_WASH_SIZE, 7, { seams: false });
+    expect(bay[(row * WALL_WASH_SIZE + mid) * 4]).toBe(at(mid, row));
+  });
+
+  it('bakes a darker panel seam at both tile edges (every 2 m on the wall)', () => {
+    const row = WALL_WASH_SIZE - 2;
+    expect(at(0, row)).toBeLessThan(at(mid, row));
+    expect(at(WALL_WASH_SIZE - 1, row)).toBeLessThan(at(mid, row));
+  });
+
+  it('hangs one bay per target on its wall, the first bay of a wall setting its seam grid', () => {
+    const { bays, seams } = washLayout(layout);
+    expect(bays.map((b) => b.for)).toEqual(lightTargets(layout).map((t) => t.id));
+    for (const line of seams) {
+      const first = bays.find(
+        (b) => b.bay.axis === line.axis && Math.abs(b.bay.at - line.at) < 1e-6,
+      )!;
+      const edge = (((first.bay.center - 1 - line.phase) % 2) + 2) % 2;
+      expect(Math.min(edge, 2 - edge), `${line.axis} ${line.at}`).toBeLessThan(1e-9);
+    }
+  });
+
+  it('centers each plinth bay on its wall title and sizes it to cover the title (F-027)', () => {
+    const { bays } = washLayout(layout);
+    for (const slot of layout.slots.filter((s) => s.mount === 'plinth')) {
+      const { bay } = bays.find((b) => b.for === slot.id)!;
+      const title = slotPlacard(layout, slot);
+      expect(bay.center, slot.id).toBeCloseTo(title.position[2], 9);
+      expect(bay.width, slot.id).toBeGreaterThanOrEqual(WASH_BAY_WIDTH);
+      const room = layout.rooms.find(
+        (r) =>
+          slot.position[0] >= r.min[0] &&
+          slot.position[0] <= r.max[0] &&
+          slot.position[2] >= r.min[1] &&
+          slot.position[2] <= r.max[1],
+      )!;
+      // Inside its wall; as wide as the title plus the pad unless the wall ends trim it.
+      expect(bay.center - bay.width / 2, slot.id).toBeGreaterThanOrEqual(room.min[1] - 1e-9);
+      expect(bay.center + bay.width / 2, slot.id).toBeLessThanOrEqual(room.max[1] + 1e-9);
+      const fits = Math.min(bay.center - room.min[1], room.max[1] - bay.center) * 2;
+      const wanted = Math.max(WASH_BAY_WIDTH, title.width + WASH_TITLE_PAD);
+      expect(bay.width, slot.id).toBeCloseTo(Math.min(wanted, fits), 9);
+    }
+    expect(bays.find((b) => b.for === 'verafin')!.bay.center).toBeCloseTo(-11.6956, 3);
+    // The portrait and the desk keep one 2 m panel.
+    expect(bays.find((b) => b.for === 'portrait')!.bay.width).toBe(WASH_BAY_WIDTH);
+    expect(bays.find((b) => b.for === 'desk')!.bay.width).toBe(WASH_BAY_WIDTH);
+  });
+
+  it('gives the bays a seamless tile with the same base level as the shell', () => {
+    const bay = wallWashPixels(WALL_WASH_SIZE, 7, { seams: false });
+    const row = WALL_WASH_SIZE - 2;
+    const px = (col: number) => bay[(row * WALL_WASH_SIZE + col) * 4]!;
+    expect(Math.abs(px(0) - px(mid))).toBeLessThanOrEqual(1);
+    expect(Math.abs(px(WALL_WASH_SIZE - 1) - px(mid))).toBeLessThanOrEqual(1);
+    expect(Math.abs(px(mid) - at(mid, row))).toBeLessThanOrEqual(1);
+  });
+
+  it('turns each bay plane to face into its room, just off the wall', () => {
+    const { bays } = washLayout(layout);
+    const verafin = bays.find((b) => b.for === 'verafin')!;
+    const m = washMatrix(verafin.bay);
+    const normal = new Vector3(0, 0, 1).transformDirection(m);
+    expect(normal.x).toBeCloseTo(-1, 6);
+    const center = new Vector3().applyMatrix4(m);
+    expect(center.x).toBeLessThan(3.5);
+    expect(center.x).toBeGreaterThan(3.49);
+    expect(center.y).toBeCloseTo(verafin.bay.height / 2, 6);
+  });
+});
+
+describe('side bays (F-052, the door composition)', () => {
+  const { bays, sides } = washLayout(layout);
+  const aisle = room('aisle');
+  const spans = (at: number) => [
+    ...bays
+      .filter((b) => b.bay.axis === 'z' && Math.abs(b.bay.at - at) < 1e-6)
+      .map((b) => [b.bay.center - b.bay.width / 2, b.bay.center + b.bay.width / 2] as const),
+    ...layout.doors
+      .filter((d) => (d.side === 'left' ? -1 : 1) * 3.5 === at)
+      .map((d) => [d.z - d.width / 2 - 0.04, d.z + d.width / 2 + 0.04] as const),
+  ];
+
+  it('hangs one side bay per stop whose recipe has one: verafin, mysa, cfia and both doors', () => {
+    expect(sides.map((s) => s.for).sort()).toEqual(
+      ['cfia', 'mysa', 'projects-door', 'verafin', 'volunteer-door'].sort(),
+    );
+    for (const side of sides) {
+      expect(side.strength, side.for).toBe(stopRecipe(side.for, 'high').side);
+      expect(side.strength, side.for).toBeGreaterThan(0);
+    }
+    expect(washLayout(layout, 'medium').sides[0]!.strength).toBeCloseTo(
+      sides[0]!.strength * TIER_LIFT.medium.wash,
+      9,
+    );
+  });
+
+  it('puts each on its aisle wall, beside its bay or door, on the frame-left side', () => {
+    for (const side of sides) {
+      const { bay } = side;
+      const s = Math.sign(bay.at);
+      expect(Math.abs(bay.at), side.for).toBeCloseTo(AISLE_HALF, 9);
+      expect(bay.normal, side.for).toEqual([-s, 0]);
+      expect(bay.width, side.for).toBeGreaterThanOrEqual(WASH_BAY_WIDTH);
+      expect(bay.width, side.for).toBeLessThanOrEqual(SIDE_BAY_WIDTH + 1e-9);
+      const door = layout.doors.find((d) => `${d.wing}-door` === side.for);
+      const owner = door
+        ? ([door.z - door.width / 2 - 0.04, door.z + door.width / 2 + 0.04] as const)
+        : (() => {
+            const b = bays.find((x) => x.for === side.for)!.bay;
+            return [b.center - b.width / 2, b.center + b.width / 2] as const;
+          })();
+      const [lo, hi] = [bay.center - bay.width / 2, bay.center + bay.width / 2];
+      // The right wall's frame-left is down the aisle (-z); the left wall's is up it (+z).
+      if (s > 0) expect(hi, side.for).toBeCloseTo(owner[0] - SIDE_BAY_GAP, 9);
+      else expect(lo, side.for).toBeCloseTo(owner[1] + SIDE_BAY_GAP, 9);
+      expect(lo, side.for).toBeGreaterThanOrEqual(aisle.min[1]);
+      expect(hi, side.for).toBeLessThanOrEqual(aisle.max[1]);
+    }
+  });
+
+  it('never overlaps another bay, side bay or door opening on its wall', () => {
+    for (const side of sides) {
+      const [lo, hi] = [side.bay.center - side.bay.width / 2, side.bay.center + side.bay.width / 2];
+      const others = [
+        ...spans(side.bay.at),
+        ...sides
+          .filter((o) => o !== side && o.bay.at === side.bay.at)
+          .map((o) => [o.bay.center - o.bay.width / 2, o.bay.center + o.bay.width / 2] as const),
+      ];
+      for (const [a, b] of others)
+        expect(lo < b && a < hi, `${side.for} [${lo}, ${hi}]`).toBe(false);
+    }
+  });
+
+  it('carries its target color, or the door pool color at a door', () => {
+    const colors = new Map(lightTargets(layout).map((t) => [t.id as string, t.color]));
+    for (const side of sides) {
+      expect(side.color, side.for).toBe(colors.get(side.for) ?? rampColor(0));
+    }
+  });
+});
+
+describe('far bays and their floor pools (F-M5p, phone mood)', () => {
+  const { bays, sides, fars } = washLayout(layout);
+  const span = (b: { center: number; width: number }) =>
+    [b.center - b.width / 2, b.center + b.width / 2] as const;
+
+  it('hangs a far bay for verafin, mysa and the volunteer door, none at wailo', () => {
+    expect(fars.map((f) => f.for).sort()).toEqual(['mysa', 'verafin', 'volunteer-door']);
+    for (const far of fars) {
+      expect(far.strength, far.for).toBe(stopRecipe(far.for, 'high').far);
+      expect(Math.abs(far.bay.at), far.for).toBeCloseTo(AISLE_HALF, 9);
+      expect(far.bay.width, far.for).toBeGreaterThanOrEqual(WASH_BAY_WIDTH);
+    }
+    expect(stopRecipe('wailo', 'medium').far).toBe(0);
+  });
+
+  it('puts each far bay on the other side of its owner from its side bay, overlapping nothing', () => {
+    for (const far of fars) {
+      const side = sides.find((s) => s.for === far.for)!;
+      const owner = bays.find((b) => b.for === far.for)?.bay;
+      const door = layout.doors.find((d) => `${d.wing}-door` === far.for);
+      const mid = owner ? owner.center : door!.z;
+      expect(Math.sign(far.bay.center - mid), far.for).toBe(-Math.sign(side.bay.center - mid));
+      const [lo, hi] = span(far.bay);
+      const others = [...bays, ...sides, ...fars]
+        .filter((o) => o.bay !== far.bay && o.bay.axis === 'z' && o.bay.at === far.bay.at)
+        .map((o) => span(o.bay));
+      for (const d of layout.doors.filter((d) => (d.side === 'left' ? -1 : 1) * 3.5 === far.bay.at))
+        others.push([d.z - d.width / 2 - 0.04, d.z + d.width / 2 + 0.04]);
+      for (const [a, b] of others) expect(lo < b && a < hi, far.for).toBe(false);
+    }
+  });
+
+  it('paints one soft floor pool in front of every side and far bay, on the aisle floor', () => {
+    const pools = floorPaint(layout).pools.filter((p) => p.kind === 'far');
+    expect(pools.length).toBe(sides.length + fars.length);
+    const aisle = room('aisle');
+    for (const pool of pools) {
+      expect(Math.abs(pool.center[0]), pool.for).toBeLessThan(AISLE_HALF);
+      expect(pool.center[1], pool.for).toBeGreaterThan(aisle.min[1]);
+      expect(pool.center[1], pool.for).toBeLessThan(aisle.max[1]);
+      expect(pool.alpha, pool.for).toBeGreaterThan(0);
+      expect(pool.alpha, pool.for).toBeLessThanOrEqual(0.55);
+    }
+  });
+});

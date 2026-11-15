@@ -1,0 +1,148 @@
+{
+  "wp": "WP-19",
+  "role": "R11 Experience Reviewer",
+  "status": "done",
+  "branch": "claude/m4-g4r2",
+  "base": "4df46e0 (claude/intelligent-sagan-poq45q, F-M4b merged, CI run 144 green per R0)",
+  "round": "G4 round 2",
+  "commits": [
+    "docs(review): G4 round 2 run folder and probe script",
+    "docs(review): G4 round 2 captures, probes, scores and evidence",
+    "<this commit> docs(review): G4 round 2 scorecard, findings and report"
+  ],
+  "changedFiles": [
+    "review/runs/2026-10-27-g4r2/scorecard.md",
+    "review/runs/2026-10-27-g4r2/scores.json",
+    "review/runs/2026-10-27-g4r2/<stop>-<desktop|pixel7>.json (26 capture stats records)",
+    "review/runs/2026-10-27-g4r2/probe-g4.mjs, probe-g4.json, probe-g4-main.json",
+    "review/runs/2026-10-27-g4r2/evidence/*.png and <stop>-thumb.png (1.5 MB, force-added)",
+    "review/findings.json",
+    "review/reports/G4r2.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Every stop x D1 to D6 x desktop (1440 x 900, high) and Pixel 7 (medium) scored with a path; averages per viewport and per dimension",
+      "command": "PORT=4174 CAPTURE_DIR=review/runs/2026-10-27-g4r2 CAPTURE_DIALOGS=1 CAPTURE_TIER=high npx playwright test --grep @capture --project=desktop; the same without CAPTURE_TIER --project=pixel7",
+      "result": "pass",
+      "evidence": "Both capture runs passed: 13 stops and 9 dialogs per project. 156 cells with reason, path and the round 1 value in scores.json; averages by script, truncated to two decimals."
+    },
+    {
+      "id": "A2",
+      "criterion": "Dialogs reviewed for D2 and D3; 360 x 640 probes re-run",
+      "command": "node review/runs/2026-10-27-g4r2/probe-g4.mjs http://localhost:4174 review/runs/2026-10-27-g4r2 (and PROBE_STOPS=verafin,mysa,wailo,cfia,desk,projects-door,volunteer-door PROBE_OUT=probe-g4-main.json)",
+      "result": "pass",
+      "evidence": "18 dialog shots read; probes at every exhibit stop, the lobby, the desk and both doors on Pixel 7 and 360 x 640. Every title at least 8.95 px under the HUD row at 360 x 640."
+    },
+    {
+      "id": "A3",
+      "criterion": "Valid findings; F-047 to F-053 re-checked with evidence",
+      "command": "node -e findings check (WP-19 brief)",
+      "result": "pass",
+      "evidence": "findings ok, 36 findings. F-048, F-049, F-050, F-051, F-053 fixed; F-052 open, narrowed to verafin; F-047 open, not re-checked (CI). New: F-054 (P2), F-055 and F-056 (P3)."
+    },
+    {
+      "id": "A4",
+      "criterion": "Gate verdict, cells that moved, stills comparison",
+      "command": "review/runs/2026-10-27-g4r2/scorecard.md",
+      "result": "pass",
+      "evidence": "Overall 3.94 against 4.0: not met. 15 cells moved, all up (+7.5). Stills: 7 unchanged, 3 with small visible changes (verafin, wailo, wailo dialog)."
+    }
+  ],
+  "scores": {
+    "overall": 3.94,
+    "desktop": 3.98,
+    "pixel7": 3.91,
+    "points": {
+      "desktop": 310.5,
+      "pixel7": 305.5,
+      "total": 616.0,
+      "bar": 624.0
+    },
+    "dimensionsBoth": {
+      "D1": 3.86,
+      "D2": 3.96,
+      "D3": 4.3,
+      "D4": 3.78,
+      "D5": 4.0,
+      "D6": 3.76
+    },
+    "dimensionsDesktop": {
+      "D1": 4.0,
+      "D2": 4.0,
+      "D3": 4.23,
+      "D4": 3.8,
+      "D5": 4.0,
+      "D6": 3.84
+    },
+    "dimensionsPixel7": {
+      "D1": 3.73,
+      "D2": 3.92,
+      "D3": 4.38,
+      "D4": 3.76,
+      "D5": 4.0,
+      "D6": 3.69
+    },
+    "previous": {
+      "round": "G4 round 1",
+      "overall": 3.9,
+      "desktop": 3.92,
+      "pixel7": 3.87,
+      "points": 608.5
+    }
+  },
+  "gate": {
+    "G4": "not met in round 2: average 3.94 (616 / 156) against 4.0, 8 points short; no dimension below 3.5 (pass, lowest D6 3.76, Pixel 7 D6 3.69); Emeka's sign-off of 2026-10-24 holds (pass)",
+    "openP0": 0,
+    "openP1": [],
+    "openP2": [
+      "F-047",
+      "F-054"
+    ],
+    "openP3": [
+      "F-052",
+      "F-055",
+      "F-056"
+    ]
+  },
+  "stillsComparison": {
+    "unchanged": [
+      "01-lobby-desktop",
+      "02-lobby-pixel7",
+      "05-klarup-desktop",
+      "06-sdsj-desktop",
+      "07-finance-tracker-pixel7",
+      "08-certifications-desktop",
+      "09-desk-desktop"
+    ],
+    "smallVisibleChange": {
+      "03-verafin-desktop": "F-052 side bay arch left of the case, organization label about 4% larger, rail scrim",
+      "04-wailo-desktop": "right wall behind the rail slightly lighter, WAILO slightly larger",
+      "10-wailo-dialog-desktop": "case and title a few pixels off their old place, WAILO slightly larger"
+    },
+    "largeChange": [],
+    "recommendation": "No new sign-off needed (R11 default); R0 decides."
+  },
+  "deviations": [
+    "Local Playwright: this container ships Chromium 1243; PLAYWRIGHT_BROWSERS_PATH pointed at a scratch folder outside the repo with 1194 folders whose chrome-linux entries link to the 1243 binaries (headless_shell to chrome-headless-shell). No install, nothing committed.",
+    "Evidence: the full-size stop PNGs stay gitignored; the committed evidence is crops, 720 px door shots, 412 px phone shots, the thumbnail sheet and the 13 D6 thumbnails (1.5 MB)."
+  ],
+  "openQuestions": [
+    {
+      "question": "G4 is 8 points short after round 2, with one round left in M4. Run a round 3 fix pass (door story beat, warm far pools on the phone main stops and verafin desktop, F-054, larger door interiors) or take the 0.06 gap to Emeka as a taste call?",
+      "for": "R0",
+      "default": "Reported as not met; the scorecard's Next section lists where the 8 points sit. R11 takes no position on which option."
+    },
+    {
+      "question": "EXPERIENCE 5.4 still lists main-aisle organization labels at 0.12 m and mun at 0.19 m, while R0 ratified 0.125 m and 0.26 / 0.20 m in the F-M4b entry.",
+      "for": "R0",
+      "default": "Not a finding (spec sync is R0's); scored against the ratified values."
+    },
+    {
+      "question": "Does the 14 px floor apply below 412 px wide (F-055)?",
+      "for": "R0",
+      "default": "Treated as a Pixel 7 rule per EXPERIENCE 5.4; filed as P3 only."
+    }
+  ],
+  "notes": "Overall 3.94 (616 / 156; desktop 3.98, Pixel 7 3.91), up from 3.90 cell for cell; 15 cells moved, all up. G4 not met: average below 4.0 by 8 points. No dimension below 3.5. Open P0 0, P1 0, P2 2 (F-047, F-054), P3 3 (F-052, F-055, F-056). New this round: 1 P2, 2 P3."
+}

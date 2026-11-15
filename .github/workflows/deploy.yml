@@ -138,6 +138,12 @@ jobs:
             echo "::error title=No deploy URL::netlify-cli returned no deploy_url."
             exit 1
           fi
+          if [ "$PRODUCTION" = 'true' ] && [ -n "$site_url" ]; then
+            # Production is smoke-tested and reported at the address visitors use. Its deploy
+            # permalink (<deploy id>--<site>) gets Netlify's feedback toolbar script, which the
+            # CSP blocks, so every @smoke guard tripped there (first production deploy, run 193).
+            url="$site_url"
+          fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployed: $url"
           if [ "$PRODUCTION" = 'true' ]; then

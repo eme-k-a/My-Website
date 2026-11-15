@@ -490,7 +490,7 @@
     "evidence": "CI run 125 attempt 1 (a601f91, https://github.com/eme-k-a/My-Website/actions/runs/40080091934): desktop quality (b) saw one frame instead of two within 10 s of the last input (expected > 16, received 16), and pixel7 exhibit-contract verafin saw the canvas change under ?test=1. Both passed in run 122 and in attempt 2 of run 125, with no code change. Locally under 3 workers quality (b) failed 1 of 15 runs on the M4 build and 0 of 6 on the pre-M4 build (7bd904d), with matching frame times (2 to 3 s); exhibit-contract verafin passed 7 of 7.",
     "expected": "Both checks pass on every CI run with retries 0: either the app guarantees the condition (steady idle frames for 15 s; nothing late, such as a troika label or an exhibit reveal, changes the frozen canvas) or the check waits on a measured signal instead of a fixed window.",
     "check": "20 local repeats of each under 3 workers with 0 failures, then 3 consecutive green CI runs.",
-    "status": "open",
+    "status": "fixed",
     "round": 0,
     "gate": "G4",
     "owner": "R8 with R7 (WP-29 or WP-32)",
@@ -501,7 +501,8 @@
     },
     "note": "quality (b) is fixed (see quality_b). The pixel7 exhibit-contract verafin still-canvas check stays open as intermittent.",
     "g4r2": "Not re-checked in this visual review. Per R0: quality (b) is fixed in the test (CI run 142 root cause), and the pixel7 verafin still-canvas check stays open as intermittent. CI run 144 green per R0.",
-    "m5": "WP-32 (10dc1db): the pixel7 verafin still-canvas flake was in the capture, not the app: at a 2.625 device pixel ratio the screenshot picked up the browser's vignette redraw and canvas upscaling. canvasPixels() now compares at the drawing-buffer resolution: 0 of 240 captures varied, 20 of 20 repeats passed. R0 marks F-047 fixed after 3 consecutive green CI runs."
+    "m5": "WP-32 (10dc1db): the pixel7 verafin still-canvas flake was in the capture, not the app: at a 2.625 device pixel ratio the screenshot picked up the browser's vignette redraw and canvas upscaling. canvasPixels() now compares at the drawing-buffer resolution: 0 of 240 captures varied, 20 of 20 repeats passed. R0 marks F-047 fixed after 3 consecutive green CI runs.",
+    "resolution": "quality (b): the poll window (CI run 142 root cause). pixel7 verafin still canvas: WP-32's canvasPixels() compares at the drawing-buffer resolution (10dc1db). CI runs 179, 180, 181 and 182 (2026-11-15) were green in a row."
   },
   {
     "id": "F-048",

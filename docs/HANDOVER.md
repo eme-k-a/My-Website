@@ -245,3 +245,13 @@ When G4 round 2 passes, R0:
 
 
 **G4 accepted, M5 starting (2026-11-15 05:45 UTC):** Emeka chose "Accept, start M5". RULINGS records "G4 passed, M4 complete". Five sessions start from this commit: WP-29 to WP-32 as above, plus the polish session F-M5p (brief `docs/wp/F-M5p.md`, branch `claude/m5-f-m5p`). Session ids follow below once created.
+
+| WP | Scope | Session | Branch |
+|---|---|---|---|
+| WP-29 | Budgets in CI, blocking Lighthouse | session_019vLPznDvQ8caFQWwjQAJKP | `claude/m5-wp-29` |
+| WP-30 | Accessibility (attribute-level) | session_019vLPznsYLU7jZSjCEdXD8n | `claude/m5-wp-30` |
+| WP-31 | SEO and sharing | session_019vLPzjK2ewBTuvamnv62Bm | `claude/m5-wp-31` |
+| WP-32 | Cross-browser DOM tests, F-047 verafin half, phone checklist | session_019vLPzoDztZiUFNP1PxxkiZ | `claude/m5-wp-32` |
+| F-M5p | G4 polish (F-054, phone pools, F-052, doors, F-056, F-055 row) | session_019vLPzjnGWK1r2YHsrPK2Ek | `claude/m5-f-m5p` |
+
+All five started at 05:44 UTC from `df5a730`. R0 polls them with an "M5 check-in" about every 90 minutes. Merge order when done: WP-29, WP-31, WP-30, WP-32, F-M5p (cherry-pick; ci.yml is shared by WP-29's `lighthouse` job and WP-32's `e2e-xbrowser` job). Then a CI baseline refresh, a green run, and the G5 checks (step 6 above).

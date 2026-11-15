@@ -167,6 +167,50 @@ jobs:
           path: test-results/
           if-no-files-found: ignore
 
+  # Cross-browser DOM smoke (WP-32, ARCHITECTURE §13.2 and §14.1): Firefox and WebKit run the @dom
+  # tests (DOM, classic and no-WebGL checks; never WebGL screenshots) against the built site.
+  # Advisory: continue-on-error, and deploy does not need it. The report is uploaded every time.
+  e2e-xbrowser:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      # Its own key: the Chromium jobs save their cache under playwright-<os>-<version>.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-xbrowser-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Firefox and WebKit
+        run: npx playwright install --with-deps firefox webkit
+      - run: npx playwright test --project=firefox-dom --project=webkit-dom
+      - if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-xbrowser
+          path: playwright-report/
+          if-no-files-found: ignore
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-xbrowser
+          path: test-results/
+          if-no-files-found: ignore
+
   # A dispatch with update-baselines commits the regenerated screenshots back to the branch (R0,
   # 2026-10-17): artifact downloads are not reachable from the agent containers. A push made with
   # GITHUB_TOKEN starts no new run, so R0 dispatches a normal run (or pushes) afterwards.

@@ -1,0 +1,108 @@
+{
+  "wp": "F-M5p",
+  "role": "Fixer acting as R4 (rail and framing), R3 (environment and labels) and R2 (light values only)",
+  "status": "done",
+  "branch": "claude/m5-f-m5p",
+  "commits": [
+    "e191214 fix(F-054): keep the volunteer doorway clear of the rail's active label",
+    "f388764 fix(polish): far bays and floor pools for the phone mood",
+    "b8e2f21 fix(F-056): let the MUN 05 lead its title again",
+    "2b6339d fix(F-055): add a 360 x 640 row to the label legibility test",
+    "6b41469 fix(F-056): give the MUN 05 a clearer lead (0.33 m, 1 em lines)",
+    "(this commit) review(F-M5p): report and before/after captures"
+  ],
+  "changedFiles": [
+    "src/museum/rail/framing.ts",
+    "src/museum/rail/framing.test.ts",
+    "src/museum/rail/CameraRig.tsx (one line, see deviations)",
+    "src/museum/environment/lightRecipe.ts",
+    "src/museum/environment/lightPools.ts",
+    "src/museum/environment/lightPools.test.ts",
+    "src/museum/environment/Hall.tsx",
+    "src/museum/environment/labels.test.ts",
+    "src/museum/exhibits/_kit/titleMetrics.ts",
+    "src/museum/exhibits/_kit/placard.ts",
+    "src/museum/exhibits/_kit/placard.test.ts",
+    "docs/ART_DIRECTION.md (section 4 only)",
+    "review/runs/2026-11-15-f-m5p/*",
+    "review/reports/F-M5p.json"
+  ],
+  "items": [
+    {
+      "id": "F-054",
+      "result": "fixed",
+      "change": "Desktop door framing x is per door (framing.ts doorDesktopX, via doorFramingX): DOOR_DESKTOP_X (0.58) while the doorway ends DOOR_LABEL_CLEARANCE (16) px left of the widest door label (DOOR_LABEL_LEFT_FROM_RIGHT 312 px, measured x 1128 at 1440 x 900); otherwise the doorway is centered between the card column (446 + 16) and that bound. doorCorners drops the near jamb's reveal, which is hidden from the stop and overstated the right edge by about 35 px. The projects door keeps x 0.58 exactly (pinned by a test).",
+      "evidence": "framing.test: each desktop doorway and its room titles end at or left of its own active label's left edge less 16 px (projects 1223, volunteer 1128). Capture after/volunteer-door-desktop.png: label rect x 1128 to 1324; brass pixels inside the rect plus 16 px: 0 (before: 440); rightmost brass left of the label at x 1085 (before 1179); left jamb at about x 466, right of the card (446). projects-door desktop unchanged (rightmost brass 1092 vs 1093)."
+    },
+    {
+      "id": "Phone mood (D1)",
+      "result": "done, modest",
+      "change": "New recipe field `far` (FAR_WASH 1.7, tier lift as the side bays): verafin, mysa and the volunteer door add a dim far bay on the other side of their title bay or door (cfia and the projects door have no free wall there). Every side and far bay gets a soft warm floor pool (FAR_POOL: 1.3 m off the wall, 0.8 m into the bay, radius 1.8 m, alpha 0.45 scaled by the bay strength, max 0.55). More instances of the existing bay mesh and lightmap paint only: no lights, no draw calls; check:budgets and the environment budget specs pass unchanged. Wailo keeps its frame (no bays added; its desktop and phone captures are pixel-identical to before apart from a 70 x 25 px corner at desktop).",
+      "evidence": "before/after mysa, verafin, volunteer-door, projects-door, cfia at pixel7 and small: mysa's dark right side is now a lit far bay with a warm floor corner, verafin's and the doors' lower corners are warmer. The CSS vignette still darkens the outer edges, so the change reads as gallery rather than a full lift. lightPools.test covers placement, overlap and pool bounds; ART_DIRECTION section 4 records the values."
+    },
+    {
+      "id": "F-052 (verafin)",
+      "result": "tried, not fixable within this grant",
+      "change": "The far bay and floor pools above. The sample point itself does not move.",
+      "evidence": "Raycast from the verafin desktop pose: pixel (300, 300) reaches the end of the aisle about 45 m away (wall x 1.7, y 4.6, z -52). At fog density 0.038 that is about 95% fog, and the fog color is tokens.color.ink (#0B0B0D), so the sample stays rgb(11, 11, 13) whatever is lit there. after/verafin-desktop.png: sample (11, 11, 13); the left-half mean moved from 57.5 to 58.3. Only a warmer fog or background color (a color token and Scene.tsx, not light values) or a different framing (an approved still) can change it; see openQuestions."
+    },
+    {
+      "id": "Door story beat (D4)",
+      "result": "left, with reasons",
+      "change": "None beyond F-054's recentering of the volunteer room.",
+      "evidence": "Projected from the projects-door stop, KlarUp's title and case land at screen x 72 to 199 at 1440 x 900, behind the aisle wall left of the doorway; the doorway shows the back wall from z -16 to -20 only. No framing, pool or wash where KlarUp stands can be seen through the opening without moving the slot (frozen contract). The volunteer room now sits centered in the doorway on desktop (after/volunteer-door-desktop.png); its glow and title are unchanged so the approved sdsj still keeps its look."
+    },
+    {
+      "id": "Phone door cases (D6)",
+      "result": "tried, not better",
+      "change": "None.",
+      "evidence": "Projection at 412 x 839: at the portrait FOV 68 the doorway already spans x 26 to 386; keeping both jambs inside 16 to 396 allows at most FOV 65.5, a 3% larger case (44.2 to 45.7 px tall). At 360 x 640 the FOV could drop to about 60 before the jambs reach the edges, but the door top then reaches y 10, under the 52 px HUD row, which breaks the F-048 and F-051 rule. The pose (layout.ts) is outside this grant."
+    },
+    {
+      "id": "F-056",
+      "result": "fixed",
+      "change": "The wide (MUN) title: number cap 0.26 to 0.33 m, organization line height 1.25 to 1 em (caps only), via a new optional TitleSpec.lineHeight used by placard.ts. The block's top stays within 1 cm of F-049's, so the 05 keeps its HUD gap.",
+      "evidence": "placard.test pins the values and the block top; labels.test passes (MUN organization cap unchanged at 0.20 m, 14.28 px on Pixel 7); munTitle.test and framing.test pass; rail-input and mobile specs pass on desktop and pixel7. after/mun-pixel7.png and after/mun-desktop.png: the 05 reads taller than MEMORIAL UNIVERSITY."
+    },
+    {
+      "id": "F-055",
+      "result": "fixed, value needs R0's confirmation",
+      "change": "labels.test gains a 360 x 640 row (FOV 68) over every wall title and room label with SMALL_PHONE_MIN_CAP_PX = 10.85.",
+      "evidence": "The ruling's 11 px is against rendered glyph boxes (11.4 px minimum in G4 round 2). The test's projection math reads today's smallest caps at 10.90 px (KLARUP, CANADIAN FOOD INSPECTION AGENCY, MEMORIAL UNIVERSITY), so a literal 11 px projected floor fails on today's build. The row pins today's projected minimum instead; see openQuestions."
+    }
+  ],
+  "acceptance": {
+    "verify": "pass (918 tests: 915 passed, 3 skipped)",
+    "build": "pass (budgets ok, check-copy ok)",
+    "checkBudgets": "pass, unchanged",
+    "checkGlyphs": "pass",
+    "e2e": "rail-input, wings, dialog, environment, greybox, exhibits, mobile and quality on desktop and pixel7: 107 passed, 65 skipped (tags and projects), 0 failed, on the build with the 0.30 m MUN number; rail-input, mobile and exhibits re-run on the final 0.33 m build: see notes",
+    "browsers": "Chromium 1243 mapped under the 1194 names in a scratch PLAYWRIGHT_BROWSERS_PATH outside the repo; nothing installed or committed"
+  },
+  "visualBaselinesChanged": {
+    "stops": [
+      "volunteer-door desktop (F-054 reframe, far bay)",
+      "volunteer-door pixel7 (far bay, floor pools, doorCorners)",
+      "projects-door pixel7 (floor pools, doorCorners; desktop changes slightly from the pools)",
+      "verafin desktop and pixel7 (floor pools, far bay)",
+      "mysa desktop and pixel7 (far bay, floor pools)",
+      "cfia desktop and pixel7 (floor pool beside the side bay)",
+      "mun desktop and pixel7 (F-056)"
+    ],
+    "dialogs": [
+      "mun dialog desktop and pixel7 (F-056)",
+      "verafin, mysa and cfia dialogs may shift slightly where the new bays or pools are in view"
+    ],
+    "unchanged": "wailo stop (approved still), klarup, finance-tracker, sdsj, lobby, certifications, desk"
+  },
+  "deviations": [
+    "F-054 needed one line in src/museum/rail/CameraRig.tsx (R4's file, outside this brief's globs): it passed the door framing x only on portrait (`aspect >= 1 ? 0.5`), so framing.ts could not tell the two doors apart on desktop. It now passes doorFramingX for both. Without it the only in-path fix was a shared FOV and shift change that shrank and moved the projects door too. F-M4b touched the same file for the same framing. R0: please ratify, or drop commit e191214's CameraRig hunk and re-route it to R4.",
+    "Approved stills: verafin (03) changes a little (warmer lower corners, a far bay toward the lobby that is mostly out of frame); wailo (04, 10) is unchanged."
+  ],
+  "openQuestions": [
+    "F-055: confirm 10.85 px projected (11 px rendered) as the 360 x 640 floor, or rule that the organization caps rise about 1.6% so an 11 px projected floor holds.",
+    "F-052: the verafin desktop sample is the fog color. Closing it needs a warmer fog and background (tokens.color.ink is shared with the UI, Scene.tsx) or a reframe of approved still 03. Suggest leaving it to the M7 review as a taste call."
+  ],
+  "depsRequest": [],
+  "notes": "Captures: review/runs/2026-11-15-f-m5p/before and after (desktop 1440 x 900 tier high, Pixel 7 and 360 x 640 Pixel 7 UA tier medium; downscaled to 960, 412 and 360 px wide), made with capture-f-m5p.mjs (active rail label rect, brass near the label, (300, 300) sample, region means). Before is the integration tip df5a730."
+}

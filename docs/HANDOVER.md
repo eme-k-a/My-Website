@@ -255,3 +255,5 @@ When G4 round 2 passes, R0:
 | F-M5p | G4 polish (F-054, phone pools, F-052, doors, F-056, F-055 row) | session_019vLPzjnGWK1r2YHsrPK2Ek | `claude/m5-f-m5p` |
 
 All five started at 05:44 UTC from `df5a730`. R0 polls them with an "M5 check-in" about every 90 minutes. Merge order when done: WP-29, WP-31, WP-30, WP-32, F-M5p (cherry-pick; ci.yml is shared by WP-29's `lighthouse` job and WP-32's `e2e-xbrowser` job). Then a CI baseline refresh, a green run, and the G5 checks (step 6 above).
+
+**M5 merged (2026-11-15 07:40 UTC):** all five sessions finished within an hour, and R0 merged them by cherry-pick, then applied the three cross-owner fixes (MuseumGate paint gate, the ContactShadows leak, the `/resume/` JSON-LD check) and Emeka's content answers (RULINGS "M5 merges", "Emeka's G5 facts"). Next: archive the sessions, push, a CI baseline dispatch (screenshots change at the doors, verafin, mysa, cfia, mun, the desk and the project cards), a normal green run, then the G5 checks. Still owed by Emeka: review of the SDSJ, MUN and Certifications copy, and the favicon monogram letters.

@@ -500,7 +500,8 @@
       "resolution": "CI run 142 failed quality (b) a second time, so R0 root-caused it. Under SwiftShader with parallel workers the first frame after the input lands 2.2 to 7.5 s late, on the pre-M4 build (7bd904d: 4.5 to 6.4 s) as on the M4 build, and later frames come about every 2 s. The 10 s window for two frames was too tight; the poll now uses the idle window minus 1 s (14 s), so it still only counts idle frames. 6 of 6 local repeats pass under 3 workers."
     },
     "note": "quality (b) is fixed (see quality_b). The pixel7 exhibit-contract verafin still-canvas check stays open as intermittent.",
-    "g4r2": "Not re-checked in this visual review. Per R0: quality (b) is fixed in the test (CI run 142 root cause), and the pixel7 verafin still-canvas check stays open as intermittent. CI run 144 green per R0."
+    "g4r2": "Not re-checked in this visual review. Per R0: quality (b) is fixed in the test (CI run 142 root cause), and the pixel7 verafin still-canvas check stays open as intermittent. CI run 144 green per R0.",
+    "m5": "WP-32 (10dc1db): the pixel7 verafin still-canvas flake was in the capture, not the app: at a 2.625 device pixel ratio the screenshot picked up the browser's vignette redraw and canvas upscaling. canvasPixels() now compares at the drawing-buffer resolution: 0 of 240 captures varied, 20 of 20 repeats passed. R0 marks F-047 fixed after 3 consecutive green CI runs."
   },
   {
     "id": "F-048",
@@ -575,7 +576,8 @@
     "status": "open",
     "round": 1,
     "gate": "G4",
-    "g4r2": "Fixed at mysa (x 300, y 300: rgb 26, 21, 21, was 8, 7, 9), cfia (24, 15, 10), projects-door (19, 17, 18) and volunteer-door (31, 28, 30). Not at verafin: (300, 300) is still rgb(11, 11, 13); the side bay lands between the aisle and the case as a dim grey arch, and the left half remains the dark far aisle with no pool ahead (review/runs/2026-10-27-g4r2/evidence/verafin-left-desktop.png). Verafin desktop D1 stays 3.5. Narrowed to verafin; P3, a taste call."
+    "g4r2": "Fixed at mysa (x 300, y 300: rgb 26, 21, 21, was 8, 7, 9), cfia (24, 15, 10), projects-door (19, 17, 18) and volunteer-door (31, 28, 30). Not at verafin: (300, 300) is still rgb(11, 11, 13); the side bay lands between the aisle and the case as a dim grey arch, and the left half remains the dark far aisle with no pool ahead (review/runs/2026-10-27-g4r2/evidence/verafin-left-desktop.png). Verafin desktop D1 stays 3.5. Narrowed to verafin; P3, a taste call.",
+    "m5": "F-M5p tried a far bay and floor pools: the verafin (300, 300) sample looks about 45 m down the aisle, where the ink-colored fog covers about 95% of any light, so it stays rgb(11, 11, 13). Fixing it needs a warmer fog and background or a reframe of approved still 03. Left to the M7 monthly review."
   },
   {
     "id": "F-053",
@@ -602,9 +604,10 @@
     "evidence": "review/runs/2026-10-27-g4r2/volunteer-door-desktop.png and review/runs/2026-10-27-g4r2/evidence/volunteer-door-rail-desktop.png: after F-051 the door frame's right jamb runs at about x 1160 to 1180, under the active rail label 'Volunteer & Leadership wing' (x 1128 to 1322, y 405 to 435), so the label is drawn over the lit brass jamb, and the room title SOFTWARE DEVELOPERS ends about 13 px from the label. F-M4b's framing.test bounds the doorway by the rail year labels (x 1240), not by the active label's left edge. projects-door is clear (right jamb about x 1095, its label starts at x 1223).",
     "expected": "At the volunteer door on desktop, the door frame and the room title end at least 16 px left of the active rail label. Fix (R4): bound DOOR_DESKTOP_X (or the door FOV) by the measured left edge of the active rail label instead of the year-label column, or nudge the volunteer pose 1 to 2 degrees toward the door.",
     "check": "Re-capture volunteer-door desktop: no brass jamb or title pixels inside the active rail label's rect plus 16 px; framing.test's door bound uses the active label's left edge.",
-    "status": "open",
+    "status": "fixed",
     "round": 2,
-    "gate": "G4"
+    "gate": "G4",
+    "resolution": "F-M5p (e191214): the volunteer door's desktop framing is bounded by its own active rail label; brass pixels inside the label rect plus 16 px went from 440 to 0, the right jamb from x 1179 to 1085. framing.test bounds each door by its own label. R0 ratified the one-line CameraRig.tsx change that lets desktop tell the two doors apart."
   },
   {
     "id": "F-055",
@@ -616,9 +619,10 @@
     "evidence": "review/runs/2026-10-27-g4r2/probe-g4.json and probe-g4-main.json, 'small' rows: median glyph box heights of the wall titles are 11.4 to 13.3 px (klarup 11.4, finance-tracker 11.8, sdsj 11.8, mun 12.6, certifications 13.3, verafin 12.6, wailo 11.8, cfia 12.2); on Pixel 7 the same titles are 15.2 to 17.1 px. EXPERIENCE 5.4 sets the 14 px floor on Pixel 7 only, so this is in spec; the card repeats every title in the DOM. Unchanged in kind since round 1 (mun small median 12.2 then).",
     "expected": "Idea for R0: either record that the 14 px floor is a Pixel 7 rule and small phones rely on the DOM card, or add a 360 x 640 row to labels.test with a lower floor (for example 11 px).",
     "check": "An R0 ruling in RULINGS.md, or a 360 x 640 row in labels.test.",
-    "status": "open",
+    "status": "fixed",
     "round": 2,
-    "gate": "G4"
+    "gate": "G4",
+    "resolution": "R0 ruled the 14 px floor a Pixel 7 rule (RULINGS, G4 passed). F-M5p added a 360 x 640 row to labels.test with a 10.85 px floor: the test's projection puts today's smallest title at 10.90 px (the review's 11.4 px was a rendered glyph height), and R0 ratified 10.85 px."
   },
   {
     "id": "F-056",
@@ -630,8 +634,24 @@
     "evidence": "review/runs/2026-10-27-g4r2/mun-desktop.png and review/runs/2026-10-27-g4r2/evidence/mun-pixel7-412.png: after F-049 (number cap 0.26 m, organization 0.20 m) the 05 is about the height of two organization letters and thinner, so MEMORIAL UNIVERSITY dominates; at every other stop the numeral leads (verafin, mysa, wailo, cfia, certifications). Legible, and R0 ratified the caps.",
     "expected": "Idea for R3 and R0: a heavier or slightly larger 05 within the same block height (for example 0.28 m with the organization line spacing tightened), so the hierarchy matches the other stops.",
     "check": "Re-capture mun desktop and Pixel 7: the numeral reads as the lead line; labels.test and the F-048 HUD gap (at least 8 px) still pass.",
-    "status": "open",
+    "status": "fixed",
     "round": 2,
-    "gate": "G4"
+    "gate": "G4",
+    "resolution": "F-M5p (b8e2f21, 6b41469): the MUN 05 is 0.33 m (was 0.26 m) and the organization lines tighten from 1.25 em to 1 em; the block top stays within 1 cm and the 0.20 m organization cap is unchanged."
+  },
+  {
+    "id": "F-057",
+    "severity": "P3",
+    "title": "Dialog Newer/Older buttons: the accessible name says 'Older exhibit: ...' but the visible label says 'Older ...'",
+    "stop": "every story dialog",
+    "viewport": "all",
+    "path": "src/overlay (dialog navigation) and tests/e2e/dialog.spec.ts",
+    "evidence": "WP-30 report, openQuestions 1: axe does not flag it, but the visible label is not contained in the accessible name's first words (WCAG 2.5.3 label in name, advisory). dialog.spec.ts asserts the current name.",
+    "expected": "The accessible name starts with the visible label (for example 'Older: <title>' both ways), changed by R6 and R8 together.",
+    "check": "dialog.spec and a11y.spec pass with the new name.",
+    "status": "open",
+    "round": 0,
+    "gate": "M6",
+    "owner": "R6 with R8"
   }
 ]

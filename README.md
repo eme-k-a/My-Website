@@ -80,6 +80,17 @@ GitHub Actions deploys to Netlify. Netlify never builds anything: Git builds sta
 - **Secrets:** `NETLIFY_AUTH_TOKEN` (a Netlify personal access token) and `NETLIFY_SITE_ID` are GitHub repository secrets. If either is missing, the deploy job fails with a message that names it. Never commit or print them.
 - **No deploy available:** review the tested build locally with `npm run build && npm run preview`, which serves `dist/` with the production headers.
 
+## Release notes
+
+### v1.0.0 (prepared 2026-11-15)
+
+The first public version of Commit History, the 3D gallery of Emeka's work, newest first.
+
+- **The gallery:** nine exhibits on one aisle (Nasdaq Verafin, Mysa, Wailo, the Canadian Food Inspection Agency, Memorial University and Certifications), a Projects wing (KlarUp, Personal Finance Tracker) and a Volunteer & Leadership wing (Software Developers of St. John's), each with a story page that also works without JavaScript.
+- **The classic view and the resume:** `/resume/` (no scripts), a one-page `/resume.pdf` and `resume/resume.tex` for Overleaf, all generated from `src/content/resume.ts`.
+- **Quality gates passed:** G4 polish (Emeka's taste call at 3.94 with his 10 approved stills) and G5 (every line of first-person copy approved by Emeka, `RELEASE=1` clean, size and render budgets enforced in CI, Lighthouse accessibility and SEO 1.00).
+- **Known follow-ups:** `docs/FUTURE_IMPROVEMENTS.md`.
+
 ## License
 
 Code: MIT License (see [`LICENSE`](LICENSE)). Content and images (the text content, the resume and the portrait photograph): all rights reserved.

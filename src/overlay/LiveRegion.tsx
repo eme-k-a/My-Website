@@ -8,7 +8,12 @@ import styles from './overlay.module.css';
 export function LiveRegion() {
   const message = useAnnouncer();
   return (
-    <div className={styles.visuallyHidden} aria-live="polite" data-testid={TEST_IDS.liveRegion}>
+    <div
+      className={styles.visuallyHidden}
+      aria-live="polite"
+      aria-atomic="true"
+      data-testid={TEST_IDS.liveRegion}
+    >
       {message}
     </div>
   );

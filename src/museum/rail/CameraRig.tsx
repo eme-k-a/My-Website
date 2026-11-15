@@ -43,7 +43,7 @@ import {
   deskWeightAt,
   doorCorners,
   doorFov,
-  doorPortraitX,
+  doorFramingX,
   horizontalTangents,
   lobbyWeightAt,
   framingFor,
@@ -637,8 +637,10 @@ export function CameraRig() {
         tan === undefined || wing === 0
           ? tokens.camera.framingPortraitY
           : wingPortraitY(size.height, head, fov, tan);
-      // A wing door: the doorway centered on a portrait screen (F-051).
-      const doorX = span === undefined || aspect >= 1 ? 0.5 : doorPortraitX(aspect, fov, span);
+      // A wing door: the doorway centered on a portrait screen (F-051), clear of the rail's
+      // active label on desktop (F-054).
+      const doorX =
+        span === undefined ? undefined : doorFramingX(size.width, size.height, fov, span);
       const goal = viewOffsetFor(
         framingFor(
           aspect,

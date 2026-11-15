@@ -31,8 +31,8 @@
 //   case floor meeting the card. It blends in over the half stop next to the exhibit
 //   (`stopWeightAt`), so the door stops keep their framing (F-038).
 // - at a wing door (F-051): on desktop the FOV tightens to DOOR_FOV_DESKTOP around the normal
-//   framing point (moved to DOOR_DESKTOP_X, DOOR_DESKTOP_Y), so the doorway, its transom title and the room's
-//   glow fill the picture; on
+//   framing point (moved to `doorDesktopX`, DOOR_DESKTOP_Y), so the doorway, its transom title and
+//   the room's glow fill the picture, clear of the rail's active label (F-054); on
 //   portrait the framing x centers the doorway's projected span (`doorPortraitX`), so neither
 //   jamb is cut by the edge. Both blend in over the half stop next to the door (`stopWeightAt`).
 // Vertical FOV is 50 at aspect >= 1, 68 at aspect <= 0.6, linear in between. CameraRig damps shift
@@ -469,6 +469,15 @@ export const DOOR_DESKTOP_Y = 0.57;
  * and the room title behind it stay clear of the rail's stop label at the right.
  */
 export const DOOR_DESKTOP_X = 0.58;
+/**
+ * The rail's widest door label ("Volunteer & Leadership wing") starts this many CSS px left of the
+ * view's right edge on desktop (measured at 1440 x 900: x 1128; the rail sits a fixed distance
+ * from the right edge, so the distance holds at every desktop width). F-054: at the volunteer
+ * door the doorway at DOOR_DESKTOP_X ran under that label.
+ */
+export const DOOR_LABEL_LEFT_FROM_RIGHT = 312;
+/** The doorway and its room title keep at least this many CSS px left of the active label. */
+export const DOOR_LABEL_CLEARANCE = 16;
 /** The portrait door framing never moves the doorway's center past these fractions of the width. */
 const DOOR_X_MIN = 0.38;
 const DOOR_X_MAX = 0.62;
@@ -477,7 +486,13 @@ const DOOR_X_MAX = 0.62;
 const DOOR_LINING = 0.04;
 const DOOR_REVEAL = 0.2;
 
-/** The corners of a wing door's opening with its brass lining, seen from the aisle. */
+/**
+ * The corners of a wing door's opening with its brass lining, as seen from its door stop. The
+ * stop camera stands DOOR_CAM_BACK_Z up the aisle (+z), so the jamb nearer the camera shows only
+ * its lining face; its reveal faces away into the opening and is hidden, and leaving it out keeps
+ * the span to what is drawn (F-054: it overstated the volunteer door's right edge by about 35 px).
+ * The far jamb shows its reveal, so its corners at the reveal's depth stay in.
+ */
 export function doorCorners(
   side: 'left' | 'right',
   z: number,
@@ -487,11 +502,11 @@ export function doorCorners(
   const s = side === 'left' ? -1 : 1;
   // The lining's 4 cm face and the reveal's depth into the wall, read from the aisle.
   const half = width / 2 + DOOR_LINING;
-  return [AISLE_HALF, AISLE_HALF + DOOR_REVEAL].flatMap((x) =>
-    [z - half, z + half].flatMap((zz) =>
-      [0, height + DOOR_LINING].map((y) => [s * x, y, zz] as Vec3),
-    ),
-  );
+  const ys = [0, height + DOOR_LINING];
+  return [
+    ...[z - half, z + half].flatMap((zz) => ys.map((y) => [s * AISLE_HALF, y, zz] as Vec3)),
+    ...ys.map((y) => [s * (AISLE_HALF + DOOR_REVEAL), y, z - half] as Vec3),
+  ];
 }
 
 /**
@@ -509,6 +524,50 @@ export function doorPortraitX(
   const kx = 1 / (2 * Math.tan((fov * Math.PI) / 360) * aspect);
   const x = 0.5 - ((lo + hi) / 2) * kx;
   return Math.min(DOOR_X_MAX, Math.max(DOOR_X_MIN, x));
+}
+
+/**
+ * The stop card column's right edge on desktop, CSS px from the left (72 px inset plus the 374 px
+ * card, measured at 1440 x 900).
+ */
+export const DOOR_CARD_RIGHT = 446;
+
+/**
+ * The desktop framing x at a wing door (F-054): DOOR_DESKTOP_X while the doorway's projected span
+ * (`span`, from `horizontalTangents` of `doorCorners`; it bounds the room title seen through the
+ * doorway as well) ends DOOR_LABEL_CLEARANCE px left of the widest door label in the rail. When it
+ * does not (the volunteer door), the span is centered between the stop card column and that bound
+ * instead, never right of DOOR_DESKTOP_X. The projects door clears and keeps its F-051 framing.
+ */
+export function doorDesktopX(
+  width: number,
+  height: number,
+  fov: number,
+  span: readonly [number, number],
+): number {
+  const [lo, hi] = span;
+  if (!(width > 0) || !(height > 0) || !Number.isFinite(lo) || !Number.isFinite(hi)) {
+    return DOOR_DESKTOP_X;
+  }
+  const kx = 1 / (2 * Math.tan((fov * Math.PI) / 360) * (width / height));
+  const right = 1 - (DOOR_LABEL_LEFT_FROM_RIGHT + DOOR_LABEL_CLEARANCE) / width;
+  if (DOOR_DESKTOP_X + hi * kx <= right) return DOOR_DESKTOP_X;
+  const left = (DOOR_CARD_RIGHT + DOOR_LABEL_CLEARANCE) / width;
+  return Math.min(DOOR_DESKTOP_X, (left + right) / 2 - ((lo + hi) / 2) * kx);
+}
+
+/**
+ * The framing x at a wing door for a `width` x `height` view: `doorDesktopX` on desktop,
+ * `doorPortraitX` on portrait (F-051, F-054).
+ */
+export function doorFramingX(
+  width: number,
+  height: number,
+  fov: number,
+  span: readonly [number, number],
+): number {
+  const aspect = width / height;
+  return aspect >= 1 ? doorDesktopX(width, height, fov, span) : doorPortraitX(aspect, fov, span);
 }
 
 /**
@@ -539,7 +598,8 @@ export function fovFor(aspect: number): number {
  * at the desk (`deskPortraitY` of the measured band, or the DESK_PORTRAIT_Y fallback). `lobby`
  * is `lobbyWeightAt` (portrait only). `wing` is the `stopWeightAt` weight of an exhibit and
  * `wingY` its `wingPortraitY` (portrait only, F-039 and F-048). `door` is the `stopWeightAt`
- * weight of a wing door and `doorX` its `doorPortraitX` (portrait; on desktop the door lowers the point, F-051).
+ * weight of a wing door and `doorX` its `doorFramingX` (`doorPortraitX` on portrait,
+ * `doorDesktopX` on desktop, where the door also lowers the point; F-051, F-054).
  */
 export function framingFor(
   aspect: number,
@@ -550,7 +610,7 @@ export function framingFor(
   wing = 0,
   wingY: number = tokens.camera.framingPortraitY,
   door = 0,
-  doorX = 0.5,
+  doorX = aspect < 1 ? 0.5 : DOOR_DESKTOP_X,
 ): ScreenPoint {
   const d = Math.min(1, Math.max(0, door));
   if (!(aspect < 1)) {
@@ -558,7 +618,7 @@ export function framingFor(
       return { x: panelLeft / 2, y: 0.5 };
     }
     const x = tokens.camera.framingDesktopX;
-    return { x: x + (DOOR_DESKTOP_X - x) * d, y: 0.5 + (DOOR_DESKTOP_Y - 0.5) * d };
+    return { x: x + (doorX - x) * d, y: 0.5 + (DOOR_DESKTOP_Y - 0.5) * d };
   }
   const w = Math.min(1, Math.max(0, desk));
   const l = Math.min(1, Math.max(0, lobby));

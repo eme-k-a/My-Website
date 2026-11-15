@@ -8,7 +8,10 @@
 //   script, so one CSP hash covers every page;
 // - dist/resume/index.html: the classic resume, linking the hashed `classic` CSS from
 //   dist/.vite/manifest.json, with no script at all;
-// - dist/404.html: the 404 page with the gallery CSS, `noindex`, and no script at all.
+// - dist/404.html: the 404 page with the gallery CSS, `noindex`, and no script at all;
+// - dist/sitemap.xml and dist/robots.txt (WP-31), generated because they need SITE_URL.
+// `/` and `/resume/` carry the JSON-LD Person, a `type="application/ld+json"` data block that
+// executes nothing, so the zero-JS rule of the classic page allows it (ARCHITECTURE §11.3, §12.1).
 // The gallery and exhibit pages also get the font preloads in <!--preload--> (WP-28 under a grant:
 // the Instrument Serif 400 face of the h1, the LCP element, and the Plex Sans 400 body face).
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -29,6 +32,8 @@ export interface EntryServer {
   renderClassic(): string;
   renderNotFound(): string;
   headTags(route: HeadRoute): string;
+  renderSitemap(): string;
+  renderRobots(): string;
   EXHIBIT_IDS: readonly string[];
 }
 
@@ -134,7 +139,9 @@ export function staticPage(page: StaticPage, base = '/'): string {
     '</html>',
     '',
   ].join('\n');
-  if (/<script\b/i.test(html)) throw new Error('A zero-JS page would contain a <script> element');
+  if (/<script\b(?![^>]*\btype="application\/ld\+json")/i.test(html)) {
+    throw new Error('A zero-JS page would contain an executable <script> element');
+  }
   return html;
 }
 
@@ -197,6 +204,9 @@ export async function prerenderPages(options: PrerenderOptions = {}): Promise<st
       base,
     ),
   );
+
+  await write('sitemap.xml', entry.renderSitemap());
+  await write('robots.txt', entry.renderRobots());
 
   console.log(`prerendered ${written.join(', ')}`);
   return written;

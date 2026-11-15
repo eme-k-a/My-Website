@@ -720,5 +720,21 @@
     "round": 0,
     "gate": "M7",
     "owner": "R8"
+  },
+  {
+    "id": "F-062",
+    "severity": "P1",
+    "title": "Production deploy: the @smoke run tested the deploy permalink, where Netlify's feedback toolbar script trips the CSP guards",
+    "stop": "all smoke pages",
+    "viewport": "desktop (CI deploy job)",
+    "path": ".github/workflows/deploy.yml",
+    "evidence": "CI run 193 on main (613842c, the v1 merge): Netlify published production deploy 6afa1730 at 20:33 UTC (context production, state ready), then the smoke step ran against its permalink https://6afa1730...--emeka-nduka-nwagbo.netlify.app and 11 of 22 @smoke tests failed: an injected <script> (1 element on the 404 page) and an inline script in an about:srcdoc frame refused by the CSP. Preview smokes against branch aliases never showed it.",
+    "expected": "The production smoke runs against the production address (WP-33: BASE_URL=<SITE_URL>) and passes.",
+    "check": "The deploy job on main is green after the fix; the production checks (CSP, no X-Robots-Tag, one-page PDF) pass.",
+    "status": "open",
+    "resolution": "R0 for R10: for production the deploy step reports and smoke-tests netlify-cli's site url, not the permalink. Lands on main through the next PR.",
+    "round": 0,
+    "gate": "M6",
+    "owner": "R10"
   }
 ]

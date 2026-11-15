@@ -3,13 +3,13 @@
 // first viewport, with JavaScript off and with JavaScript on before the museum is ready (its chunk
 // is blocked, so `ready` never comes). The largest-contentful-paint element is the h1. CLS from
 // navigation to `ready` stays within perf/budgets.json web.cls on desktop and Pixel 7 (WP-17).
-// @dom: the phone-size checks are DOM-only (WP-32 runs them in Firefox and WebKit).
+// @dom: the phone-size checks are DOM-only, so they also run in Firefox and WebKit (WP-32, CI only).
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
 import { expect, test, type Guards } from './fixtures';
-import { museumUrl, observeLayoutShift, waitForMuseum } from './helpers';
+import { hasWebgl2, isXbrowser, museumUrl, observeLayoutShift, waitForMuseum } from './helpers';
 
 /** perf/budgets.json web.cls (ARCHITECTURE §9): the e2e gate, from navigation to `ready`. */
 const CLS_BUDGET = (
@@ -78,11 +78,22 @@ async function lcpElement(page: Page): Promise<string> {
   });
 }
 
+/**
+ * Firefox and WebKit headless may have no WebGL2, and then ?mode=museum lands on the classic
+ * resume by design (ARCHITECTURE §5.3 row 3), so the before-ready checks cannot start there.
+ * Chromium projects always have it (SwiftShader).
+ */
+async function needsMuseumPath(page: Page) {
+  if (!isXbrowser()) return;
+  await page.goto('/resume/');
+  test.skip(!(await hasWebgl2(page)), 'This headless browser has no WebGL2 (the museum path)');
+}
+
 test.describe('recruiter fast path', { tag: '@dom' }, () => {
   test.beforeEach(() => {
     test.skip(
-      test.info().project.name !== 'pixel7',
-      'Phone sizes run once, on the pixel7 project (touch, mobile user agent)',
+      test.info().project.name !== 'pixel7' && !isXbrowser(),
+      'Phone sizes run once in Chromium, on the pixel7 project (touch, mobile user agent), and in Firefox and WebKit (WP-32)',
     );
   });
 
@@ -101,6 +112,7 @@ test.describe('recruiter fast path', { tag: '@dom' }, () => {
       test.use({ viewport: size });
 
       test('the hero is fully inside the first viewport', async ({ page, guards }) => {
+        await needsMuseumPath(page);
         await page.route(MUSEUM_CHUNK, (route) => route.abort());
         await page.goto(MUSEUM_URL);
         await expect(page.locator('html')).toHaveAttribute('data-mode', 'museum');
@@ -115,6 +127,13 @@ test.describe('recruiter fast path', { tag: '@dom' }, () => {
       });
 
       test('the LCP element is the h1', async ({ page }) => {
+        await needsMuseumPath(page);
+        if (isXbrowser()) {
+          const supported = await page.evaluate(() =>
+            PerformanceObserver.supportedEntryTypes.includes('largest-contentful-paint'),
+          );
+          test.skip(!supported, 'This browser has no largest-contentful-paint entries');
+        }
         await page.goto(MUSEUM_URL);
         expect(await lcpElement(page)).toMatch(/^h1:/);
       });

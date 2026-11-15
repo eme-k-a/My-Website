@@ -2,13 +2,15 @@
 // function of the content and the build date, called by src/entry-server.tsx at prerender time
 // (never shipped to the client). Every indexable page gets a unique <title>, a description, an
 // absolute canonical URL with a trailing slash, Open Graph and a Twitter card. The 404 page is
-// `noindex` and carries only its title, description and robots tag: it has no canonical address
-// and is never shared. JSON-LD and the favicon links are WP-31's.
+// `noindex` and carries only its title, description, robots tag and icons: it has no canonical
+// address and is never shared. Every page links the favicon set; `/` and `/resume/` also carry
+// the JSON-LD Person (WP-31, ARCHITECTURE §11.3, §11.4).
 import { CLASSIC_PATH, exhibitPath, GALLERY_PATH } from '../app/routes';
 import { EXHIBIT_IDS, type ExhibitId } from '../content/ids';
 import type { Content } from '../content/types';
 import { entryById, organizationOf, resumePageMeta } from '../content/selectors';
 import { NOT_FOUND_TITLE } from '../overlay/NotFound';
+import { jsonLdTag } from './jsonLd';
 
 export type MetaRoute = 'gallery' | 'classic' | 'notFound' | { kind: 'exhibit'; id: ExhibitId };
 
@@ -28,6 +30,13 @@ export interface PageMeta {
   ogType?: 'profile' | 'article' | 'website';
   robots?: string;
 }
+
+/** The favicon set in public/ (ARCHITECTURE §11.4). No web manifest. */
+export const ICON_TAGS = [
+  '<link rel="icon" href="/favicon.svg" type="image/svg+xml" />',
+  '<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />',
+  '<link rel="apple-touch-icon" href="/apple-touch-icon.png" />',
+] as const;
 
 /** `/og/home.png`, `/og/resume.png` or `/og/<id>.png`. */
 export const ogImagePath = (name: ExhibitId | 'home' | 'resume') => `/og/${name}.png`;
@@ -122,6 +131,8 @@ export function headTags(c: Content, route: MetaRoute, now: Date): string {
     }
     tags.push(metaName('twitter:card', 'summary_large_image'));
   }
+  tags.push(...ICON_TAGS);
+  if (route === 'gallery' || route === 'classic') tags.push(jsonLdTag(c, now));
   return tags.join('\n    ');
 }
 

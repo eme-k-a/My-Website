@@ -89,6 +89,22 @@ describe('headTags', () => {
     }
   });
 
+  it('links the favicon set on every page and no web manifest', () => {
+    for (const { html } of all) {
+      expect(html).toContain('<link rel="icon" href="/favicon.svg" type="image/svg+xml" />');
+      expect(html).toContain('href="/favicon-32.png" sizes="32x32"');
+      expect(html).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png" />');
+      expect(html).not.toContain('rel="manifest"');
+    }
+  });
+
+  it('carries the JSON-LD Person on the gallery and the classic page only', () => {
+    const ld = (html: string) => html.match(/<script type="application\/ld\+json">/g)?.length ?? 0;
+    for (const { route, html } of all) {
+      expect(ld(html)).toBe(route === 'gallery' || route === 'classic' ? 1 : 0);
+    }
+  });
+
   it('escapes markup in copy', () => {
     const route: MetaRoute = 'gallery';
     const tricky = { ...content, meta: { ...content.meta, title: 'A <b> & "q"' } };

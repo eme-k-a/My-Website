@@ -12,7 +12,9 @@ import { content } from './content/index';
 import { BUILD_DATE } from './overlay/model';
 import { NotFound } from './overlay/NotFound';
 import { StoryArticle } from './overlay/StoryBody';
+import { personJsonLd, type PersonJsonLd } from './seo/jsonLd';
 import { headTags as metaHeadTags, type MetaRoute } from './seo/meta';
+import { robotsTxt, sitemapPaths, sitemapXml } from './seo/sitemap';
 
 export type { MetaRoute };
 
@@ -40,6 +42,25 @@ export function renderStory(id: ExhibitId): string {
 /** Head tags (src/seo/meta.ts) for `/`, `/exhibit/<id>/`, `/resume/` and the 404 page. */
 export function headTags(route: MetaRoute): string {
   return metaHeadTags(content, route, BUILD_DATE);
+}
+
+/** The JSON-LD Person for the build date (ARCHITECTURE §11.3); headTags embeds it on / and /resume/. */
+export function jsonLd(): PersonJsonLd {
+  return personJsonLd(content, BUILD_DATE);
+}
+
+/** dist/sitemap.xml: `/`, `/resume/` and every exhibit page, `lastmod` = the build date. */
+export function renderSitemap(): string {
+  return sitemapXml(
+    content.meta.siteUrl,
+    sitemapPaths(EXHIBIT_IDS),
+    BUILD_DATE.toISOString().slice(0, 10),
+  );
+}
+
+/** dist/robots.txt, pointing at `<SITE_URL>/sitemap.xml`. */
+export function renderRobots(): string {
+  return robotsTxt(content.meta.siteUrl);
 }
 
 export { EXHIBIT_IDS };

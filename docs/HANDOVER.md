@@ -51,7 +51,10 @@ claude --teleport session_016CcKJFMWCyXKspJx4YvMS7
 | WP-19 and F-G2 | Slice review and fixes | Done 2026-10-20. Round 1: 3.33. Round 2: 3.65. Round 3: 3.74 (desktop 3.83, Pixel 7 3.65), the last allowed round. Every P1 is closed: F-020 to F-023, F-036 and F-037 by F-G2a, F-G2b and F-G2r2; F-038 by its own scoped fix with an e2e check (`0d291d9`). Open P2 and P3: F-027, F-032, F-033. Baselines were refreshed by the CI bot (`fee0ac2`). Stills for Emeka: `review/runs/2026-10-20-g2r3/stills/` |
 | F-035 | Remove Safe Sip and Enactus | Done 2026-10-20 (Emeka's decision): gone from the gallery, its story page, `/resume/`, the PDF and the tex. The volunteer wing holds only SDSJ |
 | Gate G2 | Slice sign-off | **Passed 2026-10-20: Emeka approved the stills and the preview.** Review round 3 scored 3.74 with no open P0 or P1, and CI run 60 was green and deployed. **M2 is complete.** Next: Emeka runs `/compact`, then M3 (WP-20 to WP-25) starts on his "go", with builders in separate cloud sessions a few at a time (PLAN section 7). The usage-limit check-ins are paused until then (section 9) |
-| WP-20 onward | M3 to M7 | Not started |
+| WP-20 to WP-25 | M3: the full gallery | Done; Gate G3 passed 2026-10-24 (section 11) |
+| WP-26 to WP-28, F-M4a, F-M4b | M4: polish | Done; **Gate G4 passed 2026-11-15**: Emeka accepted round 2's 3.94 as a taste call, with his 10 approved stills (section 12) |
+| WP-29 to WP-32, F-M5p | M5: performance, accessibility, SEO, cross-browser tests, G4 polish | Started 2026-11-15 (section 13) |
+| WP-33 onward | M6 and M7 | Not started |
 
 How to tell what's done:
 - `git log --oneline` shows commits carrying a `WP: WP-xx` trailer.
@@ -240,3 +243,5 @@ When G4 round 2 passes, R0:
 
 **G4 round 2 (2026-10-27 04:51 UTC):** 3.94, with no P0 or P1 open. The session is merged (`8404187`) and archived. M5 is held: Emeka chooses between accepting G4 (R0's recommendation, with a parallel polish session) and a third, final G4 round.
 
+
+**G4 accepted, M5 starting (2026-11-15 05:45 UTC):** Emeka chose "Accept, start M5". RULINGS records "G4 passed, M4 complete". Five sessions start from this commit: WP-29 to WP-32 as above, plus the polish session F-M5p (brief `docs/wp/F-M5p.md`, branch `claude/m5-f-m5p`). Session ids follow below once created.

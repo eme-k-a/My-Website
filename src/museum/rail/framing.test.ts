@@ -13,7 +13,11 @@ import {
   deskPortraitY,
   deskWeightAt,
   doorCorners,
+  doorDesktopX,
+  doorFramingX,
   DOOR_DESKTOP_X,
+  DOOR_LABEL_CLEARANCE,
+  DOOR_LABEL_LEFT_FROM_RIGHT,
   DOOR_DESKTOP_Y,
   doorFov,
   DOOR_FOV_DESKTOP,
@@ -419,9 +423,11 @@ describe('door framing (F-051)', () => {
     expect(doorFov(1440 / 900, 0)).toBe(fovFor(1440 / 900));
     expect(doorFov(1440 / 900, 0.5)).toBeCloseTo((DOOR_FOV_DESKTOP + fovFor(1.6)) / 2, 9);
     expect(doorFov(412 / 839, 1)).toBe(fovFor(412 / 839));
-    const at = (door: number) =>
-      framingFor(1440 / 900, null, 0, DESK_PORTRAIT_Y, 0, 0, undefined, door, 0.3);
+    const at = (door: number, x?: number) =>
+      framingFor(1440 / 900, null, 0, DESK_PORTRAIT_Y, 0, 0, undefined, door, x);
     expect(at(1)).toEqual({ x: DOOR_DESKTOP_X, y: DOOR_DESKTOP_Y });
+    expect(at(1, 0.52)).toEqual({ x: 0.52, y: DOOR_DESKTOP_Y });
+    expect(at(0, 0.52)).toEqual({ x: tokens.camera.framingDesktopX, y: 0.5 });
     expect(at(0)).toEqual({ x: tokens.camera.framingDesktopX, y: 0.5 });
     // The dialog framing wins on desktop.
     expect(framingFor(1.6, 800 / 1440, 0, DESK_PORTRAIT_Y, 0, 0, undefined, 1, 0.3).y).toBe(0.5);
@@ -444,13 +450,37 @@ describe('door framing (F-051)', () => {
     expect(0.5 + hi * k).toBeCloseTo(Math.max(...xs), 6);
   });
 
+  /**
+   * The left edge of each door's active rail label at 1440 x 900, CSS px (G4 round 2 captures:
+   * "Projects wing" from x 1223, "Volunteer & Leadership wing" from x 1128). F-054: the doorway
+   * keeps DOOR_LABEL_CLEARANCE px left of its own active label, not of the year labels.
+   */
+  const ACTIVE_LABEL_LEFT: Record<string, number> = { projects: 1223, volunteer: 1128 };
+
+  it('bounds the desktop door by the widest door label, which the measured labels match', () => {
+    expect(1440 - DOOR_LABEL_LEFT_FROM_RIGHT).toBe(Math.min(...Object.values(ACTIVE_LABEL_LEFT)));
+    expect(DOOR_LABEL_CLEARANCE).toBeGreaterThanOrEqual(16);
+    expect(doorDesktopX(1440, 900, DOOR_FOV_DESKTOP, [-0.1, 0.1])).toBe(DOOR_DESKTOP_X);
+    expect(doorDesktopX(1440, 900, DOOR_FOV_DESKTOP, [0.2, 0.9])).toBeLessThan(DOOR_DESKTOP_X);
+    expect(doorFramingX(412, 839, 68, [-0.4, 0.2])).toBe(doorPortraitX(412 / 839, 68, [-0.4, 0.2]));
+    // The projects door already clears its label and keeps the F-051 framing.
+    const pose = layout.tracks.main.stops.find((s) => s.id === 'projects-door')!;
+    const projects = layout.doors.find((d) => d.wing === 'projects')!;
+    const span = horizontalTangents(
+      pose.camera,
+      pose.look,
+      doorCorners(projects.side, projects.z, projects.width, DOOR_H),
+    );
+    expect(doorDesktopX(1440, 900, DOOR_FOV_DESKTOP, span)).toBe(DOOR_DESKTOP_X);
+  });
+
   // Phones: inside the edges; desktop: right of the stop card column (its right edge at 446)
-  // and left of the rail's stop labels (from x 1240).
+  // and DOOR_LABEL_CLEARANCE px left of the door's active rail label (F-054).
   it.each([
     [412, 839, 16, 396],
     [360, 640, 16, 344],
-    [1440, 900, 446, 1240],
-  ])('shows every doorway whole at %i x %i, between x %i and %i', (width, height, left, right) => {
+    [1440, 900, 446, 'its active label'],
+  ])('shows every doorway whole at %i x %i, between x %i and %s', (width, height, left, right) => {
     expect(layout.doors.length).toBe(2);
     const aspect = width / height;
     const fov = doorFov(aspect, 1);
@@ -458,7 +488,9 @@ describe('door framing (F-051)', () => {
       const pose = layout.tracks.main.stops.find((s) => s.id === `${door.wing}-door`)!;
       const corners = doorCorners(door.side, door.z, door.width, DOOR_H);
       const span = horizontalTangents(pose.camera, pose.look, corners);
-      const x = aspect < 1 ? doorPortraitX(aspect, fov, span) : 0.5;
+      const x = doorFramingX(width, height, fov, span);
+      const bound =
+        typeof right === 'number' ? right : ACTIVE_LABEL_LEFT[door.wing]! - DOOR_LABEL_CLEARANCE;
       const camera = new PerspectiveCamera(fov, aspect, 0.1, 90);
       camera.position.set(...pose.camera);
       camera.lookAt(new Vector3(...pose.look));
@@ -471,7 +503,14 @@ describe('door framing (F-051)', () => {
       );
       const xs = corners.map((c) => screenOf(camera, new Vector3(...c)).x * width);
       expect(Math.min(...xs), door.wing).toBeGreaterThan(left);
-      expect(Math.max(...xs), door.wing).toBeLessThan(right);
+      expect(Math.max(...xs), door.wing).toBeLessThanOrEqual(bound + 1e-6);
+      // The room's wall titles seen through the doorway stay left of the same bound.
+      for (const slot of layout.slots.filter((s) => s.track === door.wing)) {
+        const title = slotPlacard(layout, slot);
+        const ends = [...titleTopCorners(title), ...titleBottomCorners(title)];
+        const tx = ends.map((c) => screenOf(camera, new Vector3(...c)).x * width);
+        expect(Math.max(...tx), slot.id).toBeLessThanOrEqual(bound + 1e-6);
+      }
     }
   });
 });

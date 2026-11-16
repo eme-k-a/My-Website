@@ -1,0 +1,87 @@
+{
+  "wp": "WP-33",
+  "role": "R0 Orchestrator (release)",
+  "status": "done except A6: the v1.0.0 tag needs Emeka (this session's git proxy refuses tag pushes, HTTP 403)",
+  "branch": "main (via PRs from claude/intelligent-sagan-poq45q)",
+  "productionUrl": "https://emeka-nduka-nwagbo.netlify.app",
+  "mainMergeCommit": "34b80d232204676afb4042193b82cb0edaf9376b",
+  "pullRequests": [
+    "https://github.com/eme-k-a/My-Website/pull/1 (v1, merged as 613842c on 2026-11-15, Emeka: \"merge it\")",
+    "https://github.com/eme-k-a/My-Website/pull/8 (F-062, smoke at the site address, merged as d43f3a5, Emeka: \"ship the fix\")",
+    "https://github.com/eme-k-a/My-Website/pull/9 (F-063, the host badge, merged as 34b80d2, Emeka: \"go\")"
+  ],
+  "runs": {
+    "mainCi": "https://github.com/eme-k-a/My-Website/actions/runs/43782664821 (run 207, success, RELEASE=1)",
+    "productionDeploy": "https://github.com/eme-k-a/My-Website/actions/runs/43782664821/job/133028125473 (deploy / deploy, success, 01:06 to 01:08 UTC 2026-11-16)",
+    "earlierProductionRuns": [
+      "https://github.com/eme-k-a/My-Website/actions/runs/43775831233 (run 203 on d43f3a5: ci green, smoke failed on the host badge, F-063)",
+      "run 193 on 613842c: first production deploy (6afa1730, 20:33 UTC 2026-11-15), smoke failed on the permalink toolbar, F-062"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Release build clean",
+      "command": "RELEASE=1 ci on main (verify with check:copy, build with the PDF gate and test:pdf, latex, lighthouse, six e2e shards with a11y and visual)",
+      "result": "pass",
+      "evidence": "Run 207 on 34b80d2: every job green with RELEASE=1, including RELEASE=1 check:copy (no drafts or placeholders), the one-page PDF gate and test:pdf, the .tex one-page compile, Lighthouse mobile and desktop, and all six e2e shards. e2e-xbrowser (advisory) green too."
+    },
+    {
+      "id": "A2",
+      "criterion": "Production deploy green",
+      "command": "ci run 207 on main and its deploy job",
+      "result": "pass",
+      "evidence": "deploy / deploy succeeded on 34b80d2: netlify-cli 27.12.1 --prod --no-build uploaded the tested dist artifact; environment url https://emeka-nduka-nwagbo.netlify.app."
+    },
+    {
+      "id": "A3",
+      "criterion": "Production smoke",
+      "command": "BASE_URL=https://emeka-nduka-nwagbo.netlify.app npx playwright test --grep @smoke --project=desktop (the deploy job's smoke step)",
+      "result": "pass",
+      "evidence": "22 passed (22.6 s), including museum boot with the HUD, the CSP hash test, /resume/ and the 404 with zero scripts of ours, and the six guard proofs (their 'trips' twins are expected failures). Netlify's free-plan badge script is left out exactly as F-063 rules, and recorded as test annotations."
+    },
+    {
+      "id": "A4",
+      "criterion": "Production PDF is one page",
+      "command": "build job: npm run build (PDF gate) and npm run test:pdf on the dist artifact that deploy uploaded; smoke: /resume.pdf is served as a PDF",
+      "result": "pass (indirect)",
+      "evidence": "The deployed dist is the build job's artifact (Download the tested dist), whose PDF gate and test:pdf check one page. The production smoke confirms /resume.pdf returns 200 with application/pdf. A direct curl and pdfinfo against production is not possible from this session (the proxy refuses netlify.app, CONNECT 403)."
+    },
+    {
+      "id": "A5",
+      "criterion": "Production is indexable",
+      "command": "smoke: 'only a deploy preview sends X-Robots-Tag: noindex' and 'the CSP header is present on /' against the production URL",
+      "result": "pass",
+      "evidence": "Both smoke tests passed at https://emeka-nduka-nwagbo.netlify.app: no x-robots-tag on production, content-security-policy present with default-src 'self'. curl -sI from this session is blocked by the proxy, so the smoke run is the proof."
+    },
+    {
+      "id": "A6",
+      "criterion": "Tag v1.0.0 on the main merge commit",
+      "command": "git tag v1.0.0 34b80d2 && git push origin v1.0.0; proof git ls-remote --tags origin v1.0.0",
+      "result": "blocked (needs Emeka)",
+      "evidence": "The tag push was refused by this session's git proxy (HTTP 403 on four tries; only the integration branch can be pushed) and the GitHub tools here cannot create tags or releases. Emeka creates it in GitHub's release form (tag v1.0.0, target main at 34b80d2); R0 then verifies with git ls-remote."
+    }
+  ],
+  "findings": {
+    "fixed": [
+      "F-062 (smoke at the site address, PR 8)",
+      "F-063 (Netlify's free-plan badge script, PR 9)"
+    ],
+    "open": [
+      "F-057 (P3)",
+      "F-061 (P3, advisory)",
+      "F-052 (P3, verafin)"
+    ]
+  },
+  "notes": [
+    "package.json is already 1.0.0 and README has the v1.0.0 release notes (c5e3d4e).",
+    "The integration branch's own push run for 05e3868 had two rail-input (f) walks time out on a runner about twice as slow as usual in every test (mean arrival 15.2 s against 7.3 s in run 203); the PR run and run 207 on the same code passed at normal speed."
+  ],
+  "requests": [
+    {
+      "to": "Emeka",
+      "id": "tag-v1.0.0",
+      "ask": "Create the v1.0.0 tag on main (34b80d2) in GitHub's release form."
+    }
+  ]
+}

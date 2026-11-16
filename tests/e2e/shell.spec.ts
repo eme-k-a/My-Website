@@ -16,7 +16,7 @@ import type { Page } from '@playwright/test';
 import { PDF_PATH } from '../../src/app/routes';
 import { TEST_IDS } from '../../src/app/testIds';
 import { content } from '../../src/content/index';
-import { expect, test, type Guards } from './fixtures';
+import { expect, NOT_HOST_BADGE, test, withoutHostBadge, type Guards } from './fixtures';
 import { goToStop, isXbrowser, museumUrl, waitForMuseum, withoutWebgl } from './helpers';
 
 /** Every museum URL carries ?test=1 (CLAUDE.md); &mode=museum keeps it off the classic path. */
@@ -106,10 +106,15 @@ test.describe('app shell', { tag: '@smoke' }, () => {
       expect(raw.status()).toBe(200);
       // The JSON-LD Person block (WP-31, ARCHITECTURE §11.3) is data, not code: only scripts that
       // run are banned (prerender.ts and headers.ts also reject any inline script that runs).
-      expect(await raw.text()).not.toMatch(/<script\b(?![^>]*type="application\/ld\+json")/i);
+      // On a deploy, Netlify's badge tag (fixtures.ts HOST_BADGE_SRC, F-063) is the host's, not ours.
+      expect(withoutHostBadge(await raw.text())).not.toMatch(
+        /<script\b(?![^>]*type="application\/ld\+json")/i,
+      );
       await page.goto('/resume/');
       await expect(page.getByTestId(TEST_IDS.classicView)).toBeVisible();
-      await expect(page.locator('script:not([type="application/ld+json"])')).toHaveCount(0);
+      await expect(
+        page.locator(`script:not([type="application/ld+json"])${NOT_HOST_BADGE}`),
+      ).toHaveCount(0);
       await expect(page.locator('html')).toHaveAttribute('lang', 'en-CA');
       await expect(page.getByTestId(TEST_IDS.classicView)).toContainText('Nasdaq Verafin');
       // Banners show only as the :target of /resume/#why-<reason>.
@@ -143,7 +148,7 @@ test.describe('app shell', { tag: '@smoke' }, () => {
         'href',
         '/resume/',
       );
-      await expect(page.locator('script')).toHaveCount(0);
+      await expect(page.locator(`script${NOT_HOST_BADGE}`)).toHaveCount(0);
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex');
       acknowledgeNotFound(guards);
     },

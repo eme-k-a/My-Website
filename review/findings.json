@@ -731,10 +731,26 @@
     "evidence": "CI run 193 on main (613842c, the v1 merge): Netlify published production deploy 6afa1730 at 20:33 UTC (context production, state ready), then the smoke step ran against its permalink https://6afa1730...--emeka-nduka-nwagbo.netlify.app and 11 of 22 @smoke tests failed: an injected <script> (1 element on the 404 page) and an inline script in an about:srcdoc frame refused by the CSP. Preview smokes against branch aliases never showed it.",
     "expected": "The production smoke runs against the production address (WP-33: BASE_URL=<SITE_URL>) and passes.",
     "check": "The deploy job on main is green after the fix; the production checks (CSP, no X-Robots-Tag, one-page PDF) pass.",
-    "status": "open",
-    "resolution": "R0 for R10: for production the deploy step reports and smoke-tests netlify-cli's site url, not the permalink. Lands on main through the next PR.",
+    "status": "fixed",
+    "resolution": "R0 for R10: for production the deploy step reports and smoke-tests netlify-cli's site url, not the permalink. Merged to main as d43f3a5 (PR 8). Verified in ci run 203: the smoke ran at https://emeka-nduka-nwagbo.netlify.app. Its remaining failures are a different cause, F-063.",
     "round": 0,
     "gate": "M6",
     "owner": "R10"
+  },
+  {
+    "id": "F-063",
+    "severity": "P1",
+    "title": "Production deploy: Netlify's free-plan badge script is injected at the site address and trips the @smoke guards",
+    "stop": "all smoke pages",
+    "viewport": "desktop (CI deploy job)",
+    "path": "tests/e2e/fixtures.ts, tests/e2e/shell.spec.ts",
+    "evidence": "CI run 203 on main (d43f3a5): every ci job green, Netlify published the production deploy, then 11 of 22 @smoke tests failed at https://emeka-nduka-nwagbo.netlify.app. Netlify serves every page with an HTML comment after the charset meta and <script async src=\"/.netlify/scripts/hud?variant=public\" ... data-account-tier=\"free\"> after </html>, outside dist/. That same-origin script builds an about:srcdoc iframe whose inline script the self-only CSP refuses (one console error, one script-src-elem violation per page), and /resume/ and the 404 page count one script. Reproduced locally with a server that adds the same tag to dist/ (the same 11 tests fail).",
+    "expected": "Our pages ship zero scripts beyond the boot script; the production smoke passes while the host adds its badge.",
+    "check": "The deploy job on main is green; locally and in ci the guards still leave nothing out.",
+    "status": "open",
+    "resolution": "R0 for R8: against a deployed site only (BASE_URL set), the guards leave out exactly the badge frame's blocked inline script (console error located at about:srcdoc, script-src-elem violation from an about:srcdoc document) and report it as a test annotation; the /resume/ and 404 script checks leave out exactly the /.netlify/scripts/hud tag. Locally and in ci nothing is left out. Verified against the simulated injection: the 11 failures pass (the 2 guard cases that still fail locally do so without the change too, on the newer local Chromium's wording). Removing the badge itself is Emeka's call (Netlify plan setting), docs/FUTURE_IMPROVEMENTS.md. Lands on main through the next PR.",
+    "round": 0,
+    "gate": "M6",
+    "owner": "R8"
   }
 ]

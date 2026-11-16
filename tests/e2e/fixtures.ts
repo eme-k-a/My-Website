@@ -9,9 +9,61 @@
 // - a request under `/fonts/unicode-fallback/` (troika asking for a missing 3D glyph, §8.3).
 // Under the `@smoke` tag it also fails when a main-frame document from the site lacks the
 // `content-security-policy` header.
+// Against a deployed site (BASE_URL set) it leaves out exactly the two records of Netlify's badge
+// frame (see HOST_BADGE_SRC); locally and in ci nothing is left out.
 import { test as base, expect, type ConsoleMessage, type Page } from '@playwright/test';
 
 export { expect };
+
+/**
+ * Netlify's free plan serves production pages with its "Powered by Netlify" badge (F-063, first
+ * seen in ci run 203): at serve time, outside dist/, it appends
+ * `<script async src="/.netlify/scripts/hud?variant=public" ...>` after `</html>` (plus an HTML
+ * comment after the charset meta). That same-origin script builds an `about:srcdoc` iframe whose
+ * inline script the self-only CSP blocks, as it blocks every inline script but the boot script, so
+ * the badge never runs. Only when the suite runs against a deployed site do the guards leave out
+ * exactly that frame's blocked inline script (one console error, one CSP violation), and the shell
+ * specs leave out exactly that tag. Our own pages still ship zero scripts beyond the boot script.
+ */
+export const HOST_BADGE_SRC = '/.netlify/scripts/hud';
+
+/** True when the suite runs against a deployed site (playwright.config.ts reads BASE_URL). */
+export const AGAINST_DEPLOY = Boolean(process.env.BASE_URL);
+
+/** A CSS suffix that leaves the host badge's script tag out of a `script` locator on a deploy. */
+export const NOT_HOST_BADGE = AGAINST_DEPLOY ? `:not([src^="${HOST_BADGE_SRC}"])` : '';
+
+const HOST_BADGE_TAG = /<script\b[^>]*\bsrc="\/\.netlify\/scripts\/hud[?"][^>]*><\/script>/gi;
+
+/** Raw HTML without the host badge's script tag (on a deploy only; unchanged otherwise). */
+export function withoutHostBadge(html: string): string {
+  return AGAINST_DEPLOY ? html.replace(HOST_BADGE_TAG, '') : html;
+}
+
+const SRCDOC = 'about:srcdoc';
+
+/** Chromium's wording for a blocked inline script: 141 (ci, 1194) and newer builds. */
+const BLOCKED_INLINE_SCRIPT =
+  /^(Refused to execute inline script|Executing inline script violates)/;
+
+/** The console error of the badge frame's blocked inline script (deploy only). */
+function isHostBadgeConsole(message: ConsoleMessage): boolean {
+  return (
+    AGAINST_DEPLOY &&
+    message.location().url === SRCDOC &&
+    BLOCKED_INLINE_SCRIPT.test(message.text())
+  );
+}
+
+/** The CSP violation of the badge frame's blocked inline script (deploy only). */
+function isHostBadgeCsp(v: CspViolation): boolean {
+  return (
+    AGAINST_DEPLOY &&
+    v.frame === SRCDOC &&
+    v.directive === 'script-src-elem' &&
+    v.blockedURI === 'inline'
+  );
+}
 
 /** Where the kit points troika's unicode fallback (ARCHITECTURE §8.3): any request is a failure. */
 export const FALLBACK_FONT_PATH = '/fonts/unicode-fallback/';
@@ -21,6 +73,8 @@ export interface CspViolation {
   /** Random id of the document that saw it, plus a per-document counter: the dedupe key. */
   doc: string;
   seq: number;
+  /** `location.href` of the document that saw it (`about:srcdoc` for a srcdoc iframe). */
+  frame: string;
   directive: string;
   blockedURI: string;
   sourceFile: string;
@@ -72,6 +126,7 @@ function cspListener(): void {
     const violation: CspViolation = {
       doc,
       seq: seq++,
+      frame: location.href,
       directive: event.effectiveDirective,
       blockedURI: event.blockedURI,
       sourceFile: event.sourceFile,
@@ -133,12 +188,15 @@ export const test = base.extend<{ guards: Guards }>({
       };
       const seenCsp = new Set<string>();
       const documents: { url: string; csp: string | undefined }[] = [];
+      /** Records of Netlify's badge frame left out on a deploy (F-063), reported as annotations. */
+      const hostBadge: string[] = [];
 
       const addCsp = (violation: CspViolation) => {
         const key = `${violation.doc}:${violation.seq}`;
         if (seenCsp.has(key)) return;
         seenCsp.add(key);
-        records.csp.push(describeCsp(violation));
+        if (isHostBadgeCsp(violation)) hostBadge.push(describeCsp(violation));
+        else records.csp.push(describeCsp(violation));
       };
       // A binding call can still be in flight when the test ends, so the in-page list is read too.
       const collectCsp = async () => {
@@ -159,7 +217,8 @@ export const test = base.extend<{ guards: Guards }>({
       const watch = (page: Page) => {
         page.on('console', (message) => {
           if (message.type() !== 'error' || isBrowserFaviconProbe(message, origin)) return;
-          records.console.push(describeConsole(message));
+          if (isHostBadgeConsole(message)) hostBadge.push(describeConsole(message));
+          else records.console.push(describeConsole(message));
         });
         page.on('pageerror', (error) => records.pageerror.push(describeError(error)));
       };
@@ -211,6 +270,9 @@ export const test = base.extend<{ guards: Guards }>({
       await use(guards);
 
       await collectCsp();
+      for (const entry of hostBadge) {
+        testInfo.annotations.push({ type: 'host badge (F-063)', description: entry });
+      }
       const problems: string[] = [];
       for (const kind of GUARD_KINDS) {
         const list = records[kind];

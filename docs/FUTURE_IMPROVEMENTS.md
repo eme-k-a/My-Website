@@ -23,6 +23,7 @@ Last updated: 2026-11-15.
 | Firefox: one navigation per cross-browser run never finishes loading | F-061 (P3, R8) | Advisory job only. Needs the Playwright trace from the run's artifact (download it locally or in a session that can reach GitHub's artifact storage). |
 | One source for render budgets and vitals | WP-29 request (R8) | Drop the repeated assertions from `environment.spec.ts` and `fast-path.spec.ts`. |
 | Lighthouse full-page screenshot setting | WP-29 request (R10) | Move `disableFullPageScreenshot` from the CI flag into `lighthouserc.cjs`. |
+| Netlify adds its "Powered by Netlify" badge script to every production page | F-063 (Emeka's call) | Netlify's free plan adds the tag at serve time. Our CSP blocks the badge's inline script, so it never runs, and the smoke tests skip exactly that tag on a deploy. To remove it at the source: a Netlify plan with the badge toggle, or the dashboard's collaboration-tools setting if Netlify offers it for this plan. |
 
 ## Done
 

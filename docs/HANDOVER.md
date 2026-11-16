@@ -280,7 +280,7 @@ M6 is complete: `v1.0.0` is tagged on `main` at `34b80d2` and live at https://em
 
 | WP | Work | Session | Branch |
 |---|---|---|---|
-| WP-34 | Review automation (`npm run review`, scorecard, findings schema) | (pending) | `claude/m7-wp-34` |
-| WP-35 | Content runbook and `new:exhibit` scaffold | (pending) | `claude/m7-wp-35` |
-| WP-36 | Weekly scheduled rebuild, link checker, maintenance checklist | (pending) | `claude/m7-wp-36` |
+| WP-34 | Review automation (`npm run review`, scorecard, findings schema) | session_019vLPznsgH9Tsaujv6HnFCX | `claude/m7-wp-34` |
+| WP-35 | Content runbook and `new:exhibit` scaffold | session_019vLPzoCf2uxWJ29C8VjXoR | `claude/m7-wp-35` |
+| WP-36 | Weekly scheduled rebuild, link checker, maintenance checklist | session_019vLPzmrV4gCW3fTkHdGZup | `claude/m7-wp-36` |
 

@@ -273,3 +273,14 @@ All five started at 05:44 UTC from `df5a730`. R0 polls them with an "M5 check-in
 **F-062 merged, F-063 found (2026-11-16 00:04 UTC):** PR 8 merged as `d43f3a5`; ci run 203 passed every job and the smoke ran at the site address, then failed on Netlify's free-plan badge script, which the host adds to every production page and our CSP blocks (F-063, P1, test-side). Fix on this branch: on a deployed site the guards and the shell script checks leave out exactly that badge. Next: Emeka's go for PR 9 to `main`, a green deploy job, the production checks, then the `v1.0.0` tag.
 
 **v1.0.0 live, M6 complete but for the tag (2026-11-16 01:08 UTC):** PR 9 merged as `34b80d2` at Emeka's "go"; ci run 207 passed every job and the production smoke passed 22 of 22 at https://emeka-nduka-nwagbo.netlify.app (`review/reports/WP-33.json`). The `v1.0.0` tag push is refused by this session's git proxy (HTTP 403), so Emeka creates the tag in GitHub's release form (tag `v1.0.0`, target `main` at `34b80d2`); R0 verifies with `git ls-remote --tags origin v1.0.0`. Next: M7 (WP-34 review harness, WP-35 content-update runbook, WP-36).
+
+## 14. M7 (started 2026-11-16)
+
+M6 is complete: `v1.0.0` is tagged on `main` at `34b80d2` and live at https://emeka-nduka-nwagbo.netlify.app. Emeka said "go" for M7. Three builders run as separate cloud sessions (tag `commit-history:M7`), each pushing only to its own branch; R0 polls them about every 90 minutes with an "M7 check-in" message, merges by cherry-pick onto the integration branch, then asks Emeka before a PR to `main` (needed for WP-36's A4). Routing is in RULINGS ("M7 routing").
+
+| WP | Work | Session | Branch |
+|---|---|---|---|
+| WP-34 | Review automation (`npm run review`, scorecard, findings schema) | (pending) | `claude/m7-wp-34` |
+| WP-35 | Content runbook and `new:exhibit` scaffold | (pending) | `claude/m7-wp-35` |
+| WP-36 | Weekly scheduled rebuild, link checker, maintenance checklist | (pending) | `claude/m7-wp-36` |
+

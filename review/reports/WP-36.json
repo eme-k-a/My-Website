@@ -1,0 +1,74 @@
+{
+  "wp": "WP-36",
+  "role": "R10 DevOps & Release",
+  "status": "done",
+  "branch": "claude/m7-wp-36 (from claude/intelligent-sagan-poq45q at baaff11)",
+  "commits": [
+    "598ea06 feat(ci): external link checker",
+    "eeaf593 ci: weekly rebuild and production checks",
+    "135c7c8 docs(maintenance): dated checklist"
+  ],
+  "changedFiles": [
+    ".github/workflows/scheduled.yml",
+    "scripts/check-links.ts",
+    "scripts/check-links.test.ts",
+    "docs/MAINTENANCE.md",
+    "review/reports/WP-36.json"
+  ],
+  "acceptance": [
+    {
+      "id": "A1",
+      "criterion": "Workflow valid",
+      "command": "python3 -c \"import yaml; yaml.safe_load(open('.github/workflows/scheduled.yml')); print('yaml ok')\"",
+      "result": "pass",
+      "evidence": "yaml ok. prettier --check clean. actionlint is not installed here; a scratch check confirmed every steps.<id>, needs.<job> and needs.<job>.outputs.<name> reference resolves, triggers are schedule ('23 9 * * 1') and workflow_dispatch, top-level permissions contents: read, issues: write. The report job's issue-body script was dry-run locally with simulated results."
+    },
+    {
+      "id": "A2",
+      "criterion": "Link checker fails on 404, warns on 999",
+      "command": "npx vitest run --project unit scripts/check-links.test.ts",
+      "result": "pass",
+      "evidence": "14 passed against a local fixture server: 404 fails (no retry), 999 warns, 503 retried once (recovered passes, dead fails), a hang fails at the timeout, ECONNREFUSED fails, 301 followed, mailto:/tel:/relative/same-origin skipped, CLI exits 0 with only warnings and 1 on a 404 naming URL and page. Against the real dist from here: github.com/eme-k-a 200; linkedin.com ENOTFOUND (this container cannot resolve it; in Actions it should answer 999, a warning)."
+    },
+    {
+      "id": "A3",
+      "criterion": "Stale tense is caught",
+      "command": "BUILD_DATE=2027-01-05 RELEASE=1 npm run build; echo \"exit=$?\"",
+      "result": "pass",
+      "evidence": "check-content: verafin: tense is 'present' but the role ended 2026-12. Rewrite bullets in past tense and set tense: 'past'. / content check failed (1 error, build date 2027-01-05) / exit=1. Today's RELEASE=1 npm run build exits 0 (budgets ok, check-copy ok with dist)."
+    },
+    {
+      "id": "A4",
+      "criterion": "Scheduled run succeeds on main",
+      "command": "gh workflow run scheduled.yml --ref main && gh run list --workflow scheduled.yml --limit 1 --json conclusion,url",
+      "result": "skipped",
+      "evidence": "R0's, after the PR to main Emeka asks for (M7 routing). Builders never trigger workflows."
+    },
+    {
+      "id": "A5",
+      "criterion": "Checklist has all dated items",
+      "command": "docs/MAINTENANCE.md",
+      "result": "pass",
+      "evidence": "Dated checklist rows: January 2027 Verafin past tense (build fails from 2027-01-01, first scheduled failure Monday 2027-01-04), May 2027 degree completed plus copy check, after graduation the @mun.ca address, volunteer end date and past tense, monthly npm run review round, quarterly 5 real-GPU screenshots from Emeka's laptop; plus the weekly job, how to read its issue, and reminders as scheduled tasks for R0. Steps link to CONTENT_UPDATE.md."
+    }
+  ],
+  "openQuestions": [
+    {
+      "question": "docs/MAINTENANCE.md links docs/CONTENT_UPDATE.md (no section anchors) and mentions its PDF section; WP-35 had not pushed that file when this branch was cut. Check both read consistently after both merge.",
+      "for": "R0",
+      "default": "Link to the file only; MAINTENANCE.md lists the same dated items as the WP-36 brief."
+    },
+    {
+      "question": "Locally the @smoke run of the workflow's local step passed 20 of 22; the two 'is recorded by the csp guard' tests failed because the mapped Chromium (revision 1243 standing in for 1194) also logs each blocked CSP action as a console error. CI installs the real 1194, where all 22 passed (run 207). tests/** is R8's, so nothing was changed.",
+      "for": "R8",
+      "default": "No change; recorded here."
+    },
+    {
+      "question": "rebuild uses environment 'production' like deploy.yml. If that environment ever gets required reviewers, the Monday run waits for approval.",
+      "for": "Emeka",
+      "default": "Same environment as deploy.yml, so deploy history stays in one place."
+    }
+  ],
+  "depsRequest": [],
+  "notes": "A4 needs the workflow on main: after the merge, R0 dispatches it once (gh workflow run scheduled.yml --ref main). The first failing run creates the scheduled-check label itself (gh label create --force). The scheduled deploy does not share deploy.yml's concurrency group (a ci deploy joining it would cancel this run's tests); instead it deploys only if main still points at the commit it built and tested, so it never puts an older build back. The report job fires on any job result 'failure'; a run cancelled by hand opens no issue. No package.json script was needed: the workflow calls npx tsx scripts/check-links.ts directly."
+}

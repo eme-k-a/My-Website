@@ -86,7 +86,7 @@ describe('new:exhibit scaffold (WP-35)', () => {
     for (const file of result.files) {
       const text = await readFile(file, 'utf8');
       expect(text, file).not.toMatch(/__[A-Z_]+__/);
-      expect(text, file).not.toContain('—');
+      expect(text, file).not.toContain('\u2014');
     }
   });
 

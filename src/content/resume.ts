@@ -342,6 +342,10 @@ export const resume = {
             type: 'p',
             text: 'In January 2026, Emeka became IT Lead for the Memorial University chapter of the National Society of Black Engineers. He built its website, launched it at nsbe-mun.ca, and continues to maintain it.',
           },
+          {
+            type: 'p',
+            text: 'The noticeboard gives that work a physical form. Visitors see the page on the front; the two clips let someone change what is on display. Around the back, a small access panel stands for the work that continues after a website goes live.',
+          },
         ],
         object: {
           text: 'Brass clips hold a replaceable page on the front of the board. A latched panel on the back represents the work of maintaining the chapter’s website.',

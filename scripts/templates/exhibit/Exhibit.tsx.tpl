@@ -5,5 +5,12 @@ import type { ExhibitProps } from '../_kit';
 import { Placeholder } from '../_kit/Placeholder';
 
 export default function __COMPONENT__({ slot }: ExhibitProps) {
-  return <Placeholder slot={slot} />;
+  // The kit's crate stands on the plinth top, but an exhibit's bounds start 0.025 m above it
+  // (EXPERIENCE §5.3), so the scaffold lifts it there and reports inBounds under ?test=1.
+  const lift = slot.mount === 'plinth' ? slot.bounds.min[1] : 0;
+  return (
+    <group position={[0, lift, 0]}>
+      <Placeholder slot={slot} />
+    </group>
+  );
 }

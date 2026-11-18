@@ -35,7 +35,7 @@ export interface NewExhibitResult {
   files: string[];
 }
 
-/** `practice-co` -> `PracticeCo`. */
+/** `new-job` -> `NewJob`. */
 export function componentName(id: string): string {
   return id
     .split('-')

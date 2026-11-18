@@ -10,7 +10,15 @@ import { ESLint } from 'eslint';
 import * as prettier from 'prettier';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { EXHIBIT_IDS } from '../src/content/ids';
+import { Group, Mesh, MeshBasicMaterial } from 'three';
+import { content } from '../src/content/index';
 import { MAX_EXHIBIT_TRIANGLES } from '../src/museum/exhibits/_kit/defineExhibit';
+import { fitsBounds, measureObject } from '../src/museum/exhibits/_kit/measure';
+import {
+  createPlaceholderGeometries,
+  placeholderFit,
+} from '../src/museum/exhibits/_kit/placeholderGeometry';
+import { computeLayout } from '../src/museum/rail/layout';
 import type { ExhibitManifest } from '../src/museum/exhibits/_kit/types';
 import {
   EXHIBITS_DIR,
@@ -18,6 +26,7 @@ import {
   newExhibit,
   nextSteps,
   render,
+  validateId,
   type NewExhibitResult,
 } from './new-exhibit';
 
@@ -69,6 +78,26 @@ describe('new:exhibit scaffold (WP-35)', () => {
     expect(component).toContain("import { Placeholder } from '../_kit/Placeholder';");
     expect(component).toContain('export default function Verafin({ slot }: ExhibitProps)');
     expect(component).toContain('<Placeholder slot={slot} />');
+    expect(component).toContain("const lift = slot.mount === 'plinth' ? slot.bounds.min[1] : 0;");
+  });
+
+  it('lifts the crate so it fits every plinth and wall slot of the layout (inBounds)', () => {
+    const layout = computeLayout(content, new Date('2026-10-15T00:00:00Z'));
+    const material = new MeshBasicMaterial();
+    for (const slot of layout.slots) {
+      const fit = placeholderFit(slot);
+      const { crate, caps } = createPlaceholderGeometries(fit.size);
+      const lift = new Group();
+      lift.position.set(0, slot.mount === 'plinth' ? slot.bounds.min[1] : 0, 0);
+      const body = new Group();
+      body.position.set(...fit.center);
+      body.add(new Mesh(crate, material), new Mesh(caps, material));
+      lift.add(body);
+      const root = new Group().add(lift);
+      const { box, triangles } = measureObject(root);
+      expect(fitsBounds(box, slot.bounds), slot.id).toBe(true);
+      expect(triangles, slot.id).toBeLessThanOrEqual(300);
+    }
   });
 
   it('the README states the slot bounds, the budget, MergeStatic and the concept link', async () => {
@@ -125,7 +154,7 @@ describe('new:exhibit refuses', () => {
     await expect(newExhibit(undefined, { root })).rejects.toThrow(/Usage/);
   });
 
-  it.each(['Practice', 'practice_co', 'practice--co', '-practice', 'practice-', '1co', '_kit'])(
+  it.each(['NewJob', 'new_job', 'new--job', '-new', 'new-', '1co', '_kit'])(
     'the non-kebab id %s',
     async (bad) => {
       await expect(newExhibit(bad, { root, ids: [bad], title: 'x' })).rejects.toThrow(/kebab-case/);
@@ -133,7 +162,7 @@ describe('new:exhibit refuses', () => {
   );
 
   it('an id that is not in EXHIBIT_IDS', async () => {
-    await expect(newExhibit('practice-co', { root, title: 'x' })).rejects.toThrow(
+    await expect(newExhibit('not-an-exhibit-id', { root, title: 'x' })).rejects.toThrow(
       /not in EXHIBIT_IDS/,
     );
   });
@@ -144,16 +173,18 @@ describe('new:exhibit refuses', () => {
     expect(await read('index.ts')).toBe(before);
   });
 
-  it('the real exhibit folders (every current id already has one)', async () => {
-    for (const id of EXHIBIT_IDS) {
-      await expect(newExhibit(id)).rejects.toThrow(/already exists/);
+  it('every real exhibit folder (validation only: this test never writes into src/)', () => {
+    const existing = EXHIBIT_IDS.filter((id) => existsSync(join(ROOT, EXHIBITS_DIR, id)));
+    expect(existing.length).toBeGreaterThan(0);
+    for (const id of existing) {
+      expect(() => validateId(id, EXHIBIT_IDS, ROOT)).toThrow(/already exists/);
     }
   });
 });
 
 describe('helpers', () => {
   it('componentName makes a PascalCase identifier', () => {
-    expect(componentName('practice-co')).toBe('PracticeCo');
+    expect(componentName('new-job')).toBe('NewJob');
     expect(componentName('finance-tracker')).toBe('FinanceTracker');
     expect(componentName('b2b-app')).toBe('B2bApp');
   });
@@ -163,10 +194,10 @@ describe('helpers', () => {
   });
 
   it('nextSteps names the registry test, verify, the brief and the runbook', () => {
-    const steps = nextSteps('practice-co').join('\n');
+    const steps = nextSteps('new-job').join('\n');
     expect(steps).toContain('registry.test.ts');
     expect(steps).toContain('npm run verify');
-    expect(steps).toContain('review/concepts/practice-co.md');
+    expect(steps).toContain('review/concepts/new-job.md');
     expect(steps).toContain('docs/CONTENT_UPDATE.md');
   });
 });

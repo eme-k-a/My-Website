@@ -1,0 +1,310 @@
+# Scheduled maintenance (ARCHITECTURE §14.4, WP-36, R10). "Now" is the build date (§3.5), so a
+# site that is never rebuilt goes stale: "On view now", durations and the JSON-LD worksFor drift.
+# Every Monday this workflow rebuilds main in release mode, tests that build and deploys exactly
+# it to production, then checks production itself. Any failure opens (or comments on) the open
+# issue labeled scheduled-check. docs/MAINTENANCE.md explains how to read that issue.
+#
+# - rebuild: check out main, RELEASE=1 npm run build (check-content fails while a tense flag is
+#   stale, §3.6, and names the entry), npm run test:pdf, the @smoke specs against the local dist,
+#   then netlify-cli 27.12.1 deploy --prod --no-build of that same dist. The deploy is skipped when
+#   main moved during the run: the push's own ci run tests and deploys the newer commit, and this
+#   run must not put an older build back.
+# - production-checks: the @smoke specs at SITE_URL (F-062 and F-063 apply: with BASE_URL set the
+#   guards leave out exactly Netlify's free-plan badge script), the production /resume.pdf is one
+#   page, and the external links of the deployed dist answer (check-links.ts; LinkedIn's 999 is a
+#   warning). Each check runs even when an earlier one failed, so the issue lists all of them.
+# - report: only on a failure.
+# The workflow only reports. It never commits: a stale tense is fixed by a person following
+# docs/CONTENT_UPDATE.md, and the next run (or a dispatch) confirms it.
+name: scheduled
+
+on:
+  schedule:
+    - cron: '23 9 * * 1' # Mondays 09:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+# Never two maintenance runs at once, and never cancel one halfway through a deploy.
+concurrency:
+  group: scheduled
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    if: ${{ !github.event.repository.fork }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      RELEASE: '1'
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+      skipped-reason: ${{ steps.tip.outputs.reason }}
+      build: ${{ steps.build.outcome }}
+      pdf: ${{ steps.pdf.outcome }}
+      smoke: ${{ steps.smoke.outcome }}
+      deploy: ${{ steps.deploy.outcome }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Record the commit
+        id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # The PDF step of the build and the smoke specs both need Chromium.
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Release build (stops on a stale tense flag)
+        id: build
+        run: npm run build
+      - name: PDF checks
+        id: pdf
+        run: npm run test:pdf
+      - name: Smoke test the local build
+        id: smoke
+        run: npx playwright test --grep @smoke --project=desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-scheduled
+          path: dist
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Check the Netlify secrets
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          missing=''
+          [ -n "$NETLIFY_AUTH_TOKEN" ] || missing="$missing NETLIFY_AUTH_TOKEN"
+          [ -n "$NETLIFY_SITE_ID" ] || missing="$missing NETLIFY_SITE_ID"
+          if [ -n "$missing" ]; then
+            echo "::error title=Netlify secrets missing::Repository secret(s)$missing not set. Add them under Settings, Secrets and variables, Actions (README, Deploy). Nothing was deployed."
+            exit 1
+          fi
+
+      - name: Check that main has not moved
+        id: tip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          set -euo pipefail
+          tip="$(gh api "repos/$REPO/commits/main" --jq .sha)"
+          if [ "$tip" = "$SHA" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            reason="main moved from $SHA to $tip during this run; the ci run of $tip deploys it"
+            echo "::notice title=Deploy skipped::$reason."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "reason=$reason" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy the tested build to production
+        id: deploy
+        if: ${{ steps.tip.outputs.deploy == 'true' }}
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          SHA: ${{ steps.sha.outputs.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/netlify-deploy.json"
+          # netlify-cli reads the token and site id from the environment; its JSON is parsed here
+          # and never printed.
+          npx --yes netlify-cli@27.12.1 deploy --no-build --dir=dist --prod \
+            --message="weekly rebuild of $SHA (scheduled run $RUN_ID)" --json > "$out"
+          deploy_url="$(sed -n '/^{/,$p' "$out" | jq -r '.deploy_url // empty')"
+          site_url="$(sed -n '/^{/,$p' "$out" | jq -r '.url // empty')"
+          rm -f "$out"
+          if [ -z "$deploy_url" ]; then
+            echo "::error title=No deploy URL::netlify-cli returned no deploy_url."
+            exit 1
+          fi
+          expected="$(npx tsx --eval "import('./src/content/site.ts').then(m => console.log(m.SITE_URL))")"
+          if [ -n "$site_url" ] && [ "$site_url" != "$expected" ]; then
+            echo "::warning title=SITE_URL differs::Netlify serves production at $site_url but src/content/site.ts says $expected."
+          fi
+          echo "url=${site_url:-$expected}" >> "$GITHUB_OUTPUT"
+          echo "Deployed: ${site_url:-$expected}"
+
+      - name: Write the job summary
+        if: ${{ always() }}
+        env:
+          SHA: ${{ steps.sha.outputs.sha }}
+          URL: ${{ steps.deploy.outputs.url }}
+          REASON: ${{ steps.tip.outputs.reason }}
+        run: |
+          {
+            echo "### Weekly rebuild"
+            echo
+            echo "- Commit: \`$SHA\` on \`main\`, build date $(date -u +%F)"
+            if [ -n "$URL" ]; then echo "- Deployed to production: $URL"; fi
+            if [ -n "$REASON" ]; then echo "- Deploy skipped: $REASON"; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-local-smoke-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
+  production-checks:
+    needs: rebuild
+    if: ${{ !github.event.repository.fork }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      site: ${{ steps.site.outputs.url }}
+      smoke: ${{ steps.smoke.outcome }}
+      pdf: ${{ steps.pdf.outcome }}
+      links: ${{ steps.links.outcome }}
+    steps:
+      # The specs and scripts of the commit that was just built and deployed.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.rebuild.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-scheduled
+          path: dist
+      - name: Read SITE_URL
+        id: site
+        run: echo "url=$(npx tsx --eval "import('./src/content/site.ts').then(m => console.log(m.SITE_URL))")" >> "$GITHUB_OUTPUT"
+      - name: Read the Playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Smoke test production
+        id: smoke
+        env:
+          BASE_URL: ${{ steps.site.outputs.url }}
+        run: npx playwright test --grep @smoke --project=desktop
+      - name: Production resume.pdf is one page
+        id: pdf
+        if: ${{ !cancelled() && steps.site.outputs.url != '' }}
+        env:
+          SITE_URL: ${{ steps.site.outputs.url }}
+        run: |
+          set -euo pipefail
+          curl -sSf "$SITE_URL/resume.pdf" -o "$RUNNER_TEMP/prod.pdf"
+          pdfinfo "$RUNNER_TEMP/prod.pdf" | grep '^Pages:'
+          test "$(pdfinfo "$RUNNER_TEMP/prod.pdf" | awk '/^Pages:/{print $2}')" = "1"
+      - name: External links
+        id: links
+        if: ${{ !cancelled() && steps.site.outputs.url != '' }}
+        env:
+          SITE_URL: ${{ steps.site.outputs.url }}
+        run: npx tsx scripts/check-links.ts --base "$SITE_URL"
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: scheduled-production-smoke-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
+  report:
+    needs: [rebuild, production-checks]
+    if: ${{ always() && !github.event.repository.fork && contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update the scheduled-check issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ needs.rebuild.outputs.sha }}
+          REBUILD: ${{ needs.rebuild.result }}
+          BUILD: ${{ needs.rebuild.outputs.build }}
+          LOCAL_PDF: ${{ needs.rebuild.outputs.pdf }}
+          LOCAL_SMOKE: ${{ needs.rebuild.outputs.smoke }}
+          DEPLOY: ${{ needs.rebuild.outputs.deploy }}
+          SKIPPED: ${{ needs.rebuild.outputs.skipped-reason }}
+          CHECKS: ${{ needs.production-checks.result }}
+          PROD_SMOKE: ${{ needs.production-checks.outputs.smoke }}
+          PROD_PDF: ${{ needs.production-checks.outputs.pdf }}
+          LINKS: ${{ needs.production-checks.outputs.links }}
+        run: |
+          set -euo pipefail
+          line() { printf -- '- %s: %s\n' "$1" "${2:-not run}"; }
+          body="$RUNNER_TEMP/issue.md"
+          {
+            printf 'The scheduled maintenance run (%s) failed: %s\n\n' "$EVENT" "$RUN_URL"
+            printf 'Commit of main: `%s`. Build date: %s (UTC).\n\n' "${SHA:-unknown}" "$(date -u +%F)"
+            printf '**rebuild**: %s\n\n' "$REBUILD"
+            line 'Release build (`RELEASE=1 npm run build`)' "$BUILD"
+            line 'PDF checks (`npm run test:pdf`)' "$LOCAL_PDF"
+            line 'Smoke test of the local build' "$LOCAL_SMOKE"
+            line 'Production deploy' "${DEPLOY:-not run}${SKIPPED:+ ($SKIPPED)}"
+            printf '\n**production-checks**: %s\n\n' "$CHECKS"
+            line 'Smoke test of production' "$PROD_SMOKE"
+            line 'Production resume.pdf is one page' "$PROD_PDF"
+            line 'External links (`scripts/check-links.ts`)' "$LINKS"
+            printf '\n'
+            if [ "$BUILD" = 'failure' ]; then
+              printf 'The release build failed. When the log of "Release build" shows a check-content line such as `verafin: tense is '"'"'present'"'"' but the role ended ...`, a role has ended: R1 follows docs/CONTENT_UPDATE.md (past tense, `tense: '"'"'past'"'"'`), and production keeps the last good build until then. Nothing was deployed.\n\n'
+            fi
+            if [ "$LINKS" = 'failure' ]; then
+              printf 'A link check failed: the step log and the job summary name each URL and the pages that carry it. A single timeout can be the other site; dispatch the workflow again before changing content.\n\n'
+            fi
+            printf 'How to read this issue and what to do: docs/MAINTENANCE.md. Close it once a run is green again.\n'
+          } > "$body"
+          gh label create scheduled-check --repo "$REPO" --color B60205 \
+            --description 'Opened by the weekly scheduled maintenance workflow' --force
+          open="$(gh issue list --repo "$REPO" --label scheduled-check --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --repo "$REPO" --body-file "$body"
+            echo "Commented on issue #$open."
+          else
+            gh issue create --repo "$REPO" --title "Scheduled check failed ($(date -u +%F))" \
+              --label scheduled-check --body-file "$body"
+          fi

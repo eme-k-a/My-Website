@@ -1,0 +1,119 @@
+{
+  "verafin": {
+    "object": {
+      "triangles": 2732,
+      "drawCalls": 5,
+      "inBounds": true
+    },
+    "scene": {
+      "calls": 22,
+      "triangles": 7514,
+      "textureMB": 11.916996002197264,
+      "tier": "medium"
+    }
+  },
+  "mysa": {
+    "object": {
+      "triangles": 4820,
+      "drawCalls": 7,
+      "inBounds": true
+    },
+    "scene": {
+      "calls": 28,
+      "triangles": 9930,
+      "textureMB": 12.166996002197264,
+      "tier": "medium"
+    }
+  },
+  "wailo": {
+    "object": {
+      "triangles": 2598,
+      "drawCalls": 7,
+      "inBounds": true
+    },
+    "scene": {
+      "calls": 40,
+      "triangles": 11836,
+      "textureMB": 12.666996002197264,
+      "tier": "medium"
+    }
+  },
+  "cfia": {
+    "object": {
+      "triangles": 1116,
+      "drawCalls": 6,
+      "inBounds": true
+    },
+    "scene": {
+      "calls": 28,
+      "triangles": 8748,
+      "textureMB": 12.166996002197264,
+      "tier": "medium"
+    }
+  },
+  "klarup": {
+    "object": {
+      "triangles": 3052,
+      "drawCalls": 8,
+      "inBounds": true
+    },
+    "scene": {
+      "calls": 31,
+      "triangles": 16480,
+      "textureMB": 12.416996002197264,
+      "tier": "medium"
+    }
+  },
+  "finance-tracker": {
+    "object": {
+      "triangles": 7480,
+      "drawCalls": 5,
+      "inBounds": true
+    },
+    "scene": {
+      "calls": 19,
+      "triangles": 12216,
+      "textureMB": 11.916996002197264,
+      "tier": "medium"
+    }
+  },
+  "sdsj": {
+    "object": {
+      "triangles": 792,
+      "drawCalls": 9,
+      "inBounds": true
+    },
+    "scene": {
+      "calls": 35,
+      "triangles": 7164,
+      "textureMB": 12.166996002197264,
+      "tier": "medium"
+    }
+  },
+  "mun": {
+    "object": {
+      "triangles": 2676,
+      "drawCalls": 8,
+      "inBounds": true
+    },
+    "scene": {
+      "calls": 61,
+      "triangles": 22610,
+      "textureMB": 12.166996002197264,
+      "tier": "medium"
+    }
+  },
+  "certifications": {
+    "object": {
+      "triangles": 3924,
+      "drawCalls": 7,
+      "inBounds": true
+    },
+    "scene": {
+      "calls": 20,
+      "triangles": 7938,
+      "textureMB": 11.666996002197264,
+      "tier": "medium"
+    }
+  }
+}

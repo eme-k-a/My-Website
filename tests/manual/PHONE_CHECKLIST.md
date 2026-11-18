@@ -20,7 +20,7 @@ Pass when, without scrolling, you can read your name, the role line, the educati
 Pass when each swipe lands on the next stop (its card settles at the bottom of the screen), none is skipped, the camera never stops between two stops, and every stop's object is visible above its card.
 [ ] Pass [ ] Fail Notes: ______________________
 
-**3. Step into and out of each wing.** At the Projects door, tap "Step inside"; swipe through the wing's two exhibits; tap "Return to the aisle". Go back into the wing, then leave it with the browser's Back gesture or button instead. Repeat both ways at the Volunteer & Leadership door (one exhibit).
+**3. Step into and out of each wing.** At the Projects door, tap "Step inside"; swipe through the wing's two exhibits; tap "Return to the aisle". Go back into the wing, then leave it with the browser's Back gesture or button instead. Repeat both ways at the Volunteer & Leadership door. Check that NSBE MUN comes first and Software Developers of St. John's second.
 Pass when "Step inside" glides you into the room, "Return to the aisle" appears at the top left inside the wing, and both "Return to the aisle" and Back bring you to the same door in the main aisle, with the page still working.
 [ ] Pass [ ] Fail Notes: ______________________
 

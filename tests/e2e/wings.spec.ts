@@ -131,6 +131,40 @@ test.describe('wings', () => {
     await expectBackAtDoor(page, wing, door, before);
   });
 
+  test('the Volunteer door leads through NSBE MUN and SDSJ and restores focus on return', async ({
+    page,
+    hasTouch,
+  }) => {
+    const before = await openAtDoor(page, 'volunteer-door');
+    const card = page.getByTestId(TEST_IDS.card('volunteer-door'));
+    const links = card.getByRole('link');
+    await expect(links).toHaveCount(2);
+    await expect(links.nth(0)).toHaveAttribute('href', '/exhibit/nsbe-mun/');
+    await expect(links.nth(1)).toHaveAttribute('href', '/exhibit/sdsj/');
+
+    await stepInside(page, 'volunteer', hasTouch);
+    await settledAt(page, 'nsbe-mun');
+    const open = page.getByTestId(TEST_IDS.open('nsbe-mun'));
+    if (hasTouch) await open.tap();
+    else await open.click();
+    const dialog = page.getByTestId(TEST_IDS.dialog);
+    await expect(
+      dialog.getByRole('heading', { level: 2, name: 'The Chapter Noticeboard' }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/exhibit\/nsbe-mun\//);
+    await page.getByTestId(TEST_IDS.dialogOlder).click();
+    await expect(dialog.getByRole('heading', { level: 2, name: 'The Round Table' })).toBeVisible();
+    await expect(page).toHaveURL(/\/exhibit\/sdsj\//);
+    await page.getByTestId(TEST_IDS.dialogClose).click();
+    await expect(dialog).toBeHidden();
+    await settledAt(page, 'sdsj');
+    await expect(page.getByTestId(TEST_IDS.open('sdsj'))).toBeFocused();
+    await expect(page.getByTestId(TEST_IDS.card('sdsj'))).toContainText('V2');
+
+    await page.getByTestId(TEST_IDS.exitWing).click();
+    await expectBackAtDoor(page, 'volunteer', 'volunteer-door', before);
+  });
+
   test('goTo crosses tracks through the wing history entry', async ({ page }) => {
     await page.goto(museumUrl('/'));
     await waitForMuseum(page);

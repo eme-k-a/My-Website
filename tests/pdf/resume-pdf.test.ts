@@ -94,6 +94,17 @@ describe('dist/resume.pdf', () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
+  it('lists NSBE MUN and SDSJ under Volunteer Experience in newest-first order', () => {
+    // PDF extraction inserts spaces inside the letter-spaced section headings.
+    const compact = text.replace(/\s+/g, '');
+    const heading = compact.indexOf('VOLUNTEEREXPERIENCE');
+    const nsbe = compact.indexOf('ITLeadJan2026–PresentNSBEMUN');
+    const sdsj = compact.indexOf("SoftwareDevelopersofSt.John's");
+    expect(heading).toBeGreaterThanOrEqual(0);
+    expect(nsbe).toBeGreaterThan(heading);
+    expect(sdsj).toBeGreaterThan(nsbe);
+  });
+
   it('prints at least one bullet for every work entry', () => {
     for (const work of content.experiences) {
       const printed = work.bullets.filter((b) => b.print);

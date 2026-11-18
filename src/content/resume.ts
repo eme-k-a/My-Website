@@ -319,6 +319,38 @@ export const resume = {
   ],
   volunteer: [
     {
+      id: 'nsbe-mun',
+      kind: 'volunteer',
+      role: 'IT Lead',
+      org: 'NSBE MUN',
+      location: { city: "St. John's", region: 'NL' },
+      dates: { start: '2026-01', end: 'present' },
+      tense: 'present',
+      bullets: [
+        {
+          text: 'Maintain the chapter website after building and deploying it at nsbe-mun.ca.',
+          print: true,
+          priority: 1,
+        },
+      ],
+      exhibit: {
+        title: 'The Chapter Noticeboard',
+        caption:
+          'The website Emeka built, deployed and now maintains for the NSBE chapter at Memorial University.',
+        story: [
+          {
+            type: 'p',
+            text: 'In January 2026, Emeka became IT Lead for the Memorial University chapter of the National Society of Black Engineers. He built its website, launched it at nsbe-mun.ca, and continues to maintain it.',
+          },
+        ],
+        object: {
+          text: 'Brass clips hold a replaceable page on the front of the board. A latched panel on the back represents the work of maintaining the chapter’s website.',
+        },
+        tags: ['Web Development', 'Deployment', 'Site Maintenance'],
+        links: [{ label: 'Visit the NSBE MUN website', href: 'https://nsbe-mun.ca/' }],
+      },
+    },
+    {
       id: 'sdsj',
       kind: 'volunteer',
       role: 'President',
@@ -473,7 +505,7 @@ export const resume = {
       title: 'Volunteer & Leadership',
       after: 'mysa',
       side: 'right',
-      items: ['sdsj'],
+      items: ['nsbe-mun', 'sdsj'],
     },
   ],
 } satisfies ResumeInput;

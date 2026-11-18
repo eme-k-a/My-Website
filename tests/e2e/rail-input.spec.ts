@@ -618,7 +618,9 @@ const overlaps = (a: Rect, b: Rect) =>
 async function expectRailClearOfWingTitles(page: Page): Promise<void> {
   await openGallery(page);
   const wingStops = content.wings.flatMap((w) => w.items as ExhibitId[]);
-  expect(wingStops).toEqual(expect.arrayContaining(['sdsj', 'klarup', 'finance-tracker']));
+  expect(wingStops).toEqual(
+    expect.arrayContaining(['nsbe-mun', 'sdsj', 'klarup', 'finance-tracker']),
+  );
   for (const id of wingStops) {
     await goToStop(page, id);
     const titles = await wallTitleRects(page, id);

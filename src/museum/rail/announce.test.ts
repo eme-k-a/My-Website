@@ -28,10 +28,10 @@ describe('wording (EXPERIENCE §8.4 aria-live rows)', () => {
 
   it('announces doors, the lobby and the desk', () => {
     expect(arrivalMessage('projects-door')).toBe(
-      'Projects wing door. Press Enter to step inside, or keep scrolling.',
+      'Projects wing door. 2 exhibits. Press Enter to step inside, or keep scrolling.',
     );
     expect(arrivalMessage('volunteer-door')).toBe(
-      'Volunteer & Leadership wing door. Press Enter to step inside, or keep scrolling.',
+      'Volunteer & Leadership wing door. 2 exhibits. Press Enter to step inside, or keep scrolling.',
     );
     expect(arrivalMessage('lobby')).toBe('Lobby.');
     expect(arrivalMessage('desk')).toBe('Front desk.');

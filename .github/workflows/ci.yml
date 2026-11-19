@@ -33,8 +33,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -44,7 +44,7 @@ jobs:
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
@@ -62,8 +62,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -72,7 +72,7 @@ jobs:
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
@@ -83,13 +83,13 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - name: Render the PDF preview
         run: mkdir -p out && pdftoppm -png -r 110 dist/resume.pdf out/resume-preview
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist
           include-hidden-files: true
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: resume-preview
           path: out/resume-preview*.png
@@ -111,13 +111,13 @@ jobs:
     env:
       E2E_SHARD: ${{ matrix.shard }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
@@ -125,7 +125,7 @@ jobs:
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
@@ -149,19 +149,19 @@ jobs:
           done
           echo "Changed or new baselines in this shard: $(find baseline-changes -type f | wc -l)"
       - if: ${{ inputs.update-baselines }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: visual-baselines-${{ matrix.shard }}
           path: baseline-changes/
           if-no-files-found: ignore
       - if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           if-no-files-found: ignore
       - if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.shard }}
           path: test-results/
@@ -176,13 +176,13 @@ jobs:
     timeout-minutes: 20
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
@@ -191,7 +191,7 @@ jobs:
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
       # Its own key: the Chromium jobs save their cache under playwright-<os>-<version>.
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-xbrowser-${{ runner.os }}-${{ steps.playwright.outputs.version }}
@@ -199,13 +199,13 @@ jobs:
         run: npx playwright install --with-deps firefox webkit
       - run: npx playwright test --project=firefox-dom --project=webkit-dom
       - if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-xbrowser
           path: playwright-report/
           if-no-files-found: ignore
       - if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-xbrowser
           path: test-results/
@@ -222,8 +222,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           pattern: visual-baselines-*
           merge-multiple: true
@@ -249,13 +249,13 @@ jobs:
     # fallback; then the error-level assertions of lighthouserc*.cjs gate the job. SwiftShader
     # performance on / and the exhibit page stays a warning there (ARCHITECTURE §13.8).
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
@@ -263,7 +263,7 @@ jobs:
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
@@ -288,7 +288,7 @@ jobs:
           npx lhci autorun --config=lighthouserc.desktop.cjs
           --collect.settings.disableFullPageScreenshot=true
       - if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lighthouseci
           path: .lighthouseci/
@@ -302,8 +302,8 @@ jobs:
     # Compiles the committed resume/resume.tex only, so it needs no Node setup. The default
     # pdflatex engine is required: Jake's preamble uses \pdfgentounicode (WP-04 report).
     steps:
-      - uses: actions/checkout@v4
-      - uses: xu-cheng/latex-action@v3
+      - uses: actions/checkout@v7
+      - uses: xu-cheng/latex-action@v4
         with:
           root_file: resume.tex
           working_directory: resume
@@ -312,7 +312,7 @@ jobs:
         run: |
           pdfinfo resume/resume.pdf | grep '^Pages:'
           test "$(pdfinfo resume/resume.pdf | awk '/^Pages:/{print $2}')" = "1"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: resume-tex-pdf
           path: resume/resume.pdf

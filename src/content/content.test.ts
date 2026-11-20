@@ -75,8 +75,8 @@ describe('ids, order and wings', () => {
     expect(starts).toEqual([...starts].sort().reverse());
   });
 
-  it('the volunteer wing holds only sdsj', () => {
-    expect(content.volunteer.map((e) => e.id)).toEqual(['sdsj']);
+  it('the volunteer wing lists NSBE MUN and SDSJ, newest first', () => {
+    expect(content.volunteer.map((e) => e.id)).toEqual(['nsbe-mun', 'sdsj']);
     const starts = content.volunteer.map((e) => e.dates.start);
     expect(starts).toEqual([...starts].sort().reverse());
   });
@@ -258,6 +258,7 @@ describe('exhibits', () => {
       cfia: 'The Ticket Spindle',
       klarup: 'The Climb',
       'finance-tracker': 'The Balance',
+      'nsbe-mun': 'The Chapter Noticeboard',
       sdsj: 'The Round Table',
       mun: 'Work in Progress',
       certifications: 'The Medal Cabinet',

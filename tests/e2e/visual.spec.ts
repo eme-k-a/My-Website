@@ -1,9 +1,8 @@
 // Visual baselines for the whole collection (WP-17, WP-25; ARCHITECTURE §13.6). Compared in CI
 // only: SwiftShader output differs by CPU, so locally every test skips unless VISUAL_LOCAL=1
 // (advisory, never committed). Baselines come from the `update-baselines` dispatch of ci.yml.
-// - Canvas: every stop (10 main plus 3 wing exhibits) at ?test=1 (tier medium) on desktop and
-//   pixel7: 26 cases.
-// - DOM, canvas masked: every exhibit's story dialog (desktop panel, Pixel 7 sheet): 18 cases;
+// - Canvas: every main and wing stop at ?test=1 (tier medium) on desktop and Pixel 7.
+// - DOM, canvas masked: every exhibit's story dialog (desktop panel, Pixel 7 sheet);
 //   /resume/ light and dark, and 404.html (desktop).
 // One test per shot, so each stop and each dialog is its own case and a mismatch never hides the
 // shots after it. The cases of a group share one page and move with instant goTo: a cold load and
@@ -30,6 +29,7 @@ const STOPS: StopId[] = [
   'finance-tracker',
   'mysa',
   'volunteer-door',
+  'nsbe-mun',
   'sdsj',
   'wailo',
   'cfia',

@@ -15,7 +15,7 @@ const EXHIBITS_DIR = fileURLToPath(new URL('../../src/museum/exhibits/', import.
 const INSTALLING = 'Installation in progress';
 const PROJECTS = new Set(['desktop', 'pixel7']);
 const EXHIBITS = new Set<StopId>(EXHIBIT_IDS);
-/** Every stop: the 9 exhibits and the 4 stop-only ids (lobby, the two doors, desk). */
+/** Every stop: the exhibits and the four stop-only ids (lobby, the two doors, desk). */
 const STOPS: StopId[] = [...EXHIBIT_IDS, ...STOP_ONLY_IDS];
 /**
  * A cold load plus 13 instant moves: about 45 s locally on desktop with two workers (each move 1
@@ -62,6 +62,6 @@ test.describe('no placeholders', { tag: '@exhibit' }, () => {
       expect(own, `stats().exhibits['${exhibit}'] is reported at its stop`).toBeDefined();
       revealed.push(exhibit);
     }
-    expect(revealed.sort(), 'all nine exhibits revealed').toEqual([...EXHIBIT_IDS].sort());
+    expect(revealed.sort(), 'all exhibits revealed').toEqual([...EXHIBIT_IDS].sort());
   });
 });

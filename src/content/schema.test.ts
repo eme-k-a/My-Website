@@ -127,11 +127,7 @@ describe('refineResume rules (ARCHITECTURE §3.4)', () => {
   it('4: experiences, volunteer and dated projects are newest first', () => {
     const r = input();
     r.experiences[1]!.dates = { start: '2026-10', end: '2026-11' };
-    // The volunteer wing holds one entry, so a second (older-first) entry is appended for the rule.
-    r.volunteer.push({
-      ...structuredClone(r.volunteer[0]!),
-      dates: { start: '2025-10', end: 'present' },
-    });
+    r.volunteer.reverse();
     r.projects[0]!.dates = { start: '2023-01', end: '2023-06' };
     r.projects[1]!.dates = { start: '2024-01', end: '2024-06' };
     const paths = issuePaths(r);

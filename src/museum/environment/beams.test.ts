@@ -46,6 +46,11 @@ describe('beam cones (F-025)', () => {
     const groups = beamGroups(beamSpecs(galleryLayout()));
     expect(groups).toHaveLength(2);
     const wing = groups.find((g) => g.start > 0)!;
-    expect(wing.beams.map((b) => b.id).sort()).toEqual(['finance-tracker', 'klarup', 'sdsj']);
+    expect(wing.beams.map((b) => b.id).sort()).toEqual([
+      'finance-tracker',
+      'klarup',
+      'nsbe-mun',
+      'sdsj',
+    ]);
   });
 });

@@ -86,6 +86,7 @@ export const STOP_RECIPES: Record<StopId, LightRecipe> = {
   'finance-tracker': exhibit(),
   mysa: exhibit({ wash: 1.2, side: SIDE_WASH, far: FAR_WASH }),
   'volunteer-door': door({ pool: 0.42, side: SIDE_WASH, far: FAR_WASH }),
+  'nsbe-mun': exhibit(),
   sdsj: exhibit(),
   wailo: exhibit({ wash: 1.1 }),
   cfia: exhibit({ wash: 1.15, side: SIDE_WASH, far: FAR_WASH }),

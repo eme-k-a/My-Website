@@ -56,7 +56,7 @@ describe('track selectors (ARCHITECTURE §3.7, EXPERIENCE §3.1)', () => {
 
   it('wing tracks start with their door', () => {
     expect(wingTrack(content, 'projects')).toEqual(['projects-door', 'klarup', 'finance-tracker']);
-    expect(wingTrack(content, 'volunteer')).toEqual(['volunteer-door', 'sdsj']);
+    expect(wingTrack(content, 'volunteer')).toEqual(['volunteer-door', 'nsbe-mun', 'sdsj']);
   });
 
   it('trackOf puts wing items in their wing and everything else on main', () => {
@@ -73,6 +73,7 @@ describe('track selectors (ARCHITECTURE §3.7, EXPERIENCE §3.1)', () => {
       'klarup',
       'finance-tracker',
       'mysa',
+      'nsbe-mun',
       'sdsj',
       'wailo',
       'cfia',
@@ -92,7 +93,8 @@ describe('track selectors (ARCHITECTURE §3.7, EXPERIENCE §3.1)', () => {
       certifications: '06',
       klarup: 'P1',
       'finance-tracker': 'P2',
-      sdsj: 'V1',
+      'nsbe-mun': 'V1',
+      sdsj: 'V2',
     });
   });
 
@@ -148,6 +150,7 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
       ['finance-tracker', 'projects'],
       ['mysa', 'main'],
       ['volunteer-door', 'main'],
+      ['nsbe-mun', 'volunteer'],
       ['sdsj', 'volunteer'],
       ['wailo', 'main'],
       ['cfia', 'main'],
@@ -177,7 +180,9 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
       // prettier-ignore
       ['No. 02', 'mysa', 'Warm Start', 'Full Stack Software Developer (Co-op)', "Mysa, St. John's, NL", 'Jan 2026 - May 2026', '5 months', null],
       // prettier-ignore
-      ['No. V1', 'sdsj', 'The Round Table', 'President', "Software Developers of St. John's, St. John's, NL", 'Jul 2024 - Present', '2 yr 4 mo', 'ONGOING'],
+      ['No. V1', 'nsbe-mun', 'The Chapter Noticeboard', 'IT Lead', "NSBE MUN, St. John's, NL", 'Jan 2026 - Present', '10 months', 'ONGOING'],
+      // prettier-ignore
+      ['No. V2', 'sdsj', 'The Round Table', 'President', "Software Developers of St. John's, St. John's, NL", 'Jul 2024 - Present', '2 yr 4 mo', 'ONGOING'],
       // prettier-ignore
       ['No. 03', 'wailo', 'The Deep Link', 'Front End Developer (Co-op)', 'Wailo, Calgary, AB / Remote', 'May 2025 - Aug 2025', '4 months', null],
       // prettier-ignore
@@ -244,6 +249,7 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
     const volunteer = card(cards, 'volunteer-door');
     expect(volunteer.kind === 'door' && volunteer.title).toBe('Volunteer & Leadership wing');
     expect(volunteer.kind === 'door' && volunteer.links.map((l) => l.label)).toEqual([
+      'The Chapter Noticeboard, NSBE MUN',
       "The Round Table, Software Developers of St. John's",
     ]);
   });
@@ -272,13 +278,14 @@ describe('threeDStrings (EXPERIENCE §5.4)', () => {
   const texts = (kind: string) => strings.filter((s) => s.kind === kind).map((s) => s.text);
 
   it('numbers every exhibit in catalogue order', () => {
-    expect(texts('number')).toEqual(['01', 'P1', 'P2', '02', 'V1', '03', '04', '05', '06']);
+    expect(texts('number')).toEqual(['01', 'P1', 'P2', '02', 'V1', 'V2', '03', '04', '05', '06']);
   });
 
   it('has the uppercase organization labels of §5.4', () => {
     expect(new Set(texts('organization'))).toEqual(
       new Set([
         'NASDAQ VERAFIN',
+        'NSBE MUN',
         'MYSA',
         'WAILO',
         'CANADIAN FOOD INSPECTION AGENCY',
@@ -375,7 +382,7 @@ describe('printModel (ARCHITECTURE §3.7, §4.1; CONTENT_DRAFT §3)', () => {
       ),
     );
     expect(printed).toEqual(expected);
-    expect(printed.length).toBe(14);
+    expect(printed.length).toBe(15);
   });
 
   it('leaves out Personal Finance Tracker (no printed bullet) but keeps KlarUp', () => {

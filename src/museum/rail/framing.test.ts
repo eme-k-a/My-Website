@@ -508,6 +508,16 @@ describe('door framing (F-051)', () => {
       for (const slot of layout.slots.filter((s) => s.track === door.wing)) {
         const title = slotPlacard(layout, slot);
         const ends = [...titleTopCorners(title), ...titleBottomCorners(title)];
+        // If the entire title projects behind a solid wall, it cannot overlap the HUD.
+        // This applies to the second Volunteer case on the near side of the doorway.
+        const wallX = corners[0]![0];
+        const [cx, , cz] = pose.camera;
+        const crossings = ends.map(([x, , z]) => cz + ((z - cz) * (wallX - cx)) / (x - cx));
+        if (
+          Math.min(...crossings) > door.z + door.width / 2 ||
+          Math.max(...crossings) < door.z - door.width / 2
+        )
+          continue;
         const tx = ends.map((c) => screenOf(camera, new Vector3(...c)).x * width);
         expect(Math.max(...tx), slot.id).toBeLessThanOrEqual(bound + 1e-6);
       }
@@ -612,7 +622,7 @@ describe('wing dialog dolly (F-042)', () => {
     expect(titleClearDolly([0, 1.6, 0], [0, 1.35, -3], [[0, 1.7, -6]], tops, max)).toBe(0);
   });
 
-  it.each(['klarup', 'finance-tracker', 'sdsj'])(
+  it.each(['klarup', 'finance-tracker', 'nsbe-mun', 'sdsj'])(
     'keeps the whole %s title above the case top in the desktop dialog',
     (id) => {
       const slot = wingSlots.find((s) => s.id === id)!;

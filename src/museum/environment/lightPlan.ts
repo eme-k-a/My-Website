@@ -348,6 +348,9 @@ export function assignLights(
   const start = Math.min(Math.max(0, stopIndex), Math.max(0, trackStops.length - 1));
   const ahead: TargetId[] = [];
   for (let i = start; i < trackStops.length && ahead.length < count; i++) {
+    // With a single spotlight, use the first case to draw visitors through the arch.
+    // The portrait already has a baked wall wash and an unlit photographic material.
+    if (trackStops[i] === 'lobby' && count === 1 && i + 1 < trackStops.length) continue;
     const target = targetOfStop(trackStops[i]!);
     if (target && !ahead.includes(target)) ahead.push(target);
   }

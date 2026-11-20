@@ -283,6 +283,15 @@
  * stays at the bottom of the first viewport rather than of the taller lobby.
  */
 @media (max-width: 479px) {
+  .headerDuplicate {
+    display: none;
+  }
+
+  .admit {
+    background: var(--brass);
+    color: var(--ink);
+  }
+
   .fold {
     min-height: calc(100svh - var(--hero-top));
   }

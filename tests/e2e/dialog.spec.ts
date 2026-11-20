@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { TEST_IDS } from '../../src/app/testIds';
-import type { ExhibitId } from '../../src/content/ids';
+import { EXHIBIT_IDS, type ExhibitId } from '../../src/content/ids';
 import { content } from '../../src/content/index';
 import { entryById } from '../../src/content/selectors';
 import { SITE_URL } from '../../src/content/site';
@@ -302,9 +302,7 @@ test.describe('story dialog: openers, wings and motion', () => {
     await expectHudStepsAside(page, 'verafin', false);
   });
 
-  test('(n2) F-021: in the one-exhibit volunteer wing the wing head steps aside too', async ({
-    page,
-  }) => {
+  test('(n2) F-021: in the volunteer wing the wing head steps aside too', async ({ page }) => {
     onlyOn('desktop');
     await expectHudStepsAside(page, 'sdsj', true);
   });
@@ -363,6 +361,25 @@ test.describe('prerendered exhibit pages', { tag: '@dom' }, () => {
   test.describe('with JavaScript off', () => {
     test.use({ javaScriptEnabled: false });
 
+    test('the NSBE MUN static story identifies the role and links to the chapter website', async ({
+      page,
+    }) => {
+      const response = await page.goto('/exhibit/nsbe-mun/');
+      expect(response?.status()).toBe(200);
+      const story = page.getByTestId(TEST_IDS.storyStatic);
+      await expect(story.getByRole('heading', { level: 1 })).toHaveText('The Chapter Noticeboard');
+      await expect(story).toContainText('IT Lead');
+      await expect(story).toContainText('Jan 2026 – Present');
+      await expect(story.getByRole('link', { name: /NSBE MUN website/ })).toHaveAttribute(
+        'href',
+        /^https:\/\/nsbe-mun\.ca\/?$/,
+      );
+      await expect(story.getByRole('link', { name: /Older/ })).toHaveAttribute(
+        'href',
+        '/exhibit/sdsj/',
+      );
+    });
+
     test('(e) /exhibit/mysa/ shows story-static with every Mysa bullet', async ({ page }) => {
       await page.goto('/exhibit/mysa/');
       const article = page.getByTestId(TEST_IDS.storyStatic);
@@ -382,7 +399,7 @@ test.describe('prerendered exhibit pages', { tag: '@dom' }, () => {
     test.skip(project() !== 'desktop', 'Reads files once');
     test.skip(!existsSync(join(DIST, 'exhibit')), 'Needs a local build (dist/exhibit)');
     const ids = await readdir(join(DIST, 'exhibit'));
-    expect(ids).toHaveLength(9);
+    expect(ids.sort()).toEqual([...EXHIBIT_IDS].sort());
     const titles: string[] = [];
     for (const id of ids) {
       const html = await readFile(join(DIST, 'exhibit', id, 'index.html'), 'utf8');

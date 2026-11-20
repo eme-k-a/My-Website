@@ -83,9 +83,13 @@ const POSES: Record<string, [Vec3, Vec3]> = {
     [-5.6, 1.6, -17.4],
     [-9, 1.35, -18.2],
   ],
-  sdsj: [
-    [5.6, 1.6, -30.2],
+  'nsbe-mun': [
+    [5.6, 1.6, -29.4],
     [9, 1.35, -30.2],
+  ],
+  sdsj: [
+    [5.6, 1.6, -26.6],
+    [9, 1.35, -25.8],
   ],
 };
 
@@ -117,7 +121,7 @@ describe('tracks and poses (EXPERIENCE §2.4, §2.5)', () => {
 
   it('wing tracks are [door, ...items] with the door pose at index 0', () => {
     expect(stopIds(layout, 'projects')).toEqual(['projects-door', 'klarup', 'finance-tracker']);
-    expect(stopIds(layout, 'volunteer')).toEqual(['volunteer-door', 'sdsj']);
+    expect(stopIds(layout, 'volunteer')).toEqual(['volunteer-door', 'nsbe-mun', 'sdsj']);
     for (const wing of ['projects', 'volunteer'] as const) {
       const door = layout.tracks[wing].stops[0]!;
       expect(door).toEqual(pose(layout, `${wing}-door`));
@@ -157,7 +161,8 @@ describe('slots and rooms', () => {
       klarup: [-9, 0, -13.8],
       'finance-tracker': [-9, 0, -18.2],
       mysa: [-2.4, 0, -22],
-      sdsj: [9, 0, -30.2],
+      'nsbe-mun': [9, 0, -30.2],
+      sdsj: [9, 0, -25.8],
       wailo: [2.4, 0, -34],
       cfia: [-2.4, 0, -46],
       mun: [-2.5, 0, -57],
@@ -233,6 +238,7 @@ describe('time in the space (EXPERIENCE §6.9)', () => {
       klarup: 0.167,
       'finance-tracker': 0.167,
       'volunteer-door': 0.5,
+      'nsbe-mun': 0.5,
       sdsj: 0.5,
       mun: 1,
       certifications: 1,
@@ -309,7 +315,9 @@ describe('computed from content (EXPERIENCE §2.7)', () => {
 
 describe('a wing with one item (F-035, F-037)', () => {
   it('puts the lone item at the far plinth spot, camera straight in front', () => {
-    const l = computeLayout(draftContent(), NOW);
+    const one = draftContent();
+    one.wings[1]!.items = ['sdsj'];
+    const l = computeLayout(one, NOW);
     const door = l.doors.find((d) => d.wing === 'volunteer')!;
     expect(round3(slot(l, 'sdsj').position)).toEqual([9, 0, round3([door.z - 2.2])[0]]);
     expectVec(pose(l, 'sdsj').camera, [5.6, 1.6, door.z - 2.2], 'sdsj.camera');
@@ -317,11 +325,13 @@ describe('a wing with one item (F-035, F-037)', () => {
     expect(slot(l, 'sdsj').rotationY).toBeCloseTo(-Math.PI / 2, 6);
   });
 
-  it('shows the lone case whole through the doorway from the door stop (F-037)', () => {
+  it('shows the first Volunteer case whole through the doorway from the door stop (F-037)', () => {
     const l = computeLayout(draftContent(), NOW);
     const door = l.doors.find((d) => d.wing === 'volunteer')!;
     const [cx, , cz] = pose(l, 'volunteer-door').camera;
-    const [px, , pz] = slot(l, 'sdsj').position;
+    const firstItem = l.tracks.volunteer.stops[1]!.id;
+    expect(firstItem).toBe('nsbe-mun');
+    const [px, , pz] = slot(l, firstItem).position;
     // Where the sightline from the door camera to each side of the 0.65 m case (and its pool, a
     // generous 1 m around the plinth) crosses the door plane: inside the opening, off both jambs.
     const wallX = 3.5;

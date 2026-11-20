@@ -38,7 +38,7 @@ export function arrivalMessage(id: StopId): string {
     case 'desk':
       return 'Front desk.';
     case 'door':
-      return `${card.title} door. Press Enter to step inside, or keep scrolling.`;
+      return `${card.title} door. ${card.count}. Press Enter to step inside, or keep scrolling.`;
     case 'exhibit': {
       const details = [card.role, card.organization, card.dates].filter(
         (part): part is string => !!part,

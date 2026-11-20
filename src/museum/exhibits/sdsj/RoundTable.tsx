@@ -1,4 +1,4 @@
-// Exhibit No. V1, "The Round Table" (EXPERIENCE §4.8): six identical laptops face each other
+// Exhibit No. V2, "The Round Table" (EXPERIENCE §4.8): six identical laptops face each other
 // around a round walnut table on a brass pedestal, a brass cube (the shared project) at its
 // center. Shared library materials only, no lights, no text. One slow motion: the screens light
 // in turn on a 12 s loop, driven only by useExhibitClock(). Under reduced motion all six hold

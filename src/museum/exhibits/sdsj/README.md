@@ -1,4 +1,4 @@
-# sdsj: "The Round Table" (No. V1)
+# sdsj: "The Round Table" (No. V2)
 
 Spec: `docs/spec/EXPERIENCE.md` §4.8. Work package: `docs/wp/WP-23.md`. Concept checklist and R2 verdict: [`review/concepts/sdsj.md`](../../../../review/concepts/sdsj.md).
 
@@ -6,7 +6,7 @@ Spec: `docs/spec/EXPERIENCE.md` §4.8. Work package: `docs/wp/WP-23.md`. Concept
 
 Software Developers of St. John's, where Emeka is President: recurring monthly mini-hackathons that bring developers, designers and founders together to build. Six identical laptops face each other around a round walnut table on a brass pedestal; a small brass cube at the table center is the shared project. Their screens light in turn around the table. The laptop count is abstract (six, evenly spaced), not a head count. No people or avatars, no month ring or ticks, no "shipping" blocks, no stickers, logos or text.
 
-The volunteer wing holds only this exhibit (F-035), so it stands on the far plinth spot and shows through the doorway (F-037).
+The Round Table follows the Chapter Noticeboard in the Volunteer & Leadership wing.
 
 ## Object description (DOM, `exhibit.object`)
 

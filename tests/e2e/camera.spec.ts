@@ -303,7 +303,7 @@ test.describe('camera feel', () => {
     await expect.poll(announced).toHaveLength(3);
     expect(await announced()).toEqual([
       exhibitRow('verafin'),
-      'Projects wing door. Press Enter to step inside, or keep scrolling.',
+      'Projects wing door. 2 exhibits. Press Enter to step inside, or keep scrolling.',
       'No. 02, Warm Start. Full Stack Software Developer (Co-op), Mysa, Jan 2026 \u2013 May 2026.',
     ]);
   });

@@ -5,7 +5,7 @@
 export const EXHIBIT_IDS = [
   'verafin', 'mysa', 'wailo', 'cfia',            // main aisle, newest first
   'klarup', 'finance-tracker',                   // projects wing
-  'sdsj',                                        // volunteer wing
+  'nsbe-mun', 'sdsj',                            // volunteer wing
   'mun', 'certifications',                       // end of the main track
 ] as const;
 export type ExhibitId = (typeof EXHIBIT_IDS)[number];

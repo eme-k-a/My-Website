@@ -105,6 +105,11 @@ function Volunteer({ c }: { c: Content }) {
             {v.org}, {formatLocation(v.location)}
           </p>
           <Bullets bullets={v.bullets} />
+          {v.exhibit.links.map((link) => (
+            <p key={link.href}>
+              <a href={link.href}>{link.label}</a>
+            </p>
+          ))}
         </article>
       ))}
     </section>

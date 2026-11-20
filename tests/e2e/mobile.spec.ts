@@ -1,6 +1,6 @@
 // Phone layout (WP-27; EXPERIENCE §5.8, §8.3, §8.4, §9, §11.1 item 3; ARCHITECTURE §9, §10.3).
 // Runs on pixel7, pixel7-landscape and a 360 x 640 portrait context (Pixel 7 device, smaller
-// viewport). At every stop (13: the ten main stops and the three wing exhibits):
+// viewport). At every main-aisle and wing stop:
 // - the stop card does not intersect any visible HUD rect (the header, the year chip, the wing
 //   head), and at the lobby the hero text does not either;
 // - the card does not contain `screenPos(id)` and its top stays below the case floor (the front

@@ -3,7 +3,7 @@
 // the device, and a phone frame costs a fraction of a desktop one under SwiftShader.
 // - With an exhibit chunk blocked, its slot shows the placeholder crate and the card says
 //   "Installation in progress"; an exhibit with no folder would show the same (none since WP-23).
-// - With idle motion on (&idle=1), each of the nine exhibits moves; with reduced motion emulated too,
+// - With idle motion on (&idle=1), animated exhibits move and the noticeboard stays still; with reduced motion emulated too,
 //   its canvas stays byte-identical for 10 s (exhibit-contract covers only the frozen ?test=1
 //   clock).
 import type { Page } from '@playwright/test';
@@ -14,9 +14,8 @@ import { canvasPixels, goToStop, museumUrl, stats, waitForMuseum } from './helpe
 
 const INSTALLING = 'Installation in progress';
 /**
- * Idle motion and reduced motion run for all nine (WP-25): every manifest declares `motion: 'slow'`.
- * Locally on two workers the 18 tests take about 3.5 minutes; verafin and finance-tracker are the
- * slow movers (93 and 71 frames).
+ * All exhibits participate in both checks. The chapter noticeboard is a static sculpture.
+ * Verafin and finance-tracker are slow movers (93 and 71 frames in the WP-25 measurements).
  */
 const BUILT: ExhibitId[] = [...EXHIBIT_IDS];
 /** Exhibits with no folder yet: none since WP-23 (M3). Kept for future exhibits. */
@@ -88,12 +87,24 @@ test.describe('exhibits', { tag: '@exhibit' }, () => {
   });
 
   for (const id of BUILT) {
-    test(`${id}: idle motion moves the canvas`, async ({ page }) => {
+    const staticExhibit = id === 'nsbe-mun';
+    test(`${id}: ${staticExhibit ? 'static exhibit stays still' : 'idle motion moves the canvas'}`, async ({
+      page,
+    }) => {
       await page.goto(museumUrl('/', { idle: true }));
       await waitForMuseum(page);
       await goToStop(page, id);
       test.setTimeout(MOTION_TIMEOUT_MS + 60_000);
       const first = await canvasShot(page);
+      if (staticExhibit) {
+        await nudge(page);
+        await page.waitForTimeout(STILL_MS);
+        expect(
+          (await canvasShot(page)).equals(first),
+          'noticeboard stays still with idle enabled',
+        ).toBe(true);
+        return;
+      }
       const from = (await stats(page)).frames;
       const start = Date.now();
       let rendered = 0;

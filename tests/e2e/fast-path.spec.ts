@@ -1,5 +1,5 @@
 // Recruiter fast path (EXPERIENCE §8.1, §8.6; ARCHITECTURE §5.2, §9; WP-10 A5). At 360 x 640 and
-// 390 x 844 the h1, the role line, the education line and the three hero links sit fully inside the
+// 390 x 844 the h1, the role line, the education line, header shortcuts, email and admission ticket sit fully inside the
 // first viewport, with JavaScript off and with JavaScript on before the museum is ready (its chunk
 // is blocked, so `ready` never comes). The largest-contentful-paint element is the h1. CLS from
 // navigation to `ready` stays within perf/budgets.json web.cls on desktop and Pixel 7 (WP-17).
@@ -34,14 +34,17 @@ function fastPath(page: Page) {
     h1: page.getByRole('heading', { level: 1 }),
     role: hero.locator('h1 + p'),
     education: hero.locator('h1 + p + p'),
-    pdf: page.getByTestId(TEST_IDS.heroPdf),
+    pdf: page.getByTestId(TEST_IDS.hudPdf),
     email: page.getByTestId(TEST_IDS.heroEmail),
-    classic: page.getByTestId(TEST_IDS.heroClassic),
+    classic: page.getByTestId(TEST_IDS.hudClassic),
+    ticket: page.getByTestId(TEST_IDS.beginWalk),
   };
 }
 
 async function expectInsideFirstViewport(page: Page, size: { width: number; height: number }) {
   const elements = fastPath(page);
+  await expect(page.getByTestId(TEST_IDS.heroPdf)).toBeHidden();
+  await expect(page.getByTestId(TEST_IDS.heroClassic)).toBeHidden();
   await expect(elements.role).toHaveText(/Nasdaq Verafin/);
   await expect(elements.education).toHaveText(/Computer Engineering/);
   for (const [name, locator] of Object.entries(elements)) {

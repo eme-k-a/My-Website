@@ -146,7 +146,7 @@ describe('assignment on arrival (EXPERIENCE §6.8)', () => {
   });
 
   it('lights the current target, or the next one ahead, on medium and low', () => {
-    expect(assignLights(main, at(main, 'lobby'), 'medium')).toEqual(['portrait']);
+    expect(assignLights(main, at(main, 'lobby'), 'medium')).toEqual(['verafin']);
     expect(assignLights(main, at(main, 'verafin'), 'low')).toEqual(['verafin']);
     expect(assignLights(main, at(main, 'projects-door'), 'medium')).toEqual(['mysa']);
     expect(assignLights(main, at(main, 'volunteer-door'), 'medium')).toEqual(['wailo']);

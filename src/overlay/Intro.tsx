@@ -97,7 +97,7 @@ export function Intro({ card }: { card: LobbyCard }) {
           <p className={styles.role}>{card.roleLine}</p>
           <p className={styles.education}>{card.educationLine}</p>
           <ul className={styles.links}>
-            <li>
+            <li className={styles.headerDuplicate}>
               <a className={ui.primary} href={PDF_PATH} data-testid={TEST_IDS.heroPdf}>
                 <Icon name="file-text" />
                 Resume (PDF)
@@ -109,7 +109,7 @@ export function Intro({ card }: { card: LobbyCard }) {
                 Email
               </a>
             </li>
-            <li>
+            <li className={styles.headerDuplicate}>
               <a className={ui.secondary} href={CLASSIC_PATH} data-testid={TEST_IDS.heroClassic}>
                 <Icon name="list" />
                 Classic view

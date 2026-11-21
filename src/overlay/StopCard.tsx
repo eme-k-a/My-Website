@@ -171,26 +171,26 @@ function DeskPlacard({ card }: { card: DeskCard }) {
         <li>
           <a className={styles.deskLink} href={card.linkedin} rel="me">
             <Icon name="external-link" />
-            Connect on LinkedIn
+            LinkedIn
           </a>
         </li>
         <li>
           <a className={styles.deskLink} href={PDF_PATH}>
             <Icon name="file-text" />
-            Take home the catalogue (PDF)
+            Résumé (PDF)
           </a>
         </li>
         {card.github && (
           <li>
             <a className={styles.deskLink} href={card.github} rel="me">
               <Icon name="external-link" />
-              Browse code on GitHub
+              GitHub
             </a>
           </li>
         )}
         <li>
           <a className={styles.deskLink} href="#stop-lobby" onClick={again}>
-            Walk the aisle again
+            Walk again
           </a>
         </li>
       </ul>

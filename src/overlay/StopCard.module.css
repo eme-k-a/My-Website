@@ -242,7 +242,7 @@
  * top sits above it even at 360 x 640 (CameraRig frames the desk into the band between the HUD and
  * this card's measured top, framing.ts `deskPortraitY`). The closing line is dropped, the body
  * uses the small size, and the links sit in two columns (Email me and LinkedIn, the PDF and
- * GitHub, then Walk the aisle again), each still a 44 px target. Without JS or in classic mode the
+ * GitHub, then Walk again), each still a 44 px target. Without JS or in classic mode the
  * card is the page, and it keeps the full layout.
  */
 @media (orientation: portrait) and (max-width: 639px) {
@@ -262,6 +262,12 @@
     align-items: center;
     gap: 0 12px;
     margin-top: 10px;
+  }
+
+  :global(html[data-mode='museum']) .deskLinks a {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   :global(html[data-mode='museum']) .desk .deskLinks li:first-child {

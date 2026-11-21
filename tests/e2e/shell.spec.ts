@@ -164,11 +164,11 @@ test.describe('front desk card', { tag: '@dom' }, () => {
     await expect(desk).toBeAttached();
     const link = (name: string) => desk.getByRole('link', { name });
     await expect(link('Email me')).toHaveAttribute('href', `mailto:${content.contact.email}`);
-    await expect(link('Connect on LinkedIn')).toHaveAttribute('href', content.contact.linkedin);
-    await expect(link('Take home the catalogue (PDF)')).toHaveAttribute('href', PDF_PATH);
+    await expect(link('LinkedIn')).toHaveAttribute('href', content.contact.linkedin);
+    await expect(link('Résumé (PDF)')).toHaveAttribute('href', PDF_PATH);
     expect(content.contact.github, 'GitHub is in the content').toBeTruthy();
-    await expect(link('Browse code on GitHub')).toHaveAttribute('href', content.contact.github!);
-    for (const external of [link('Connect on LinkedIn'), link('Browse code on GitHub')]) {
+    await expect(link('GitHub')).toHaveAttribute('href', content.contact.github!);
+    for (const external of [link('LinkedIn'), link('GitHub')]) {
       await expect(external).toHaveAttribute('rel', 'me');
     }
   });

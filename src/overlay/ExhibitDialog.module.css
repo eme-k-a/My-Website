@@ -472,3 +472,28 @@
 .staticNav .stepLabel {
   min-width: 4.5em;
 }
+
+.objectViews {
+  margin-top: 12px;
+}
+
+.objectViews details {
+  border-top: 1px solid var(--hairline);
+}
+
+.objectViews summary {
+  min-height: var(--target-min);
+  padding: 10px 4px;
+  color: var(--brass-hi);
+  cursor: pointer;
+}
+
+.objectViews figure {
+  margin: 0 0 12px;
+}
+
+.objectViews img {
+  display: block;
+  width: 100%;
+  height: auto;
+}

@@ -26,7 +26,7 @@ export function RoundTableViews({ group }: { group: string }) {
           <summary>{label}</summary>
           <figure>
             <img
-              src={`/images/inspection/sdsj-${view}.webp`}
+              src={`/exhibits/sdsj/sdsj-${view}.webp`}
               width={640}
               height={560}
               loading="lazy"

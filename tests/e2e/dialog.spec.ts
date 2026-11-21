@@ -377,10 +377,14 @@ test.describe('prerendered exhibit pages', { tag: '@dom' }, () => {
         await page.keyboard.press('Enter');
         await expect(views.getByRole('img')).toHaveCount(1);
         await expect(views.getByRole('img')).toHaveJSProperty('naturalWidth', 560);
-        await views.getByText('View reverse', { exact: true }).filter({ visible: true }).click();
+        const medal = views.locator(':scope > details[open]');
+        await expect(medal.locator(':scope > summary')).toHaveText(name);
+        await medal.getByText('View reverse', { exact: true }).click();
         await expect(views.getByRole('img')).toHaveAccessibleName(/twelve short radial marks/);
         await expect(views.getByRole('img')).toHaveJSProperty('naturalWidth', 560);
-        await views.getByText('View front', { exact: true }).filter({ visible: true }).click();
+        await medal.getByText('View front', { exact: true }).click();
+        await expect(medal.locator('details')).not.toHaveAttribute('open');
+        await expect(medal.getByRole('img')).toHaveAttribute('src', /-front\.webp$/);
       }
       await views.getByText('Whole cabinet', { exact: true }).click();
       await expect(views.getByRole('img')).toHaveAccessibleName(/hang from one rail/);

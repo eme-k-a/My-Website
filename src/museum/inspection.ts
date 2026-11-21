@@ -67,16 +67,26 @@ export function startInspection(
   const key = new DirectionalLight(0xfff4e7, 2.4);
   key.position.set(2, 3, 3);
   scene.add(key, new HemisphereLight(0xfffaf1, 0xb7a58d, 1.4));
-  const target = new WebGLRenderTarget(width, height, {
-    colorSpace: SRGBColorSpace,
-    samples: Math.min(4, renderer.capabilities.maxSamples),
-  });
-  const pixels = new Uint8Array(width * height * 4);
-  const image = context.createImageData(width, height);
+  function makeSurface(w: number, h: number, samples: number) {
+    return {
+      target: new WebGLRenderTarget(w, h, { colorSpace: SRGBColorSpace, samples }),
+      pixels: new Uint8Array(w * h * 4),
+      image: context!.createImageData(w, h),
+    };
+  }
+  const full = makeSurface(width, height, Math.min(4, renderer.capabilities.maxSamples));
+  // Keep engravings sharp at rest. During a gesture, read back one quarter as many pixels.
+  let fullDrawMs = 0;
+  let movingSurface: ReturnType<typeof makeSurface> | undefined;
   const direction = new Vector3();
 
   return {
-    draw({ yaw, elevation, zoom }, medal) {
+    draw({ yaw, elevation, zoom }, medal, moving = false) {
+      const started = performance.now();
+      const { target, pixels, image } =
+        moving && fullDrawMs > 1000 / 60
+          ? (movingSurface ??= makeSurface(Math.ceil(width / 2), Math.ceil(height / 2), 0))
+          : full;
       if (medal !== selected) {
         selected = medal;
         for (const { mesh, owners, matrices } of batches) {
@@ -100,19 +110,28 @@ export function startInspection(
       try {
         renderer.setRenderTarget(target);
         renderer.render(scene, camera);
-        renderer.readRenderTargetPixels(target, 0, 0, width, height, pixels);
+        renderer.readRenderTargetPixels(target, 0, 0, target.width, target.height, pixels);
       } finally {
         renderer.setRenderTarget(previous);
       }
-      const stride = width * 4;
-      for (let y = 0; y < height; y++) {
-        const offset = (height - 1 - y) * stride;
+      if (canvas.width !== target.width || canvas.height !== target.height) {
+        canvas.width = target.width;
+        canvas.height = target.height;
+      }
+      const stride = target.width * 4;
+      for (let y = 0; y < target.height; y++) {
+        const offset = (target.height - 1 - y) * stride;
         image.data.set(pixels.subarray(offset, offset + stride), y * stride);
       }
       context.putImageData(image, 0, 0);
+      if (target === full.target) fullDrawMs = performance.now() - started;
+      return target !== full.target;
     },
     dispose() {
-      target.dispose();
+      movingSurface?.target.dispose();
+      full.target.dispose();
+      canvas.width = width;
+      canvas.height = height;
       reflections.dispose();
       // Clones share the gallery's geometry and material, but own their instance buffers.
       model.traverse(disposeInstances);

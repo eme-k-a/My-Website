@@ -10,7 +10,8 @@ export interface InspectionPose {
   zoom: number;
 }
 export interface InspectionSession {
-  draw(pose: InspectionPose, medal: number | null): void;
+  /** Returns true when a motion frame needs a full-resolution redraw at rest. */
+  draw(pose: InspectionPose, medal: number | null, moving?: boolean): boolean;
   dispose(): void;
 }
 

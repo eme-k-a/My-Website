@@ -28,11 +28,25 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
   const [pose, setPose] = useState(initial);
   const [failed, setFailed] = useState(false);
   const latest = useRef({ pose, medal });
+  const pendingFrame = useRef<number | null>(null);
+  const settleTimer = useRef<number | undefined>(undefined);
+  const lastDraw = useRef(-Infinity);
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
   useEffect(() => {
     latest.current = { pose, medal };
-    const frame = requestAnimationFrame(() => session.current?.draw(pose, medal));
-    return () => cancelAnimationFrame(frame);
+    if (!session.current || pendingFrame.current !== null) return;
+    // A new pointer event updates the pose without postponing an already scheduled draw.
+    pendingFrame.current = requestAnimationFrame((now) => {
+      pendingFrame.current = null;
+      window.clearTimeout(settleTimer.current);
+      const moving = now - lastDraw.current < 150;
+      lastDraw.current = now;
+      if (session.current?.draw(latest.current.pose, latest.current.medal, moving)) {
+        settleTimer.current = window.setTimeout(() => {
+          session.current?.draw(latest.current.pose, latest.current.medal);
+        }, 150);
+      }
+    });
   }, [pose, medal]);
   useEffect(() => {
     if (!start || lost || !canvas.current) return;
@@ -52,6 +66,10 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
       });
     return () => {
       active = false;
+      window.clearTimeout(settleTimer.current);
+      lastDraw.current = -Infinity;
+      if (pendingFrame.current !== null) cancelAnimationFrame(pendingFrame.current);
+      pendingFrame.current = null;
       session.current?.dispose();
       session.current = null;
     };

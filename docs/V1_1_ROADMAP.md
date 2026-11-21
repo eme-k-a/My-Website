@@ -25,6 +25,7 @@
   - [x] Continuous orbit, input controls and restoration of the visitor’s position.
 - [ ] **06. Pilot the Round Table and Medal Cabinet** (art/3D; after 05). Give SDSJ an overhead preset revealing the inward-facing laptops. For Certifications, support selecting a named medal, viewing the finished reverse and returning to the whole cabinet. Exclude case/backboard from the orbit. **Done when:** real-phone and keyboard users can inspect both, switch to the story and return to their exact stop; repeated opens release resources. Record initial/peak/idle rendering, mobile frame rate, draw calls and triangle counts.
   - [x] Offer an overhead view of the Round Table and continuous rotation, zoom and a reverse preset for each named credential.
+  - [x] Coalesce continuous input and reduce pixel readback during slow rotation. Restore the full-resolution engraving after input settles.
   - [ ] Verify interaction and frame rate on physical phones.
   - [x] Finish each brass reverse and provide individually selectable front and reverse views from the story and classic résumé.
 - [ ] **07. Visitor checkpoint** (design/QA; after 06). Ask first-time visitors to find a named exhibit, inspect underneath, explain one feature, return and obtain the résumé. Record task completion, wrong turns, interpretation before/after and phone/browser. **Exit decision:** resolve trapping, disorientation or unreadable controls before rollout. Ask Emeka to select the KlarUp story emphasis and Verafin concept using the pilot as context.

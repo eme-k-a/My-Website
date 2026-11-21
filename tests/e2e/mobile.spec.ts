@@ -209,6 +209,12 @@ async function expectStopsClear(page: Page): Promise<void> {
           .toBe(false);
 
     if (EXHIBITS.has(id)) {
+      const { exhibit } = entryById(content, id as ExhibitId);
+      const detail =
+        exhibit.object.text.split(/(?<=[.!?])\s+/)[(exhibit.placardSentence ?? 1) - 1]!;
+      await expect(
+        page.getByTestId(TEST_IDS.card(id)).getByText(detail, { exact: true }),
+      ).toBeVisible();
       const card = cards[0]!;
       const live = await page.evaluate((e) => window.__MUSEUM__!.screenPos(e), id as ExhibitId);
       expect(live, `${id}: screenPos`).not.toBeNull();

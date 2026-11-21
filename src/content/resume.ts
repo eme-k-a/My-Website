@@ -91,6 +91,7 @@ export const resume = {
             text: 'In a domain like this, data has to be accurate and clear before it can be useful, and that is the standard I hold my work to. This exhibit is still being installed, so check back after December.',
           },
         ],
+        placardSentence: 2,
         object: {
           text: 'A frosted glass column feeds a six-by-six grid of bars that refreshes like a report. Three brass cartridges docked in the column are the plugins that extend it.',
         },
@@ -145,6 +146,7 @@ export const resume = {
             text: 'I also built and deployed a responsive web app with AWS Cognito authentication, used telemetry and logs to troubleshoot runtime failures, and improved our internal support tooling with smarter search classifications and Pylon bug-report metadata.',
           },
         ],
+        placardSentence: 2,
         object: {
           text: 'A ring dial on a wall unit lights four segments in turn (build, end-to-end tests, dev release, store release) as the release pipeline warms up. At its foot, a brass key passes through a ring: the single sign-on token exchange.',
         },
@@ -191,6 +193,7 @@ export const resume = {
             text: 'As the app headed for its Apple App Store release, I took on QA testing and bug fixes to improve performance and usability. It taught me what it takes to carry a feature all the way to a public release.',
           },
         ],
+        placardSentence: 2,
         object: {
           text: 'A phone leans back on its stand while a glowing link arcs into it from an envelope, and the screen answers with a reset card: password recovery through a deep link. The blank brass tag marks the App Store release.',
         },
@@ -272,6 +275,7 @@ export const resume = {
             text: 'I also architected its production release pipeline on Expo Application Services (EAS), securely injecting environment variables to generate untethered, standalone Android APKs. KlarUp taught me that a release process deserves as much design as the features it ships.',
           },
         ],
+        placardSentence: 2,
         object: {
           text: 'Five tiles climb like a staircase and tick themselves off one by one, while three brass beads wait together on the top step: accountability as a team sport. The small crate at the base is the standalone Android build.',
         },
@@ -347,6 +351,7 @@ export const resume = {
             text: 'The noticeboard gives that work a physical form. Visitors see the page on the front; the two clips let someone change what is on display. Around the back, a small access panel stands for the work that continues after a website goes live.',
           },
         ],
+        placardSentence: 2,
         object: {
           text: 'Brass clips hold a replaceable page on the front of the board. A latched panel on the back represents the work of maintaining the chapter’s website.',
         },
@@ -423,6 +428,7 @@ export const resume = {
             text: 'My studies have grounded me in algorithms, data structures, and the basics of compilers and operating systems. My co-op terms at Wailo, Mysa, and Nasdaq Verafin let me test those ideas against real products, and I treat the degree and the work as one continuous education.',
           },
         ],
+        placardSentence: 2,
         object: {
           text: 'A silicon die stands inside a brass scaffold. Each brass tier is a year of study still ahead; the tiers already taken down remain as glass outlines. The degree is expected in May 2027.',
         },

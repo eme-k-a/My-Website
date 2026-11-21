@@ -72,7 +72,7 @@ function ExhibitPlacard({ card }: { card: ExhibitCard }) {
           <span className={styles.mediumLabel}>Medium</span> {card.medium.join(', ')}
         </p>
       )}
-      <p className={styles.caption}>{card.caption}</p>
+      <p className={styles.objectDetail}>{card.objectDetail}</p>
       <div className={styles.actions}>
         <button
           type="button"

@@ -130,7 +130,7 @@
 }
 
 .medium,
-.caption {
+.objectDetail {
   margin: 8px 0 0;
   font-size: var(--type-small);
   line-height: var(--lh-small);
@@ -142,7 +142,7 @@
   color: var(--paper-ink-2);
 }
 
-.caption {
+.objectDetail {
   color: var(--paper-ink-2);
 }
 
@@ -284,14 +284,16 @@
 }
 
 /*
- * Phones: Medium and Caption are hidden below 480 px (EXPERIENCE §5.8, §9.2). The card stays short
+ * Phones: secondary résumé metadata stays in the story below 480 px (EXPERIENCE §5.8, §9.2). The card stays short
  * so the case above it is never covered, down to 360 x 640 (G3: the sdsj card met the case floor).
  * The reserved "Installation in progress" line moves out of the flow, beside "Read the story", so
  * it costs no height and still never shifts the card.
  */
 @media (max-width: 479px) {
   .medium,
-  .caption {
+  .role,
+  .org,
+  .dates {
     display: none;
   }
 
@@ -359,7 +361,9 @@
   }
 
   .medium,
-  .caption {
+  .role,
+  .org,
+  .dates {
     display: none;
   }
 }

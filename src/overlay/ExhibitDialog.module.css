@@ -82,6 +82,14 @@
   padding: 8px 48px 40px;
 }
 
+.navHint {
+  margin: 0;
+  padding: 4px 16px;
+  text-align: center;
+  font-size: var(--type-small);
+  color: var(--text-2);
+}
+
 .footer {
   display: flex;
   flex: none;

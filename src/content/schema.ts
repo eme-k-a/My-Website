@@ -64,6 +64,7 @@ export const Exhibit = z.object({
   caption: Line.max(140), // one line: cards, OG description, meta description
   story: z.array(StoryBlock).min(1),
   object: Copy, // "The object" in the dialog: the one-sentence object description (EXPERIENCE §4); draft until the built object is confirmed
+  placardSentence: z.number().int().positive().optional(), // one-based sentence in the object description; defaults to the first
   curatorNote: Copy.optional(), // optional pull quote under "Curator's note", above the story; stored only once Emeka writes it
   takeaway: Copy.optional(), // "What I took away"
   tags: z.array(Line).max(8).default([]), // shown as "Medium"

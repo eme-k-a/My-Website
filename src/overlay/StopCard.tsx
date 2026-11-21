@@ -12,6 +12,7 @@ import { enterWing, travelTo } from '../museum/rail/navigation';
 import { Icon } from './icons';
 import { Intro } from './Intro';
 import { cardOf, PDF_PATH, paperOf } from './model';
+import { canInspect } from './inspection';
 import { openStory } from './story';
 import styles from './StopCard.module.css';
 import ui from './ui.module.css';
@@ -86,7 +87,7 @@ function ExhibitPlacard({ card }: { card: ExhibitCard }) {
             Enter
           </kbd>
         </button>
-        {card.id === 'sdsj' && (
+        {canInspect(card.id) && (
           <button
             type="button"
             className={ui.paperPrimary}

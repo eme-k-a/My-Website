@@ -12,6 +12,13 @@ import { cabinetInstances, PRIMITIVES, writeCabinet, yawsAt, type Primitive } fr
 
 const INSTANCES = cabinetInstances();
 const KINDS = Object.keys(INSTANCES) as Primitive[];
+// A close-up includes only the struck medal. Its strap stays with the cabinet.
+const inspectionData = Object.fromEntries(
+  KINDS.map((kind) => [
+    kind,
+    { medalOwners: INSTANCES[kind].map(({ medallion }) => (kind === 'box' ? null : medallion)) },
+  ]),
+);
 
 /** A primitive's geometry from ./cabinet (cylinder axes are +Y; ./cabinet turns them to +Z). */
 function Geometry({ kind }: { kind: Primitive }) {
@@ -70,6 +77,7 @@ export default function MedalCabinet({ runtime }: ExhibitProps) {
           key={kind}
           ref={refs[kind]}
           name={kind}
+          userData={inspectionData[kind]}
           args={[undefined, undefined, INSTANCES[kind].length]}
           material={brass}
           frustumCulled={false}

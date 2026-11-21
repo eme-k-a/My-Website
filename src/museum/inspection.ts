@@ -3,6 +3,7 @@ import {
   DirectionalLight,
   HemisphereLight,
   InstancedMesh,
+  Matrix4,
   PerspectiveCamera,
   PMREMGenerator,
   Scene,
@@ -11,11 +12,18 @@ import {
   Vector3,
   WebGLRenderTarget,
   type Group,
+  type Object3D,
   type WebGLRenderer,
 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { measureObject } from './exhibits/_kit/measure';
 import type { InspectionSession } from '../overlay/inspection';
+
+// RoomEnvironment.dispose releases geometry and materials. Instanced meshes own a
+// separate transform buffer and dispatch their own disposal event to the renderer.
+function disposeInstances(object: Object3D) {
+  if (object instanceof InstancedMesh) object.dispose();
+}
 
 export function startInspection(
   renderer: WebGLRenderer,
@@ -31,10 +39,23 @@ export function startInspection(
   const generator = new PMREMGenerator(renderer);
   const reflections = generator.fromScene(studio, 0.04, 0.1, 100, { size: 64 });
   scene.environment = reflections.texture;
+  studio.traverse(disposeInstances);
   studio.dispose();
   generator.dispose();
   const model = sculpture.clone(true);
   scene.add(model);
+  // Keep the original pose for restoring the whole cabinet after a close-up.
+  const batches: { mesh: InstancedMesh; owners: (number | null)[]; matrices: Matrix4[] }[] = [];
+  model.traverse((mesh) => {
+    if (!(mesh instanceof InstancedMesh) || !mesh.userData.medalOwners) return;
+    const matrices = Array.from({ length: mesh.count }, (_, i) => {
+      const matrix = new Matrix4();
+      mesh.getMatrixAt(i, matrix);
+      return matrix;
+    });
+    batches.push({ mesh, owners: mesh.userData.medalOwners, matrices });
+  });
+  let selected: number | null = null;
   const sphere = measureObject(model).box.getBoundingSphere(new Sphere());
   const camera = new PerspectiveCamera(
     32,
@@ -42,7 +63,7 @@ export function startInspection(
     sphere.radius * 0.01,
     sphere.radius * 12,
   );
-  const distance = (1.05 * sphere.radius) / Math.sin((camera.fov * Math.PI) / 360);
+  const fit = 1.05 / Math.sin((camera.fov * Math.PI) / 360);
   const key = new DirectionalLight(0xfff4e7, 2.4);
   key.position.set(2, 3, 3);
   scene.add(key, new HemisphereLight(0xfffaf1, 0xb7a58d, 1.4));
@@ -55,11 +76,24 @@ export function startInspection(
   const direction = new Vector3();
 
   return {
-    draw({ yaw, elevation, zoom }) {
+    draw({ yaw, elevation, zoom }, medal) {
+      if (medal !== selected) {
+        selected = medal;
+        for (const { mesh, owners, matrices } of batches) {
+          let count = 0;
+          matrices.forEach((matrix, i) => {
+            if (medal === null || owners[i] === medal) mesh.setMatrixAt(count++, matrix);
+          });
+          mesh.count = count;
+          mesh.visible = count > 0;
+          mesh.instanceMatrix.needsUpdate = true;
+        }
+        measureObject(model).box.getBoundingSphere(sphere);
+      }
       const a = (yaw * Math.PI) / 180;
       const b = (elevation * Math.PI) / 180;
       direction.set(Math.sin(a) * Math.cos(b), Math.sin(b), Math.cos(a) * Math.cos(b));
-      camera.position.copy(sphere.center).addScaledVector(direction, distance / zoom);
+      camera.position.copy(sphere.center).addScaledVector(direction, (sphere.radius * fit) / zoom);
       camera.up.set(-Math.sin(a) * Math.sin(b), Math.cos(b), -Math.cos(a) * Math.sin(b));
       camera.lookAt(sphere.center);
       const previous = renderer.getRenderTarget();
@@ -81,9 +115,7 @@ export function startInspection(
       target.dispose();
       reflections.dispose();
       // Clones share the gallery's geometry and material, but own their instance buffers.
-      model.traverse((object) => {
-        if (object instanceof InstancedMesh) object.dispose();
-      });
+      model.traverse(disposeInstances);
     },
   };
 }

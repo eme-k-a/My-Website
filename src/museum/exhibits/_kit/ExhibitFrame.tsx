@@ -34,7 +34,7 @@ import type { ExhibitId, StopId } from '../../../content/ids';
 import { content } from '../../../content/index';
 import { entryById } from '../../../content/selectors';
 import { tokens } from '../../../design/tokens';
-import { useInspection } from '../../../overlay/inspection';
+import { canInspect, useInspection } from '../../../overlay/inspection';
 import { openStory } from '../../../overlay/story';
 import { useMaterialLibrary } from '../../materials';
 import { markExhibitMounted, reportExhibit } from '../../quality/StatsProbe';
@@ -344,14 +344,16 @@ function ExhibitMount({ slot, manifest }: { slot: Slot; manifest: ExhibitManifes
 
   useEffect(() => {
     const model = group.current;
-    if (id !== 'sdsj' || !revealed || failed || !model) return;
+    if (!canInspect(id) || !revealed || failed || !model) return;
     const start = async (canvas: HTMLCanvasElement) => {
       const { startInspection } = await import('../../inspection');
       return startInspection(gl, model, canvas);
     };
-    useInspection.setState({ start });
+    useInspection.setState((s) => ({ starts: { ...s.starts, [id]: start } }));
     return () => {
-      if (useInspection.getState().start === start) useInspection.setState({ start: null });
+      useInspection.setState((s) =>
+        s.starts[id] === start ? { starts: { ...s.starts, [id]: undefined } } : s,
+      );
     };
   }, [id, revealed, failed, gl]);
 
@@ -451,7 +453,8 @@ export interface ExhibitFrameProps {
 }
 
 export function ExhibitFrame({ slot, layout, here }: ExhibitFrameProps) {
-  const inspecting = useInspection((s) => slot.id === 'sdsj' && s.objectView);
+  const openHere = useMuseum((s) => canInspect(slot.id) && s.openId === slot.id);
+  const inspecting = useInspection((s) => openHere && s.objectView);
   const distance = stopDistance(layout, here, slot.id);
   const [mounted, setMounted] = useState(() => mountDecision(false, distance).mount);
   const decision = mountDecision(mounted, distance);

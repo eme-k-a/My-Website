@@ -1,26 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMuseum } from '../app/store';
-import { useInspection, type InspectionPose, type InspectionSession } from './inspection';
+import { content } from '../content';
+import {
+  useInspection,
+  type Inspectable,
+  type InspectionPose,
+  type InspectionSession,
+} from './inspection';
 import dialog from './ExhibitDialog.module.css';
 import styles from './ObjectInspector.module.css';
 
 const initial: InspectionPose = { yaw: 25, elevation: 24, zoom: 1 };
 const clamp = (n: number, low: number, high: number) => Math.max(low, Math.min(high, n));
 const wrap = (degrees: number) => ((degrees % 360) + 360) % 360;
-export default function ObjectInspector() {
-  const start = useInspection((s) => s.start);
+export default function ObjectInspector({ id }: { id: Inspectable }) {
+  const [medal, setMedal] = useState<number | null>(null);
+  const table = id === 'sdsj';
+  const label = table
+    ? 'Round Table'
+    : medal === null
+      ? 'Medal Cabinet'
+      : content.certifications.items[medal]!.name;
+  const start = useInspection((s) => s.starts[id]);
   const lost = useMuseum((s) => s.contextLost);
   const canvas = useRef<HTMLCanvasElement>(null);
   const session = useRef<InspectionSession | null>(null);
   const [pose, setPose] = useState(initial);
   const [failed, setFailed] = useState(false);
-  const latest = useRef(pose);
+  const latest = useRef({ pose, medal });
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
   useEffect(() => {
-    latest.current = pose;
-    const frame = requestAnimationFrame(() => session.current?.draw(pose));
+    latest.current = { pose, medal };
+    const frame = requestAnimationFrame(() => session.current?.draw(pose, medal));
     return () => cancelAnimationFrame(frame);
-  }, [pose]);
+  }, [pose, medal]);
   useEffect(() => {
     if (!start || lost || !canvas.current) return;
     let active = true;
@@ -31,7 +44,7 @@ export default function ObjectInspector() {
           return;
         }
         session.current = view;
-        view.draw(latest.current);
+        view.draw(latest.current.pose, latest.current.medal);
         setFailed(false);
       })
       .catch(() => {
@@ -60,7 +73,26 @@ export default function ObjectInspector() {
   const available = !!start && !lost && !failed;
   return (
     <div className={styles.inspector}>
-      {available && <p>Drag to turn the table, or use the arrow keys. Use + and - to zoom.</p>}
+      {!table && (
+        <label>
+          Inspect{' '}
+          <select
+            value={medal ?? 'all'}
+            onChange={(e) => {
+              setMedal(e.target.value === 'all' ? null : Number(e.target.value));
+              setPose(initial);
+            }}
+          >
+            <option value="all">Whole cabinet</option>
+            {content.certifications.items.slice(0, 3).map((item, index) => (
+              <option key={item.name} value={index}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {available && <p>Drag to rotate, or use the arrow keys. Use + and - to zoom.</p>}
       <canvas
         hidden={!available}
         ref={canvas}
@@ -68,7 +100,7 @@ export default function ObjectInspector() {
         height={400}
         tabIndex={0}
         role="group"
-        aria-label="Round Table rotation and zoom"
+        aria-label={label + ' rotation and zoom'}
         onKeyDown={(e) => {
           const action = actions[e.key];
           if (action) {
@@ -94,6 +126,17 @@ export default function ObjectInspector() {
       />
       {available && (
         <div className={styles.orbitControls}>
+          {table ? (
+            <button type="button" onClick={() => setPose({ yaw: 0, elevation: 90, zoom: 1 })}>
+              Overhead view
+            </button>
+          ) : (
+            medal !== null && (
+              <button type="button" onClick={() => setPose({ yaw: 180, elevation: 0, zoom: 1 })}>
+                View reverse
+              </button>
+            )
+          )}
           {(
             [
               ['Left', 'ArrowLeft'],
@@ -111,8 +154,8 @@ export default function ObjectInspector() {
           ))}
         </div>
       )}
-      <a className={dialog.link} href="/exhibit/sdsj/?mode=classic#story-static-title-views">
-        View six static angles
+      <a className={dialog.link} href={`/exhibit/${id}/?mode=classic#story-static-title-views`}>
+        {table ? 'View six static angles' : 'View static medal images'}
       </a>
     </div>
   );

@@ -21,7 +21,7 @@ import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
 import type { ExhibitId } from '../content/ids';
 import { SITE_URL } from '../content/site';
-import { useInspection } from './inspection';
+import { canInspect, useInspection } from './inspection';
 import { Icon } from './icons';
 import {
   closeStory,
@@ -116,7 +116,7 @@ function StepButton({ id, direction }: { id: ExhibitId; direction: StoryDirectio
 
 export function ExhibitDialog() {
   const openId = useMuseum((s) => s.openId);
-  const objectView = useInspection((s) => s.objectView) && openId === 'sdsj';
+  const objectView = useInspection((s) => s.objectView) && canInspect(openId);
   const dialog = useRef<HTMLDialogElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -225,7 +225,7 @@ export function ExhibitDialog() {
           >
             <div className={styles.body}>
               <p className={`${styles.eyebrow} ${styles.bodyEyebrow}`}>{eyebrowText(openId)}</p>
-              {openId === 'sdsj' && (
+              {canInspect(openId) && (
                 <div className={inspectorStyles.viewSwitch} role="group" aria-label="Exhibit view">
                   {(['story', 'object'] as const).map((view) => (
                     <button
@@ -242,10 +242,10 @@ export function ExhibitDialog() {
               {objectView ? (
                 <>
                   <h2 className={styles.title} id={HEADING_ID}>
-                    The Round Table
+                    {openId === 'sdsj' ? 'The Round Table' : 'The Medal Cabinet'}
                   </h2>
                   <Suspense fallback={<p>Loading object…</p>}>
-                    <ObjectInspector />
+                    <ObjectInspector key={openId} id={openId} />
                   </Suspense>
                 </>
               ) : (

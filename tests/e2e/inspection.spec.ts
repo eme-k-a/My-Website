@@ -6,7 +6,7 @@ test('the Round Table rotates, zooms, resets and returns to its opener', async (
   await page.goto(museumUrl('/'));
   await waitForMuseum(page);
   await goToStop(page, 'sdsj');
-  const opener = page.getByRole('button', { name: 'Inspect object' });
+  const opener = page.getByTestId('card-sdsj').getByRole('button', { name: 'Inspect object' });
   const scroll = await page.evaluate(() => scrollY);
   await opener.click();
   const stage = page.getByRole('group', { name: 'Round Table rotation and zoom' });
@@ -19,6 +19,10 @@ test('the Round Table rotates, zooms, resets and returns to its opener', async (
     )
     .toBe(255);
   const first = await pixels();
+  await page.getByRole('button', { name: 'Overhead view' }).click();
+  await expect.poll(async () => (await pixels()) !== first).toBe(true);
+  await page.getByRole('button', { name: 'Reset' }).click();
+  await expect.poll(async () => (await pixels()) === first).toBe(true);
   await stage.focus();
   await page.keyboard.press('ArrowUp');
   await expect.poll(async () => (await pixels()) !== first).toBe(true);
@@ -42,4 +46,53 @@ test('the Round Table rotates, zooms, resets and returns to its opener', async (
   await opener.click();
   await page.goBack();
   await expect(opener).toBeFocused();
+});
+
+test('inspect each credential from both sides and restore the full cabinet', async ({ page }) => {
+  test.skip(!['desktop', 'pixel7'].includes(test.info().project.name));
+  await page.goto(museumUrl('/'));
+  await waitForMuseum(page);
+  await goToStop(page, 'certifications');
+  const opener = page
+    .getByTestId('card-certifications')
+    .getByRole('button', { name: 'Inspect object' });
+  const scroll = await page.evaluate(() => scrollY);
+  await opener.click();
+  const select = page.getByRole('combobox', { name: 'Inspect' });
+  const stage = page.locator('canvas[aria-label$="rotation and zoom"]');
+  const pixels = () => stage.evaluate((el) => (el as HTMLCanvasElement).toDataURL());
+  await expect
+    .poll(() =>
+      stage.evaluate(
+        (el) => (el as HTMLCanvasElement).getContext('2d')!.getImageData(0, 0, 1, 1).data[3],
+      ),
+    )
+    .toBe(255);
+  const whole = await pixels();
+  const reverses = new Set<string>();
+  for (const title of [
+    'AWS Certified Cloud Practitioner',
+    'Tech Stewardship Practice Program',
+    'Tech Stewardship for the Energy Transition',
+  ]) {
+    await select.selectOption({ label: title });
+    await expect(stage).toHaveAccessibleName(title + ' rotation and zoom');
+    await expect.poll(async () => (await pixels()) !== whole).toBe(true);
+    await page.getByRole('button', { name: 'View reverse', exact: true }).click();
+    await stage.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
+    const reverse = await pixels();
+    reverses.add(reverse);
+    await stage.focus();
+    await page.keyboard.press('ArrowLeft');
+    await expect.poll(async () => (await pixels()) !== reverse).toBe(true);
+    await select.selectOption({ label: 'Whole cabinet' });
+    await expect.poll(async () => (await pixels()) === whole).toBe(true);
+  }
+  expect(reverses.size).toBe(3);
+  await page.getByRole('button', { name: 'Story', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(opener).toBeFocused();
+  expect(await page.evaluate(() => scrollY)).toBe(scroll);
 });

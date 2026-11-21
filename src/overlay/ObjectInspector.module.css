@@ -28,3 +28,13 @@
   background: var(--brass);
   color: var(--ink);
 }
+
+.inspector select {
+  display: block;
+  width: 100%;
+  min-height: var(--target-min);
+  font: inherit;
+  background: var(--panel-solid);
+  color: var(--text);
+  border: 1px solid var(--border-secondary);
+}

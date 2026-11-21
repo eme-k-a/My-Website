@@ -90,7 +90,10 @@
   composes: label from './ui.module.css';
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
+  min-height: var(--target-min);
+  gap: 6px;
+  pointer-events: auto;
+  cursor: pointer;
   padding: 0 10px;
   border: 1px solid var(--hairline);
   border-radius: var(--radius);

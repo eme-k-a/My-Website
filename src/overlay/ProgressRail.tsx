@@ -14,6 +14,7 @@ import { exitWing, travelTo } from '../museum/rail/navigation';
 import { Icon } from './icons';
 import { cardOf, railLabel, railStops, wingHeadShown, YEAR_TICKS } from './model';
 import { watchRailProgress } from './railProgress';
+import shared from './overlay.module.css';
 import styles from './ProgressRail.module.css';
 import ui from './ui.module.css';
 
@@ -43,7 +44,7 @@ function tickAt(progress: number, last: number): CSSProperties {
 /** Travel errors (a wing move before WP-09 lands, for example) must never surface as page errors. */
 const ignore = () => {};
 
-export function ProgressRail() {
+export function ProgressRail({ openDirectory }: { openDirectory: () => void }) {
   const track = useMuseum((s) => s.track);
   const stop = useMuseum((s) => s.stop);
   const stops = railStops(track);
@@ -73,6 +74,8 @@ export function ProgressRail() {
   // and "Return to the aisle") sat on the door's transom title (F-038), so it steps aside: the
   // visitor is at the door, Esc still returns to the aisle and the door card offers Step inside.
   // The control unmounts rather than hiding, so it can never hold focus.
+  const wingLabel =
+    wing && `${wing.title} wing, ${Math.max(1, stops.indexOf(stop) + 1)} of ${stops.length}`;
   const atDoor = wing !== undefined && !wingHeadShown(track, stop);
 
   return (
@@ -86,9 +89,17 @@ export function ProgressRail() {
       {wing ? (
         !atDoor && (
           <div className={styles.wingHead}>
-            <p className={styles.wingTitle}>
-              {wing.title} wing, {Math.max(1, stops.indexOf(stop) + 1)} of {stops.length}
-            </p>
+            <p className={styles.wingTitle}>{wingLabel}</p>
+            <button
+              className={styles.directoryButton}
+              type="button"
+              onClick={openDirectory}
+              aria-haspopup="dialog"
+            >
+              <Icon name="list" />
+              <span className={shared.visuallyHidden}>Museum stops, </span>
+              {wingLabel}
+            </button>
             <button
               type="button"
               className={ui.secondary}

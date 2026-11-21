@@ -262,6 +262,28 @@ async function expectCls(page: Page): Promise<void> {
 test.describe('phone layout', () => {
   test.describe.configure({ timeout: 180_000 });
 
+  test('the stop directory connects both wings and marks the current stop', async ({ page }) => {
+    test.skip(project() !== 'pixel7', 'phone directory');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openGallery(page);
+    const trigger = page.getByRole('button', { name: /Museum stops,/ });
+    const directory = page.getByRole('dialog', { name: 'Museum stops' });
+    await trigger.focus();
+    await page.keyboard.press('Enter');
+    await expect(directory.getByRole('button', { name: 'Lobby' })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await directory.getByRole('button', { name: /P2.*Finance Tracker/i }).click();
+    await page.waitForFunction(() => window.__MUSEUM__?.stop === 'finance-tracker');
+    await trigger.click();
+    await expect(directory.locator('[aria-current="step"]')).toHaveAccessibleName(/P2/);
+    await directory.getByRole('button', { name: /V1.*NSBE/i }).click();
+    await page.waitForFunction(() => window.__MUSEUM__?.stop === 'nsbe-mun');
+    await page.getByTestId(TEST_IDS.exitWing).click();
+    await page.waitForFunction(() => window.__MUSEUM__?.stop === 'volunteer-door');
+  });
+
   test('every stop: card clear of the HUD and the case, 44 px targets', async ({ page }) => {
     test.skip(!PHONES.includes(project()), 'pixel7 and pixel7-landscape');
     await openGallery(page);

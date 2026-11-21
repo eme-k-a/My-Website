@@ -547,7 +547,7 @@ async function railTextRects(page: Page): Promise<(Rect & { text: string })[]> {
       if (!rail) return [];
       const els = [
         ...rail.querySelectorAll<HTMLElement>('[data-testid^="hud-stop-"] > span'),
-        ...rail.querySelectorAll<HTMLElement>('p'),
+        ...rail.querySelectorAll<HTMLElement>('p, button[aria-haspopup="dialog"]'),
         ...rail.querySelectorAll<HTMLElement>(`[data-testid="${ids.exit}"]`),
       ];
       return els

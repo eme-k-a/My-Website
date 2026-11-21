@@ -7,7 +7,13 @@ import type { CSSProperties, MouseEvent } from 'react';
 import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
 import type { ExhibitId, StopId } from '../content/ids';
-import type { DeskCard, DoorCard, ExhibitCard } from '../content/selectors';
+import { content } from '../content';
+import {
+  exhibitNumber,
+  type DeskCard,
+  type DoorCard,
+  type ExhibitCard,
+} from '../content/selectors';
 import { enterWing, travelTo } from '../museum/rail/navigation';
 import { Icon } from './icons';
 import { Intro } from './Intro';
@@ -118,7 +124,7 @@ function DoorPlacard({ card }: { card: DoorCard }) {
         {card.links.map((link) => (
           <li key={link.id}>
             <StoryLink id={link.id} href={link.href}>
-              {link.label}
+              {`${exhibitNumber(content, link.id)} · ${link.label}`}
             </StoryLink>
           </li>
         ))}

@@ -237,6 +237,11 @@
   pointer-events: auto;
 }
 
+.directoryButton {
+  composes: label from './ui.module.css';
+  display: none;
+}
+
 .wingTitle {
   composes: label from './ui.module.css';
   margin: 0;
@@ -273,6 +278,22 @@
     display: none;
   }
 
+  .wingTitle {
+    display: none;
+  }
+  .wingHead .directoryButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: none;
+    min-height: var(--target-min);
+    padding: 4px 8px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    background: var(--panel-solid);
+    color: var(--text);
+    cursor: pointer;
+  }
   .wingHead {
     flex-direction: row-reverse;
     align-items: center;

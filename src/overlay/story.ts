@@ -23,9 +23,11 @@ import { TEST_IDS } from '../app/testIds';
 import type { ExhibitId } from '../content/ids';
 import { content } from '../content/index';
 import { readingOrder, trackOf } from '../content/selectors';
+import { useInspection } from './inspection';
 import { travelTo } from '../museum/rail/navigation';
 
 export interface OpenStoryOptions {
+  inspect?: boolean;
   /** The control that opened the dialog, for focus return. */
   opener?: HTMLElement | null;
   /** What opened it: 'card' (Read the story), 'card-link' (an artwork title or door-card link),
@@ -75,6 +77,7 @@ export function openStory(id: ExhibitId, opts: OpenStoryOptions = {}): void {
   window.history.scrollRestoration = 'manual';
   applyHistoryOp(transitions.openStory(readHere(), id, state.track));
   window.history.scrollRestoration = 'auto';
+  useInspection.setState({ objectView: !!opts.inspect });
   useMuseum.setState({ openId: id });
 }
 
@@ -93,6 +96,7 @@ export function stepStory(direction: StoryDirection): ExhibitId | null {
     op.state = { ...op.state, inApp: false };
   }
   applyHistoryOp(op);
+  useInspection.setState({ objectView: false });
   useMuseum.setState({ openId: next });
   // The camera moves behind the dialog only when the exhibit is on the active track (§3.5).
   if (onActiveTrack(next)) travelTo(next).catch(ignore);
@@ -118,12 +122,17 @@ export function closeStory(): void {
  * (after a cold deep link, the deep-linked exhibit's button).
  */
 export function restoreFocus(id: ExhibitId): void {
+  useInspection.setState({ objectView: false });
   cancelColdTravel();
   cancelColdTravel = ignore;
   const fallback = opener?.isConnected ? opener : coldId ? openButton(coldId) : null;
   opener = null;
   coldId = null;
   closing = false;
+  if (fallback?.hasAttribute('data-inspect') && fallback.dataset.inspect === id) {
+    fallback.focus({ preventScroll: true });
+    return;
+  }
   const button = openButton(id);
   if (button && onActiveTrack(id)) {
     travelTo(id, { instant: true })
@@ -172,6 +181,7 @@ export function installStory(): () => void {
     opener = null;
     coldId = id;
     closing = false;
+    useInspection.setState({ objectView: false });
     useMuseum.setState({ openId: id });
     cancelColdTravel = whenReady(() => {
       cancelColdTravel = ignore;

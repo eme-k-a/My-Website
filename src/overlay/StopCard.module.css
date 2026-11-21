@@ -317,6 +317,10 @@
     margin-top: 12px;
   }
 
+  .status:empty {
+    pointer-events: none;
+  }
+
   .status {
     position: absolute;
     right: 18px;

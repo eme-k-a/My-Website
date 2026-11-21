@@ -86,6 +86,17 @@ function ExhibitPlacard({ card }: { card: ExhibitCard }) {
             Enter
           </kbd>
         </button>
+        {card.id === 'sdsj' && (
+          <button
+            type="button"
+            className={ui.paperPrimary}
+            data-inspect={card.id}
+            aria-haspopup="dialog"
+            onClick={(e) => openStory(card.id, { inspect: true, opener: e.currentTarget })}
+          >
+            Inspect object
+          </button>
+        )}
       </div>
       <p className={styles.status}>{installing ? 'Installation in progress' : ''}</p>
     </article>

@@ -13,6 +13,7 @@ import type { ExhibitId } from '../content/ids';
 import { content } from '../content/index';
 import { entryById, organizationOf, type ExhibitCard } from '../content/selectors';
 import type { StoryBlock } from '../content/types';
+import { MedalViews } from './MedalViews';
 import { RoundTableViews } from './RoundTableViews';
 import { cardOf } from './model';
 import { neighbourOf } from './story';
@@ -167,6 +168,7 @@ function StoryContent({ id, headingId, level, durationTestId, eyebrow = true }: 
       )}
       <Section id={sid('object')} title="The object" level={sub}>
         <p className={styles.prose}>{exhibit.object.text}</p>
+        {id === 'certifications' && <MedalViews group={sid('views')} />}
         {id === 'sdsj' && <RoundTableViews group={sid('views')} />}
       </Section>
       {exhibit.links.length > 0 && (

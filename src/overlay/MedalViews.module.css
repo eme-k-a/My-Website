@@ -1,0 +1,11 @@
+.medal {
+  margin-bottom: 12px;
+}
+.flip {
+  padding-left: 12px;
+}
+.flip[open] + img,
+.flip[open] > summary > span:first-child,
+.flip:not([open]) > summary > span:last-child {
+  display: none;
+}

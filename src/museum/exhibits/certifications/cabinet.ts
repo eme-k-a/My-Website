@@ -106,6 +106,7 @@ export interface Part {
   center: Vec3;
   size: Vec3;
   roll?: number;
+  reverse?: boolean;
   /** Round only: lay its axis along +X instead (size = length, then the y and z radii). */
   alongX?: boolean;
 }
@@ -166,6 +167,29 @@ export function turbineEmblem(): Part[] {
 
 export const EMBLEMS = [cloudEmblem, compassEmblem, turbineEmblem] as const;
 
+/** Twelve short edge cuts surround one, two or three raised catalogue marks on the back. */
+export function reverseParts(index: number): Part[] {
+  const depth = 0.002;
+  const z = -FACE - depth / 2;
+  const edge = Array.from({ length: 12 }, (_, i): Part => {
+    const angle = (i * Math.PI) / 6;
+    return {
+      kind: 'slab',
+      reverse: true,
+      roll: angle,
+      center: [-Math.sin(angle) * 0.077, Math.cos(angle) * 0.077, z],
+      size: [0.0025, 0.009, depth],
+    };
+  });
+  const marks = Array.from({ length: index + 1 }, (_, i): Part => ({
+    kind: 'slab',
+    reverse: true,
+    center: [(i - index / 2) * 0.019, 0, z],
+    size: [0.007, 0.029, depth],
+  }));
+  return [...edge, ...marks];
+}
+
 /** Everything one medallion carries, in its own frame: disc, rim, strap and its emblem. */
 export function medallionParts(index: number): Part[] {
   const r = MEDALLION.radius;
@@ -174,6 +198,7 @@ export function medallionParts(index: number): Part[] {
     { kind: 'rim', center: [0, 0, FACE], size: [1, 1, 1] },
     { kind: 'box', center: [0, r + STRAP.size[1] / 2, 0], size: [...STRAP.size] },
     ...EMBLEMS[index]!(),
+    ...reverseParts(index),
   ];
 }
 
@@ -212,6 +237,7 @@ export function medallionYaw(index: number, t: number, reducedMotion: boolean): 
 }
 
 const toZ = new Quaternion().setFromEuler(new Euler(Math.PI / 2, 0, 0));
+const toBack = new Quaternion().setFromEuler(new Euler(-Math.PI / 2, 0, 0));
 const toX = new Quaternion().setFromEuler(new Euler(0, 0, -Math.PI / 2));
 const rollQ = new Quaternion();
 const yawQ = new Quaternion();
@@ -234,7 +260,7 @@ export function partMatrix(part: Part, out = new Matrix4()): Matrix4 {
   } else if (turned) {
     // S applies after the turn: x, y in the face, z the depth. As compose(T, Q, S) applies S
     // first, swap the y and z scale (the turn maps the primitive's y onto z).
-    q.multiplyQuaternions(rollQ, toZ);
+    q.multiplyQuaternions(rollQ, part.reverse ? toBack : toZ);
     scale.set(part.size[0], part.size[2], part.size[1]);
   } else {
     q.copy(rollQ);

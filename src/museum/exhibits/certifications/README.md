@@ -27,7 +27,7 @@ Wall vitrine slot (EXPERIENCE §5.3), local meters, origin at the center of the 
 
 All emblem parts are 4 mm relief (3.6 to 4.5 mm, so overlapping parts never z-fight). Their edges are bevelled (frustums and four-sided pyramids): a flat brass top square to the camera mirrors the dark room behind the visitor and vanishes, while a sloped flank catches the spotlight above, so each emblem reads as a bright outline on the medallion face. Same primitives, same material; only the edge profile is sloped.
 
-Measured under `?test=1` (`stats().exhibits.certifications`): `inBounds: true`, 3,924 triangles, 7 draw calls. At the full +-12 degree swing the medallions stay inside z 0.054 to 0.106.
+Each reverse carries twelve short radial marks and a central group of one, two or three bars identifying its place on the rail. These shallow reliefs reuse the bevelled square primitive. The cabinet totals 4,596 triangles across seven instanced draws. At the full +-12 degree swing the medallions stay inside z 0.054 to 0.106.
 
 ## Budget
 

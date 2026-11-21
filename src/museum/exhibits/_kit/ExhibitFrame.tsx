@@ -34,6 +34,7 @@ import type { ExhibitId, StopId } from '../../../content/ids';
 import { content } from '../../../content/index';
 import { entryById } from '../../../content/selectors';
 import { tokens } from '../../../design/tokens';
+import { useInspection } from '../../../overlay/inspection';
 import { openStory } from '../../../overlay/story';
 import { useMaterialLibrary } from '../../materials';
 import { markExhibitMounted, reportExhibit } from '../../quality/StatsProbe';
@@ -341,6 +342,19 @@ function ExhibitMount({ slot, manifest }: { slot: Slot; manifest: ExhibitManifes
     };
   }, [showsExhibit, resolved, revealed, gl, scene, camera, id]);
 
+  useEffect(() => {
+    const model = group.current;
+    if (id !== 'sdsj' || !revealed || failed || !model) return;
+    const start = async (canvas: HTMLCanvasElement) => {
+      const { startInspection } = await import('../../inspection');
+      return startInspection(gl, model, canvas);
+    };
+    useInspection.setState({ start });
+    return () => {
+      if (useInspection.getState().start === start) useInspection.setState({ start: null });
+    };
+  }, [id, revealed, failed, gl]);
+
   // After the reveal commit: settle, measure, and remember what to dispose.
   const resources = useRef<ExhibitResources | null>(null);
   const shared = useMemo(() => sharedResources(library), [library]);
@@ -437,6 +451,7 @@ export interface ExhibitFrameProps {
 }
 
 export function ExhibitFrame({ slot, layout, here }: ExhibitFrameProps) {
+  const inspecting = useInspection((s) => slot.id === 'sdsj' && s.objectView);
   const distance = stopDistance(layout, here, slot.id);
   const [mounted, setMounted] = useState(() => mountDecision(false, distance).mount);
   const decision = mountDecision(mounted, distance);
@@ -451,7 +466,7 @@ export function ExhibitFrame({ slot, layout, here }: ExhibitFrameProps) {
     <>
       <group name={`slot-${slot.id}`} position={origin} rotation-y={slot.rotationY}>
         <HitBox slot={slot} />
-        {decision.mount && <ExhibitMount slot={slot} manifest={manifest} />}
+        {(inspecting || decision.mount) && <ExhibitMount slot={slot} manifest={manifest} />}
       </group>
       <Placard layout={layout} slot={slot} />
     </>

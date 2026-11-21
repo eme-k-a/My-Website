@@ -1,0 +1,30 @@
+.inspector canvas {
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  cursor: grab;
+}
+.inspector canvas:active {
+  cursor: grabbing;
+}
+.viewSwitch,
+.orbitControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+}
+.viewSwitch button,
+.orbitControls button {
+  background: var(--panel-solid);
+  color: var(--text);
+  border: 1px solid var(--border-secondary);
+  padding: 4px 12px;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  cursor: pointer;
+}
+.viewSwitch button[aria-pressed='true'] {
+  background: var(--brass);
+  color: var(--ink);
+}

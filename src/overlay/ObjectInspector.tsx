@@ -31,7 +31,14 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
   const pendingFrame = useRef<number | null>(null);
   const settleTimer = useRef<number | undefined>(undefined);
   const lastDraw = useRef(-Infinity);
-  const drag = useRef<{ id: number; x: number; y: number } | null>(null);
+  const [debug] = useState(() => new URLSearchParams(window.location.search).has('debug'));
+  const [measurement, setMeasurement] = useState('');
+  const drag = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    sample?: { start: number; frames: number };
+  } | null>(null);
   useEffect(() => {
     latest.current = { pose, medal };
     if (!session.current || pendingFrame.current !== null) return;
@@ -41,7 +48,11 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
       window.clearTimeout(settleTimer.current);
       const moving = now - lastDraw.current < 150;
       lastDraw.current = now;
-      if (session.current?.draw(latest.current.pose, latest.current.medal, moving)) {
+      const view = session.current;
+      if (!view) return;
+      const refine = view.draw(latest.current.pose, latest.current.medal, moving);
+      if (drag.current?.sample) drag.current.sample.frames++;
+      if (refine) {
         settleTimer.current = window.setTimeout(() => {
           session.current?.draw(latest.current.pose, latest.current.medal);
         }, 150);
@@ -66,6 +77,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
       });
     return () => {
       active = false;
+      drag.current = null;
       window.clearTimeout(settleTimer.current);
       lastDraw.current = -Infinity;
       if (pendingFrame.current !== null) cancelAnimationFrame(pendingFrame.current);
@@ -99,6 +111,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
             onChange={(e) => {
               setMedal(e.target.value === 'all' ? null : Number(e.target.value));
               setPose(initial);
+              setMeasurement('');
             }}
           >
             <option value="all">Whole cabinet</option>
@@ -130,18 +143,41 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
         onPointerDown={(e) => {
           if (!e.isPrimary || e.button !== 0) return;
           e.currentTarget.setPointerCapture(e.pointerId);
-          drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+          drag.current = {
+            id: e.pointerId,
+            x: e.clientX,
+            y: e.clientY,
+            sample: debug ? { start: performance.now(), frames: 0 } : undefined,
+          };
         }}
         onPointerMove={(e) => {
           const last = drag.current;
           if (last?.id !== e.pointerId) return;
           rotate((last.x - e.clientX) * 0.65, (e.clientY - last.y) * 0.65);
-          drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+          last.x = e.clientX;
+          last.y = e.clientY;
+        }}
+        onPointerUp={(e) => {
+          const gesture = drag.current;
+          if (!gesture?.sample || gesture.id !== e.pointerId) return;
+          const seconds = (performance.now() - gesture.sample.start) / 1000;
+          const frames = gesture.sample.frames;
+          setMeasurement(
+            seconds >= 2 && frames > 0
+              ? `${(frames / seconds).toFixed(1)} fps · ${frames} frames in ${seconds.toFixed(2)} s`
+              : 'Drag continuously for at least 2 seconds.',
+          );
         }}
         onLostPointerCapture={() => {
           drag.current = null;
         }}
       />
+      {available && debug && (
+        <p>
+          Rotation measurement ·{' '}
+          <output>{measurement || 'Drag continuously for at least 2 seconds.'}</output>
+        </p>
+      )}
       {available && (
         <div className={styles.orbitControls}>
           {table ? (

@@ -7,12 +7,21 @@
 // ends in story.ts, which keeps history consistent; the dialog only mirrors `openId`. While the
 // phone sheet is open, `html[data-sheet="open"]` tells the FrameDriver to stop rendering (WP-16).
 // Only Enter and Esc are custom keys anywhere, and Esc here is the browser's own.
-import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
 import { exhibitPath } from '../app/routes';
 import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
 import type { ExhibitId } from '../content/ids';
 import { SITE_URL } from '../content/site';
+import { useInspection } from './inspection';
 import { Icon } from './icons';
 import {
   closeStory,
@@ -24,7 +33,9 @@ import {
 } from './story';
 import { eyebrowText, exhibitLabel, StoryBody } from './StoryBody';
 import styles from './ExhibitDialog.module.css';
+import inspectorStyles from './ObjectInspector.module.css';
 
+const ObjectInspector = lazy(() => import('./ObjectInspector'));
 const HEADING_ID = 'story-title';
 /** The phone sheet (EXPERIENCE §5.9, §9.1): landscape phones get the compact panel instead. */
 export const SHEET_QUERY = '(max-width: 1023px) and (orientation: portrait)';
@@ -105,6 +116,7 @@ function StepButton({ id, direction }: { id: ExhibitId; direction: StoryDirectio
 
 export function ExhibitDialog() {
   const openId = useMuseum((s) => s.openId);
+  const objectView = useInspection((s) => s.objectView) && openId === 'sdsj';
   const dialog = useRef<HTMLDialogElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -213,7 +225,32 @@ export function ExhibitDialog() {
           >
             <div className={styles.body}>
               <p className={`${styles.eyebrow} ${styles.bodyEyebrow}`}>{eyebrowText(openId)}</p>
-              <StoryBody id={openId} headingId={HEADING_ID} />
+              {openId === 'sdsj' && (
+                <div className={inspectorStyles.viewSwitch} role="group" aria-label="Exhibit view">
+                  {(['story', 'object'] as const).map((view) => (
+                    <button
+                      type="button"
+                      key={view}
+                      aria-pressed={objectView === (view === 'object')}
+                      onClick={() => useInspection.setState({ objectView: view === 'object' })}
+                    >
+                      {view === 'object' ? 'Object' : 'Story'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {objectView ? (
+                <>
+                  <h2 className={styles.title} id={HEADING_ID}>
+                    The Round Table
+                  </h2>
+                  <Suspense fallback={<p>Loading object…</p>}>
+                    <ObjectInspector />
+                  </Suspense>
+                </>
+              ) : (
+                <StoryBody id={openId} headingId={HEADING_ID} />
+              )}
             </div>
           </div>
           <p className={styles.navHint}>Follow the timeline across the aisle and wings.</p>

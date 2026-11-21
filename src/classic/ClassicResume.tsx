@@ -178,6 +178,11 @@ function Certifications({ c }: { c: Content }) {
           return <li key={item.name}>{item.url ? <a href={item.url}>{text}</a> : text}</li>;
         })}
       </ul>
+      <p>
+        <a href="/exhibit/certifications/?mode=classic#story-static-title-views">
+          Inspect the Medal Cabinet
+        </a>
+      </p>
     </section>
   );
 }

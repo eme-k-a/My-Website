@@ -15,6 +15,7 @@ import {
   medallionMatrix,
   medallionYaw,
   placedMatrix,
+  reverseParts,
   RAIL,
   RIM,
   STRAP,
@@ -94,6 +95,25 @@ describe('certifications geometry (EXPERIENCE §4.10)', () => {
     expect(Math.min(...zs('facet'))).toBeCloseTo(face, 9);
   });
 
+  it('keeps the twelve edge marks and each catalogue number in relief on the reverse', () => {
+    for (let index = 0; index < MEDALLION.xs.length; index++) {
+      const parts = reverseParts(index);
+      expect(parts).toHaveLength(12 + index + 1);
+      for (const part of parts) {
+        const points = GEOMETRY[part.kind].getAttribute('position');
+        const matrix = placedMatrix(null, part);
+        const zs = [];
+        for (let i = 0; i < points.count; i++) {
+          const point = new Vector3().fromBufferAttribute(points, i).applyMatrix4(matrix);
+          expect(Math.hypot(point.x, point.y)).toBeLessThan(MEDALLION.radius);
+          zs.push(point.z);
+        }
+        expect(Math.max(...zs)).toBeCloseTo(-MEDALLION.thickness / 2, 8);
+        expect(Math.min(...zs)).toBeCloseTo(-MEDALLION.thickness / 2 - 0.002, 8);
+      }
+    }
+  });
+
   it('keeps each emblem inside its rim', () => {
     for (let i = 0; i < 3; i++) {
       for (const part of EMBLEMS[i]!()) {
@@ -134,7 +154,7 @@ describe('certifications geometry (EXPERIENCE §4.10)', () => {
     }
   });
 
-  it('stays under 20k triangles (about 3,900)', () => {
+  it('stays within the 5,000-triangle cabinet budget', () => {
     const instances = cabinetInstances();
     let triangles = 0;
     for (const kind of Object.keys(instances) as Primitive[]) {

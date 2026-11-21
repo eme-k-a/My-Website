@@ -361,6 +361,31 @@ test.describe('prerendered exhibit pages', { tag: '@dom' }, () => {
   test.describe('with JavaScript off', () => {
     test.use({ javaScriptEnabled: false });
 
+    test('selects a named medal, turns it over and returns to the cabinet without JavaScript', async ({
+      page,
+    }) => {
+      await page.goto('/resume/');
+      await page.getByRole('link', { name: 'Inspect the Medal Cabinet' }).click();
+      const views = page.locator('#story-static-title-views');
+      for (const name of [
+        'AWS Certified Cloud Practitioner',
+        'Tech Stewardship Practice Program',
+        'Tech Stewardship for the Energy Transition',
+      ]) {
+        const summary = views.getByText(name, { exact: true });
+        await summary.focus();
+        await page.keyboard.press('Enter');
+        await expect(views.getByRole('img')).toHaveCount(1);
+        await expect(views.getByRole('img')).toHaveJSProperty('naturalWidth', 560);
+        await views.getByText('View reverse', { exact: true }).filter({ visible: true }).click();
+        await expect(views.getByRole('img')).toHaveAccessibleName(/twelve short radial marks/);
+        await expect(views.getByRole('img')).toHaveJSProperty('naturalWidth', 560);
+        await views.getByText('View front', { exact: true }).filter({ visible: true }).click();
+      }
+      await views.getByText('Whole cabinet', { exact: true }).click();
+      await expect(views.getByRole('img')).toHaveAccessibleName(/hang from one rail/);
+    });
+
     test('the classic résumé opens all six Round Table views without JavaScript', async ({
       page,
     }) => {

@@ -216,6 +216,7 @@ export function ExhibitDialog() {
               <StoryBody id={openId} headingId={HEADING_ID} />
             </div>
           </div>
+          <p className={styles.navHint}>Follow the timeline across the aisle and wings.</p>
           <div className={styles.footer}>
             <StepButton id={openId} direction="newer" />
             <StepButton id={openId} direction="older" />

@@ -210,6 +210,7 @@ export interface ExhibitCard {
   /** The first 4 tags (the dialog shows all). */
   medium: string[];
   caption: string;
+  objectDetail: string;
   cta: Cta;
   /** exhibit.draft: the title, caption, tags and object text await approval. */
   draft: boolean;
@@ -322,6 +323,9 @@ function exhibitCard(c: Content, id: ExhibitId, track: TrackId, now: Date): Exhi
     ...(length !== undefined && { duration: length }),
     medium: entry.exhibit.tags.slice(0, MEDIUM_ON_CARD),
     caption: entry.exhibit.caption,
+    objectDetail:
+      entry.exhibit.object.text.split(/(?<=[.!?])\s+/)[(entry.exhibit.placardSentence ?? 1) - 1] ??
+      entry.exhibit.object.text,
     cta: { label: 'Read the story', href: `/exhibit/${id}/` },
     draft: entry.exhibit.draft,
   };

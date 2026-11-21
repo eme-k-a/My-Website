@@ -209,6 +209,7 @@ export function StoryArticle({ id }: { id: ExhibitId }) {
     <article id="story-static" data-testid={TEST_IDS.storyStatic} className={styles.static}>
       <StoryContent id={id} headingId="story-static-title" level={1} />
       <nav className={styles.staticNav} aria-label="More exhibits">
+        <p>Follow the timeline across the aisle and wings.</p>
         <ul>
           {newer && (
             <li>

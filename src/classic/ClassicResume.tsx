@@ -105,6 +105,13 @@ function Volunteer({ c }: { c: Content }) {
             {v.org}, {formatLocation(v.location)}
           </p>
           <Bullets bullets={v.bullets} />
+          {v.id === 'sdsj' && (
+            <p>
+              <a href="/exhibit/sdsj/?mode=classic#story-static-title-views">
+                Inspect the Round Table
+              </a>
+            </p>
+          )}
           {v.exhibit.links.map((link) => (
             <p key={link.href}>
               <a href={link.href}>{link.label}</a>

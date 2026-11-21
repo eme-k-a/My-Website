@@ -361,6 +361,27 @@ test.describe('prerendered exhibit pages', { tag: '@dom' }, () => {
   test.describe('with JavaScript off', () => {
     test.use({ javaScriptEnabled: false });
 
+    test('the classic résumé opens all six Round Table views without JavaScript', async ({
+      page,
+    }) => {
+      await page.goto('/resume/');
+      await page.getByRole('link', { name: 'Inspect the Round Table' }).click();
+      const views = page.locator('#story-static-title-views');
+      const panels = views.locator('details');
+      await expect(panels).toHaveCount(6);
+      for (const panel of await panels.all()) {
+        const summary = panel.locator('summary');
+        if (!(await panel.evaluate((el) => el.hasAttribute('open')))) {
+          await summary.focus();
+          await page.keyboard.press('Enter');
+        }
+        const image = panel.getByRole('img');
+        await expect(image).toBeVisible();
+        await expect(image).toHaveJSProperty('naturalWidth', 640);
+        await expect(image).toHaveAccessibleName(/.+/);
+      }
+    });
+
     test('the NSBE MUN static story identifies the role and links to the chapter website', async ({
       page,
     }) => {

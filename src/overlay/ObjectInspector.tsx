@@ -130,6 +130,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
         onPointerDown={(e) => {
           if (!e.isPrimary || e.button !== 0) return;
           e.currentTarget.setPointerCapture(e.pointerId);
+          if (e.pointerType === 'touch') e.currentTarget.dataset.touchRotating = '';
           drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
         }}
         onPointerMove={(e) => {
@@ -138,7 +139,9 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
           rotate((last.x - e.clientX) * 0.65, (e.clientY - last.y) * 0.65);
           drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
         }}
-        onLostPointerCapture={() => {
+        onLostPointerCapture={(e) => {
+          if (drag.current?.id !== e.pointerId) return;
+          delete e.currentTarget.dataset.touchRotating;
           drag.current = null;
         }}
       />

@@ -70,6 +70,11 @@
   padding: 24px 48px 8px;
 }
 
+/* Hold the sheet at its current offset while the visitor rotates the object. */
+.scroller:has(canvas[data-touch-rotating]) {
+  overflow-y: hidden;
+}
+
 .scroller {
   flex: 1 1 auto;
   min-height: 0;

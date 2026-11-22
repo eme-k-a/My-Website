@@ -96,3 +96,26 @@ test('inspect each credential from both sides and restore the full cabinet', asy
   await expect(opener).toBeFocused();
   expect(await page.evaluate(() => scrollY)).toBe(scroll);
 });
+
+test('the debug reader measures a drag on the inspection canvas', async ({ page }) => {
+  test.skip(test.info().project.name !== 'pixel7');
+  await page.goto(museumUrl('/exhibit/certifications/') + '&debug');
+  await waitForMuseum(page);
+  await page.getByRole('button', { name: 'Object', exact: true }).click();
+  const stage = page.locator('canvas[aria-label$="rotation and zoom"]');
+  await stage.scrollIntoViewIfNeeded();
+  const box = (await stage.boundingBox())!;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.click(x, y);
+  const reading = page.locator('output').filter({ hasText: 'Drag continuously' });
+  await expect(reading).toBeVisible();
+  await page.mouse.down();
+  const start = Date.now();
+  while (Date.now() - start < 2200) {
+    await page.mouse.move(x + 24 * Math.sin((Date.now() - start) / 150), y);
+    await page.waitForTimeout(30);
+  }
+  await page.mouse.up();
+  await expect(page.locator('output').filter({ hasText: /fps · [1-9]\d* frames/ })).toBeVisible();
+});

@@ -129,8 +129,8 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
         }}
         onPointerDown={(e) => {
           if (!e.isPrimary || e.button !== 0) return;
-          e.currentTarget.setPointerCapture(e.pointerId);
           if (e.pointerType === 'touch') e.currentTarget.dataset.touchRotating = '';
+          e.currentTarget.setPointerCapture(e.pointerId);
           drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
         }}
         onPointerMove={(e) => {

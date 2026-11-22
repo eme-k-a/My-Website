@@ -38,7 +38,7 @@ export const resume = {
     desk: {
       headline: "You've reached the beginning.",
       body: {
-        text: "Thanks for walking through. I'm finishing my B.Eng in Computer Engineering in May 2027 and I'm open to new-grad software engineering roles. If something here sparked an idea, I'd love to hear from you.",
+        text: "I'm finishing my B.Eng in Computer Engineering in May 2027 and I'm open to new-grad software engineering roles.",
       },
       footnote: 'New exhibits are installed as the collection grows.',
     },

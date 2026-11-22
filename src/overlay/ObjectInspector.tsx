@@ -142,6 +142,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
         }}
         onPointerDown={(e) => {
           if (!e.isPrimary || e.button !== 0) return;
+          if (e.pointerType === 'touch') e.currentTarget.dataset.touchRotating = '';
           e.currentTarget.setPointerCapture(e.pointerId);
           drag.current = {
             id: e.pointerId,
@@ -168,7 +169,9 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
               : 'Drag continuously for at least 2 seconds.',
           );
         }}
-        onLostPointerCapture={() => {
+        onLostPointerCapture={(e) => {
+          if (drag.current?.id !== e.pointerId) return;
+          delete e.currentTarget.dataset.touchRotating;
           drag.current = null;
         }}
       />

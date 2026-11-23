@@ -1,0 +1,530 @@
+{
+  "desktop": {
+    "verafin": {
+      "object": {
+        "triangles": 1912,
+        "drawCalls": 4,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 53,
+        "triangles": 10342,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "mysa": {
+      "object": {
+        "triangles": 4820,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 28,
+        "triangles": 10176,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "wailo": {
+      "object": {
+        "triangles": 2598,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 61,
+        "triangles": 15356,
+        "textureMB": 12.666996002197264,
+        "tier": "medium"
+      }
+    },
+    "cfia": {
+      "object": {
+        "triangles": 1116,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 39,
+        "triangles": 12302,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "klarup": {
+      "object": {
+        "triangles": 1452,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 31,
+        "triangles": 12068,
+        "textureMB": 12.416996002197264,
+        "tier": "medium"
+      }
+    },
+    "finance-tracker": {
+      "object": {
+        "triangles": 3832,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 19,
+        "triangles": 9108,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "sdsj": {
+      "object": {
+        "triangles": 792,
+        "drawCalls": 9,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 23,
+        "triangles": 6082,
+        "textureMB": 11.666996002197264,
+        "tier": "medium"
+      }
+    },
+    "nsbe-mun": {
+      "object": {
+        "triangles": 192,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 19,
+        "triangles": 5438,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "mun": {
+      "object": {
+        "triangles": 2676,
+        "drawCalls": 8,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 29,
+        "triangles": 11454,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "certifications": {
+      "object": {
+        "triangles": 4596,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 20,
+        "triangles": 8790,
+        "textureMB": 11.666996002197264,
+        "tier": "medium"
+      }
+    }
+  },
+  "portrait": {
+    "verafin": {
+      "object": {
+        "triangles": 1912,
+        "drawCalls": 4,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 23,
+        "triangles": 7252,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "mysa": {
+      "object": {
+        "triangles": 4820,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 21,
+        "triangles": 10070,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "wailo": {
+      "object": {
+        "triangles": 2598,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 40,
+        "triangles": 12376,
+        "textureMB": 12.666996002197264,
+        "tier": "medium"
+      }
+    },
+    "cfia": {
+      "object": {
+        "triangles": 1116,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 28,
+        "triangles": 9600,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "klarup": {
+      "object": {
+        "triangles": 1452,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 31,
+        "triangles": 12068,
+        "textureMB": 12.416996002197264,
+        "tier": "medium"
+      }
+    },
+    "finance-tracker": {
+      "object": {
+        "triangles": 3832,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 19,
+        "triangles": 9108,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "sdsj": {
+      "object": {
+        "triangles": 792,
+        "drawCalls": 9,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 23,
+        "triangles": 6082,
+        "textureMB": 11.666996002197264,
+        "tier": "medium"
+      }
+    },
+    "nsbe-mun": {
+      "object": {
+        "triangles": 192,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 23,
+        "triangles": 6648,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "mun": {
+      "object": {
+        "triangles": 2676,
+        "drawCalls": 8,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 31,
+        "triangles": 11462,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "certifications": {
+      "object": {
+        "triangles": 4596,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 20,
+        "triangles": 8790,
+        "textureMB": 11.666996002197264,
+        "tier": "medium"
+      }
+    }
+  },
+  "short": {
+    "verafin": {
+      "object": {
+        "triangles": 1912,
+        "drawCalls": 4,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 35,
+        "triangles": 11456,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "mysa": {
+      "object": {
+        "triangles": 4820,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 20,
+        "triangles": 10058,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "wailo": {
+      "object": {
+        "triangles": 2598,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 36,
+        "triangles": 11292,
+        "textureMB": 12.666996002197264,
+        "tier": "medium"
+      }
+    },
+    "cfia": {
+      "object": {
+        "triangles": 1116,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 31,
+        "triangles": 10322,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "klarup": {
+      "object": {
+        "triangles": 1452,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 20,
+        "triangles": 6696,
+        "textureMB": 12.416996002197264,
+        "tier": "medium"
+      }
+    },
+    "finance-tracker": {
+      "object": {
+        "triangles": 3832,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 19,
+        "triangles": 9108,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "sdsj": {
+      "object": {
+        "triangles": 792,
+        "drawCalls": 9,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 23,
+        "triangles": 6082,
+        "textureMB": 11.666996002197264,
+        "tier": "medium"
+      }
+    },
+    "nsbe-mun": {
+      "object": {
+        "triangles": 192,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 19,
+        "triangles": 5438,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "mun": {
+      "object": {
+        "triangles": 2676,
+        "drawCalls": 8,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 31,
+        "triangles": 11462,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "certifications": {
+      "object": {
+        "triangles": 4596,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 20,
+        "triangles": 8790,
+        "textureMB": 11.666996002197264,
+        "tier": "medium"
+      }
+    }
+  },
+  "landscape": {
+    "verafin": {
+      "object": {
+        "triangles": 1912,
+        "drawCalls": 4,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 63,
+        "triangles": 15176,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "mysa": {
+      "object": {
+        "triangles": 4820,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 37,
+        "triangles": 10450,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "wailo": {
+      "object": {
+        "triangles": 2598,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 54,
+        "triangles": 12062,
+        "textureMB": 12.666996002197264,
+        "tier": "medium"
+      }
+    },
+    "cfia": {
+      "object": {
+        "triangles": 1116,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 44,
+        "triangles": 12530,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "klarup": {
+      "object": {
+        "triangles": 1452,
+        "drawCalls": 6,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 20,
+        "triangles": 6696,
+        "textureMB": 12.416996002197264,
+        "tier": "medium"
+      }
+    },
+    "finance-tracker": {
+      "object": {
+        "triangles": 3832,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 21,
+        "triangles": 9124,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "sdsj": {
+      "object": {
+        "triangles": 792,
+        "drawCalls": 9,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 25,
+        "triangles": 6100,
+        "textureMB": 11.666996002197264,
+        "tier": "medium"
+      }
+    },
+    "nsbe-mun": {
+      "object": {
+        "triangles": 192,
+        "drawCalls": 5,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 24,
+        "triangles": 6706,
+        "textureMB": 11.916996002197264,
+        "tier": "medium"
+      }
+    },
+    "mun": {
+      "object": {
+        "triangles": 2676,
+        "drawCalls": 8,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 32,
+        "triangles": 11638,
+        "textureMB": 12.166996002197264,
+        "tier": "medium"
+      }
+    },
+    "certifications": {
+      "object": {
+        "triangles": 4596,
+        "drawCalls": 7,
+        "inBounds": true
+      },
+      "scene": {
+        "calls": 20,
+        "triangles": 8790,
+        "textureMB": 11.666996002197264,
+        "tier": "medium"
+      }
+    }
+  }
+}

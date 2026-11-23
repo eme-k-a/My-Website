@@ -82,6 +82,13 @@ function Projects({ c }: { c: Content }) {
           {p.role && <p className="cv-entry-org">{p.role}</p>}
           <p className="cv-stack">{p.stack.join(', ')}</p>
           <Bullets bullets={p.bullets} />
+          {p.id === 'finance-tracker' && (
+            <p>
+              <a href="/exhibit/finance-tracker/?mode=classic#story-static-title-views">
+                Inspect The Balance
+              </a>
+            </p>
+          )}
         </article>
       ))}
     </section>

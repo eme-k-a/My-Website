@@ -315,7 +315,7 @@ export const resume = {
           },
         ],
         object: {
-          text: 'Three coin stacks, income in brass, expenses in graphite and the budget in frosted glass, rise and fall but always stay in balance.',
+          text: 'Round brass coins represent income, square graphite coins expenses, and six-sided glass coins the budget. The stacks rise and fall together on a ledger tray.',
         },
         tags: ['React', 'Node.js', 'MongoDB', 'ChatGPT API', 'Express'],
       },

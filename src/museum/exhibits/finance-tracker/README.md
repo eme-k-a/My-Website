@@ -4,11 +4,11 @@ Spec: `docs/spec/EXPERIENCE.md` §4.6. Work package: `docs/wp/WP-22.md` (procedu
 
 ## Concept
 
-Income, expenses and a budget kept in balance in one full-stack app. Three coin stacks stand on a walnut ledger tray: Income in brass, Expenses in graphite ceramic, Budget in frosted glass. They differ only by material. Every 6 s they rebalance to a new seeded set of counts, and Expenses never exceeds the Budget, which never exceeds Income. The language-model analysis lives in the story text, not in 3D: no speech bubble, text, labels, currency symbols or chart. The counts are seeded design noise, never data.
+Income, expenses and a budget kept in balance in one full-stack app. Three coin stacks stand on a walnut ledger tray: Income in brass, Expenses in graphite ceramic, Budget in frosted glass. Viewed from above, income is round, expenses square and budget hexagonal. The object inspector includes an overhead preset and a key. Six static angles remain accessible in the story. Every 6 s they rebalance to a new seeded set of counts, and Expenses never exceeds the Budget, which never exceeds Income. The language-model analysis lives in the story text, not in 3D: no speech bubble, text, labels, currency symbols or chart. The counts are seeded design noise, never data.
 
 ## Object description (DOM, `exhibit.object`)
 
-"Three coin stacks, income in brass, expenses in graphite and the budget in frosted glass, rise and fall but always stay in balance."
+"Round brass coins represent income, square graphite coins expenses, and six-sided glass coins the budget. The stacks rise and fall together on a ledger tray."
 
 ## Slot and bounds
 
@@ -22,13 +22,13 @@ Standard slot (EXPERIENCE §5.3), local meters, origin at the plinth top center,
 | Expenses stack | `ceramicGraphite` | x 0, z 0; 24-coin InstancedMesh                                                  |
 | Budget stack   | `frostedGlass`    | x +0.17, z 0; 24-coin InstancedMesh                                              |
 
-Each coin is a cylinder r 0.065, h 0.011, 24 segments (96 triangles). A stack holds 8 to 24 coins; a full stack tops out at y 0.479. Each mesh always draws all 24 instances: absent coins are scaled to zero at the stack top, so the measured triangle count is always the maximum-count one.
+The coins share a 0.065 radius and 0.011 height, with 24, 4 and 6 sides respectively. A stack holds 8 to 24 coins; a full stack tops out at y 0.479. Each mesh always draws all 24 instances: absent coins are scaled to zero at the stack top, so the measured triangle count is always the maximum-count one.
 
-Measured under `?test=1` (`stats().exhibits['finance-tracker']`): `inBounds: true`, 7,480 triangles (at the maximum coin count), 5 draw calls. Overall box (analytic): x -0.280 to 0.280, y 0.025 to 0.479 at most, z -0.150 to 0.150.
+Measured under `?test=1` (`stats().exhibits['finance-tracker']`): `inBounds: true`, 3,832 triangles (at the maximum coin count), 5 draw calls. Overall box (analytic): x -0.280 to 0.280, y 0.025 to 0.479 at most, z -0.150 to 0.150.
 
 ## Budget
 
-`index.ts`: 8,000 triangles, 6 draw calls, 0 MB textures. Actual: 7,480 triangles (tray 556, stand 12, coins 3 x 24 x 96), 5 draw calls (stand, tray and one per stack). Lazy chunk `Balance`: 1.41 KB gzip of the 40 KB limit.
+`index.ts`: 8,000 triangles, 6 draw calls, 0 MB textures. Actual: 3,832 triangles (tray 556, stand 12, coins 24 x (96 + 16 + 24)), 5 draw calls (stand, tray and one per stack).
 
 ## Materials
 

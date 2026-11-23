@@ -36,7 +36,9 @@ export default function Balance({ runtime }: ExhibitProps) {
     driver.apply([income.current, expenses.current, budget.current], clock.current, reducedMotion);
   });
 
-  const coin = <cylinderGeometry args={[COIN.radius, COIN.radius, COIN.height, COIN.segments]} />;
+  const coin = (sides: number) => (
+    <cylinderGeometry args={[COIN.radius, COIN.radius, COIN.height, sides]} />
+  );
 
   return (
     <group name="balance">
@@ -58,7 +60,7 @@ export default function Balance({ runtime }: ExhibitProps) {
         args={[undefined, undefined, MAX_COINS]}
         material={brass}
       >
-        {coin}
+        {coin(COIN.segments)}
       </instancedMesh>
       <instancedMesh
         ref={expenses}
@@ -66,7 +68,7 @@ export default function Balance({ runtime }: ExhibitProps) {
         args={[undefined, undefined, MAX_COINS]}
         material={graphite}
       >
-        {coin}
+        {coin(4)}
       </instancedMesh>
       <instancedMesh
         ref={budget}
@@ -74,7 +76,7 @@ export default function Balance({ runtime }: ExhibitProps) {
         args={[undefined, undefined, MAX_COINS]}
         material={frostedGlass}
       >
-        {coin}
+        {coin(6)}
       </instancedMesh>
     </group>
   );

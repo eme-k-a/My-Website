@@ -253,3 +253,14 @@ p {
 .paper .chart {
   height: 23px;
 }
+
+/* These surfaces have no 3D children. Rasterize each rounded face as one plane. */
+.face,
+.rim,
+.stroke,
+.bridge,
+.pulse,
+.tile-face,
+.cartridge {
+  transform-style: flat;
+}

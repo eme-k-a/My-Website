@@ -252,11 +252,11 @@ describe('exhibits', () => {
 
   it('artwork titles follow EXPERIENCE §4', () => {
     expect(Object.fromEntries(entries.map((e) => [e.id, e.exhibit.title]))).toEqual({
-      verafin: 'The Reporting Engine',
+      verafin: 'Editions',
       mysa: 'Warm Start',
       wailo: 'The Deep Link',
       cfia: 'The Ticket Spindle',
-      klarup: 'The Climb',
+      klarup: 'Someone Showed Up',
       'finance-tracker': 'The Balance',
       'nsbe-mun': 'The Chapter Noticeboard',
       sdsj: 'The Round Table',

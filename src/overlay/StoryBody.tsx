@@ -188,7 +188,7 @@ function StoryContent({ id, headingId, level, durationTestId, eyebrow = true }: 
         {id === 'sdsj' && <RoundTableViews group={sid('views')} />}
       </Section>
       {study && (
-        <Section id={sid('study')} title={study.title} level={sub}>
+        <Section id={sid('study')} title="Inspect the object" level={sub}>
           <figure className={styles.figure}>
             <img
               src={`/studies/${id}.webp`}

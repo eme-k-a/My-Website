@@ -79,7 +79,7 @@ test.describe('story dialog and history', () => {
     const origin = new URL(page.url()).origin;
     const dialog = dialogOf(page);
     await expect(dialog).toBeVisible();
-    await expect(dialog).toContainText('The Reporting Engine');
+    await expect(dialog).toContainText('Editions');
     await waitForMuseum(page);
     const length = await historyLength(page);
     await page.getByTestId(TEST_IDS.dialogClose).click();
@@ -96,7 +96,7 @@ test.describe('story dialog and history', () => {
     await openVerafinInApp(page);
     const dialog = dialogOf(page);
     for (const [id, title] of [
-      ['klarup', 'The Climb'],
+      ['klarup', 'Someone Showed Up'],
       ['finance-tracker', 'The Balance'],
       ['mysa', 'Warm Start'],
     ] as const) {
@@ -139,7 +139,7 @@ test.describe('story dialog and history', () => {
     await openVerafinInApp(page);
     await expect(page.getByTestId(TEST_IDS.dialogNewer)).toHaveCount(0);
     await expect(page.getByTestId(TEST_IDS.dialogOlder)).toHaveAccessibleName(
-      'Older exhibit: The Climb, KlarUp',
+      'Older exhibit: Someone Showed Up, KlarUp',
     );
     await page.keyboard.press('Escape');
     await expect(dialogOf(page)).toBeHidden();
@@ -215,7 +215,9 @@ test.describe('story dialog: openers, wings and motion', () => {
     await page.goto(museumUrl('/exhibit/klarup/'));
     const dialog = dialogOf(page);
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('heading', { level: 2, name: 'The Climb' })).toBeVisible();
+    await expect(
+      dialog.getByRole('heading', { level: 2, name: 'Someone Showed Up' }),
+    ).toBeVisible();
     await waitForMuseum(page);
     expect(await trackOf(page)).toBe('projects');
     expect((await writes()).push, 'no pushState on a cold wing deep link').toBe(0);
@@ -347,7 +349,7 @@ test.describe('classic mode on an exhibit page', { tag: '@dom' }, () => {
     await expect(page.locator('html')).toHaveAttribute('data-mode', 'classic');
     const article = page.getByTestId(TEST_IDS.storyStatic);
     await expect(article).toBeVisible();
-    await expect(article.getByRole('heading', { level: 1 })).toHaveText('The Reporting Engine');
+    await expect(article.getByRole('heading', { level: 1 })).toHaveText('Editions');
     await expect(page.locator('#app')).toBeHidden();
     await expect(page.locator('canvas')).toHaveCount(0);
     await page.waitForLoadState('networkidle');

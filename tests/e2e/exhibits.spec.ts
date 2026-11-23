@@ -54,8 +54,8 @@ test.describe('exhibits', { tag: '@exhibit' }, () => {
     page,
     guards,
   }) => {
-    // verafin's lazy chunk (src/museum/exhibits/verafin/ReportingEngine.tsx).
-    await page.route('**/assets/ReportingEngine-*.js', (route) => route.abort());
+    // verafin's lazy chunk (src/museum/exhibits/verafin/Editions.tsx).
+    await page.route('**/assets/Editions-*.js', (route) => route.abort());
     await page.goto(museumUrl('/'));
     await waitForMuseum(page);
     await goToStop(page, 'verafin');

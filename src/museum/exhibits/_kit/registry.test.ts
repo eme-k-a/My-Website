@@ -15,7 +15,7 @@ const entries = Object.entries(mods).map(([path, mod]) => ({
 
 const valid: ExhibitManifest = {
   id: 'verafin',
-  title: 'The Reporting Engine',
+  title: 'Editions',
   load: () => Promise.reject(new Error('not loaded in unit tests')),
   budget: { triangles: 12000, drawCalls: 6, textureMB: 1 },
   motion: 'slow',

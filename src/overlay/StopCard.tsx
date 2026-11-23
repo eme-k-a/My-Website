@@ -93,6 +93,11 @@ function ExhibitPlacard({ card }: { card: ExhibitCard }) {
             Enter
           </kbd>
         </button>
+        {(card.id === 'klarup' || card.id === 'verafin') && (
+          <a className={ui.paperPrimary} href={`/studies/?from=museum#${card.id}`}>
+            Inspect object
+          </a>
+        )}
         {canInspect(card.id) && (
           <button
             type="button"

@@ -78,7 +78,7 @@ export const resume = {
         },
       ],
       exhibit: {
-        title: 'The Reporting Engine',
+        title: 'Editions',
         caption:
           'Data platform, reporting, and plugin work on software that supports fraud detection and anti-money laundering.',
         story: [
@@ -93,7 +93,7 @@ export const resume = {
         ],
         placardSentence: 2,
         object: {
-          text: 'A frosted glass column feeds a six-by-six grid of bars that refreshes like a report. Three brass cartridges docked in the column are the plugins that extend it.',
+          text: 'A ceramic tile displays a report on its face. The blue cartridge on its reverse supplies the activity chart.',
         },
         tags: ['Data Platforms', 'Data Reporting', 'Reporting Plugins'],
         // Started as a draft exhibit (PLAN Addendum); Emeka approved its copy on 2026-11-15 (G5).
@@ -262,7 +262,7 @@ export const resume = {
         },
       ],
       exhibit: {
-        title: 'The Climb',
+        title: 'Someone Showed Up',
         caption:
           'A gamified, cross-platform task app with collaborative accountability features and a production release pipeline on Expo EAS.',
         story: [
@@ -277,7 +277,7 @@ export const resume = {
         ],
         placardSentence: 2,
         object: {
-          text: 'Five tiles climb like a staircase and tick themselves off one by one, while three brass beads wait together on the top step: accountability as a team sport. The small crate at the base is the standalone Android build.',
+          text: 'Two rows of lights mark completed practice sessions on a glass disc. A check-in from your partner crosses the gap after you miss a session.',
         },
         tags: ['React Native', 'Python', 'Expo EAS', 'Android', 'Gamification'],
       },

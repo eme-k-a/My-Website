@@ -173,8 +173,17 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
     ]);
     expect(rows).toEqual([
       // prettier-ignore
-      ['No. 01', 'verafin', 'The Reporting Engine', 'Software Development Co-op Student', "Nasdaq Verafin, St. John's, NL / Hybrid", 'Sep 2026 - Dec 2026', '4 months', 'ON VIEW NOW'],
-      ['No. P1', 'klarup', 'The Climb', 'Solo Developer', 'KlarUp, Project', null, null, null],
+      ['No. 01', 'verafin', 'Editions', 'Software Development Co-op Student', "Nasdaq Verafin, St. John's, NL / Hybrid", 'Sep 2026 - Dec 2026', '4 months', 'ON VIEW NOW'],
+      [
+        'No. P1',
+        'klarup',
+        'Someone Showed Up',
+        'Solo Developer',
+        'KlarUp, Project',
+        null,
+        null,
+        null,
+      ],
       // prettier-ignore
       ['No. P2', 'finance-tracker', 'The Balance', 'Team Project (School)', 'Personal Finance Tracker, Project', null, null, null],
       // prettier-ignore
@@ -237,7 +246,7 @@ describe('stopCards (EXPERIENCE §5.8)', () => {
       title: 'Projects wing',
       count: '2 exhibits',
       links: [
-        { id: 'klarup', label: 'The Climb, KlarUp', href: '/exhibit/klarup/' },
+        { id: 'klarup', label: 'Someone Showed Up, KlarUp', href: '/exhibit/klarup/' },
         {
           id: 'finance-tracker',
           label: 'The Balance, Personal Finance Tracker',

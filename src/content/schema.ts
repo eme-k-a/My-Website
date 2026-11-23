@@ -59,7 +59,7 @@ export const StoryBlock = z.discriminatedUnion('type', [
 ]);
 
 export const Exhibit = z.object({
-  title: Line.max(40), // concept title, e.g. "The Reporting Engine"
+  title: Line.max(40), // concept title, e.g. "Editions"
   label: Line.max(24).optional(), // big 3D organization label; defaults to org or name
   caption: Line.max(140), // one line: cards, OG description, meta description
   story: z.array(StoryBlock).min(1),

@@ -55,7 +55,7 @@ function wingTitle(wing: WingId): string {
   return card.kind === 'door' ? card.title : `${wing} wing`;
 }
 
-/** "Entered the Projects wing. No. P1, The Climb." */
+/** "Entered the Projects wing. No. P1, Someone Showed Up." */
 export function wingEntryMessage(wing: WingId, at: StopId): string {
   const card = cardOf(at);
   const where = card.kind === 'exhibit' ? ` ${card.numberLabel}, ${card.title}.` : '';

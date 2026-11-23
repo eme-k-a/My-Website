@@ -226,7 +226,7 @@ export interface DoorCard {
   title: string;
   /** "2 exhibits". */
   count: string;
-  /** One link per wing exhibit: "The Climb, KlarUp" to /exhibit/klarup/. */
+  /** One link per wing exhibit: "Someone Showed Up, KlarUp" to /exhibit/klarup/. */
   links: (Cta & { id: ExhibitId })[];
   cta: { label: string };
 }

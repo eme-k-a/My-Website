@@ -3,8 +3,8 @@ import { defineExhibit } from '../_kit';
 
 export default defineExhibit({
   id: 'klarup',
-  title: 'The Climb',
-  load: () => import('./Climb'),
+  title: 'Someone Showed Up',
+  load: () => import('./SessionDisc'),
   budget: { triangles: 4000, drawCalls: 20, textureMB: 0 },
   motion: 'slow',
 });

@@ -3,8 +3,8 @@ import { defineExhibit } from '../_kit';
 
 export default defineExhibit({
   id: 'verafin',
-  title: 'The Reporting Engine',
-  load: () => import('./ReportingEngine'),
+  title: 'Editions',
+  load: () => import('./Editions'),
   budget: { triangles: 4000, drawCalls: 12, textureMB: 0 },
   motion: 'slow',
 });

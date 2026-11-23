@@ -39,7 +39,7 @@ describe('wording (EXPERIENCE §8.4 aria-live rows)', () => {
 
   it('announces wing entry and exit (EXPERIENCE §3.4)', () => {
     expect(wingEntryMessage('projects', 'klarup')).toBe(
-      'Entered the Projects wing. No. P1, The Climb.',
+      'Entered the Projects wing. No. P1, Someone Showed Up.',
     );
     expect(wingExitMessage('projects')).toBe('Back in the main aisle at the Projects wing door.');
     expect(wingExitMessage('volunteer')).toBe(
@@ -213,7 +213,7 @@ describe('createAnnouncer', () => {
     h.set({ settled: false, track: 'main' });
     h.walk('projects-door');
     expect(h.written).toEqual([
-      'Entered the Projects wing. No. P1, The Climb.',
+      'Entered the Projects wing. No. P1, Someone Showed Up.',
       'Back in the main aisle at the Projects wing door.',
     ]);
   });

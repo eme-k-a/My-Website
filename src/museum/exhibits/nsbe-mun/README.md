@@ -1,5 +1,5 @@
 # NSBE MUN: The Chapter Noticeboard (No. V1)
 
-The paper held by brass clips represents the chapter's public website. A small panel and latch on the reverse suggest the ongoing work of maintaining it. The board is a metaphor, with no claims about the website's stack or a physical noticeboard at the chapter.
+The paper held by brass clips represents the chapter's public website. The rear service panel stands ajar on two brass hinges, revealing a graphite opening. Its latch and access opening represent ongoing maintenance. The board is a metaphor, with no claims about the website's stack or a physical noticeboard at the chapter.
 
-This static edition introduces the stop for roadmap item 02. Final art and named inspection views belong to item 11 after concept approval. The freestanding board fits the standard plinth bounds; five shared materials merge by material, with no local lighting or textures.
+The case opens on the public page. In the inspector, Rear service panel turns to the maintenance side. The story includes the same view without JavaScript. The freestanding board fits the standard plinth bounds; five shared materials merge by material, with no local lighting or textures.

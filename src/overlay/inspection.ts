@@ -1,6 +1,24 @@
 import { create } from 'zustand';
 
-export const workViews = {
+export const detailViews = {
+  mun: {
+    title: 'Work in Progress',
+    label: 'Chip inside the scaffold',
+    yaw: 5,
+    elevation: 34,
+    zoom: 1.4,
+    detail:
+      'The chip sits inside five scaffold tiers. Brass marks study still ahead and glass marks completed tiers.',
+  },
+  'nsbe-mun': {
+    title: 'The Chapter Noticeboard',
+    label: 'Rear service panel',
+    yaw: 156,
+    elevation: 13,
+    zoom: 1.26,
+    detail:
+      'The clipped page represents the website Emeka built and launched at nsbe-mun.ca. Turn the board over to see the hinged panel representing his ongoing maintenance.',
+  },
   mysa: {
     title: 'Warm Start',
     label: 'Dial and key',
@@ -30,12 +48,12 @@ export const workViews = {
   },
 } as const;
 
-export type WorkViewId = keyof typeof workViews;
-export const isWorkView = (id: string | null): id is WorkViewId =>
-  id !== null && Object.hasOwn(workViews, id);
-export type Inspectable = 'sdsj' | 'certifications' | 'finance-tracker' | WorkViewId;
+export type DetailViewId = keyof typeof detailViews;
+export const hasDetailView = (id: string | null): id is DetailViewId =>
+  id !== null && Object.hasOwn(detailViews, id);
+export type Inspectable = 'sdsj' | 'certifications' | 'finance-tracker' | DetailViewId;
 export const canInspect = (id: string | null): id is Inspectable =>
-  isWorkView(id) || id === 'sdsj' || id === 'certifications' || id === 'finance-tracker';
+  hasDetailView(id) || id === 'sdsj' || id === 'certifications' || id === 'finance-tracker';
 
 export interface InspectionPose {
   yaw: number;

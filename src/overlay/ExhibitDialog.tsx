@@ -20,6 +20,8 @@ import { exhibitPath } from '../app/routes';
 import { useMuseum } from '../app/store';
 import { TEST_IDS } from '../app/testIds';
 import type { ExhibitId } from '../content/ids';
+import { content } from '../content';
+import { entryById } from '../content/selectors';
 import { SITE_URL } from '../content/site';
 import { canInspect, useInspection } from './inspection';
 import { Icon } from './icons';
@@ -242,7 +244,7 @@ export function ExhibitDialog() {
               {objectView ? (
                 <>
                   <h2 className={styles.title} id={HEADING_ID}>
-                    {openId === 'sdsj' ? 'The Round Table' : 'The Medal Cabinet'}
+                    {entryById(content, openId).exhibit.title}
                   </h2>
                   <Suspense fallback={<p>Loading object…</p>}>
                     <ObjectInspector key={openId} id={openId} />

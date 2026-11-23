@@ -14,7 +14,7 @@ import { content } from '../content/index';
 import { entryById, organizationOf, type ExhibitCard } from '../content/selectors';
 import type { StoryBlock } from '../content/types';
 import { MedalViews } from './MedalViews';
-import { RoundTableViews } from './RoundTableViews';
+import { StaticObjectViews } from './StaticObjectViews';
 import { cardOf } from './model';
 import { neighbourOf } from './story';
 import styles from './ExhibitDialog.module.css';
@@ -185,7 +185,9 @@ function StoryContent({ id, headingId, level, durationTestId, eyebrow = true }: 
       <Section id={sid('object')} title="The object" level={sub}>
         <p className={styles.prose}>{exhibit.object.text}</p>
         {id === 'certifications' && <MedalViews group={sid('views')} />}
-        {id === 'sdsj' && <RoundTableViews group={sid('views')} />}
+        {(id === 'sdsj' || id === 'finance-tracker') && (
+          <StaticObjectViews id={id} group={sid('views')} />
+        )}
       </Section>
       {study && (
         <Section id={sid('study')} title="Inspect the object" level={sub}>

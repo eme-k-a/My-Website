@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 
-export type Inspectable = 'sdsj' | 'certifications';
+export type Inspectable = 'sdsj' | 'certifications' | 'finance-tracker';
 export const canInspect = (id: string | null): id is Inspectable =>
-  id === 'sdsj' || id === 'certifications';
+  id === 'sdsj' || id === 'certifications' || id === 'finance-tracker';
 
 export interface InspectionPose {
   yaw: number;

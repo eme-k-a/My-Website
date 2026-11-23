@@ -15,12 +15,15 @@ const clamp = (n: number, low: number, high: number) => Math.max(low, Math.min(h
 const wrap = (degrees: number) => ((degrees % 360) + 360) % 360;
 export default function ObjectInspector({ id }: { id: Inspectable }) {
   const [medal, setMedal] = useState<number | null>(null);
-  const table = id === 'sdsj';
-  const label = table
-    ? 'Round Table'
-    : medal === null
-      ? 'Medal Cabinet'
-      : content.certifications.items[medal]!.name;
+  const cabinet = id === 'certifications';
+  const label =
+    id === 'finance-tracker'
+      ? 'The Balance'
+      : id === 'sdsj'
+        ? 'Round Table'
+        : medal === null
+          ? 'Medal Cabinet'
+          : content.certifications.items[medal]!.name;
   const start = useInspection((s) => s.starts[id]);
   const lost = useMuseum((s) => s.contextLost);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -103,7 +106,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
   const available = !!start && !lost && !failed;
   return (
     <div className={styles.inspector}>
-      {!table && (
+      {cabinet && (
         <label>
           Inspect{' '}
           <select
@@ -122,6 +125,12 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
             ))}
           </select>
         </label>
+      )}
+      {id === 'finance-tracker' && (
+        <p>
+          Look down on the tray to identify the stacks: round for income, square for expenses, and
+          six-sided for budget.
+        </p>
       )}
       {available && <p>Drag to rotate, or use the arrow keys. Use + and - to zoom.</p>}
       <canvas
@@ -183,7 +192,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
       )}
       {available && (
         <div className={styles.orbitControls}>
-          {table ? (
+          {!cabinet ? (
             <button type="button" onClick={() => setPose({ yaw: 0, elevation: 90, zoom: 1 })}>
               Overhead view
             </button>
@@ -212,7 +221,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
         </div>
       )}
       <a className={dialog.link} href={`/exhibit/${id}/?mode=classic#story-static-title-views`}>
-        {table ? 'View six static angles' : 'View static medal images'}
+        {cabinet ? 'View static medal images' : 'View six static angles'}
       </a>
     </div>
   );

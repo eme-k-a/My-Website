@@ -20,6 +20,7 @@ import {
 } from './model';
 import { watchRailProgress } from './railProgress';
 import { SkipLink } from './SkipLink';
+import shared from './overlay.module.css';
 import styles from './Hud.module.css';
 
 const LAST = Math.max(1, MAIN_STOPS.length - 1);
@@ -29,7 +30,7 @@ const FIRST_YEAR = YEAR_TICKS[0]?.year ?? yearAt(0);
  * Phone progress: a 3 px bar and the year chip, both written outside React per frame. The chip
  * follows the main aisle's year (inside a wing, its door's) and reads "Front desk" at the desk.
  */
-function PhoneProgress() {
+function PhoneProgress({ openDirectory }: { openDirectory: () => void }) {
   const bar = useRef<HTMLSpanElement>(null);
   const year = useRef<HTMLSpanElement>(null);
   useEffect(
@@ -43,16 +44,24 @@ function PhoneProgress() {
     [],
   );
   return (
-    <span className={styles.phoneProgress} aria-hidden="true">
+    <span className={styles.phoneProgress}>
       <span className={styles.bar} ref={bar} />
-      <span className={styles.year} ref={year}>
-        {FIRST_YEAR}
-      </span>
+      <button
+        type="button"
+        className={styles.year}
+        aria-haspopup="dialog"
+        title="Museum stops"
+        onClick={openDirectory}
+      >
+        <Icon name="list" />
+        <span className={shared.visuallyHidden}>Museum stops, </span>
+        <span ref={year}>{FIRST_YEAR}</span>
+      </button>
     </span>
   );
 }
 
-export function Hud() {
+export function Hud({ openDirectory }: { openDirectory: () => void }) {
   // In a wing the rail's wing head ("Return to the aisle") takes the year chip's place on phones.
   const wing = useMuseum((s) => wingHeadShown(s.track, s.stop));
   return (
@@ -63,7 +72,7 @@ export function Hud() {
     >
       <SkipLink />
       <p className={styles.wordmark}>{content.gallery.title}</p>
-      <PhoneProgress />
+      <PhoneProgress openDirectory={openDirectory} />
       <div className={styles.actions}>
         <a className={styles.primary} href={PDF_PATH} data-testid={TEST_IDS.hudPdf}>
           <Icon name="file-text" />

@@ -11,12 +11,45 @@
   <body>
     <main>
       <header>
-        <span>Commit History</span>
+        <a id="exhibit-link" href="/exhibit/klarup/">KlarUp exhibit</a>
         <nav aria-label="Artifact studies">
           <button id="klarup" aria-pressed="true">KlarUp</button
           ><button id="verafin" aria-pressed="false">Verafin</button>
         </nav>
       </header>
+      <noscript>
+        <style>
+          header,
+          section[aria-labelledby='title'] {
+            display: none;
+          }
+        </style>
+        <h1>Artifact studies</h1>
+        <figure>
+          <img
+            src="klarup.webp"
+            width="626"
+            height="413"
+            alt="A dotted gap interrupts the upper row of session lights on a glass disc."
+          />
+          <figcaption>
+            Someone Showed Up. Your partner checks in when you miss a practice session.
+            <a href="/exhibit/klarup/">KlarUp exhibit</a>
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="verafin.webp"
+            width="626"
+            height="413"
+            alt="Three cartridges on the reverse of the report tile, with the blue one released."
+          />
+          <figcaption>
+            Editions. The blue module supplies the activity chart on the front.
+            <a href="/exhibit/verafin/">Verafin exhibit</a>
+          </figcaption>
+        </figure>
+      </noscript>
       <section aria-labelledby="title">
         <h1 id="title">Someone Showed Up</h1>
         <p id="intro">Two people keep a practice. One misses a session. Their partner checks in.</p>

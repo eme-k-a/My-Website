@@ -19,6 +19,21 @@ import { cardOf } from './model';
 import { neighbourOf } from './story';
 import styles from './ExhibitDialog.module.css';
 
+const studies = {
+  klarup: {
+    title: 'Someone Showed Up',
+    detail:
+      'Each light is a practice session. A pulse from your partner crosses the gap when you miss one.',
+    alt: 'Two rows of lights on a glass disc, with a dotted space on the upper row.',
+  },
+  verafin: {
+    title: 'Editions',
+    detail:
+      'Turn the report over and release the blue module to see which part of the report it supplies.',
+    alt: 'The back of a white report tile with two seated cartridges and a third blue cartridge pulled out.',
+  },
+} as const;
+
 interface WorkItem {
   text: string;
   href?: string;
@@ -96,6 +111,7 @@ function StoryContent({ id, headingId, level, durationTestId, eyebrow = true }: 
   const card = cardOf(id) as ExhibitCard;
   const { exhibit } = entryById(content, id);
   const items = workItems(id);
+  const study = id === 'klarup' || id === 'verafin' ? studies[id] : null;
   const Title = level === 1 ? 'h1' : 'h2';
   const sub = level === 1 ? 2 : 3;
   const sid = (name: string) => `${headingId}-${name}`;
@@ -171,6 +187,26 @@ function StoryContent({ id, headingId, level, durationTestId, eyebrow = true }: 
         {id === 'certifications' && <MedalViews group={sid('views')} />}
         {id === 'sdsj' && <RoundTableViews group={sid('views')} />}
       </Section>
+      {study && (
+        <Section id={sid('study')} title={study.title} level={sub}>
+          <figure className={styles.figure}>
+            <img
+              src={`/studies/${id}.webp`}
+              width={626}
+              height={413}
+              alt={study.alt}
+              loading="lazy"
+            />
+            <figcaption>{study.detail}</figcaption>
+          </figure>
+          <a
+            className={styles.link}
+            href={`/studies/?from=${level === 2 ? 'museum' : 'classic'}#${id}`}
+          >
+            Inspect {study.title}
+          </a>
+        </Section>
+      )}
       {exhibit.links.length > 0 && (
         <ul className={styles.links}>
           {exhibit.links.map((link) => (

@@ -196,6 +196,11 @@ function select(name) {
   study = name;
   clearPulse();
   const klarup = name === 'klarup';
+  const exhibitLink = $('exhibit-link');
+  const from = new URLSearchParams(location.search).get('from');
+  const mode = from === 'museum' || from === 'classic' ? '?mode=' + from : '';
+  exhibitLink.href = '/exhibit/' + name + '/' + mode;
+  exhibitLink.textContent = klarup ? 'KlarUp exhibit' : 'Verafin exhibit';
   disc.hidden = !klarup;
   tile.hidden = klarup;
   $('story').hidden = !klarup;
@@ -232,7 +237,13 @@ $('flip').onclick = () => {
   draw();
 };
 $('reset').onclick = reset;
-for (const name of ['klarup', 'verafin']) $(name).onclick = () => select(name);
+for (const name of ['klarup', 'verafin']) {
+  $(name).onclick = () => {
+    history.replaceState(history.state, '', '#' + name);
+    select(name);
+  };
+}
+window.addEventListener('hashchange', selectFromUrl);
 const stage = $('stage');
 stage.onpointerdown = (e) => {
   if (drag || e.button !== 0) return;
@@ -265,4 +276,7 @@ stage.onkeydown = (e) => {
   draw();
 };
 new ResizeObserver(draw).observe(stage);
-select(location.hash === '#verafin' ? 'verafin' : 'klarup');
+function selectFromUrl() {
+  select(location.hash === '#verafin' ? 'verafin' : 'klarup');
+}
+selectFromUrl();

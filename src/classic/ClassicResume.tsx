@@ -58,6 +58,13 @@ function Experience({ c }: { c: Content }) {
             {w.org}, {formatLocation(w.location)}
           </p>
           <Bullets bullets={w.bullets} />
+          {(w.id === 'mysa' || w.id === 'wailo' || w.id === 'cfia') && (
+            <p>
+              <a href={`/exhibit/${w.id}/?mode=classic#story-static-title-views`}>
+                Inspect {w.exhibit.title}
+              </a>
+            </p>
+          )}
         </article>
       ))}
     </section>

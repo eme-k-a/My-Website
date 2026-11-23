@@ -3,6 +3,8 @@ import { useMuseum } from '../app/store';
 import { content } from '../content';
 import {
   useInspection,
+  isWorkView,
+  workViews,
   type Inspectable,
   type InspectionPose,
   type InspectionSession,
@@ -10,20 +12,23 @@ import {
 import dialog from './ExhibitDialog.module.css';
 import styles from './ObjectInspector.module.css';
 
-const initial: InspectionPose = { yaw: 25, elevation: 24, zoom: 1 };
+const defaultPose: InspectionPose = { yaw: 25, elevation: 24, zoom: 1 };
 const clamp = (n: number, low: number, high: number) => Math.max(low, Math.min(high, n));
 const wrap = (degrees: number) => ((degrees % 360) + 360) % 360;
 export default function ObjectInspector({ id }: { id: Inspectable }) {
   const [medal, setMedal] = useState<number | null>(null);
+  const workView = isWorkView(id) ? workViews[id] : undefined;
+  const initial = workView ?? defaultPose;
   const cabinet = id === 'certifications';
   const label =
-    id === 'finance-tracker'
+    workView?.title ??
+    (id === 'finance-tracker'
       ? 'The Balance'
       : id === 'sdsj'
         ? 'Round Table'
         : medal === null
           ? 'Medal Cabinet'
-          : content.certifications.items[medal]!.name;
+          : content.certifications.items[medal]!.name);
   const start = useInspection((s) => s.starts[id]);
   const lost = useMuseum((s) => s.contextLost);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -132,6 +137,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
           six-sided for budget.
         </p>
       )}
+      {workView && <p>{workView.detail}</p>}
       {available && <p>Drag to rotate, or use the arrow keys. Use + and - to zoom.</p>}
       <canvas
         hidden={!available}
@@ -192,6 +198,11 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
       )}
       {available && (
         <div className={styles.orbitControls}>
+          {workView && (
+            <button type="button" onClick={() => setPose(workView)}>
+              {workView.label}
+            </button>
+          )}
           {!cabinet ? (
             <button type="button" onClick={() => setPose({ yaw: 0, elevation: 90, zoom: 1 })}>
               Overhead view
@@ -221,7 +232,11 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
         </div>
       )}
       <a className={dialog.link} href={`/exhibit/${id}/?mode=classic#story-static-title-views`}>
-        {cabinet ? 'View static medal images' : 'View six static angles'}
+        {cabinet
+          ? 'View static medal images'
+          : workView
+            ? 'View the saved angles'
+            : 'View six static angles'}
       </a>
     </div>
   );

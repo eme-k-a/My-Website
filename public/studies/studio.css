@@ -264,3 +264,58 @@ p {
 .cartridge {
   transform-style: flat;
 }
+.wall,
+.contacts,
+.disc-label,
+.missed-session {
+  transform-style: flat;
+}
+.contacts {
+  border-radius: 5px;
+  background: #35445a;
+  color: #dbca98;
+  display: grid;
+  place-items: center;
+}
+.disc-label {
+  text-align: center;
+  font:
+    bold 12px/15px Plex,
+    system-ui;
+}
+.missed-session {
+  border: 1px dashed #d8caff;
+  border-radius: 6px;
+  color: #e5d6ff;
+  text-align: center;
+  font: bold 12px/13px system-ui;
+}
+#story {
+  display: flex;
+  padding: 0;
+  list-style: none;
+  gap: 5px;
+  counter-reset: moment;
+  margin: 12px 0;
+}
+#story[hidden] {
+  display: none;
+}
+#story li {
+  flex: 1;
+  border-top: 2px solid #626c74;
+  padding-top: 5px;
+  color: #c5cdd2;
+  font-size: clamp(12px, 2vw, 15px);
+  counter-increment: moment;
+}
+#story li::before {
+  content: counter(moment) '. ';
+}
+#story[data-step='1'] li:first-child,
+#story[data-step='2'] li:nth-child(2),
+#story[data-step='3'] li:last-child {
+  border-color: #bca5ff;
+  color: white;
+  font-weight: bold;
+}

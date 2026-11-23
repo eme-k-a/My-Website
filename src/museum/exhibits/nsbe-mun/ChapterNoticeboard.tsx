@@ -32,15 +32,25 @@ export default function ChapterNoticeboard({ materials }: ExhibitProps) {
         </mesh>
       ))}
       <mesh
-        name="rear-access-panel"
+        name="service-opening"
         position={[0, 0.354, -0.026]}
         material={materials.ceramicGraphite}
       >
-        <boxGeometry args={[0.3, 0.168, 0.012]} />
+        <boxGeometry args={[0.32, 0.182, 0.012]} />
       </mesh>
-      <mesh position={[0.117, 0.354, -0.034]} material={materials.brass}>
-        <boxGeometry args={[0.018, 0.048, 0.012]} />
-      </mesh>
+      <group position={[-0.15, 0.354, -0.036]} rotation-y={0.58}>
+        <mesh name="rear-access-panel" position-x={0.15} material={materials.ceramic}>
+          <boxGeometry args={[0.3, 0.168, 0.012]} />
+        </mesh>
+        <mesh name="panel-latch" position={[0.266, 0, -0.014]} material={materials.brass}>
+          <boxGeometry args={[0.018, 0.052, 0.024]} />
+        </mesh>
+      </group>
+      {[-0.057, 0.057].map((y) => (
+        <mesh key={y} position={[-0.15, 0.354 + y, -0.036]} material={materials.brass}>
+          <cylinderGeometry args={[0.009, 0.009, 0.037, 6]} />
+        </mesh>
+      ))}
     </MergeStatic>
   );
 }

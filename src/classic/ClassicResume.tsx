@@ -119,6 +119,13 @@ function Volunteer({ c }: { c: Content }) {
             {v.org}, {formatLocation(v.location)}
           </p>
           <Bullets bullets={v.bullets} />
+          {v.id === 'nsbe-mun' && (
+            <p>
+              <a href="/exhibit/nsbe-mun/?mode=classic#story-static-title-views">
+                Inspect The Chapter Noticeboard
+              </a>
+            </p>
+          )}
           {v.id === 'sdsj' && (
             <p>
               <a href="/exhibit/sdsj/?mode=classic#story-static-title-views">
@@ -154,6 +161,13 @@ function Education({ c, now }: { c: Content; now: Date }) {
             <p className="cv-entry-org">
               {e.degree}, {formatLocation(e.location)}
             </p>
+            {e.id === 'mun' && (
+              <p>
+                <a href="/exhibit/mun/?mode=classic#story-static-title-views">
+                  Inspect Work in Progress
+                </a>
+              </p>
+            )}
           </article>
         );
       })}

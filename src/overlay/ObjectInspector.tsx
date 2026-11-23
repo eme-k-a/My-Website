@@ -3,8 +3,8 @@ import { useMuseum } from '../app/store';
 import { content } from '../content';
 import {
   useInspection,
-  isWorkView,
-  workViews,
+  hasDetailView,
+  detailViews,
   type Inspectable,
   type InspectionPose,
   type InspectionSession,
@@ -17,11 +17,11 @@ const clamp = (n: number, low: number, high: number) => Math.max(low, Math.min(h
 const wrap = (degrees: number) => ((degrees % 360) + 360) % 360;
 export default function ObjectInspector({ id }: { id: Inspectable }) {
   const [medal, setMedal] = useState<number | null>(null);
-  const workView = isWorkView(id) ? workViews[id] : undefined;
-  const initial = workView ?? defaultPose;
+  const detailView = hasDetailView(id) ? detailViews[id] : undefined;
+  const initial = id === 'nsbe-mun' ? defaultPose : (detailView ?? defaultPose);
   const cabinet = id === 'certifications';
   const label =
-    workView?.title ??
+    detailView?.title ??
     (id === 'finance-tracker'
       ? 'The Balance'
       : id === 'sdsj'
@@ -137,7 +137,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
           six-sided for budget.
         </p>
       )}
-      {workView && <p>{workView.detail}</p>}
+      {detailView && <p>{detailView.detail}</p>}
       {available && <p>Drag to rotate, or use the arrow keys. Use + and - to zoom.</p>}
       <canvas
         hidden={!available}
@@ -198,9 +198,9 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
       )}
       {available && (
         <div className={styles.orbitControls}>
-          {workView && (
-            <button type="button" onClick={() => setPose(workView)}>
-              {workView.label}
+          {detailView && (
+            <button type="button" onClick={() => setPose(detailView)}>
+              {detailView.label}
             </button>
           )}
           {!cabinet ? (
@@ -234,7 +234,7 @@ export default function ObjectInspector({ id }: { id: Inspectable }) {
       <a className={dialog.link} href={`/exhibit/${id}/?mode=classic#story-static-title-views`}>
         {cabinet
           ? 'View static medal images'
-          : workView
+          : detailView
             ? 'View the saved angles'
             : 'View six static angles'}
       </a>

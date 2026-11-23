@@ -1,4 +1,4 @@
-import { workViews, type WorkViewId } from './inspection';
+import { detailViews, type DetailViewId } from './inspection';
 import styles from './ExhibitDialog.module.css';
 
 const tableViews = [
@@ -54,7 +54,23 @@ const directions = [
   ['left', 'Left'],
   ['underside', 'Below'],
 ] as const;
-const workDescriptions = {
+const angleDescriptions = {
+  mun: [
+    'Brass rails trace a square around the silicon die.',
+    'The chip faces the open front of its scaffold.',
+    'Diagonal braces cross the side of the frame.',
+    'The support post rises behind the chip.',
+    'The tilted chip is visible through the side braces.',
+    'The base plate sits inside the lower square frame.',
+  ],
+  'nsbe-mun': [
+    'The hinged rear panel projects behind the clipped page.',
+    'Two brass clips hold the chapter page on its board.',
+    'The clipped sheets and service panel sit on opposite faces.',
+    'The raised latch and hinges frame an open service hatch.',
+    'The panel stands away from the rear face.',
+    'The wide foot supports the freestanding noticeboard.',
+  ],
   mysa: [
     'From above, the key sits forward of the upright ceramic slab.',
     'Four dial segments face forward, with the key to their right.',
@@ -86,7 +102,7 @@ export function StaticObjectViews({
   id,
   group,
 }: {
-  id: 'finance-tracker' | 'sdsj' | WorkViewId;
+  id: 'finance-tracker' | 'sdsj' | DetailViewId;
   group: string;
 }) {
   const views =
@@ -95,8 +111,8 @@ export function StaticObjectViews({
       : id === 'finance-tracker'
         ? financeViews
         : [
-            ['detail', workViews[id].label, workViews[id].detail],
-            ...directions.map(([file, label], i) => [file, label, workDescriptions[id][i]]),
+            ['detail', detailViews[id].label, detailViews[id].detail],
+            ...directions.map(([file, label], i) => [file, label, angleDescriptions[id][i]]),
           ];
   return (
     <div className={styles.objectViews} id={group}>

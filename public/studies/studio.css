@@ -1,0 +1,255 @@
+@font-face {
+  font-family: Plex;
+  src: url(../fonts/ibm-plex-sans-400.woff2);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #12171c;
+  color: #f4f3f1;
+  font:
+    16px/1.45 Plex,
+    system-ui,
+    sans-serif;
+}
+main {
+  max-width: 950px;
+  margin: auto;
+  padding: 0 clamp(16px, 4vw, 48px) 32px;
+}
+header,
+.actions,
+nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+header {
+  justify-content: space-between;
+  padding: 20px 0;
+  border-bottom: 1px solid #51585e;
+}
+header span {
+  font-weight: 600;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: #242a30;
+  border: 1px solid #646c73;
+  border-radius: 8px;
+  padding: 8px 14px;
+  min-height: 44px;
+  cursor: pointer;
+}
+button:focus-visible,
+#stage:focus-visible {
+  outline: 3px solid #9ecbff;
+  outline-offset: 3px;
+}
+button[aria-pressed='true'],
+#action {
+  background: #f5f1eb;
+  color: #162028;
+}
+h1 {
+  font:
+    normal clamp(38px, 6vw, 68px)/1.05 Georgia,
+    serif;
+  letter-spacing: -0.045em;
+  margin: 26px 0 6px;
+}
+p {
+  margin: 8px 0 16px;
+}
+#intro,
+.hint {
+  color: #c0c8ce;
+}
+.hint {
+  font-size: 14px;
+}
+.actions {
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+#status {
+  min-height: 1.5em;
+}
+#stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  height: clamp(285px, 48vh, 475px);
+  border-radius: 16px;
+  background: radial-gradient(ellipse at 48% 33%, #3c505a, #24303b 56%, #1a242c);
+  perspective: 950px;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+#stage:active {
+  cursor: grabbing;
+}
+#shadow {
+  position: absolute;
+  width: 42%;
+  height: 6%;
+  top: 82%;
+  left: 29%;
+  background: #080c11;
+  filter: blur(13px);
+  border-radius: 50%;
+  opacity: 0.55;
+}
+#sculpture,
+#disc,
+#tile,
+.module {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+#sculpture {
+  left: 50%;
+  top: 46%;
+  width: 0;
+  height: 0;
+}
+#disc,
+#tile {
+  inset: 0;
+}
+.part {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.face {
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 27% 20%, #cfe9f42e, transparent 56%),
+    linear-gradient(122deg, #657b8548, #101c2bb8 59%, #9db8bd4a);
+  border: 1.5px solid #bad7ddbb;
+}
+.stroke {
+  border-radius: 8px;
+}
+.bridge {
+  background: #c7ffe9;
+  box-shadow: 0 0 6px #83ffcf;
+}
+.pulse {
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 8px 3px #79ffe0;
+}
+.rim {
+  background: #69818a;
+  border-block: 1px solid #d5e5e6;
+}
+.tile-face {
+  border-radius: 18px;
+  background: #e5e6df;
+  border: 1px solid #fff;
+  color: #1b2428;
+  backface-visibility: hidden;
+}
+.paper {
+  padding: 20px 17px;
+}
+.paper small,
+.paper strong {
+  display: block;
+}
+.paper small {
+  font: 9px monospace;
+  letter-spacing: 0.16em;
+}
+.paper strong {
+  font: 600 22px/1.15 system-ui;
+  margin: 8px 0 10px;
+}
+.lines {
+  height: 17px;
+  background: repeating-linear-gradient(to bottom, #777e7c 0 2px, transparent 2px 7px);
+  width: 80%;
+}
+.summary {
+  margin-top: 9px;
+  border-top: 1px solid #777;
+  padding-top: 7px;
+  font: bold 10px system-ui;
+}
+.chart {
+  display: flex;
+  gap: 4px;
+  height: 24px;
+  align-items: end;
+  margin-top: 3px;
+}
+.chart i {
+  background: #414e55;
+  width: 9px;
+}
+.back {
+  background: #d1d4d0;
+}
+.rail {
+  position: absolute;
+  inset: 33px 18px;
+  background: #374149;
+  border-radius: 13px;
+  box-shadow: inset 1px 3px 6px #151d22;
+}
+.cartridge {
+  border: 1px solid #849398;
+  border-radius: 5px;
+  background: linear-gradient(115deg, #a6b1b2, #738187);
+  color: #12202a;
+  font: bold 12px monospace;
+  display: grid;
+  place-items: center;
+}
+.blue {
+  background: linear-gradient(135deg, #406fff, #1939ce);
+  color: white;
+  border-color: #708aff;
+}
+.tile-edge {
+  background: #aeb7b6;
+}
+.module {
+  cursor: pointer;
+}
+.cartridge:focus-visible {
+  outline: 3px solid #fff;
+}
+.endmark {
+  background: #8e78ff;
+}
+.actions #action {
+  font-weight: 600;
+}
+@media (max-width: 440px) {
+  button {
+    padding-inline: 10px;
+  }
+  .actions {
+    gap: 6px;
+  }
+  .actions button {
+    font-size: 14px;
+  }
+}
+.paper strong {
+  font-size: 18px;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+.paper {
+  padding: 18px 14px;
+}
+.paper .chart {
+  height: 23px;
+}

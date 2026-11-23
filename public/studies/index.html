@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Artifact studies · Commit History</title>
+    <link rel="stylesheet" href="studio.css" />
+    <script src="studio.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span>Commit History</span>
+        <nav aria-label="Artifact studies">
+          <button id="klarup" aria-pressed="true">KlarUp</button
+          ><button id="verafin" aria-pressed="false">Verafin</button>
+        </nav>
+      </header>
+      <section aria-labelledby="title">
+        <h1 id="title">Someone Showed Up</h1>
+        <p id="intro">Two people keep a practice. One misses a session. Their partner checks in.</p>
+        <div id="stage" tabindex="0" aria-label="Rotate sculpture. Drag or use arrow keys.">
+          <div id="shadow"></div>
+          <div id="sculpture">
+            <div id="disc"></div>
+            <div id="tile" hidden></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="action">Play the check-in</button><button id="flip">View edge</button
+          ><button id="reset">Reset view</button>
+        </div>
+        <p id="status" role="status"></p>
+        <p class="hint">Drag the object to rotate. Swipe outside its frame to scroll.</p>
+      </section>
+    </main>
+  </body>
+</html>

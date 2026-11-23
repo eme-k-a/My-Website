@@ -50,3 +50,7 @@ Build `d380b18` (WP-22), `?test=1&mode=museum`, captured with the `@capture` spe
 | Thumbnail path (320 px grayscale) | `out/wp22/klarup-thumb.png` |
 | Notes | Every box passes. Re-reviewed 2026-10-24 after the approved changes (staircase raised 2.5 cm, check bars 0.012 square): the checks now read as teal strokes on every step at the stop. Polish for the G3 rubric (not a checklist failure): the crate's brass strips read dark under medium-tier lighting. The review ran in the WP-22 builder session (builder and R2 roles in one session, as in WP-12); R0 may ask R11 to confirm at G3. |
 | Signed | R2 (Art Director), WP-22 |
+
+## v1.1 concept review
+
+[Compare the three mutual-accountability studies](klarup-studies/README.md).

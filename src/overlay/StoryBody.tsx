@@ -14,6 +14,7 @@ import { content } from '../content/index';
 import { entryById, organizationOf, type ExhibitCard } from '../content/selectors';
 import type { StoryBlock } from '../content/types';
 import { MedalViews } from './MedalViews';
+import { isWorkView } from './inspection';
 import { StaticObjectViews } from './StaticObjectViews';
 import { cardOf } from './model';
 import { neighbourOf } from './story';
@@ -185,7 +186,7 @@ function StoryContent({ id, headingId, level, durationTestId, eyebrow = true }: 
       <Section id={sid('object')} title="The object" level={sub}>
         <p className={styles.prose}>{exhibit.object.text}</p>
         {id === 'certifications' && <MedalViews group={sid('views')} />}
-        {(id === 'sdsj' || id === 'finance-tracker') && (
+        {(id === 'sdsj' || id === 'finance-tracker' || isWorkView(id)) && (
           <StaticObjectViews id={id} group={sid('views')} />
         )}
       </Section>
